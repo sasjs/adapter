@@ -14,10 +14,9 @@ If you are short on time and just need to build an app quickly, then check out [
 
 For more information on building web apps with SAS, check out [sasjs.io](https://sasjs.io)
 
+## None of this makes sense. How do I build an app with it?
 
-## None of this makes sense.  How do I build an app with it?
-
-Ok ok.  Deploy this [example.html](https://github.com/macropeople/sasjs/blob/master/example.html) file to your web server, and update `servertype` to `SAS9` or `SASVIYA` depending on your backend.
+Ok ok. Deploy this [example.html](https://github.com/sasjs/adapter/blob/master/example.html) file to your web server, and update `servertype` to `SAS9` or `SASVIYA` depending on your backend.
 
 The backend part can be deployed as follows:
 
@@ -25,7 +24,7 @@ The backend part can be deployed as follows:
 %let appLoc=/Public/app/readme;  /* Metadata or Viya Folder location as per SASjs config */
 /* compile macros (can also be downloaded & compiled seperately) */
 filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/master/mc_all.sas";
-%inc mc; 
+%inc mc;
 filename ft15f001 temp;
 parmcards4;
   %webout(FETCH) /* receive all data as SAS datasets */
@@ -45,6 +44,6 @@ You now have a simple web app with a backend service!
 
 # More resources
 
-For more information specific to this adapter you can check out this [user guide](https://sasjs.io/sasjs/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation. 
+For more information specific to this adapter you can check out this [user guide](https://sasjs.io/sasjs/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation.
 
 For more information on building web apps in general, check out these [resources](https://sasjs.io/training/resources/) or contact the [author](https://www.linkedin.com/in/allanbowe/) directly.
