@@ -1,0 +1,13 @@
+{
+  "defaultCommandTimeout": 10000,
+  "chromeWebSecurity": false,
+  "screenshotOnRunFailure": false,
+  "env": {
+    "serverUrl": "",
+    "appLoc": "/Public/app",
+    "serverType": "SAS9",
+    "debug": false,
+    "username": "",
+    "password": ""
+  }
+}

@@ -1,0 +1,19 @@
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+
+  .loading-spinner {
+    margin: 0 8px;
+  }
+
+  .submit-button {
+    padding: 10px;
+    min-height: 80px;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

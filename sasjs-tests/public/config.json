@@ -1,0 +1,11 @@
+{
+  "userName": "",
+  "password": "",
+  "sasJsConfig": {
+    "serverUrl": "",
+    "appLoc": "/Public/app",
+    "serverType": "SASVIYA",
+    "debug": false,
+    "contextName": null
+  }
+}

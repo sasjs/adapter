@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2018", "DOM", "ES2019.String"],
+    "target": "es5",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "./build",
+    "strict": true,
+    "sourceMap": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}

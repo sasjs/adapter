@@ -1,0 +1,62 @@
+.test {
+  display: inline-flex;
+  padding: 8px;
+  margin: 8px;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 20%;
+
+  .title {
+    font-weight: bold;
+    color: #eee;
+    font-size: 1em;
+  }
+
+  .description,
+  .execution-time {
+    color: #c6c0c0;
+    padding: 8px 0;
+    font-size: 0.8em;
+  }
+
+  .description {
+    min-height: 50px;
+  }
+
+  .execution-time {
+    color: #f9e804;
+  }
+
+  .icon {
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+    display: inline-block;
+
+    &.running {
+      background-color: yellow;
+    }
+
+    &.passed {
+      background-color: green;
+    }
+
+    &.failed {
+      background-color: red;
+    }
+  }
+}
+
+@media only screen and (max-width: 900px) {
+  .test {
+    width: 90%;
+  }
+}
+
+@media only screen and (min-width: 901px) and (max-width: 1280px) {
+  .test {
+    width: 30%;
+  }
+}

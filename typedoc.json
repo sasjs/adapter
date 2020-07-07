@@ -1,0 +1,42 @@
+{
+  "out": "docs",
+  "includeDeclarations": true,
+  "exclude": "**/*+(index|.spec|.e2e).ts",
+  "ignoreCompilerErrors": true,
+  "disableOutputCheck": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeNotExported": true,
+  "theme": "./node_modules/typedoc-neo-theme/bin/default",
+  "outline": [
+    {
+      "SAS Adapter": {
+        "SASjs": "modules/sasjs",
+        "SASjsConfig": "classes/sasjsconfig.sasjsconfig-1",
+        "ServerType": "enums/servertype.servertype-1",
+        "SASjsRequest": "interfaces/sasjsrequest.sasjsrequest-1",
+        "SASjsWaitingRequest": "interfaces/sasjswaitingrequest.sasjswaitingrequest-1"
+      },
+      "SAS Viya API Client": "classes/sasviyaapiclient.sasviyaapiclient-1",
+      "SAS 9 API Client": "classes/sas9apiclient.sas9apiclient-1"
+    }
+  ],
+  "links": [
+    {
+      "label": "SASjs on Github",
+      "url": "https://github.com/macropeople/sasjs"
+    },
+    {
+      "label": "SASjs.io",
+      "url": "https://sasjs.io"
+    },
+    {
+      "label": "SASjs CLI",
+      "url": "https://github.com/macropeople/sasjs-cli"
+    },
+    {
+      "label": "React Seed App",
+      "url": "https://github.com/macropeople/react-seed-app"
+    }
+  ]
+}

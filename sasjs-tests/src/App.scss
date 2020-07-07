@@ -1,0 +1,102 @@
+.app {
+  padding: 16px;
+
+  .controls {
+    display: flex;
+    align-items: center;
+    .debug-toggle,
+    .app-loc-input,
+    .submit-button {
+      margin: 16px 0;
+    }
+
+    .row {
+      margin: 16px;
+
+      &.app-loc {
+        width: 20vw;
+      }
+    }
+
+    .submit-button {
+      padding: 16px;
+      font-size: 1.25em;
+    }
+
+    .app-loc-input {
+      width: 100%;
+    }
+  }
+
+  .debug-toggle {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    .label {
+      padding: 0 8px;
+      font-size: 1.25em;
+    }
+  }
+
+  $height: 40px;
+  $width: 70px;
+  .switch {
+    position: relative;
+    display: inline-flex;
+    width: $width;
+    height: $height;
+
+    input[type="checkbox"] {
+      display: none;
+    }
+    input:checked + .knob {
+      animation: colorChange 0.4s linear forwards;
+    }
+    input:checked + .knob:before {
+      animation: turnON 0.4s linear forwards;
+    }
+  }
+
+  @keyframes colorChange {
+    from {
+      background-color: #ccc;
+    }
+    50% {
+      background-color: #a4d9ad;
+    }
+    to {
+      background-color: #4bd663;
+    }
+  }
+  @keyframes turnON {
+    from {
+      transform: translateX(0px);
+    }
+    to {
+      transform: translateX($width - ($height * 0.99));
+      box-shadow: -10px 0px 44px 0px #434343;
+    }
+  }
+
+  .knob {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: $height;
+  }
+
+  .knob:before {
+    position: absolute;
+    background-color: white;
+    content: "";
+    left: $height * 0.1;
+    top: $height * 0.1;
+    width: ($height * 0.8);
+    height: ($height * 0.8);
+    border-radius: 50%;
+  }
+}
