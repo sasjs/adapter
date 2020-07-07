@@ -13,6 +13,9 @@
     "semantic-release": "semantic-release",
     "typedoc": "typedoc"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "release": {
     "plugins": [
       "@semantic-release/npm",
