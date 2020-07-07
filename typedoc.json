@@ -24,7 +24,7 @@
   "links": [
     {
       "label": "SASjs on Github",
-      "url": "https://github.com/macropeople/sasjs"
+      "url": "https://github.com/sasjs/adapter"
     },
     {
       "label": "SASjs.io",
@@ -32,11 +32,11 @@
     },
     {
       "label": "SASjs CLI",
-      "url": "https://github.com/macropeople/sasjs-cli"
+      "url": "https://github.com/sasjs/cli"
     },
     {
       "label": "React Seed App",
-      "url": "https://github.com/macropeople/react-seed-app"
+      "url": "https://github.com/sasjs/react-seed-app"
     }
   ]
 }

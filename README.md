@@ -1,6 +1,6 @@
 [![](https://data.jsdelivr.com/v1/package/npm/@sasjs/adapter/badge)](https://www.jsdelivr.com/package/npm/@sasjs/adapter)
 
-# SASjs
+# @sasjs/adapter
 
 SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:
 
