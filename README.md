@@ -21,10 +21,9 @@ Ok ok. Deploy this [example.html](https://github.com/sasjs/adapter/blob/master/e
 The backend part can be deployed as follows:
 
 ```
-%let appLoc=/Public/app/readme;  /* Metadata or Viya Folder location as per SASjs config */
-/* compile macros (can also be downloaded & compiled seperately) */
-filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/master/mc_all.sas";
-%inc mc;
+%let appLoc=/Public/app/readme;  /* Metadata or Viya Folder per SASjs config */
+filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
+%inc mc; /* compile macros (can also be downloaded & compiled seperately) */
 filename ft15f001 temp;
 parmcards4;
   %webout(FETCH) /* receive all data as SAS datasets */
