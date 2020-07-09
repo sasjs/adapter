@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions to SASjs are very welcome!  When making a PR, test cases should be included.  To help in unit testing, be sure to run the following when making changes:
+Contributions to SASjs are very welcome! When making a PR, test cases should be included. To help in unit testing, be sure to run the following when making changes:
 
 ```
 # the following creates a tarball in the build folder of SASjs
@@ -10,12 +10,13 @@ npm run-script package:lib
 npm install ../sasjs/build/<tarball filename>
 ```
 
-Tests are run using cypress.  Before running tests, you need to define the following backend services:
+Tests are run using cypress. Before running tests, you need to define the following backend services:
 
 # SAS 9
+
 ```
 
-filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/master/mc_all.sas?_=1";
+filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/main/mc_all.sas?_=1";
 %inc mc;
 filename ft15f001 temp;
 parmcards4;
@@ -37,8 +38,9 @@ parmcards4;
 ```
 
 # Viya
+
 ```
-filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/master/mc_all.sas";
+filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/main/mc_all.sas";
 %inc mc;
 
 filename ft15f001 temp;
@@ -77,4 +79,4 @@ parmcards4;
 %mv_createwebservice(path=/Public/app/common,name=sendArr)
 ```
 
-The above services will return anything you send.  To run the tests simply launch `npm run cypress`.
+The above services will return anything you send. To run the tests simply launch `npm run cypress`.
