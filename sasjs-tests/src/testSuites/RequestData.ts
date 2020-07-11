@@ -1,4 +1,4 @@
-import SASjs from "sasjs";
+import SASjs from "@sasjs/adapter";
 import { TestSuite } from "../types";
 
 const stringData: any = { table1: [{ col1: "first col value" }] };

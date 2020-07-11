@@ -479,37 +479,36 @@ export default class SASjs {
 
           formData.append(name, file, `${name}.csv`);
         }
+      } else {
+        // param based approach
+        const sasjsTables = [];
+        let tableCounter = 0;
+        for (const tableName in data) {
+          if (isError) {
+            return;
+          }
+          tableCounter++;
+          sasjsTables.push(tableName);
+          const csv = convertToCSV(data[tableName]);
+          if (csv === "ERROR: LARGE STRING LENGTH") {
+            isError = true;
+            errorMsg =
+              "The max length of a string value in SASjs is 32765 characters.";
+          }
+          // if csv has length more then 16k, send in chunks
+          if (csv.length > 16000) {
+            const csvChunks = splitChunks(csv);
+            // append chunks to form data with same key
+            csvChunks.map((chunk) => {
+              formData.append(`sasjs${tableCounter}data`, chunk);
+            });
+          } else {
+            requestParams[`sasjs${tableCounter}data`] = csv;
+          }
+        }
+        requestParams["sasjs_tables"] = sasjsTables.join(" ");
       }
-      // param based approach
-      const sasjsTables = [];
-      let tableCounter = 0;
-      for (const tableName in data) {
-        if (isError) {
-          return;
-        }
-        tableCounter++;
-        sasjsTables.push(tableName);
-        const csv = convertToCSV(data[tableName]);
-        if (csv === "ERROR: LARGE STRING LENGTH") {
-          isError = true;
-          errorMsg =
-            "The max length of a string value in SASjs is 32765 characters.";
-        }
-        // if csv has length more then 16k, send in chunks
-        if (csv.length > 16000) {
-          const csvChunks = splitChunks(csv);
-          // append chunks to form data with same key
-          csvChunks.map((chunk) => {
-            formData.append(`sasjs${tableCounter}data`, chunk);
-          });
-        } else {
-          requestParams[`sasjs${tableCounter}data`] = csv;
-        }
-      }
-      requestParams["sasjs_tables"] = sasjsTables.join(" ");
     }
-
-    console.log("Request params", requestParams);
 
     for (const key in requestParams) {
       if (requestParams.hasOwnProperty(key)) {
@@ -526,9 +525,7 @@ export default class SASjs {
         if (isError) {
           reject({ MESSAGE: errorMsg });
         }
-        const headers: any = {
-          "Content-Type": "application/x-www-form-urlencoded",
-        };
+        const headers: any = {};
         if (this._csrfHeader && this._csrf) {
           headers[this._csrfHeader] = this._csrf;
         }
@@ -720,9 +717,9 @@ export default class SASjs {
   private getRequestParams(): any {
     const requestParams: any = {};
 
-    // if (this._csrf) {
-    //   requestParams["_csrf"] = this._csrf;
-    // }
+    if (this._csrf) {
+      requestParams["_csrf"] = this._csrf;
+    }
 
     if (this.sasjsConfig.debug) {
       requestParams["_omittextlog"] = "false";

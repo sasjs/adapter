@@ -1,4 +1,4 @@
-import SASjs, { ServerType, SASjsConfig } from "sasjs";
+import SASjs, { ServerType, SASjsConfig } from "@sasjs/adapter";
 import { TestSuite } from "../types";
 
 const defaultConfig: SASjsConfig = {

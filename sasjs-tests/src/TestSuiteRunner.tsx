@@ -4,7 +4,7 @@ import TestSuiteCard from "./components/TestSuiteCard";
 import { TestSuite, Test } from "./types";
 import { basicTests } from "./testSuites/Basic";
 import "./TestSuiteRunner.scss";
-import SASjs from "sasjs";
+import SASjs from "@sasjs/adapter";
 import { AppContext } from "./context/AppContext";
 import { sendArrTests, sendObjTests } from "./testSuites/RequestData";
 import { specialCaseTests } from "./testSuites/SpecialCases";
@@ -38,11 +38,11 @@ const TestSuiteRunner = (
   useEffect(() => {
     if (adapter) {
       setTestSuites([
-        // basicTests(adapter, config.userName, config.password),
-        // sendArrTests(adapter),
-        // sendObjTests(adapter),
+        basicTests(adapter, config.userName, config.password),
+        sendArrTests(adapter),
+        sendObjTests(adapter),
         specialCaseTests(adapter),
-        // sasjsRequestTests(adapter),
+        sasjsRequestTests(adapter),
       ]);
       setCompletedTestSuites([]);
     }

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import SASjs from "sasjs";
+import SASjs from "@sasjs/adapter";
 
 export const AppContext = createContext<{
   config: any;

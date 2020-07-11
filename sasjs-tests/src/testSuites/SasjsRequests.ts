@@ -1,4 +1,4 @@
-import SASjs from "sasjs";
+import SASjs from "@sasjs/adapter";
 import { TestSuite } from "../types";
 
 const data: any = { table1: [{ col1: "first col value" }] };
@@ -12,7 +12,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
       test: async () => {
         return adapter.request("common/sendArr", data);
       },
-      assertion: (res: any) => {
+      assertion: () => {
         const requests = adapter.getSasRequests();
         if (adapter.getSasjsConfig().debug) {
           return requests[0].SASWORK !== null;
