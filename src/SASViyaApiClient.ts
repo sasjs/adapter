@@ -6,7 +6,7 @@ import {
 } from "./utils";
 import * as NodeFormData from "form-data";
 import * as path from "path";
-import { Job, Session, Context, Folder } from "./types";
+import { Job, Session, Context, Folder, CsrfToken } from "./types";
 
 /**
  * A client for interfacing with the SAS Viya REST API
@@ -32,7 +32,7 @@ export class SASViyaApiClient {
     if (this.rootFolderMap.size) {
       return this.rootFolderMap;
     }
-    
+
     this.populateRootFolderMap();
     return this.rootFolderMap;
   }
@@ -276,12 +276,12 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Creates a folder in the specified location.  Either parentFolderPath or 
-   *   parentFolderUri must be provided.  
+   * Creates a folder in the specified location.  Either parentFolderPath or
+   *   parentFolderUri must be provided.
    * @param folderName - the name of the new folder.
-   * @param parentFolderPath - the full path to the parent folder.  If not 
+   * @param parentFolderPath - the full path to the parent folder.  If not
    *  provided, the parentFolderUri must be provided.
-   * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent 
+   * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
    *  folder.  If not provided, the parentFolderPath must be provided.
    */
   public async createFolder(
@@ -296,17 +296,27 @@ export class SASViyaApiClient {
 
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken);
-      if (!parentFolderUri){
+      if (!parentFolderUri) {
         console.log(`Parent folder is not present: ${parentFolderPath}`);
 
-        const newParentFolderPath = parentFolderPath.substring(0, parentFolderPath.lastIndexOf("/"));
+        const newParentFolderPath = parentFolderPath.substring(
+          0,
+          parentFolderPath.lastIndexOf("/")
+        );
         const newFolderName = `${parentFolderPath.split("/").pop()}`;
-        if (newParentFolderPath === ""){
+        if (newParentFolderPath === "") {
           throw new Error("Root Folder should have been present on server");
         }
-        console.log(`Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`)
-        const parentFolder = await this.createFolder(newFolderName, newParentFolderPath, undefined, accessToken)
-        console.log(`Parent Folder "${newFolderName}" successfully created.`)
+        console.log(
+          `Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`
+        );
+        const parentFolder = await this.createFolder(
+          newFolderName,
+          newParentFolderPath,
+          undefined,
+          accessToken
+        );
+        console.log(`Parent Folder "${newFolderName}" successfully created.`);
         parentFolderUri = `/folders/folders/${parentFolder.id}`;
       }
     }
@@ -350,7 +360,9 @@ export class SASViyaApiClient {
     accessToken?: string
   ) {
     if (!parentFolderPath && !parentFolderUri) {
-      throw new Error('Either parentFolderPath or parentFolderUri must be provided');
+      throw new Error(
+        "Either parentFolderPath or parentFolderUri must be provided"
+      );
     }
 
     if (!parentFolderUri && parentFolderPath) {
@@ -365,12 +377,12 @@ export class SASViyaApiClient {
       },
       body: JSON.stringify({
         name: jobName,
-        parameters:[
+        parameters: [
           {
-            "name":"_addjesbeginendmacros",
-            "type":"CHARACTER",
-            "defaultValue":"false"
-          }
+            name: "_addjesbeginendmacros",
+            type: "CHARACTER",
+            defaultValue: "false",
+          },
         ],
         type: "Compute",
         code,
@@ -578,6 +590,7 @@ export class SASViyaApiClient {
     let files: any[] = [];
     if (data && Object.keys(data).length) {
       files = await this.uploadTables(data, accessToken);
+      console.log("Uploaded table files: ", files);
     }
     const jobName = path.basename(sasJob);
     const jobFolder = sasJob.replace(`/${jobName}`, "");
@@ -612,15 +625,15 @@ export class SASViyaApiClient {
       };
 
       if (debug) {
-        jobArguments["_omittextlog"] = "false";
-        jobArguments["_omitsessionresults"] = "false";
-        jobArguments["_debug"] = 131;
+        jobArguments["_OMITTEXTLOG"] = "false";
+        jobArguments["_OMITSESSIONRESULTS"] = "false";
+        jobArguments["_DEBUG"] = 131;
       }
 
       files.forEach((fileInfo, index) => {
         jobArguments[
           `_webin_fileuri${index + 1}`
-        ] = `/files/files/${fileInfo.id}`;
+        ] = `/files/files/${fileInfo.file.id}`;
         jobArguments[`_webin_name${index + 1}`] = fileInfo.tableName;
       });
 
@@ -643,16 +656,29 @@ export class SASViyaApiClient {
         `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
         { headers }
       );
-      const resultLink = currentJob.results["_webout.json"];
-      if (resultLink) {
-        const result = await this.request<any>(
-          `${this.serverUrl}${resultLink}/content`,
-          { headers }
-        );
-        return result;
-      }
 
-      return postedJob;
+      let result, log;
+      if (jobStatus === "failed") {
+        return Promise.reject(currentJob.error);
+      }
+      const resultLink = currentJob.results["_webout.json"];
+      const logLink = currentJob.links.find((l) => l.rel === "log");
+      if (resultLink) {
+        result = await this.request<any>(
+          `${this.serverUrl}${resultLink}/content`,
+          { headers },
+          "text"
+        );
+      }
+      if (debug && logLink) {
+        log = await this.request<any>(
+          `${this.serverUrl}${logLink.href}/content`,
+          {
+            headers,
+          }
+        ).then((res: any) => res.items.map((i: any) => i.line).join("\n"));
+      }
+      return { result, log };
     } else {
       throw new Error(
         `The job ${sasJob} was not found at the location ${this.rootFolderName}`
@@ -673,7 +699,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}${url}`,
       requestInfo
     );
-    if (!folder){
+    if (!folder) {
       throw new Error("Cannot populate RootFolderMap unless rootFolder exists");
     }
     const members = await this.request<{ items: any[] }>(
@@ -734,6 +760,8 @@ export class SASViyaApiClient {
     accessToken?: string,
     silent = false
   ) {
+    const MAX_POLL_COUNT = 1000;
+    const POLL_INTERVAL = 300;
     let postedJobState = "";
     let pollCount = 0;
     const headers: any = {
@@ -767,7 +795,7 @@ export class SASViyaApiClient {
               console.log(`Current state: ${postedJobState}\n`);
             }
             pollCount++;
-            if (pollCount >= 100) {
+            if (pollCount >= MAX_POLL_COUNT) {
               resolve(postedJobState);
             }
           }
@@ -775,7 +803,7 @@ export class SASViyaApiClient {
           clearInterval(interval);
           resolve(postedJobState);
         }
-      }, 100);
+      }, POLL_INTERVAL);
     });
   }
 
@@ -814,20 +842,23 @@ export class SASViyaApiClient {
 
   private async getFolderUri(folderPath: string, accessToken?: string) {
     const url = "/folders/folders/@item?path=" + folderPath;
-      const requestInfo: any = {
-        method: "GET",
-      };
-      if (accessToken) {
-        requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
-      }
-      const folder = await this.request<Folder>(
-        `${this.serverUrl}${url}`,
-        requestInfo
-      );
-      if (!folder)
-        return undefined;
-      return `/folders/folders/${folder.id}`;
+    const requestInfo: any = {
+      method: "GET",
+    };
+    if (accessToken) {
+      requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
+    }
+    const folder = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    );
+    if (!folder) return undefined;
+    return `/folders/folders/${folder.id}`;
   }
+
+  setCsrfToken = (csrfToken: CsrfToken) => {
+    this.csrfToken = csrfToken;
+  };
 
   private async request<T>(
     url: string,
@@ -840,11 +871,6 @@ export class SASViyaApiClient {
         [this.csrfToken.headerName]: this.csrfToken.value,
       };
     }
-    return await makeRequest<T>(
-      url,
-      options,
-      (csrfToken) => (this.csrfToken = csrfToken),
-      contentType
-    );
+    return await makeRequest<T>(url, options, this.setCsrfToken, contentType);
   }
 }

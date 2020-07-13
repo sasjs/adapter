@@ -6,6 +6,6 @@
     "appLoc": "/Public/app",
     "serverType": "SASVIYA",
     "debug": false,
-    "contextName": null
+    "contextName": "SAS Job Execution compute context"
   }
 }
