@@ -22,9 +22,6 @@
       {
         "pkgRoot": "/build"
       }
-    ],
-    "branches": [
-      "main"
     ]
   },
   "keywords": [
