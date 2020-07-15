@@ -5,8 +5,10 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/combine/npm/chart.js@2.9.3,npm/jquery@3.5.1,npm/@sasjs/adapter@1"></script> 
     <script>
-      var sasJs = new SASjs.default({appLoc: "/Products/demo/readme"
-        ,serverType:"SAS9", debug: "false"
+      var sasJs = new SASjs.default({
+         appLoc: "/Public/app/readme"
+        ,serverType:"SAS9"
+        ,debug: "false"
       });
       function initSasJs() {
         $('#loading-spinner').show()
