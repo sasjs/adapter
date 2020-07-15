@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/combine/npm/chart.js@2.9.3,npm/jquery@3.5.1,npm/@sasjs/adapter@1"></script> 
+    <script src="https://cdn.jsdelivr.net/combine/npm/chart.js@2.9.3,npm/jquery@3.5.1,npm/@sasjs/adapter@1.0.6"></script> 
     <script>
       var sasJs = new SASjs.default({
          appLoc: "/Public/app/readme"
         ,serverType:"SAS9"
-        ,debug: "false"
+        ,debug: false
       });
       function initSasJs() {
         $('#loading-spinner').show()
@@ -72,6 +70,8 @@
         });
       }
     </script>
+    <meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
   </head>
   <body>
     <div class="container-fluid" style="text-align: center; margin-top: 10px;">
