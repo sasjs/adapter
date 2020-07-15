@@ -16,7 +16,7 @@ For more information on building web apps with SAS, check out [sasjs.io](https:/
 
 ## None of this makes sense. How do I build an app with it?
 
-Ok ok. Deploy this [example.html](https://github.com/sasjs/adapter/blob/master/example.html) file to your web server, and update `servertype` to `SAS9` or `SASVIYA` depending on your backend.
+Ok ok. Deploy this [example.html](https://raw.githubusercontent.com/sasjs/adapter/master/example.html) file to your web server, and update `servertype` to `SAS9` or `SASVIYA` depending on your backend.
 
 The backend part can be deployed as follows:
 
