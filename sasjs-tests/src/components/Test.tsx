@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import TestCard from "./TestCard";
-import { start } from "repl";
+import { start } from "repl"; // FIXME: declared but never used
 
 interface TestProps {
   title: string;
@@ -39,28 +39,36 @@ const Test = (props: TestProps): ReactElement<TestProps> => {
 
   useEffect(() => {
     if (test && assertion) {
-      const startTime = new Date().valueOf();
+      const startTime = new Date().valueOf()
+
       setIsRunning(true);
       setIsPassed(false);
+
       beforeTestFunction()
         .then(() => test(context))
         .then((res) => {
           setIsRunning(false);
-          setIsPassed(assertion(res, context));
+          setIsPassed(assertion(res, context))
+
           return Promise.resolve(assertion(res, context));
         })
         .then((testResult) => {
           afterTestFunction();
+
           const endTime = new Date().valueOf();
           const executionTime = (endTime - startTime) / 1000;
+
           onCompleted({ result: testResult, error: null, executionTime });
         })
         .catch((e) => {
           setIsRunning(false);
           setIsPassed(false);
+
           console.error(e);
+
           const endTime = new Date().valueOf();
           const executionTime = (endTime - startTime) / 1000;
+
           onCompleted({ result: false, error: e, executionTime });
         });
     }

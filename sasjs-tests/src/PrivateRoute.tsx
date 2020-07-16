@@ -8,16 +8,14 @@ interface PrivateRouteProps {
   path: string;
 }
 
-const PrivateRoute = (
-  props: PrivateRouteProps
-): ReactElement<PrivateRouteProps> => {
+const PrivateRoute = (props: PrivateRouteProps): ReactElement<PrivateRouteProps> => {
   const { component, path, exact } = props;
   const appContext = useContext(AppContext);
-  return appContext.isLoggedIn ? (
+
+  return appContext.isLoggedIn ?
     <Route component={component} path={path} exact={exact} />
-  ) : (
+    :
     <Redirect to="/login" />
-  );
 };
 
 export default PrivateRoute;

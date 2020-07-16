@@ -1,12 +1,12 @@
 import SASjs from "sasjs";
 import { TestSuite } from "../types";
 
-const stringData: any = { table1: [{ col1: "first col value" }] };
-const numericData: any = { table1: [{ col1: 3.14159265 }] };
-const multiColumnData: any = {
+const stringData: any = { table1: [{ col1: "first col value" }] }; // TODO: be more specific on type declaration
+const numericData: any = { table1: [{ col1: 3.14159265 }] }; // TODO: be more specific on type declaration
+const multiColumnData: any = { // TODO: be more specific on type declaration
   table1: [{ col1: 42, col2: 1.618, col3: "x", col4: "x" }],
 };
-const multipleRowsWithNulls: any = {
+const multipleRowsWithNulls: any = { // TODO: be more specific on type declaration
   table1: [
     { col1: 42, col2: null, col3: "x", col4: "" },
     { col1: 42, col2: null, col3: "x", col4: "" },
@@ -15,7 +15,7 @@ const multipleRowsWithNulls: any = {
     { col1: 42, col2: 1.62, col3: "x", col4: "x" },
   ],
 };
-const multipleColumnsWithNulls: any = {
+const multipleColumnsWithNulls: any = { // TODO: be more specific on type declaration
   table1: [
     { col1: 42, col2: null, col3: "x", col4: null },
     { col1: 42, col2: null, col3: "x", col4: null },
@@ -25,21 +25,20 @@ const multipleColumnsWithNulls: any = {
   ],
 };
 
-const getLongStringData = (length = 32764) => {
+const getLongStringData = (length = 32764) => { // FIXME: add type declaration
   let x = "X";
-  for (let i = 1; i <= length; i++) {
-    x = x + "X";
-  }
-  const data: any = { table1: [{ col1: x }] };
+
+  for (let i = 1; i <= length; i++) x += 'X'
+
+  const data: any = { table1: [{ col1: x }] }; // TODO: be more specific on type declaration
+
   return data;
 };
 
 const getLargeObjectData = () => {
   const data = { table1: [{ big: "data" }] };
 
-  for (let i = 1; i < 10000; i++) {
-    data.table1.push(data.table1[0]);
-  }
+  for (let i = 1; i < 10000; i++) data.table1.push(data.table1[0])
 
   return data;
 };
@@ -50,12 +49,8 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
     {
       title: "Single string value",
       description: "Should send an array with a single string value",
-      test: () => {
-        return adapter.request("common/sendArr", stringData);
-      },
-      assertion: (res: any) => {
-        return res.table1[0][0] === stringData.table1[0].col1;
-      },
+      test: () => adapter.request("common/sendArr", stringData),
+      assertion: (res: any) => res.table1[0][0] === stringData.table1[0].col1 // TODO: be more specific on type declaration
     },
     {
       title: "Long string value",
@@ -64,22 +59,17 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendArr", getLongStringData());
       },
-      assertion: (res: any) => {
-        const longStringData = getLongStringData();
-        return res.table1[0][0] === longStringData.table1[0].col1;
-      },
+      assertion: (res: any) => res.table1[0][0] === getLongStringData().table1[0].col1 // TODO: be more specific on type declaration
     },
     {
       title: "Overly long string value",
       description:
         "Should error out with long string values over 32765 characters",
-      test: () => {
-        return adapter
-          .request("common/sendArr", getLongStringData(32767))
-          .catch((e) => e);
-      },
-      assertion: (error: any) => {
-        return !!error && !!error.MESSAGE;
+      test: () => adapter
+        .request("common/sendArr", getLongStringData(32767))
+        .catch((e) => e), // TODO: rename
+      assertion: (error: any) => { // TODO: be more specific on type declaration
+        return !!error && !!error.MESSAGE; // FIXME: refactor
       },
     },
     {
@@ -88,7 +78,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendArr", numericData);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         return res.table1[0][0] === numericData.table1[0].col1;
       },
     },
@@ -98,7 +88,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendArr", multiColumnData);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         return (
           res.table1[0][0] === multiColumnData.table1[0].col1 &&
           res.table1[0][1] === multiColumnData.table1[0].col2 &&
@@ -113,9 +103,10 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendArr", multipleRowsWithNulls);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         let result = true;
-        multipleRowsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleRowsWithNulls.table1.forEach((_: any, index: number) => { // TODO: be more specific on type declaration
+            // FIXME: use loop
           result =
             result &&
             res.table1[index][0] === multipleRowsWithNulls.table1[index].col1;
@@ -129,6 +120,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
             result &&
             res.table1[index][3] === multipleRowsWithNulls.table1[index].col4;
         });
+
         return result;
       },
     },
@@ -138,9 +130,9 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendArr", multipleColumnsWithNulls);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         let result = true;
-        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => { // TODO: be more specific on type declaration
           result =
             result &&
             res.table1[index][0] ===
@@ -171,12 +163,12 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: "Invalid column name",
       description: "Should throw an error",
       test: async () => {
-        const invalidData: any = {
+        const invalidData: any = { // TODO: be more specific on type declaration
           "1 invalid table": [{ col1: 42 }],
         };
         return adapter.request("common/sendObj", invalidData).catch((e) => e);
       },
-      assertion: (error: any) => !!error && !!error.MESSAGE,
+      assertion: (error: any) => !!error && !!error.MESSAGE, // TODO: be more specific on type declaration
     },
     {
       title: "Single string value",
@@ -184,7 +176,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", stringData);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         return res.table1[0].COL1 === stringData.table1[0].col1;
       },
     },
@@ -195,7 +187,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", getLongStringData());
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         const longStringData = getLongStringData();
         return res.table1[0].COL1 === longStringData.table1[0].col1;
       },
@@ -209,7 +201,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           .request("common/sendObj", getLongStringData(32767))
           .catch((e) => e);
       },
-      assertion: (error: any) => {
+      assertion: (error: any) => { // TODO: be more specific on type declaration
         return !!error && !!error.MESSAGE;
       },
     },
@@ -219,7 +211,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", numericData);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         return res.table1[0].COL1 === numericData.table1[0].col1;
       },
     },
@@ -230,7 +222,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", getLargeObjectData());
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         const data = getLargeObjectData();
         return res.table1[9000].BIG === data.table1[9000].big;
       },
@@ -241,7 +233,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", multiColumnData);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         return (
           res.table1[0].COL1 === multiColumnData.table1[0].col1 &&
           res.table1[0].COL2 === multiColumnData.table1[0].col2 &&
@@ -256,9 +248,9 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", multipleRowsWithNulls);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         let result = true;
-        multipleRowsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleRowsWithNulls.table1.forEach((_: any, index: number) => { // TODO: be more specific on type declaration
           result =
             result &&
             res.table1[index].COL1 === multipleRowsWithNulls.table1[index].col1;
@@ -281,9 +273,9 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter.request("common/sendObj", multipleColumnsWithNulls);
       },
-      assertion: (res: any) => {
+      assertion: (res: any) => { // TODO: be more specific on type declaration
         let result = true;
-        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => { // TODO: be more specific on type declaration
           result =
             result &&
             res.table1[index].COL1 ===

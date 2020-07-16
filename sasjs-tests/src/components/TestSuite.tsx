@@ -22,7 +22,7 @@ interface TestSuiteProps {
 const TestSuite = (props: TestSuiteProps): ReactElement<TestSuiteProps> => {
   const { name, tests, beforeAll, afterAll, onCompleted } = props;
   const [context, setContext] = useState<any>(null);
-  const [completedTests, setCompletedTests] = useState<
+  const [completedTests, setCompletedTests] = useState< // TODO: create an interface
     {
       test: Test;
       result: boolean;
@@ -31,24 +31,21 @@ const TestSuite = (props: TestSuiteProps): ReactElement<TestSuiteProps> => {
     }[]
   >([]);
   const [currentTest, setCurrentTest] = useState<Test | null>(
-    (null as unknown) as Test
+    (null as unknown) as Test // ?
   );
 
   useEffect(() => {
-    if (beforeAll) {
-      beforeAll().then((data) => setContext({ data }));
-    }
+    if (beforeAll) beforeAll().then((data) => setContext({ data }))
   }, [beforeAll]);
 
   useEffect(() => {
-    if (tests.length) {
-      setCurrentTest(tests[0]);
-    }
+    if (tests.length) setCurrentTest(tests[0])
+
     setCompletedTests([]);
     setContext(null);
   }, [tests]);
 
-  return (!!beforeAll && !!context) || !beforeAll ? (
+  return (!!beforeAll && !!context) || !beforeAll ? ( // ?
     <div className="test-suite">
       <div className="test-suite-name running">{name}</div>
       {currentTest && (
@@ -64,29 +61,27 @@ const TestSuite = (props: TestSuiteProps): ReactElement<TestSuiteProps> => {
                 error: completedTest.error,
                 executionTime: completedTest.executionTime,
               },
-            ];
+            ]
+
             setCompletedTests(newCompleteTests);
+
             const currentIndex = tests.indexOf(currentTest);
-            const nextIndex =
-              currentIndex < tests.length - 1 ? currentIndex + 1 : -1;
-            if (nextIndex >= 0) {
-              setCurrentTest(tests[nextIndex]);
-            } else {
-              setCurrentTest(null);
-            }
+            const nextIndex = currentIndex < tests.length - 1 ? currentIndex + 1 : -1;
+
+            if (nextIndex >= 0) setCurrentTest(tests[nextIndex]);
+            else setCurrentTest(null);
+
             if (newCompleteTests.length === tests.length) {
-              if (afterAll) {
-                afterAll().then(() => onCompleted(name, newCompleteTests));
-              } else {
-                onCompleted(name, newCompleteTests);
-              }
+              if (afterAll) afterAll().then(() => onCompleted(name, newCompleteTests))
+              else onCompleted(name, newCompleteTests)
             }
           }}
         />
       )}
-      {completedTests.map((completedTest, index) => {
-        const { test, result, error } = completedTest;
+      {completedTests.map((test, index) => {
+        const { test, result, error } = test;
         const { title, description } = test;
+
         return (
           <TestCard
             key={index}
@@ -99,7 +94,7 @@ const TestSuite = (props: TestSuiteProps): ReactElement<TestSuiteProps> => {
       })}
     </div>
   ) : (
-    <></>
+    <></> // FIXME: use {null} instead
   );
 };
 

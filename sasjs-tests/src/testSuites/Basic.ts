@@ -33,18 +33,16 @@ export const basicTests = (
       test: async () => {
         return adapter.logIn(userName, password);
       },
-      assertion: (response: any) =>
+      assertion: (response: any) => // FIXME: be more specific on type declaration
         response && response.isLoggedIn && response.userName === userName,
     },
     {
       title: "Default config",
-      description:
-        "Should instantiate with default config when none is provided",
-      test: async () => {
-        return Promise.resolve(new SASjs());
-      },
+      description: "Should instantiate with default config when none is provided",
+      test: async () => Promise.resolve(new SASjs()),
       assertion: (sasjsInstance: SASjs) => {
         const sasjsConfig = sasjsInstance.getSasjsConfig();
+        
         return (
           sasjsConfig.serverUrl === defaultConfig.serverUrl &&
           sasjsConfig.pathSAS9 === defaultConfig.pathSAS9 &&

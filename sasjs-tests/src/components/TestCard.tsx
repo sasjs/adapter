@@ -18,7 +18,7 @@ const TestCard = (props: TestCardProps): ReactElement<TestCardProps> => {
       <span className="execution-time">
         {executionTime ? executionTime.toFixed(2) + "s" : ""}
       </span>
-      {status === "running" && (
+      {status === "running" && ( // FIXME: use switch statement
         <div>
           <span className="icon running"></span>Running...
         </div>

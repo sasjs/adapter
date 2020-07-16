@@ -2,25 +2,24 @@ import React, { useEffect, useState, ReactElement, useContext } from "react";
 import TestSuiteComponent from "./components/TestSuite";
 import TestSuiteCard from "./components/TestSuiteCard";
 import { TestSuite, Test } from "./types";
-import { basicTests } from "./testSuites/Basic";
+import { basicTests } from "./testSuites/Basic"; // FIXME: declared but never used
 import "./TestSuiteRunner.scss";
 import SASjs from "sasjs";
 import { AppContext } from "./context/AppContext";
-import { sendArrTests, sendObjTests } from "./testSuites/RequestData";
+import { sendArrTests, sendObjTests } from "./testSuites/RequestData"; // FIXME: declared but never used
 import { specialCaseTests } from "./testSuites/SpecialCases";
-import { sasjsRequestTests } from "./testSuites/SasjsRequests";
+import { sasjsRequestTests } from "./testSuites/SasjsRequests"; // FIXME: declared but never used
 
 interface TestSuiteRunnerProps {
   adapter: SASjs;
 }
-const TestSuiteRunner = (
-  props: TestSuiteRunnerProps
-): ReactElement<TestSuiteRunnerProps> => {
+
+const TestSuiteRunner = (props: TestSuiteRunnerProps): ReactElement<TestSuiteRunnerProps> => {
   const { adapter } = props;
-  const { config } = useContext(AppContext);
+  const { config } = useContext(AppContext); // FIXME: declared but never used
   const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
   const [runTests, setRunTests] = useState(false);
-  const [completedTestSuites, setCompletedTestSuites] = useState<
+  const [completedTestSuites, setCompletedTestSuites] = useState< // FIXME: create interface
     {
       name: string;
       completedTests: {
@@ -65,20 +64,23 @@ const TestSuiteRunner = (
     <>
       <div className="button-container">
         <button
-          className={runTests ? "submit-button disabled" : "submit-button"}
+          className={runTests ? "submit-button disabled" : "submit-button"} // TODO: 'submit-button' class should be assigned by default
           onClick={() => setRunTests(true)}
           disabled={runTests}
         >
           {runTests ? (
             <>
-              <div className="loading-spinner"></div>Running tests...
+            {
+                // FIXME: fragment is not needed in this case
+            }
+              <div className="loading-spinner"></div>Running tests... 
             </>
           ) : (
             "Run tests!"
           )}
         </button>
       </div>
-      {completedTestSuites.map((completedTestSuite, index) => {
+      {completedTestSuites.map((completedTestSuite, index) => { // TODO: refactor
         return (
           <TestSuiteCard
             key={index}
@@ -100,22 +102,19 @@ const TestSuiteRunner = (
             }[]
           ) => {
             const currentIndex = testSuites.indexOf(currentTestSuite);
-            const nextIndex =
-              currentIndex < testSuites.length - 1 ? currentIndex + 1 : -1;
-            if (nextIndex >= 0) {
-              setCurrentTestSuite(testSuites[nextIndex]);
-            } else {
-              setCurrentTestSuite(null);
-            }
+            const nextIndex = currentIndex < testSuites.length - 1 ? currentIndex + 1 : -1;
+
+            if (nextIndex >= 0) setCurrentTestSuite(testSuites[nextIndex]);
+            else setCurrentTestSuite(null);
+
             const newCompletedTestSuites = [
               ...completedTestSuites,
               { name, completedTests },
             ];
+
             setCompletedTestSuites(newCompletedTestSuites);
 
-            if (newCompletedTestSuites.length === testSuites.length) {
-              setRunTests(false);
-            }
+            if (newCompletedTestSuites.length === testSuites.length) setRunTests(false);
           }}
         />
       )}

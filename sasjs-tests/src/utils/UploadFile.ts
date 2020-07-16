@@ -3,19 +3,23 @@ export const uploadFile = (file: File, fileName: string, url: string) => {
     const data = new FormData();
     data.append("file", file);
     data.append("filename", fileName);
+
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
-    xhr.addEventListener("readystatechange", function () {
+    xhr.addEventListener("readystatechange", function () { // TODO: use ES6
       if (this.readyState === 4) {
         let response: any;
+
         try {
           response = JSON.parse(this.responseText);
         } catch (e) {
           reject(e);
         }
+
         resolve(response);
       }
     });
+
     xhr.open("POST", url);
     xhr.setRequestHeader("cache-control", "no-cache");
     xhr.send(data);

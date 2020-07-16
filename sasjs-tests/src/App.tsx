@@ -9,9 +9,7 @@ const App = (): ReactElement<{}> => {
   const { adapter } = useContext(AppContext);
 
   useEffect(() => {
-    if (adapter) {
-      adapter.setDebugState(debug);
-    }
+    if (adapter) adapter.setDebugState(debug);
   }, [debug, adapter]);
 
   useEffect(() => {
@@ -33,7 +31,7 @@ const App = (): ReactElement<{}> => {
             <label className="switch">
               <input
                 type="checkbox"
-                onChange={(e) => setDebug(e.target.checked)}
+                onChange={(e) => setDebug(e.target.checked)} // FIXME: rename 'e' => 'event'
               />
               <span className="knob"></span>
             </label>
@@ -45,7 +43,7 @@ const App = (): ReactElement<{}> => {
             type="text"
             className="app-loc-input"
             value={appLoc}
-            onChange={(e) => setAppLoc(e.target.value)}
+            onChange={(e) => setAppLoc(e.target.value)} // FIXME: rename 'e' => 'event'
             placeholder="AppLoc"
           />
         </div>

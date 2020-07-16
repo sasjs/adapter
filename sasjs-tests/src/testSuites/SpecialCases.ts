@@ -1,7 +1,7 @@
 import SASjs from "sasjs";
 import { TestSuite } from "../types";
 
-const specialCharData: any = {
+const specialCharData: any = { // TODO: be more specific on type definition 
   table1: [
     {
       tab: "\t",
@@ -9,8 +9,8 @@ const specialCharData: any = {
       cr: "\r",
       semicolon: ";semi",
       percent: "%",
-      singleQuote: "'",
-      doubleQuote: '"',
+      singleQuote: "'", // TODO: use ``
+      doubleQuote: '"', // TODO: use ``
       crlf: "\r\n",
       euro: "€euro",
       banghash: "!#banghash",
@@ -18,7 +18,7 @@ const specialCharData: any = {
   ],
 };
 
-const moreSpecialCharData: any = {
+const moreSpecialCharData: any = { // TODO: be more specific on type definition 
   table1: [
     {
       speech0: '"speech',
@@ -36,44 +36,46 @@ const moreSpecialCharData: any = {
   ],
 };
 
-const getWideData = () => {
-  const cols: any = {};
-  for (let i = 1; i <= 10000; i++) {
+const getWideData = () => { // FIXME: declared but never used
+  const cols: any = {}; // TODO: be more specific on type definition 
+  for (let i = 1; i <= 10000; i++) { // Why 10000?
     cols["col" + i] = "test" + i;
   }
 
-  const data: any = {
+  const data: any = { // TODO: be more specific on type definition 
     table1: [cols],
   };
 
   return data;
 };
 
-const getTables = () => {
-  const tables: any = {};
+const getTables = () => { // FIXME: declared but never used
+  const tables: any = {}; // TODO: be more specific on type definition 
 
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 1; i <= 100; i++) { // why 100
     tables["table" + i] = [{ col1: "x", col2: "x", col3: "x", col4: "x" }];
   }
+
   return tables;
 };
 
 const getLargeDataset = () => {
-  const rows: any = [];
-  const colData: string =
-    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  const rows: any = []; // TODO: be more specific on type definition 
+  const colData: string = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // FIXME: no need to explicitly mention data type
+
   for (let i = 1; i <= 10000; i++) {
     rows.push({ col1: colData, col2: colData, col3: colData, col4: colData });
   }
 
-  const data: any = {
+  const data: any = { // TODO: be more specific on type definition 
     table1: rows,
   };
 
   return data;
 };
 
-const errorAndCsrfData: any = {
+// FIXME: declared but never used
+const errorAndCsrfData: any = { // TODO: be more specific on type definition 
   error: [{ col1: "q", col2: "w", col3: "e", col4: "r" }],
   _csrf: [{ col1: "q", col2: "w", col3: "e", col4: "r" }],
 };
@@ -84,10 +86,8 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
     {
       title: "Common special characters",
       description: "Should handle common special characters",
-      test: () => {
-        return adapter.request("common/sendArr", specialCharData);
-      },
-      assertion: (res: any) => {
+      test: () => adapter.request("common/sendArr", specialCharData),
+      assertion: (res: any) => { // TODO: be more specific on type definition 
         return (
           res.table1[0][0] === specialCharData.table1[0].tab &&
           res.table1[0][1] === specialCharData.table1[0].lf &&
@@ -102,6 +102,8 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         );
       },
     },
+    // TODO: delete commented out code
+
     // {
     //   title: "Other special characters",
     //   description: "Should handle other special characters",
@@ -180,15 +182,15 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
     {
       title: "Large dataset",
       description: "Should handle 5mb of data",
-      test: () => {
-        return adapter.request("common/sendArr", getLargeDataset());
-      },
-      assertion: (res: any) => {
+      test: () => adapter.request("common/sendArr", getLargeDataset()),
+      assertion: (res: any) => { // TODO: be more specific on type definition 
         const data = getLargeDataset();
-        let result = true;
+        let result = true; // TODO: rename
+
         for (let i = 0; i <= 10; i++) {
           result = result && res.table1[i][0] === data.table1[i][0];
         }
+
         return result;
       },
     },

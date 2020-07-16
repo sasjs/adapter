@@ -12,20 +12,19 @@ interface TestSuiteCardProps {
     executionTime: number;
   }[];
 }
-const TestSuiteCard = (
-  props: TestSuiteCardProps
-): ReactElement<TestSuiteCardProps> => {
+const TestSuiteCard = (props: TestSuiteCardProps): ReactElement<TestSuiteCardProps> => {
   const { name, tests } = props;
-  const overallStatus = tests.map((t) => t.result).reduce((x, y) => x && y);
+  const overallStatus = tests.map((t) => t.result).reduce((x, y) => x && y); // TODO: refactor variable names
 
   return (
     <div className="test-suite">
       <div className={`test-suite-name ${overallStatus ? "passed" : "failed"}`}>
         {name}
       </div>
-      {tests.map((completedTest, index) => {
-        const { test, result, error, executionTime } = completedTest;
+      {tests.map((test, index) => {
+        const { test, result, error, executionTime } = test;
         const { title, description } = test;
+
         return (
           <TestCard
             key={index}

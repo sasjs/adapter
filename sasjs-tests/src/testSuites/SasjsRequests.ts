@@ -1,7 +1,7 @@
 import SASjs from "sasjs";
 import { TestSuite } from "../types";
 
-const data: any = { table1: [{ col1: "first col value" }] };
+const data: any = { table1: [{ col1: "first col value" }] }; // TODO: be more specific on type declaration
 
 export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
   name: "SASjs Requests",
@@ -9,16 +9,11 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
     {
       title: "WORK tables",
       description: "Should get WORK tables after request",
-      test: async () => {
-        return adapter.request("common/sendArr", data);
-      },
+      test: async () => adapter.request("common/sendArr", data),
       assertion: (res: any) => {
         const requests = adapter.getSasRequests();
-        if (adapter.getSasjsConfig().debug) {
-          return requests[0].SASWORK !== null;
-        } else {
-          return requests[0].SASWORK === null;
-        }
+
+        return adapter.getSasjsConfig().debug ? requests[0].SASWORK !== null : requests[0].SASWORK === null
       },
     },
   ],

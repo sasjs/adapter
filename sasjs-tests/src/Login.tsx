@@ -9,11 +9,14 @@ const Login = (): ReactElement<{}> => {
   const appContext = useContext(AppContext);
 
   const handleSubmit = useCallback(
-    (e) => {
+    (e) => { // FIXME: rename 'e' => 'event'
       e.preventDefault();
-      appContext.adapter.logIn(username, password).then(() => {
-        appContext.setIsLoggedIn(true);
-      });
+
+      appContext.adapter.logIn(username, password)
+        .then(() => {
+            appContext.setIsLoggedIn(true);
+        });
+        // FIXME: catch block
     },
     [username, password, appContext]
   );
@@ -38,7 +41,7 @@ const Login = (): ReactElement<{}> => {
             type="password"
             value={password}
             required
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)} // FIXME: rename 'e' => 'event'
           />
         </div>
         <button type="submit" className="submit-button">
