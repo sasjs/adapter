@@ -9,6 +9,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SASViya,
   debug: true,
   contextName: "SAS Job Execution compute context",
+  useComputeApi: false,
 };
 
 const customConfig = {

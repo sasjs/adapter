@@ -32,6 +32,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SASViya,
   debug: true,
   contextName: "SAS Job Execution compute context",
+  useComputeApi: false,
 };
 
 const requestRetryLimit = 5;
@@ -390,239 +391,30 @@ export default class SASjs {
       this.sasjsConfig.serverType === ServerType.SASViya &&
       this.sasjsConfig.contextName
     ) {
-      return await this.executeViaJesApi(
+      if (this.sasjsConfig.useComputeApi) {
+        return await this.executeJobViaComputeApi(
+          sasJob,
+          data,
+          params,
+          loginRequiredCallback,
+          accessToken
+        );
+      } else {
+        return await this.executeJobViaJesApi(
+          sasJob,
+          data,
+          params,
+          loginRequiredCallback,
+          accessToken
+        );
+      }
+    } else {
+      return await this.executeJobViaJes(
         sasJob,
         data,
         params,
-        loginRequiredCallback,
-        accessToken
+        loginRequiredCallback
       );
-    } else {
-      const sasjsWaitingRequest: SASjsWaitingRequest = {
-        requestPromise: {
-          promise: null,
-          resolve: null,
-          reject: null,
-        },
-        SASjob: sasJob,
-        data,
-        params,
-      };
-      const program = this.sasjsConfig.appLoc
-        ? this.sasjsConfig.appLoc.replace(/\/?$/, "/") +
-          sasJob.replace(/^\//, "")
-        : sasJob;
-      const jobUri =
-        this.sasjsConfig.serverType === "SASVIYA"
-          ? await this.getJobUri(sasJob)
-          : "";
-      const apiUrl = `${this.sasjsConfig.serverUrl}${this.jobsPath}/?${
-        jobUri.length > 0
-          ? "__program=" + program + "&_job=" + jobUri
-          : "_program=" + program
-      }`;
-
-      const inputParams = params ? params : {};
-      const requestParams = {
-        ...inputParams,
-        ...this.getRequestParams(),
-      };
-
-      const formData = new FormData();
-
-      let isError = false;
-      let errorMsg = "";
-
-      if (data) {
-        console.log("Input data", data);
-        const stringifiedData = JSON.stringify(data);
-        if (
-          this.sasjsConfig.serverType === ServerType.SAS9 ||
-          stringifiedData.length > 500000 ||
-          stringifiedData.includes(";")
-        ) {
-          // file upload approach
-          for (const tableName in data) {
-            console.log("TableName: ", tableName);
-            if (isError) {
-              return;
-            }
-            const name = tableName;
-            const csv = convertToCSV(data[tableName]);
-            console.log("Converted CSV", csv);
-            if (csv === "ERROR: LARGE STRING LENGTH") {
-              console.log("String too long");
-              isError = true;
-              errorMsg =
-                "The max length of a string value in SASjs is 32765 characters.";
-            }
-
-            const file = new Blob([csv], {
-              type: "application/csv",
-            });
-            console.log("File", file);
-
-            formData.append(name, file, `${name}.csv`);
-          }
-        } else {
-          // param based approach
-          const sasjsTables = [];
-          let tableCounter = 0;
-          for (const tableName in data) {
-            if (isError) {
-              return;
-            }
-            tableCounter++;
-            sasjsTables.push(tableName);
-            const csv = convertToCSV(data[tableName]);
-            if (csv === "ERROR: LARGE STRING LENGTH") {
-              isError = true;
-              errorMsg =
-                "The max length of a string value in SASjs is 32765 characters.";
-            }
-            // if csv has length more then 16k, send in chunks
-            if (csv.length > 16000) {
-              const csvChunks = splitChunks(csv);
-              // append chunks to form data with same key
-              csvChunks.map((chunk) => {
-                formData.append(`sasjs${tableCounter}data`, chunk);
-              });
-            } else {
-              requestParams[`sasjs${tableCounter}data`] = csv;
-            }
-          }
-          requestParams["sasjs_tables"] = sasjsTables.join(" ");
-        }
-      }
-
-      for (const key in requestParams) {
-        if (requestParams.hasOwnProperty(key)) {
-          formData.append(key, requestParams[key]);
-        }
-      }
-
-      console.log("Form data", formData);
-
-      let isRedirected = false;
-
-      sasjsWaitingRequest.requestPromise.promise = new Promise(
-        (resolve, reject) => {
-          if (isError) {
-            reject({ MESSAGE: errorMsg });
-          }
-          const headers: any = {};
-          if (this._csrfHeader && this._csrf) {
-            headers[this._csrfHeader] = this._csrf;
-          }
-          fetch(apiUrl, {
-            method: "POST",
-            body: formData,
-            referrerPolicy: "same-origin",
-            headers,
-          })
-            .then(async (response) => {
-              if (!response.ok) {
-                if (response.status === 403) {
-                  const tokenHeader = response.headers.get("X-CSRF-HEADER");
-
-                  if (tokenHeader) {
-                    const token = response.headers.get(tokenHeader);
-                    this._csrfHeader = tokenHeader;
-                    this._csrf = token;
-                  }
-                }
-              }
-
-              if (
-                response.redirected &&
-                this.sasjsConfig.serverType === ServerType.SAS9
-              ) {
-                isRedirected = true;
-              }
-
-              return response.text();
-            })
-            .then((responseText) => {
-              if (
-                (needsRetry(responseText) || isRedirected) &&
-                !isLogInRequired(responseText)
-              ) {
-                if (this.retryCount < requestRetryLimit) {
-                  this.retryCount++;
-                  this.request(sasJob, data, params).then(
-                    (res: any) => resolve(res),
-                    (err: any) => reject(err)
-                  );
-                } else {
-                  this.retryCount = 0;
-                  reject(responseText);
-                }
-              } else {
-                this.retryCount = 0;
-                this.parseLogFromResponse(responseText, program);
-
-                if (isLogInRequired(responseText)) {
-                  if (loginRequiredCallback) loginRequiredCallback(true);
-                  sasjsWaitingRequest.requestPromise.resolve = resolve;
-                  sasjsWaitingRequest.requestPromise.reject = reject;
-                  this.sasjsWaitingRequests.push(sasjsWaitingRequest);
-                } else {
-                  if (
-                    this.sasjsConfig.serverType === ServerType.SAS9 &&
-                    this.sasjsConfig.debug
-                  ) {
-                    this.updateUsername(responseText);
-                    const jsonResponseText = this.parseSAS9Response(
-                      responseText
-                    );
-
-                    if (jsonResponseText !== "") {
-                      resolve(JSON.parse(jsonResponseText));
-                    } else {
-                      reject({
-                        MESSAGE: this.parseSAS9ErrorResponse(responseText),
-                      });
-                    }
-                  } else if (
-                    this.sasjsConfig.serverType === ServerType.SASViya &&
-                    this.sasjsConfig.debug
-                  ) {
-                    try {
-                      this.parseSASVIYADebugResponse(responseText).then(
-                        (resText: any) => {
-                          this.updateUsername(resText);
-                          try {
-                            resolve(JSON.parse(resText));
-                          } catch (e) {
-                            reject({ MESSAGE: resText });
-                          }
-                        },
-                        (err: any) => {
-                          reject({ MESSAGE: err });
-                        }
-                      );
-                    } catch (e) {
-                      reject({ MESSAGE: responseText });
-                    }
-                  } else {
-                    this.updateUsername(responseText);
-                    try {
-                      const parsedJson = JSON.parse(responseText);
-                      resolve(parsedJson);
-                    } catch (e) {
-                      reject({ MESSAGE: responseText });
-                    }
-                  }
-                }
-              }
-            })
-            .catch((e: Error) => {
-              reject(e);
-            });
-        }
-      );
-
-      return sasjsWaitingRequest.requestPromise.promise;
     }
   }
 
@@ -682,7 +474,62 @@ export default class SASjs {
     );
   }
 
-  private async executeViaJesApi(
+  private async executeJobViaComputeApi(
+    sasJob: string,
+    data: any,
+    params?: any,
+    loginRequiredCallback?: any,
+    accessToken?: string
+  ) {
+    const sasjsWaitingRequest: SASjsWaitingRequest = {
+      requestPromise: {
+        promise: null,
+        resolve: null,
+        reject: null,
+      },
+      SASjob: sasJob,
+      data,
+      params,
+    };
+
+    sasjsWaitingRequest.requestPromise.promise = new Promise(
+      async (resolve, reject) => {
+        const session = await this.checkSession();
+
+        if (!session.isLoggedIn) {
+          if (loginRequiredCallback) loginRequiredCallback(true);
+          sasjsWaitingRequest.requestPromise.resolve = resolve;
+          sasjsWaitingRequest.requestPromise.reject = reject;
+          this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+        } else {
+          resolve(
+            await this.sasViyaApiClient
+              ?.executeComputeJob(
+                sasJob,
+                this.sasjsConfig.contextName,
+                this.sasjsConfig.debug,
+                data,
+                accessToken
+              )
+              .then((response) => {
+                if (!this.sasjsConfig.debug) {
+                  this.appendSasjsRequest(null, sasJob, null);
+                } else {
+                  this.appendSasjsRequest(response, sasJob, null);
+                }
+                return JSON.parse(response!.result);
+              })
+              .catch((e) =>
+                reject({ MESSAGE: (e && e.message) || "Job execution failed" })
+              )
+          );
+        }
+      }
+    );
+    return sasjsWaitingRequest.requestPromise.promise;
+  }
+
+  private async executeJobViaJesApi(
     sasJob: string,
     data: any,
     params?: any,
@@ -725,13 +572,238 @@ export default class SASjs {
                 } else {
                   this.appendSasjsRequest(response, sasJob, null);
                 }
-                return JSON.parse(response.result);
+                return JSON.parse(response!.result);
               })
-              .catch((e) => reject({ MESSAGE: e.message }))
+              .catch((e) =>
+                reject({ MESSAGE: (e && e.message) || "Job execution failed" })
+              )
           );
         }
       }
     );
+    return sasjsWaitingRequest.requestPromise.promise;
+  }
+
+  private async executeJobViaJes(
+    sasJob: string,
+    data: any,
+    params?: any,
+    loginRequiredCallback?: any
+  ) {
+    const sasjsWaitingRequest: SASjsWaitingRequest = {
+      requestPromise: {
+        promise: null,
+        resolve: null,
+        reject: null,
+      },
+      SASjob: sasJob,
+      data,
+      params,
+    };
+    const program = this.sasjsConfig.appLoc
+      ? this.sasjsConfig.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
+      : sasJob;
+    const jobUri =
+      this.sasjsConfig.serverType === "SASVIYA"
+        ? await this.getJobUri(sasJob)
+        : "";
+    const apiUrl = `${this.sasjsConfig.serverUrl}${this.jobsPath}/?${
+      jobUri.length > 0
+        ? "__program=" + program + "&_job=" + jobUri
+        : "_program=" + program
+    }`;
+
+    const inputParams = params ? params : {};
+    const requestParams = {
+      ...inputParams,
+      ...this.getRequestParams(),
+    };
+
+    const formData = new FormData();
+
+    let isError = false;
+    let errorMsg = "";
+
+    if (data) {
+      const stringifiedData = JSON.stringify(data);
+      if (
+        this.sasjsConfig.serverType === ServerType.SAS9 ||
+        stringifiedData.length > 500000 ||
+        stringifiedData.includes(";")
+      ) {
+        // file upload approach
+        for (const tableName in data) {
+          if (isError) {
+            return;
+          }
+          const name = tableName;
+          const csv = convertToCSV(data[tableName]);
+          if (csv === "ERROR: LARGE STRING LENGTH") {
+            isError = true;
+            errorMsg =
+              "The max length of a string value in SASjs is 32765 characters.";
+          }
+
+          const file = new Blob([csv], {
+            type: "application/csv",
+          });
+
+          formData.append(name, file, `${name}.csv`);
+        }
+      } else {
+        // param based approach
+        const sasjsTables = [];
+        let tableCounter = 0;
+        for (const tableName in data) {
+          if (isError) {
+            return;
+          }
+          tableCounter++;
+          sasjsTables.push(tableName);
+          const csv = convertToCSV(data[tableName]);
+          if (csv === "ERROR: LARGE STRING LENGTH") {
+            isError = true;
+            errorMsg =
+              "The max length of a string value in SASjs is 32765 characters.";
+          }
+          // if csv has length more then 16k, send in chunks
+          if (csv.length > 16000) {
+            const csvChunks = splitChunks(csv);
+            // append chunks to form data with same key
+            csvChunks.map((chunk) => {
+              formData.append(`sasjs${tableCounter}data`, chunk);
+            });
+          } else {
+            requestParams[`sasjs${tableCounter}data`] = csv;
+          }
+        }
+        requestParams["sasjs_tables"] = sasjsTables.join(" ");
+      }
+    }
+
+    for (const key in requestParams) {
+      if (requestParams.hasOwnProperty(key)) {
+        formData.append(key, requestParams[key]);
+      }
+    }
+
+    let isRedirected = false;
+
+    sasjsWaitingRequest.requestPromise.promise = new Promise(
+      (resolve, reject) => {
+        if (isError) {
+          reject({ MESSAGE: errorMsg });
+        }
+        const headers: any = {};
+        if (this._csrfHeader && this._csrf) {
+          headers[this._csrfHeader] = this._csrf;
+        }
+        fetch(apiUrl, {
+          method: "POST",
+          body: formData,
+          referrerPolicy: "same-origin",
+          headers,
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              if (response.status === 403) {
+                const tokenHeader = response.headers.get("X-CSRF-HEADER");
+
+                if (tokenHeader) {
+                  const token = response.headers.get(tokenHeader);
+                  this._csrfHeader = tokenHeader;
+                  this._csrf = token;
+                }
+              }
+            }
+
+            if (
+              response.redirected &&
+              this.sasjsConfig.serverType === ServerType.SAS9
+            ) {
+              isRedirected = true;
+            }
+
+            return response.text();
+          })
+          .then((responseText) => {
+            if (
+              (needsRetry(responseText) || isRedirected) &&
+              !isLogInRequired(responseText)
+            ) {
+              if (this.retryCount < requestRetryLimit) {
+                this.retryCount++;
+                this.request(sasJob, data, params).then(
+                  (res: any) => resolve(res),
+                  (err: any) => reject(err)
+                );
+              } else {
+                this.retryCount = 0;
+                reject(responseText);
+              }
+            } else {
+              this.retryCount = 0;
+              this.parseLogFromResponse(responseText, program);
+
+              if (isLogInRequired(responseText)) {
+                if (loginRequiredCallback) loginRequiredCallback(true);
+                sasjsWaitingRequest.requestPromise.resolve = resolve;
+                sasjsWaitingRequest.requestPromise.reject = reject;
+                this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+              } else {
+                if (
+                  this.sasjsConfig.serverType === ServerType.SAS9 &&
+                  this.sasjsConfig.debug
+                ) {
+                  this.updateUsername(responseText);
+                  const jsonResponseText = this.parseSAS9Response(responseText);
+
+                  if (jsonResponseText !== "") {
+                    resolve(JSON.parse(jsonResponseText));
+                  } else {
+                    reject({
+                      MESSAGE: this.parseSAS9ErrorResponse(responseText),
+                    });
+                  }
+                } else if (
+                  this.sasjsConfig.serverType === ServerType.SASViya &&
+                  this.sasjsConfig.debug
+                ) {
+                  try {
+                    this.parseSASVIYADebugResponse(responseText).then(
+                      (resText: any) => {
+                        this.updateUsername(resText);
+                        try {
+                          resolve(JSON.parse(resText));
+                        } catch (e) {
+                          reject({ MESSAGE: resText });
+                        }
+                      },
+                      (err: any) => {
+                        reject({ MESSAGE: err });
+                      }
+                    );
+                  } catch (e) {
+                    reject({ MESSAGE: responseText });
+                  }
+                } else {
+                  this.updateUsername(responseText);
+                  try {
+                    const parsedJson = JSON.parse(responseText);
+                    resolve(parsedJson);
+                  } catch (e) {
+                    reject({ MESSAGE: responseText });
+                  }
+                }
+              }
+            }
+          })
+          .catch((e: Error) => {
+            reject(e);
+          });
+      }
+    );
+
     return sasjsWaitingRequest.requestPromise.promise;
   }
 
@@ -930,7 +1002,7 @@ export default class SASjs {
         try {
           jsonResponse = JSON.parse(this.parseSAS9Response(response));
         } catch (e) {
-          console.log(e);
+          console.error(e);
         }
       } else {
         await this.parseSASVIYADebugResponse(response).then(
@@ -938,11 +1010,11 @@ export default class SASjs {
             try {
               jsonResponse = JSON.parse(resText);
             } catch (e) {
-              console.log(e);
+              console.error(e);
             }
           },
           (err: any) => {
-            console.log(err);
+            console.error(err);
           }
         );
       }

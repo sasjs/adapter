@@ -5,11 +5,12 @@ export async function makeRequest<T>(
   request: RequestInit,
   callback: (value: CsrfToken) => any,
   contentType: "text" | "json" = "json"
-): Promise<T> {
+): Promise<{ result: T; etag: string | null }> {
   const responseTransform =
     contentType === "json"
       ? (res: Response) => res.json()
       : (res: Response) => res.text();
+  let etag = null;
   const result = await fetch(url, request).then((response) => {
     if (!response.ok) {
       if (response.status === 403) {
@@ -26,12 +27,16 @@ export async function makeRequest<T>(
             ...request,
             headers: { ...request.headers, [tokenHeader]: token },
           };
-          return fetch(url, retryRequest).then(responseTransform);
+          return fetch(url, retryRequest).then((res) => {
+            etag = res.headers.get("ETag");
+            return responseTransform(res);
+          });
         }
       }
     } else {
+      etag = response.headers.get("ETag");
       return responseTransform(response);
     }
   });
-  return result;
+  return { result, etag };
 }
