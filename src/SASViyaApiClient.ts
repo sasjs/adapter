@@ -97,17 +97,14 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`;
     }
 
-    if (!this.contexts.length) {
-      const { result: contexts } = await this.request<{ items: Context[] }>(
-        `${this.serverUrl}/compute/contexts`,
-        { headers }
-      );
-
-      this.contexts = contexts && contexts.items ? contexts.items : [];
-    }
+    const { result: contexts } = await this.request<{ items: Context[] }>(
+      `${this.serverUrl}/compute/contexts`,
+      { headers }
+    );
+    const contextsList = contexts && contexts.items ? contexts.items : [];
     const executableContexts: any[] = [];
 
-    const promises = this.contexts.map((context: any) => {
+    const promises = contextsList.map((context: any) => {
       const linesOfCode = ["%put &=sysuserid;"];
       return this.executeScript(
         `test-${context.name}`,
@@ -132,10 +129,10 @@ export class SASViyaApiClient {
         }
 
         executableContexts.push({
-          createdBy: this.contexts[index].createdBy,
-          id: this.contexts[index].id,
-          name: this.contexts[index].name,
-          version: this.contexts[index].version,
+          createdBy: contextsList[index].createdBy,
+          id: contextsList[index].id,
+          name: contextsList[index].name,
+          version: contextsList[index].version,
           attributes: {
             sysUserId,
           },
@@ -215,14 +212,20 @@ export class SASViyaApiClient {
     if (this.csrfToken) {
       headers[this.csrfToken.headerName] = this.csrfToken.value;
     }
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
-      { headers }
+    if (!this.contexts.length) {
+      const { result: contexts } = await this.request<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts`,
+        { headers }
+      );
+
+      this.contexts =
+        contexts && contexts.items && contexts.items.length
+          ? contexts.items
+          : [];
+    }
+    const executionContext = this.contexts.find(
+      (c: any) => c.name === contextName
     );
-    const executionContext =
-      contexts.items && contexts.items.length
-        ? contexts.items.find((c: any) => c.name === contextName)
-        : null;
 
     if (executionContext) {
       // Request new session in context or use the ID passed in
@@ -345,7 +348,7 @@ export class SASViyaApiClient {
       console.error(
         `Unable to find execution context ${contextName}.\nPlease check the contextName in the tgtDeployVars and try again.`
       );
-      console.error("Response from server: ", JSON.stringify(contexts));
+      console.error("Response from server: ", JSON.stringify(this.contexts));
     }
   }
 
