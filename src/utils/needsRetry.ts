@@ -1,3 +1,4 @@
+// TODO: refactor
 export const needsRetry = (responseText: string): boolean => {
   return (
     (responseText.includes('"errorCode":403') &&

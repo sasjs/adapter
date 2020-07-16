@@ -10,6 +10,7 @@ export class SASjsConfig {
    * Can be omitted, eg if serving directly from the SAS Web Server or being
    * streamed.
    */
+  // TODO: we should clarify what location we are talking about
   serverUrl: string = "";
   pathSAS9: string = "";
   pathSASViya: string = "";

@@ -1,3 +1,13 @@
+/**
+ * TODO: needs to be split into logical blocks:
+ * - Folder
+ * - Config
+ * - Context
+ * - Session
+ * - Job
+ * - Auth
+ */
+
 import {
   isAuthorizeFormRequired,
   parseAndSubmitAuthorizeForm,
@@ -32,7 +42,7 @@ export class SASViyaApiClient {
     if (this.rootFolderMap.size) {
       return this.rootFolderMap;
     }
-    
+
     this.populateRootFolderMap();
     return this.rootFolderMap;
   }

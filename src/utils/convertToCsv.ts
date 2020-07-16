@@ -3,43 +3,43 @@
  * @param data - the JSON object to convert.
  */
 export const convertToCSV = (data: any) => {
-  const replacer = (key: any, value: any) => (value === null ? "" : value);
-  const headerFields = Object.keys(data[0]);
+  const replacer = (key: any, value: any) => (value === null ? "" : value); // FIXME: 'key' parameter was not used, why do we compare with null (undefined, NaN)?
+  const headerFields = Object.keys(data[0]); // FIXME: data can be of any type, but we are working with it as with object
   let csvTest;
   let invalidString = false;
   const headers = headerFields.map((field) => {
     let firstFoundType: string | null = null;
-    let hasMixedTypes: boolean = false;
-    let rowNumError: number = -1;
+    let hasMixedTypes: boolean = false; // FIXME: unnecessary type declaration
+    let rowNumError: number = -1; // FIXME: unnecessary type declaration
 
     const longestValueForField = data
-      .map((row: any, index: number) => {
+      .map((row: any, index: number) => { // FIXME: row should be of type string | number
         if (row[field] || row[field] === "") {
           if (firstFoundType) {
-            let currentFieldType =
-              row[field] === "" || typeof row[field] === "string"
+            let currentFieldType = // FIXME: use const
+              row[field] === "" || typeof row[field] === "string" // FIXME: "" is also of type string
                 ? "chars"
                 : "number";
 
             if (!hasMixedTypes) {
               hasMixedTypes = currentFieldType !== firstFoundType;
-              rowNumError = hasMixedTypes ? index + 1 : -1;
+              rowNumError = hasMixedTypes ? index + 1 : -1; // TODO: refactor
             }
           } else {
             if (row[field] === "") {
               firstFoundType = "chars";
             } else {
               firstFoundType =
-                typeof row[field] === "string" ? "chars" : "number";
+                typeof row[field] === "string" ? "chars" : "number"; // TODO: refactor
             }
           }
 
           let byteSize;
 
           if (typeof row[field] === "string") {
-            let doubleQuotesFound = row[field]
+            let doubleQuotesFound = row[field] // FIXME: use const
               .split("")
-              .filter((char: any) => char === '"');
+              .filter((char: any) => char === '"'); // FIXME: why char is of type any?
 
             byteSize = getByteSize(row[field]);
 
@@ -52,16 +52,18 @@ export const convertToCSV = (data: any) => {
         }
       })
       .sort((a: number, b: number) => b - a)[0];
-    if (longestValueForField && longestValueForField > 32765) {
+
+    if (longestValueForField && longestValueForField > 32765) { // FIXME: longestValueForField is an array and it is not comparable to a number
       invalidString = true;
     }
+
     if (hasMixedTypes) {
       console.error(
         `Row (${rowNumError}), Column (${field}) has mixed types: ERROR`
       );
     }
 
-    return `${field}:${firstFoundType === "chars" ? "$" : ""}${
+    return `${field}:${firstFoundType === "chars" ? "$" : ""}${ // TODO: format return string before return statement
       longestValueForField
         ? longestValueForField
         : firstFoundType === "chars"
@@ -73,10 +75,11 @@ export const convertToCSV = (data: any) => {
   if (invalidString) {
     return "ERROR: LARGE STRING LENGTH";
   }
+
   csvTest = data.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
       let value;
-      let containsSpecialChar = false;
+      let containsSpecialChar = false; // FIXME: should be const
       const currentCell = row[fieldName];
 
       if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
@@ -89,7 +92,7 @@ export const convertToCSV = (data: any) => {
       value = value.replace(/\\\\/gm, "\\");
 
       if (containsSpecialChar) {
-        if (value.includes(",") || value.includes('"')) {
+        if (value.includes(",") || value.includes('"')) { // FIXME: use `"`
           value = '"' + value + '"';
         }
       } else {
@@ -112,6 +115,7 @@ export const convertToCSV = (data: any) => {
 
       return value;
     });
+    
     return fields.join(",");
   });
 
@@ -121,6 +125,7 @@ export const convertToCSV = (data: any) => {
   return finalCSV;
 };
 
+// TODO: refactor
 const getByteSize = (str: string) => {
   let byteSize = str.length;
   for (let i = str.length - 1; i >= 0; i--) {

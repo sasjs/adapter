@@ -1,2 +1,1 @@
-export const isLogInSuccess = (response: string): boolean =>
-  /You have signed in/gm.test(response);
+export const isLogInSuccess = (response: string): boolean => /You have signed in/gm.test(response); // TODO: maybe we have more reliable way to verify that login was successful?

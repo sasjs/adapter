@@ -6,7 +6,7 @@ export const parseAndSubmitAuthorizeForm = async (
   const params: any = {};
 
   const responseBody = response.split("<body>")[1].split("</body>")[0];
-  const bodyElement = document.createElement("div");
+  const bodyElement = document.createElement("div"); // TODO: rename
   bodyElement.innerHTML = responseBody;
 
   const form = bodyElement.querySelector("#application_authorization");
@@ -24,7 +24,7 @@ export const parseAndSubmitAuthorizeForm = async (
 
   const formData = new FormData();
 
-  for (const key in params) {
+  for (const key in params) { // TODO: use forEach
     if (params.hasOwnProperty(key)) {
       formData.append(key, params[key]);
     }
@@ -32,7 +32,7 @@ export const parseAndSubmitAuthorizeForm = async (
 
   return new Promise((resolve, reject) => {
     if (authUrl) {
-      fetch(authUrl, {
+      fetch(authUrl, { // TODO use axios instead of fetch
         method: "POST",
         credentials: "include",
         body: formData,

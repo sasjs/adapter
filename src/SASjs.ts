@@ -1,3 +1,16 @@
+/**
+ * TODO: needs to be split into logical blocks:
+ * - Execute
+ * - Context
+ * - Session
+ * - Folder and services
+ * - Job
+ * - Auth
+ * - Config
+ * - Debug
+ * - Response
+ */
+
 import "isomorphic-fetch";
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
@@ -839,6 +852,7 @@ export default class SASjs {
     }
   }
 
+  // FIXME: this method never used
   private fetchLogFileContent(logLink: string) {
     return new Promise((resolve, reject) => {
       fetch(logLink, {

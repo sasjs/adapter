@@ -1,6 +1,7 @@
-export const serialize = (obj: any) => {
+export const serialize = (obj: any) => { // TODO: be more specific on type declaration
   const str: any[] = [];
-  for (const p in obj) {
+
+  for (const p in obj) { // FIXME: name variables properly
     if (obj.hasOwnProperty(p)) {
       if (obj[p] instanceof Array) {
         for (let i = 0, n = obj[p].length; i < n; i++) {
@@ -11,5 +12,6 @@ export const serialize = (obj: any) => {
       }
     }
   }
+
   return str.join("&");
 };

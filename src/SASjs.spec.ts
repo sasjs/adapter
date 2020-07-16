@@ -2,6 +2,7 @@ import SASjs from "./index";
 
 const adapter = new SASjs();
 
+// FIXME: adapter doesn't have 'parseSAS9SourceCode' and 'parseGeneratedCode'
 it("should parse SAS9 source code", async done => {
   expect(sampleResponse).toBeTruthy();
   const parsedSourceCode = (adapter as any).parseSAS9SourceCode(sampleResponse);
