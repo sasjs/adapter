@@ -239,7 +239,17 @@ export default class SASjs {
    *
    */
   public getCsrf() {
-    return this._csrf;
+    let csrfToken = null;
+
+    if (this._csrf) {
+      csrfToken = this._csrf;
+    } else {
+      if (this.sasViyaApiClient) {
+        csrfToken = this.sasViyaApiClient.getCsrf();
+      }
+    }
+
+    return csrfToken;
   }
 
   /**

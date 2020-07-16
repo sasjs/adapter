@@ -50,6 +50,13 @@ export class SASViyaApiClient {
   }
 
   /**
+   * returns an csrf token that's fetched with request retry
+   */
+  public getCsrf() {
+    return this.csrfToken;
+  }
+
+  /**
    * Updates server URL or root folder name when not null
    * @param serverUrl - the URL of the server.
    * @param rootFolderName - the name for rootFolderName.
