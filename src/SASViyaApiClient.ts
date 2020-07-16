@@ -26,6 +26,7 @@ export class SASViyaApiClient {
   }
   private csrfToken: { headerName: string; value: string } | null = null;
   private rootFolder: Folder | null = null;
+  private contexts: Context[] = [];
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -95,14 +96,18 @@ export class SASViyaApiClient {
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
-      { headers }
-    );
-    const contextsList = contexts && contexts.items ? contexts.items : [];
+
+    if (!this.contexts.length) {
+      const { result: contexts } = await this.request<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts`,
+        { headers }
+      );
+
+      this.contexts = contexts && contexts.items ? contexts.items : [];
+    }
     const executableContexts: any[] = [];
 
-    const promises = contextsList.map((context: any) => {
+    const promises = this.contexts.map((context: any) => {
       const linesOfCode = ["%put &=sysuserid;"];
       return this.executeScript(
         `test-${context.name}`,
@@ -127,10 +132,10 @@ export class SASViyaApiClient {
         }
 
         executableContexts.push({
-          createdBy: contextsList[index].createdBy,
-          id: contextsList[index].id,
-          name: contextsList[index].name,
-          version: contextsList[index].version,
+          createdBy: this.contexts[index].createdBy,
+          id: this.contexts[index].id,
+          name: this.contexts[index].name,
+          version: this.contexts[index].version,
           attributes: {
             sysUserId,
           },
