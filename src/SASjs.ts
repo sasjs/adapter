@@ -448,7 +448,11 @@ export default class SASjs {
         appLoc = this.sasjsConfig.appLoc;
       }
       if (this.sasjsConfig.serverType === ServerType.SASViya) {
-        sasApiClient = new SASViyaApiClient(serverUrl, appLoc);
+        sasApiClient = new SASViyaApiClient(
+          serverUrl,
+          appLoc,
+          this.sasjsConfig.contextName
+        );
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
         sasApiClient = new SAS9ApiClient(serverUrl);
       }
@@ -1066,7 +1070,8 @@ export default class SASjs {
       else
         this.sasViyaApiClient = new SASViyaApiClient(
           this.sasjsConfig.serverUrl,
-          this.sasjsConfig.appLoc
+          this.sasjsConfig.appLoc,
+          this.sasjsConfig.contextName
         );
     }
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
