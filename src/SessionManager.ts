@@ -38,6 +38,7 @@ export class SessionManager {
     );
 
     await this.waitForSession(createdSession, etag);
+    this.sessions.push(createdSession);
     return createdSession;
   }
 

@@ -661,7 +661,7 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       "",
-      false,
+      true,
       data,
       debug
     );
@@ -864,12 +864,19 @@ export class SASViyaApiClient {
     if (accessToken) {
       requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
     }
+    let error;
     const rootFolder = await this.request<Folder>(
       `${this.serverUrl}${url}`,
       requestInfo
-    ).catch(() => null);
+    ).catch((e) => {
+      error = e;
+      return null;
+    });
 
     this.rootFolder = rootFolder?.result || null;
+    if (error) {
+      throw new Error(JSON.stringify(error));
+    }
   }
 
   private async pollJobState(

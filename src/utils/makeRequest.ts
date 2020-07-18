@@ -11,7 +11,7 @@ export async function makeRequest<T>(
       ? (res: Response) => res.json()
       : (res: Response) => res.text();
   let etag = null;
-  const result = await fetch(url, request).then((response) => {
+  const result = await fetch(url, request).then(async (response) => {
     if (!response.ok) {
       if (response.status === 403) {
         const tokenHeader = response.headers.get("X-CSRF-HEADER");
@@ -32,8 +32,15 @@ export async function makeRequest<T>(
             return responseTransform(res);
           });
         }
+      } else {
+        const body = await response.text();
+        return Promise.reject({ status: response.status, body });
       }
     } else {
+      if (response.redirected && response.url.includes("SASLogon/login")) {
+        const body = await response.text();
+        return Promise.reject({ status: 401, body });
+      }
       etag = response.headers.get("ETag");
       return responseTransform(response);
     }
