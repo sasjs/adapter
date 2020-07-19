@@ -42,7 +42,6 @@ const requestRetryLimit = 5;
  *
  */
 export default class SASjs {
-  private globalSasjsConfig: SASjsConfig = new SASjsConfig();
   private sasjsConfig: SASjsConfig = new SASjsConfig();
   private jobsPath: string = "";
   private logoutUrl: string = "";
@@ -63,7 +62,6 @@ export default class SASjs {
     };
     
     this.setupConfiguration();
-    this.globalSasjsConfig = { ...this.sasjsConfig };
   }
 
   public async executeScriptSAS9(
@@ -385,29 +383,28 @@ export default class SASjs {
   public async request(
     sasJob: string,
     data: any,
-    config?: SASjsConfig,
+    config: any = {},
     loginRequiredCallback?: any,
     accessToken?: string
   ) {
     let requestResponse;
 
-    if (config) {
-      this.sasjsConfig = {
-        ...this.globalSasjsConfig,
-        ...config
-      };
+    config = {
+      ...this.sasjsConfig,
+      ...config
     }
 
     sasJob = sasJob.startsWith("/") ? sasJob.replace("/", "") : sasJob;
 
     if (
-      this.sasjsConfig.serverType === ServerType.SASViya &&
-      this.sasjsConfig.contextName
+      config.serverType === ServerType.SASViya &&
+      config.contextName
     ) {
-      if (this.sasjsConfig.useComputeApi) {
+      if (config.useComputeApi) {
         requestResponse = await this.executeJobViaComputeApi(
           sasJob,
           data,
+          config,
           loginRequiredCallback,
           accessToken
         );
@@ -415,6 +412,7 @@ export default class SASjs {
         requestResponse = await this.executeJobViaJesApi(
           sasJob,
           data,
+          config,
           loginRequiredCallback,
           accessToken
         );
@@ -423,11 +421,10 @@ export default class SASjs {
       requestResponse = await this.executeJobViaWeb(
         sasJob,
         data,
+        config,
         loginRequiredCallback
       );
     }
-
-    this.sasjsConfig = this.globalSasjsConfig;
 
     return requestResponse;
   }
@@ -495,6 +492,7 @@ export default class SASjs {
   private async executeJobViaComputeApi(
     sasJob: string,
     data: any,
+    config: any,
     loginRequiredCallback?: any,
     accessToken?: string
   ) {
@@ -514,13 +512,13 @@ export default class SASjs {
           await this.sasViyaApiClient
             ?.executeComputeJob(
               sasJob,
-              this.sasjsConfig.contextName,
-              this.sasjsConfig.debug,
+              config.contextName,
+              config.debug,
               data,
               accessToken
             )
             .then((response) => {
-              if (!this.sasjsConfig.debug) {
+              if (!config.debug) {
                 this.appendSasjsRequest(null, sasJob, null);
               } else {
                 this.appendSasjsRequest(response, sasJob, null);
@@ -546,6 +544,7 @@ export default class SASjs {
   private async executeJobViaJesApi(
     sasJob: string,
     data: any,
+    config: any,
     loginRequiredCallback?: any,
     accessToken?: string
   ) {
@@ -573,13 +572,13 @@ export default class SASjs {
             await this.sasViyaApiClient
               ?.executeJob(
                 sasJob,
-                this.sasjsConfig.contextName,
-                this.sasjsConfig.debug,
+                config.contextName,
+                config.debug,
                 data,
                 accessToken
               )
               .then((response) => {
-                if (!this.sasjsConfig.debug) {
+                if (!config.debug) {
                   this.appendSasjsRequest(null, sasJob, null);
                 } else {
                   this.appendSasjsRequest(response, sasJob, null);
@@ -599,6 +598,7 @@ export default class SASjs {
   private async executeJobViaWeb(
     sasJob: string,
     data: any,
+    config: any,
     loginRequiredCallback?: any
   ) {
     const sasjsWaitingRequest: SASjsWaitingRequest = {
@@ -610,14 +610,14 @@ export default class SASjs {
       SASjob: sasJob,
       data
     };
-    const program = this.sasjsConfig.appLoc
-      ? this.sasjsConfig.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
+    const program = config.appLoc
+      ? config.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
       : sasJob;
     const jobUri =
-      this.sasjsConfig.serverType === "SASVIYA"
+      config.serverType === "SASVIYA"
         ? await this.getJobUri(sasJob)
         : "";
-    const apiUrl = `${this.sasjsConfig.serverUrl}${this.jobsPath}/?${
+    const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
       jobUri.length > 0
         ? "__program=" + program + "&_job=" + jobUri
         : "_program=" + program
@@ -635,7 +635,7 @@ export default class SASjs {
     if (data) {
       const stringifiedData = JSON.stringify(data);
       if (
-        this.sasjsConfig.serverType === ServerType.SAS9 ||
+        config.serverType === ServerType.SAS9 ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(";")
       ) {
@@ -727,7 +727,7 @@ export default class SASjs {
 
             if (
               response.redirected &&
-              this.sasjsConfig.serverType === ServerType.SAS9
+              config.serverType === ServerType.SAS9
             ) {
               isRedirected = true;
             }
@@ -760,8 +760,8 @@ export default class SASjs {
                 this.sasjsWaitingRequests.push(sasjsWaitingRequest);
               } else {
                 if (
-                  this.sasjsConfig.serverType === ServerType.SAS9 &&
-                  this.sasjsConfig.debug
+                  config.serverType === ServerType.SAS9 &&
+                  config.debug
                 ) {
                   this.updateUsername(responseText);
                   const jsonResponseText = this.parseSAS9Response(responseText);
@@ -774,8 +774,8 @@ export default class SASjs {
                     });
                   }
                 } else if (
-                  this.sasjsConfig.serverType === ServerType.SASViya &&
-                  this.sasjsConfig.debug
+                  config.serverType === ServerType.SASViya &&
+                  config.debug
                 ) {
                   try {
                     this.parseSASVIYADebugResponse(responseText).then(
