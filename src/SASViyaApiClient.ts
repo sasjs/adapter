@@ -20,6 +20,7 @@ export class SASViyaApiClient {
     private serverUrl: string,
     private rootFolderName: string,
     private contextName: string,
+    private setCsrfToken: (csrfToken: CsrfToken) => void,
     private rootFolderMap = new Map<string, Job[]>()
   ) {
     if (!rootFolderName) {
@@ -28,7 +29,7 @@ export class SASViyaApiClient {
   }
   private csrfToken: CsrfToken | null = null;
   private rootFolder: Folder | null = null;
-  private sessionManager = new SessionManager(this.serverUrl, this.contextName);
+  private sessionManager = new SessionManager(this.serverUrl, this.contextName, this.setCsrfToken);
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -1025,8 +1026,9 @@ export class SASViyaApiClient {
     return `/folders/folders/${folder.id}`;
   }
 
-  setCsrfToken = (csrfToken: CsrfToken) => {
+  setCsrfTokenLocal = (csrfToken: CsrfToken) => {
     this.csrfToken = csrfToken;
+    this.setCsrfToken(csrfToken);
   };
 
   private async request<T>(
@@ -1040,6 +1042,6 @@ export class SASViyaApiClient {
         [this.csrfToken.headerName]: this.csrfToken.value,
       };
     }
-    return await makeRequest<T>(url, options, this.setCsrfToken, contentType);
+    return await makeRequest<T>(url, options, this.setCsrfTokenLocal, contentType);
   }
 }
