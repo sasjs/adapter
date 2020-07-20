@@ -51,7 +51,7 @@
     "typedoc": "^0.17.8",
     "typedoc-neo-theme": "^1.0.9",
     "typedoc-plugin-external-module-name": "^4.0.3",
-    "typescript": "^3.9.6",
+    "typescript": "^3.9.7",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.12"
