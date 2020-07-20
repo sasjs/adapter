@@ -374,8 +374,9 @@ export default class SASjs {
    *  Process.)  Is prepended at runtime with the value of `appLoc`.
    * @param data - A JSON object containing one or more tables to be sent to
    * SAS.  Can be `null` if no inputs required.
-   * @param params - Provide any changes to the config here, for instance to
-   * enable / disable `debug`.
+   * @param config - Provide any changes to the config here, for instance to
+   * enable / disable `debug`. Any change provided will override the global config, 
+   * for that particular function call.
    * @param loginRequiredCallback - provide a function here to be called if the
    * user is not logged in (eg to display a login form).  The request will be
    * resubmitted after logon.
