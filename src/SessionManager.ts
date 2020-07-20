@@ -4,7 +4,11 @@ import { asyncForEach, makeRequest } from "./utils";
 const MAX_SESSION_COUNT = 1;
 
 export class SessionManager {
-  constructor(private serverUrl: string, private contextName: string) {}
+  constructor(
+    private serverUrl: string,
+    private contextName: string,
+    private setCsrfToken: (csrfToken: CsrfToken) => void
+  ) {}
   private sessions: Session[] = [];
   private currentContext: Context | null = null;
   private csrfToken: CsrfToken | null = null;
@@ -132,7 +136,10 @@ export class SessionManager {
     return await makeRequest<T>(
       url,
       options,
-      (token) => (this.csrfToken = token),
+      (token) => {
+        this.csrfToken = token;
+        this.setCsrfToken(token);
+      },
       contentType
     );
   }

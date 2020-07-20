@@ -20,6 +20,7 @@ import {
   SASjsRequest,
   SASjsWaitingRequest,
   ServerType,
+  CsrfToken,
 } from "./types";
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
@@ -46,8 +47,7 @@ export default class SASjs {
   private jobsPath: string = "";
   private logoutUrl: string = "";
   private loginUrl: string = "";
-  private _csrf: string | null = null;
-  private _csrfHeader: string | null = null;
+  private csrfToken: CsrfToken | null = null;
   private retryCount: number = 0;
   private sasjsRequests: SASjsRequest[] = [];
   private sasjsWaitingRequests: SASjsWaitingRequest[] = [];
@@ -239,7 +239,7 @@ export default class SASjs {
    *
    */
   public getCsrf() {
-    return this._csrf;
+    return this.csrfToken?.value;
   }
 
   /**
@@ -452,7 +452,8 @@ export default class SASjs {
         sasApiClient = new SASViyaApiClient(
           serverUrl,
           appLoc,
-          this.sasjsConfig.contextName
+          this.sasjsConfig.contextName,
+          this.setCsrfToken
         );
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
         sasApiClient = new SAS9ApiClient(serverUrl);
@@ -517,7 +518,7 @@ export default class SASjs {
               return JSON.parse(response!.result);
             })
             .catch((e) => {
-              if (e && e.includes(401)) {
+              if (e && e.status === 401) {
                 if (loginRequiredCallback) loginRequiredCallback(true);
                 sasjsWaitingRequest.requestPromise.resolve = resolve;
                 sasjsWaitingRequest.requestPromise.reject = reject;
@@ -698,8 +699,8 @@ export default class SASjs {
           reject({ MESSAGE: errorMsg });
         }
         const headers: any = {};
-        if (this._csrfHeader && this._csrf) {
-          headers[this._csrfHeader] = this._csrf;
+        if (this.csrfToken) {
+          headers[this.csrfToken.headerName] = this.csrfToken.value;
         }
         fetch(apiUrl, {
           method: "POST",
@@ -714,8 +715,10 @@ export default class SASjs {
 
                 if (tokenHeader) {
                   const token = response.headers.get(tokenHeader);
-                  this._csrfHeader = tokenHeader;
-                  this._csrf = token;
+                  this.csrfToken = {
+                    headerName: tokenHeader,
+                    value: token || ''
+                  }
                 }
               }
             }
@@ -810,6 +813,10 @@ export default class SASjs {
     return sasjsWaitingRequest.requestPromise.promise;
   }
 
+  private setCsrfToken = (csrfToken: CsrfToken) => {
+    this.csrfToken = csrfToken;
+  };
+
   private async resendWaitingRequests() {
     for (const sasjsWaitingRequest of this.sasjsWaitingRequests) {
       this.request(
@@ -832,8 +839,8 @@ export default class SASjs {
   private getRequestParams(): any {
     const requestParams: any = {};
 
-    if (this._csrf) {
-      requestParams["_csrf"] = this._csrf;
+    if (this.csrfToken) {
+      requestParams["_csrf"] = this.csrfToken.value;
     }
 
     if (this.sasjsConfig.debug) {
@@ -1070,7 +1077,8 @@ export default class SASjs {
         this.sasViyaApiClient = new SASViyaApiClient(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
-          this.sasjsConfig.contextName
+          this.sasjsConfig.contextName,
+          this.setCsrfToken
         );
     }
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
