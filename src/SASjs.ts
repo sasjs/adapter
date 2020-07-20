@@ -530,6 +530,7 @@ export default class SASjs {
                 if (loginRequiredCallback) loginRequiredCallback(true);
                 sasjsWaitingRequest.requestPromise.resolve = resolve;
                 sasjsWaitingRequest.requestPromise.reject = reject;
+                sasjsWaitingRequest.config = config;
                 this.sasjsWaitingRequests.push(sasjsWaitingRequest);
               } else {
                 reject({ MESSAGE: e || "Job execution failed" });
@@ -566,6 +567,7 @@ export default class SASjs {
           if (loginRequiredCallback) loginRequiredCallback(true);
           sasjsWaitingRequest.requestPromise.resolve = resolve;
           sasjsWaitingRequest.requestPromise.reject = reject;
+          sasjsWaitingRequest.config = config;
           this.sasjsWaitingRequests.push(sasjsWaitingRequest);
         } else {
           resolve(
@@ -757,6 +759,7 @@ export default class SASjs {
                 if (loginRequiredCallback) loginRequiredCallback(true);
                 sasjsWaitingRequest.requestPromise.resolve = resolve;
                 sasjsWaitingRequest.requestPromise.reject = reject;
+                sasjsWaitingRequest.config = config;
                 this.sasjsWaitingRequests.push(sasjsWaitingRequest);
               } else {
                 if (
