@@ -47,8 +47,10 @@ export default class SASjs {
   private jobsPath: string = "";
   private logoutUrl: string = "";
   private loginUrl: string = "";
-  private csrfToken: CsrfToken | null = null;
-  private retryCount: number = 0;
+  private csrfTokenApi: CsrfToken | null = null;
+  private csrfTokenWeb: CsrfToken | null = null;
+  private retryCountRequest: number = 0;
+  private retryCountFileUpload: number = 0;
   private sasjsRequests: SASjsRequest[] = [];
   private sasjsWaitingRequests: SASjsWaitingRequest[] = [];
   private userName: string = "";
@@ -235,11 +237,19 @@ export default class SASjs {
   }
 
   /**
-   * Returns the _csrf token of the current session.
+   * Returns the _csrf token of the current session for the API approach
    *
    */
-  public getCsrf() {
-    return this.csrfToken?.value;
+  public getCsrfApi() {
+    return this.csrfTokenApi?.value;
+  }
+
+  /**
+   * Returns the _csrf token of the current session for the WEB approach.
+   *
+   */
+  public getCsrfWeb() {
+    return this.csrfTokenWeb?.value;
   }
 
   /**
@@ -364,6 +374,95 @@ export default class SASjs {
   }
 
   /**
+   * Uploads a file to the given service
+   * @param sasJob - The path to the SAS program (ultimately resolves to
+   *  the SAS `_program` parameter to run a Job Definition or SAS 9 Stored
+   *  Process.)  Is prepended at runtime with the value of `appLoc`.
+   * @param file - File to be uploaded
+   * @param fileName - Name of the file to be uploaded
+   * @param params - Request URL paramaters
+   */
+  public uploadFile(sasJob: string, file: File, fileName: string, params: any) {
+    if (!file) throw new Error("File must be provided");
+    if (!fileName) throw new Error("File name must be provided");
+
+    let paramsString = "";
+
+    for (let param in params) {
+      if (params.hasOwnProperty(param)) {
+        paramsString += `&${param}=${params[param]}`;
+      }
+    }
+
+    const program = this.sasjsConfig.appLoc
+      ? this.sasjsConfig.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
+      : sasJob;
+    const uploadUrl = `${this.sasjsConfig.serverUrl}${this.jobsPath}/?${'_program=' + program}${paramsString}`;
+
+    let headers = {
+      "cache-control": "no-cache"
+    }
+    
+    return new Promise((resolve, reject) => {
+      let formData = new FormData();
+
+      formData.append("file", file)
+      formData.append("filename", fileName)
+      if (this.csrfTokenWeb) formData.append('_csrf', this.csrfTokenWeb.value)
+
+      fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+        referrerPolicy: "same-origin",
+        headers
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            if (response.status === 403) {
+              const tokenHeader = response.headers.get("X-CSRF-HEADER");
+
+              if (tokenHeader) {
+                const token = response.headers.get(tokenHeader);
+                this.csrfTokenWeb = {
+                  headerName: tokenHeader,
+                  value: token || ''
+                }
+              }
+            }
+          }
+
+          return response.text();
+        })
+        .then((responseText) => {
+          if (isLogInRequired(responseText)) reject('You must be logged in to upload a fle');
+
+          if (
+            (needsRetry(responseText))
+          ) {
+            if (this.retryCountFileUpload < requestRetryLimit) {
+              this.retryCountFileUpload++;
+              this.uploadFile(sasJob, file, fileName, params).then(
+                (res: any) => resolve(res),
+                (err: any) => reject(err)
+              );
+            } else {
+              this.retryCountFileUpload = 0;
+              reject(responseText);
+            }
+          } else {
+            this.retryCountFileUpload = 0;
+
+            try {
+              resolve(JSON.parse(responseText))
+            } catch (e) {
+              reject(e);
+            }
+          }
+        });
+    });
+  }
+
+  /**
    * Makes a request to the SAS Service specified in `SASjob`.  The response
    * object will always contain table names in lowercase, and column names in
    * uppercase.  Values are returned formatted by default, unformatted
@@ -453,7 +552,7 @@ export default class SASjs {
           serverUrl,
           appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfToken
+          this.setCsrfTokenApi
         );
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
         sasApiClient = new SAS9ApiClient(serverUrl);
@@ -620,7 +719,7 @@ export default class SASjs {
     const inputParams = params ? params : {};
     const requestParams = {
       ...inputParams,
-      ...this.getRequestParams(),
+      ...this.getRequestParamsWeb(),
     };
 
     const formData = new FormData();
@@ -699,8 +798,8 @@ export default class SASjs {
           reject({ MESSAGE: errorMsg });
         }
         const headers: any = {};
-        if (this.csrfToken) {
-          headers[this.csrfToken.headerName] = this.csrfToken.value;
+        if (this.csrfTokenWeb) {
+          headers[this.csrfTokenWeb.headerName] = this.csrfTokenWeb.value;
         }
         fetch(apiUrl, {
           method: "POST",
@@ -715,7 +814,7 @@ export default class SASjs {
 
                 if (tokenHeader) {
                   const token = response.headers.get(tokenHeader);
-                  this.csrfToken = {
+                  this.csrfTokenWeb = {
                     headerName: tokenHeader,
                     value: token || ''
                   }
@@ -737,18 +836,18 @@ export default class SASjs {
               (needsRetry(responseText) || isRedirected) &&
               !isLogInRequired(responseText)
             ) {
-              if (this.retryCount < requestRetryLimit) {
-                this.retryCount++;
+              if (this.retryCountRequest < requestRetryLimit) {
+                this.retryCountRequest++;
                 this.request(sasJob, data, params).then(
                   (res: any) => resolve(res),
                   (err: any) => reject(err)
                 );
               } else {
-                this.retryCount = 0;
+                this.retryCountRequest = 0;
                 reject(responseText);
               }
             } else {
-              this.retryCount = 0;
+              this.retryCountRequest = 0;
               this.parseLogFromResponse(responseText, program);
 
               if (isLogInRequired(responseText)) {
@@ -813,8 +912,8 @@ export default class SASjs {
     return sasjsWaitingRequest.requestPromise.promise;
   }
 
-  private setCsrfToken = (csrfToken: CsrfToken) => {
-    this.csrfToken = csrfToken;
+  private setCsrfTokenApi = (csrfToken: CsrfToken) => {
+    this.csrfTokenApi = csrfToken;
   };
 
   private async resendWaitingRequests() {
@@ -836,11 +935,11 @@ export default class SASjs {
     this.sasjsWaitingRequests = [];
   }
 
-  private getRequestParams(): any {
+  private getRequestParamsWeb(): any {
     const requestParams: any = {};
 
-    if (this.csrfToken) {
-      requestParams["_csrf"] = this.csrfToken.value;
+    if (this.csrfTokenWeb) {
+      requestParams["_csrf"] = this.csrfTokenWeb.value;
     }
 
     if (this.sasjsConfig.debug) {
@@ -1078,7 +1177,7 @@ export default class SASjs {
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfToken
+          this.setCsrfTokenApi
         );
     }
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
