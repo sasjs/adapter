@@ -24,6 +24,7 @@ import {
 } from "./types";
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
+import { FileUploader } from "./FileUploader";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: "",
@@ -50,12 +51,12 @@ export default class SASjs {
   private csrfTokenApi: CsrfToken | null = null;
   private csrfTokenWeb: CsrfToken | null = null;
   private retryCountRequest: number = 0;
-  private retryCountFileUpload: number = 0;
   private sasjsRequests: SASjsRequest[] = [];
   private sasjsWaitingRequests: SASjsWaitingRequest[] = [];
   private userName: string = "";
   private sasViyaApiClient: SASViyaApiClient | null = null;
   private sas9ApiClient: SAS9ApiClient | null = null;
+  private fileUploader: FileUploader | null = null;
 
   constructor(config?: any) {
     this.sasjsConfig = {
@@ -383,83 +384,15 @@ export default class SASjs {
    * @param params - Request URL paramaters
    */
   public uploadFile(sasJob: string, file: File, fileName: string, params: any) {
-    if (!file) throw new Error("File must be provided");
-    if (!fileName) throw new Error("File name must be provided");
-
-    let paramsString = "";
-
-    for (let param in params) {
-      if (params.hasOwnProperty(param)) {
-        paramsString += `&${param}=${params[param]}`;
-      }
-    }
-
-    const program = this.sasjsConfig.appLoc
-      ? this.sasjsConfig.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
-      : sasJob;
-    const uploadUrl = `${this.sasjsConfig.serverUrl}${this.jobsPath}/?${'_program=' + program}${paramsString}`;
-
-    let headers = {
-      "cache-control": "no-cache"
-    }
-    
-    return new Promise((resolve, reject) => {
-      let formData = new FormData();
-
-      formData.append("file", file)
-      formData.append("filename", fileName)
-      if (this.csrfTokenWeb) formData.append('_csrf', this.csrfTokenWeb.value)
-
-      fetch(uploadUrl, {
-        method: "POST",
-        body: formData,
-        referrerPolicy: "same-origin",
-        headers
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            if (response.status === 403) {
-              const tokenHeader = response.headers.get("X-CSRF-HEADER");
-
-              if (tokenHeader) {
-                const token = response.headers.get(tokenHeader);
-                this.csrfTokenWeb = {
-                  headerName: tokenHeader,
-                  value: token || ''
-                }
-              }
-            }
-          }
-
-          return response.text();
-        })
-        .then((responseText) => {
-          if (isLogInRequired(responseText)) reject('You must be logged in to upload a fle');
-
-          if (
-            (needsRetry(responseText))
-          ) {
-            if (this.retryCountFileUpload < requestRetryLimit) {
-              this.retryCountFileUpload++;
-              this.uploadFile(sasJob, file, fileName, params).then(
-                (res: any) => resolve(res),
-                (err: any) => reject(err)
-              );
-            } else {
-              this.retryCountFileUpload = 0;
-              reject(responseText);
-            }
-          } else {
-            this.retryCountFileUpload = 0;
-
-            try {
-              resolve(JSON.parse(responseText))
-            } catch (e) {
-              reject(e);
-            }
-          }
-        });
-    });
+    const fileUploader =
+      this.fileUploader ||
+      new FileUploader(
+        this.sasjsConfig.appLoc,
+        this.sasjsConfig.serverUrl,
+        this.jobsPath,
+        this.csrfTokenWeb
+      );
+    return fileUploader.uploadFile(sasJob, file, fileName, params);
   }
 
   /**
@@ -816,8 +749,8 @@ export default class SASjs {
                   const token = response.headers.get(tokenHeader);
                   this.csrfTokenWeb = {
                     headerName: tokenHeader,
-                    value: token || ''
-                  }
+                    value: token || "",
+                  };
                 }
               }
             }
@@ -1185,6 +1118,12 @@ export default class SASjs {
         this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl);
       else this.sas9ApiClient = new SAS9ApiClient(this.sasjsConfig.serverUrl);
     }
+
+    this.fileUploader = new FileUploader(
+      this.sasjsConfig.appLoc,
+      this.sasjsConfig.serverUrl,
+      this.jobsPath
+    );
   }
 
   private setLoginUrl = (matches: RegExpExecArray) => {
