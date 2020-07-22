@@ -1,5 +1,5 @@
 import SASjs, { ServerType, SASjsConfig } from "@sasjs/adapter";
-import { TestSuite } from "../types";
+import { TestSuite } from "@sasjs/test-framework";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,

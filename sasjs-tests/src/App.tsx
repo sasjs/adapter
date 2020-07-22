@@ -1,16 +1,28 @@
 import React, { ReactElement, useState, useContext, useEffect } from "react";
+import { TestSuiteRunner, TestSuite, AppContext } from "@sasjs/test-framework";
+import { basicTests } from "./testSuites/Basic";
+import { sendArrTests, sendObjTests } from "./testSuites/RequestData";
+import { specialCaseTests } from "./testSuites/SpecialCases";
+import { sasjsRequestTests } from "./testSuites/SasjsRequests";
+import "@sasjs/test-framework/dist/index.css";
 import "./App.scss";
-import TestSuiteRunner from "./TestSuiteRunner";
-import { AppContext } from "./context/AppContext";
 
 const App = (): ReactElement<{}> => {
   const [appLoc, setAppLoc] = useState("");
   const [debug, setDebug] = useState(false);
-  const { adapter } = useContext(AppContext);
+  const { adapter, config } = useContext(AppContext);
+  const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
 
   useEffect(() => {
     if (adapter) {
       adapter.setDebugState(debug);
+      setTestSuites([
+        basicTests(adapter, config.userName, config.password),
+        sendArrTests(adapter),
+        sendObjTests(adapter),
+        specialCaseTests(adapter),
+        sasjsRequestTests(adapter),
+      ]);
     }
   }, [debug, adapter]);
 
@@ -50,7 +62,7 @@ const App = (): ReactElement<{}> => {
           />
         </div>
       </div>
-      {adapter && <TestSuiteRunner adapter={adapter} />}
+      {adapter && testSuites && <TestSuiteRunner testSuites={testSuites} />}
     </div>
   );
 };

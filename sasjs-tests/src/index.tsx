@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { Route, HashRouter, Switch } from "react-router-dom";
 import "./index.scss";
 import * as serviceWorker from "./serviceWorker";
-import { AppProvider } from "./context/AppContext";
+import { AppProvider } from "@sasjs/test-framework";
 import PrivateRoute from "./PrivateRoute";
 import Login from "./Login";
 import App from "./App";

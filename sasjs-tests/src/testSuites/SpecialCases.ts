@@ -1,5 +1,5 @@
 import SASjs from "@sasjs/adapter";
-import { TestSuite } from "../types";
+import { TestSuite } from "@sasjs/test-framework";
 
 const specialCharData: any = {
   table1: [
