@@ -24,7 +24,7 @@ const App = (): ReactElement<{}> => {
         sasjsRequestTests(adapter),
       ]);
     }
-  }, [debug, adapter]);
+  }, [debug, adapter, config]);
 
   useEffect(() => {
     if (appLoc && adapter) {
