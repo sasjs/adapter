@@ -24,7 +24,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && rsync -avhe ssh ./build/* --delete kriaco@sas.analytium.co.uk:/var/www/html/kriaco/sasjs-tests"
+    "deploy": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz && npm run build && rsync -avhe ssh ./build/* --delete kriaco@sas.analytium.co.uk:/var/www/html/kriaco/sasjs-tests"
   },
   "eslintConfig": {
     "extends": "react-app"
