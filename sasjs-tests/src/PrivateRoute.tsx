@@ -1,6 +1,6 @@
 import React, { ReactElement, useContext, FunctionComponent } from "react";
 import { Redirect, Route } from "react-router-dom";
-import { AppContext } from "./context/AppContext";
+import { AppContext } from "@sasjs/test-framework";
 
 interface PrivateRouteProps {
   component: FunctionComponent;
