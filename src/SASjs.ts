@@ -383,7 +383,7 @@ export default class SASjs {
    * @param file - Array of files to be uploaded, including File object and file name.
    * @param params - Request URL paramaters
    */
-  public uploadFile(sasJob: string, files: UploadFile[], fileName: string, params: any) {
+  public uploadFile(sasJob: string, files: UploadFile[], params: any) {
     const fileUploader =
       this.fileUploader ||
       new FileUploader(
