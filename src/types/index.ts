@@ -8,3 +8,4 @@ export * from "./SASjsRequest";
 export * from "./SASjsWaitingRequest";
 export * from "./ServerType";
 export * from "./Session";
+export * from "./UploadFile";

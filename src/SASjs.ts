@@ -21,6 +21,7 @@ import {
   SASjsWaitingRequest,
   ServerType,
   CsrfToken,
+  UploadFile
 } from "./types";
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
@@ -379,11 +380,10 @@ export default class SASjs {
    * @param sasJob - The path to the SAS program (ultimately resolves to
    *  the SAS `_program` parameter to run a Job Definition or SAS 9 Stored
    *  Process.)  Is prepended at runtime with the value of `appLoc`.
-   * @param file - File to be uploaded
-   * @param fileName - Name of the file to be uploaded
+   * @param file - Array of files to be uploaded, including File object and file name.
    * @param params - Request URL paramaters
    */
-  public uploadFile(sasJob: string, file: File, fileName: string, params: any) {
+  public uploadFile(sasJob: string, files: UploadFile[], fileName: string, params: any) {
     const fileUploader =
       this.fileUploader ||
       new FileUploader(
@@ -392,7 +392,7 @@ export default class SASjs {
         this.jobsPath,
         this.csrfTokenWeb
       );
-    return fileUploader.uploadFile(sasJob, file, fileName, params);
+    return fileUploader.uploadFile(sasJob, files, params);
   }
 
   /**

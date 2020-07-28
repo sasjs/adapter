@@ -1,5 +1,6 @@
 import { isLogInRequired, needsRetry } from "./utils";
 import { CsrfToken } from "./types/CsrfToken";
+import { UploadFile } from "./types/UploadFile";
 
 const requestRetryLimit = 5;
 
@@ -12,9 +13,8 @@ export class FileUploader {
   ) {}
   private retryCount = 0;
 
-  public uploadFile(sasJob: string, file: File, fileName: string, params: any) {
-    if (!file) throw new Error("File must be provided");
-    if (!fileName) throw new Error("File name must be provided");
+  public uploadFile(sasJob: string, files: UploadFile[], params: any) {
+    if (files?.length < 1) throw new Error("Atleast one file must be provided");
 
     let paramsString = "";
 
@@ -38,8 +38,10 @@ export class FileUploader {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
 
-      formData.append("file", file);
-      formData.append("filename", fileName);
+      for (let file of files) {
+        formData.append("file", file.file, file.fileName);
+      }
+
       if (this.csrfToken) formData.append("_csrf", this.csrfToken.value);
 
       fetch(uploadUrl, {
@@ -72,7 +74,7 @@ export class FileUploader {
           if (needsRetry(responseText)) {
             if (this.retryCount < requestRetryLimit) {
               this.retryCount++;
-              this.uploadFile(sasJob, file, fileName, params).then(
+              this.uploadFile(sasJob, files, params).then(
                 (res: any) => resolve(res),
                 (err: any) => reject(err)
               );
