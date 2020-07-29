@@ -510,35 +510,45 @@ export default class SASjs {
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
-        resolve(
-          await this.sasViyaApiClient
-            ?.executeComputeJob(
-              sasJob,
-              config.contextName,
-              config.debug,
-              data,
-              accessToken
-            )
-            .then((response) => {
-              if (!config.debug) {
-                this.appendSasjsRequest(null, sasJob, null);
-              } else {
-                this.appendSasjsRequest(response, sasJob, null);
-              }
-              return JSON.parse(response!.result);
-            })
-            .catch((e) => {
-              if (e && e.status === 401) {
-                if (loginRequiredCallback) loginRequiredCallback(true);
-                sasjsWaitingRequest.requestPromise.resolve = resolve;
-                sasjsWaitingRequest.requestPromise.reject = reject;
-                sasjsWaitingRequest.config = config;
-                this.sasjsWaitingRequests.push(sasjsWaitingRequest);
-              } else {
-                reject({ MESSAGE: e || "Job execution failed" });
-              }
-            })
-        );
+        const session = await this.checkSession();
+
+        if (!session.isLoggedIn) {
+          if (loginRequiredCallback) loginRequiredCallback(true);
+          sasjsWaitingRequest.requestPromise.resolve = resolve;
+          sasjsWaitingRequest.requestPromise.reject = reject;
+          sasjsWaitingRequest.config = config;
+          this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+        } else {
+          resolve(
+            await this.sasViyaApiClient
+              ?.executeComputeJob(
+                sasJob,
+                config.contextName,
+                config.debug,
+                data,
+                accessToken
+              )
+              .then((response) => {
+                if (!config.debug) {
+                  this.appendSasjsRequest(null, sasJob, null);
+                } else {
+                  this.appendSasjsRequest(response, sasJob, null);
+                }
+                return JSON.parse(response!.result);
+              })
+              .catch((e) => {
+                if (e && e.status === 401) {
+                  if (loginRequiredCallback) loginRequiredCallback(true);
+                  sasjsWaitingRequest.requestPromise.resolve = resolve;
+                  sasjsWaitingRequest.requestPromise.reject = reject;
+                  sasjsWaitingRequest.config = config;
+                  this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+                } else {
+                  reject({ MESSAGE: e || "Job execution failed" });
+                }
+              })
+          );
+        }
       }
     );
     return sasjsWaitingRequest.requestPromise.promise;
