@@ -510,15 +510,6 @@ export default class SASjs {
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
-        const session = await this.checkSession();
-
-        if (!session.isLoggedIn) {
-          if (loginRequiredCallback) loginRequiredCallback(true);
-          sasjsWaitingRequest.requestPromise.resolve = resolve;
-          sasjsWaitingRequest.requestPromise.reject = reject;
-          sasjsWaitingRequest.config = config;
-          this.sasjsWaitingRequests.push(sasjsWaitingRequest);
-        } else {
           resolve(
             await this.sasViyaApiClient
               ?.executeComputeJob(
@@ -549,7 +540,6 @@ export default class SASjs {
               })
           );
         }
-      }
     );
     return sasjsWaitingRequest.requestPromise.promise;
   }
