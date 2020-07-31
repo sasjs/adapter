@@ -313,6 +313,7 @@ export class SASViyaApiClient {
         }
       ).then((res: any) => res.result.items.map((i: any) => i.line).join("\n"));
     }
+    
     return { result: jobResult?.result, log };
     // } else {
     //   console.error(
@@ -621,7 +622,6 @@ export class SASViyaApiClient {
     if (!this.rootFolder) {
       await this.populateRootFolder(accessToken);
     }
-
     if (!this.rootFolder) {
       throw new Error("Root folder was not found");
     }
@@ -869,10 +869,7 @@ export class SASViyaApiClient {
     const rootFolder = await this.request<Folder>(
       `${this.serverUrl}${url}`,
       requestInfo
-    ).catch((e) => {
-      error = e;
-      return null;
-    });
+    );
 
     this.rootFolder = rootFolder?.result || null;
     if (error) {

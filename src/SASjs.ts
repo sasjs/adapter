@@ -51,7 +51,9 @@ export default class SASjs {
   private loginUrl: string = "";
   private csrfTokenApi: CsrfToken | null = null;
   private csrfTokenWeb: CsrfToken | null = null;
-  private retryCountRequest: number = 0;
+  private retryCountWeb: number = 0;
+  private retryCountComputeApi: number = 0;
+  private retryCountJeseApi: number = 0;
   private sasjsRequests: SASjsRequest[] = [];
   private sasjsWaitingRequests: SASjsWaitingRequest[] = [];
   private userName: string = "";
@@ -438,6 +440,8 @@ export default class SASjs {
           loginRequiredCallback,
           accessToken
         );
+
+        this.retryCountComputeApi = 0;
       } else {
         requestResponse = await this.executeJobViaJesApi(
           sasJob,
@@ -446,6 +450,8 @@ export default class SASjs {
           loginRequiredCallback,
           accessToken
         );
+
+        this.retryCountJeseApi = 0;
       }
     } else {
       requestResponse = await this.executeJobViaWeb(
@@ -539,8 +545,7 @@ export default class SASjs {
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
-        resolve(
-          await this.sasViyaApiClient
+        this.sasViyaApiClient
             ?.executeComputeJob(
               sasJob,
               config.contextName,
@@ -554,9 +559,29 @@ export default class SASjs {
               } else {
                 this.appendSasjsRequest(response, sasJob, null);
               }
-              return JSON.parse(response!.result);
+
+              resolve(JSON.parse(response!.result));
             })
-            .catch((e) => {
+            .catch(async (e) => {
+              if (needsRetry(JSON.stringify(e))) {
+                if (this.retryCountComputeApi < requestRetryLimit) {
+                  let retryResponse = await this.executeJobViaComputeApi(
+                    sasJob,
+                    data,
+                    config,
+                    loginRequiredCallback,
+                    accessToken
+                  );
+
+                  this.retryCountComputeApi++;
+  
+                  resolve(retryResponse);
+                } else {
+                  this.retryCountComputeApi = 0;
+                  reject({ MESSAGE: "Compute API retry requests limit reached" });
+                }
+              }
+
               if (e && e.status === 401) {
                 if (loginRequiredCallback) loginRequiredCallback(true);
                 sasjsWaitingRequest.requestPromise.resolve = resolve;
@@ -567,7 +592,6 @@ export default class SASjs {
                 reject({ MESSAGE: e || "Job execution failed" });
               }
             })
-        );
       }
     );
     return sasjsWaitingRequest.requestPromise.promise;
@@ -618,9 +642,28 @@ export default class SASjs {
                 }
                 return JSON.parse(response!.result);
               })
-              .catch((e) =>
+              .catch(async (e) => {
+                if (needsRetry(JSON.stringify(e))) {
+                  if (this.retryCountJeseApi < requestRetryLimit) {
+                    let retryResponse = await this.executeJobViaJesApi(
+                      sasJob,
+                      data,
+                      config,
+                      loginRequiredCallback,
+                      accessToken
+                    );
+  
+                    this.retryCountJeseApi++;
+    
+                    resolve(retryResponse);
+                  } else {
+                    this.retryCountJeseApi = 0;
+                    reject({ MESSAGE: "Jes API retry requests limit reached" });
+                  }
+                }
+
                 reject({ MESSAGE: (e && e.message) || "Job execution failed" })
-              )
+              })
           );
         }
       }
@@ -769,18 +812,18 @@ export default class SASjs {
               (needsRetry(responseText) || isRedirected) &&
               !isLogInRequired(responseText)
             ) {
-              if (this.retryCountRequest < requestRetryLimit) {
-                this.retryCountRequest++;
+              if (this.retryCountWeb < requestRetryLimit) {
+                this.retryCountWeb++;
                 this.request(sasJob, data).then(
                   (res: any) => resolve(res),
                   (err: any) => reject(err)
                 );
               } else {
-                this.retryCountRequest = 0;
+                this.retryCountWeb = 0;
                 reject(responseText);
               }
             } else {
-              this.retryCountRequest = 0;
+              this.retryCountWeb = 0;
               this.parseLogFromResponse(responseText, program);
 
               if (isLogInRequired(responseText)) {
