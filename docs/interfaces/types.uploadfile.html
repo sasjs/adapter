@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Folder | @sasjs/adapter</title>
+	<title>UploadFile | @sasjs/adapter</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -58,7 +58,7 @@
 					<a href="../modules/types.html">types</a>
 				</li>
 				<li>
-					<a href="types.folder.html">Folder</a>
+					<a href="types.uploadfile.html">UploadFile</a>
 				</li>
 			</ul>
 		</div>
@@ -75,12 +75,17 @@
 			</nav>
 		</div>
 		<div class="col-7 offset-3 col-content">
-			<h1>Interface Folder</h1>
+			<h1>Interface UploadFile</h1>
+			<section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography tsd-comment-shorttext">
+					<div class="lead">
+						<p>Represents a object that is passed to file uploader</p>
+					</div>
+			</div></section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">Folder</span>
+						<span class="target">UploadFile</span>
 					</li>
 				</ul>
 			</section>
@@ -90,9 +95,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.folder.html#id" class="tsd-kind-icon">id</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.folder.html#links" class="tsd-kind-icon">links</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.folder.html#uri" class="tsd-kind-icon">uri</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.uploadfile.html#file" class="tsd-kind-icon">file</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.uploadfile.html#filename" class="tsd-kind-icon">fileName</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,32 +105,22 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="id" class="tsd-anchor"></a>
-					<h3>id</h3>
-					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="file" class="tsd-anchor"></a>
+					<h3>file</h3>
+					<div class="tsd-signature tsd-kind-icon">file<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">File</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Folder.ts:4</li>
+							<li>Defined in types/UploadFile.ts:6</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="links" class="tsd-anchor"></a>
-					<h3>links</h3>
-					<div class="tsd-signature tsd-kind-icon">links<span class="tsd-signature-symbol">:</span> <a href="types.link.html" class="tsd-signature-type">Link</a><span class="tsd-signature-symbol">[]</span></div>
+					<a name="filename" class="tsd-anchor"></a>
+					<h3>file<wbr>Name</h3>
+					<div class="tsd-signature tsd-kind-icon">file<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Folder.ts:6</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="uri" class="tsd-anchor"></a>
-					<h3>uri</h3>
-					<div class="tsd-signature tsd-kind-icon">uri<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/Folder.ts:5</li>
+							<li>Defined in types/UploadFile.ts:7</li>
 						</ul>
 					</aside>
 				</section>
@@ -148,24 +142,9 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.csrftoken.html" class="tsd-kind-icon">Csrf<wbr>Token</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-module root">
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.folder.html" class="tsd-kind-icon">Folder</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.folder.html#id" class="tsd-kind-icon">id</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.folder.html#links" class="tsd-kind-icon">links</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.folder.html#uri" class="tsd-kind-icon">uri</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.job.html" class="tsd-kind-icon">Job</a>
 					</li>
@@ -187,9 +166,21 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.session.html" class="tsd-kind-icon">Session</a>
 					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.uploadfile.html#file" class="tsd-kind-icon">file</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.uploadfile.html#filename" class="tsd-kind-icon">file<wbr>Name</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 				</ul>
 			</nav>
 		</div>
