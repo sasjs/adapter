@@ -1,6 +1,6 @@
 import React, { ReactElement, useState, useCallback, useContext } from "react";
 import "./Login.scss";
-import { AppContext } from "./context/AppContext";
+import { AppContext } from "@sasjs/test-framework";
 import { Redirect } from "react-router-dom";
 
 const Login = (): ReactElement<{}> => {

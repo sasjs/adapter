@@ -16,7 +16,7 @@ Tests are run using cypress. Before running tests, you need to define the follow
 
 ```
 
-filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/main/mc_all.sas?_=1";
+filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
 filename ft15f001 temp;
 parmcards4;
@@ -40,18 +40,13 @@ parmcards4;
 # Viya
 
 ```
-filename mc url "https://raw.githubusercontent.com/macropeople/macrocore/main/mc_all.sas";
+filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
-
 filename ft15f001 temp;
 parmcards4;
+  %webout(FETCH)
   %webout(OPEN)
-  %global sasjs_tables;
-  %let sasjs_tables=&sasjs_tables;
-  %put &=sasjs_tables;
-  %let sasjs_tables=&sasjs_tables;
   %macro x();
-  %global sasjs_tables;
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
     %webout(OBJ,&table)
@@ -60,13 +55,11 @@ parmcards4;
   %x()
   %webout(CLOSE)
 ;;;;
-%mv_createwebservice(path=/Public/app/common,name=sendObj)
+%mp_createwebservice(path=/Public/app/common,name=sendObj)
 filename ft15f001 temp;
 parmcards4;
+  %webout(FETCH)
   %webout(OPEN)
-  %global sasjs_tables;
-  %let sasjs_tables=&sasjs_tables;
-  %put &=sasjs_tables;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
@@ -76,7 +69,7 @@ parmcards4;
   %x()
   %webout(CLOSE)
 ;;;;
-%mv_createwebservice(path=/Public/app/common,name=sendArr)
+%mp_createwebservice(path=/Public/app/common,name=sendArr)
 ```
 
 The above services will return anything you send. To run the tests simply launch `npm run cypress`.

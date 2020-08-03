@@ -6,7 +6,7 @@ name: SASjs Build and Publish
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build:
