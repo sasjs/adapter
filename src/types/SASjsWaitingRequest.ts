@@ -10,5 +10,5 @@ export interface SASjsWaitingRequest {
   };
   SASjob: string;
   data: any;
-  params?: any;
+  config?: any;
 }
