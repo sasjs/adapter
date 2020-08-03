@@ -74,9 +74,8 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
       description:
         "Should error out with long string values over 32765 characters",
       test: () => {
-        return adapter
-          .request("common/sendArr", getLongStringData(32767))
-          .catch((e) => e);
+        const data = getLongStringData(32767);
+        return adapter.request("common/sendArr", data).catch((e) => e);
       },
       assertion: (error: any) => {
         return !!error && !!error.MESSAGE;

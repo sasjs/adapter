@@ -27,4 +27,5 @@ export class SASjsConfig {
    */
   debug: boolean = true;
   contextName: string = "";
+  useComputeApi = false;
 }

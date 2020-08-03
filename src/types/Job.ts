@@ -8,4 +8,5 @@ export interface Job {
   createdBy: string;
   links: Link[];
   results: JobResult;
+  error?: any;
 }

@@ -6,6 +6,7 @@
     "appLoc": "/Public/app",
     "serverType": "SASVIYA",
     "debug": false,
-    "contextName": null
+    "contextName": "SharedCompute",
+    "useComputeApi": true
   }
 }
