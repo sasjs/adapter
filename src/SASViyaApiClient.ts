@@ -1018,7 +1018,10 @@ export class SASViyaApiClient {
     const { result: folder } = await this.request<Folder>(
       `${this.serverUrl}${url}`,
       requestInfo
-    );
+    ).catch((err) => {
+      return {result: null};
+    })
+    
     if (!folder) return undefined;
     return `/folders/folders/${folder.id}`;
   }
