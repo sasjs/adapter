@@ -53,7 +53,7 @@
     "typedoc-plugin-external-module-name": "^4.0.3",
     "typescript": "^3.9.7",
     "uglifyjs-webpack-plugin": "^2.2.0",
-    "webpack": "^4.43.0",
+    "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
   "main": "index.js",
