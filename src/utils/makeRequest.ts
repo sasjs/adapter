@@ -1,4 +1,8 @@
 import { CsrfToken } from "../types";
+import { needsRetry } from "./needsRetry";
+
+let retryCount: number = 0;
+let retryLimit: number = 5;
 
 export async function makeRequest<T>(
   url: string,
@@ -6,6 +10,8 @@ export async function makeRequest<T>(
   callback: (value: CsrfToken) => any,
   contentType: "text" | "json" = "json"
 ): Promise<{ result: T; etag: string | null }> {
+  let retryRequest: any = null;
+
   const responseTransform =
     contentType === "json"
       ? (res: Response) => res.json()
@@ -23,7 +29,7 @@ export async function makeRequest<T>(
             value: token || "",
           });
 
-          const retryRequest = {
+          retryRequest = {
             ...request,
             headers: { ...request.headers, [tokenHeader]: token },
           };
@@ -37,12 +43,35 @@ export async function makeRequest<T>(
         return Promise.reject({ status: response.status, body });
       }
     } else {
-      if (response.redirected && response.url.includes("SASLogon/login")) {
-        const body = await response.text();
-        return Promise.reject({ status: 401, body });
+      const responseTransformed = responseTransform(response);
+      let responseText = '';
+
+      if (typeof responseTransformed === 'string') {
+        responseText = responseTransformed;
+      } else {
+        responseText = JSON.stringify(responseTransformed);
       }
+
+      if (response.redirected && response.url.includes("SASLogon/login")) {
+        return Promise.reject({ status: 401, responseTransformed });
+      }
+      
+      if (needsRetry(responseText)) {
+        if (retryCount < retryLimit) {
+          retryCount++;
+          let retryResponse =  await makeRequest(url, retryRequest || request, callback, contentType);
+          retryCount = 0;
+
+          return retryResponse;
+        } else {
+          retryCount = 0;
+          
+          throw new Error('Request retry limit exceeded');
+        }
+      }
+
       etag = response.headers.get("ETag");
-      return responseTransform(response);
+      return responseTransformed;
     }
   });
   return { result, etag };
