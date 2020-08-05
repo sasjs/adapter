@@ -40,10 +40,25 @@ export async function makeRequest<T>(
         }
       } else {
         const body = await response.text();
+
+        if (needsRetry(body)) {
+          if (retryCount < retryLimit) {
+            retryCount++;
+            let retryResponse =  await makeRequest(url, retryRequest || request, callback, contentType);
+            retryCount = 0;
+  
+            return retryResponse;
+          } else {
+            retryCount = 0;
+            
+            throw new Error('Request retry limit exceeded');
+          }
+        }
+        
         return Promise.reject({ status: response.status, body });
       }
     } else {
-      const responseTransformed = responseTransform(response);
+      const responseTransformed = await responseTransform(response);
       let responseText = '';
 
       if (typeof responseTransformed === 'string') {
