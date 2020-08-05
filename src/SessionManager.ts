@@ -16,7 +16,21 @@ export class SessionManager {
   async getSession(accessToken?: string) {
     await this.createSessions(accessToken);
     this.createAndWaitForSession(accessToken);
-    return this.sessions.pop();
+    const session = this.sessions.pop();
+    return session;
+  }
+
+  async clearSession(id: string, accessToken?: string) {
+    const deleteSessionRequest = {
+      method: "DELETE",
+      headers: this.getHeaders(accessToken),
+    };
+    return await this.request<Session>(
+      `${this.serverUrl}/compute/sessions/${id}`,
+      deleteSessionRequest
+    ).then(() => {
+      this.sessions = this.sessions.filter((s) => s.id !== id);
+    });
   }
 
   private async createSessions(accessToken?: string) {

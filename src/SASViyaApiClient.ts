@@ -29,7 +29,11 @@ export class SASViyaApiClient {
   }
   private csrfToken: CsrfToken | null = null;
   private rootFolder: Folder | null = null;
-  private sessionManager = new SessionManager(this.serverUrl, this.contextName, this.setCsrfToken);
+  private sessionManager = new SessionManager(
+    this.serverUrl,
+    this.contextName,
+    this.setCsrfToken
+  );
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -113,9 +117,7 @@ export class SASViyaApiClient {
         `test-${context.name}`,
         linesOfCode,
         context.name,
-        accessToken,
-        undefined,
-        true
+        accessToken
       ).catch(() => null);
     });
     const results = await Promise.all(promises);
@@ -201,11 +203,11 @@ export class SASViyaApiClient {
     linesOfCode: string[],
     contextName: string,
     accessToken?: string,
-    sessionId = "",
     silent = false,
     data = null,
     debug = false
   ) {
+    silent = !debug;
     const headers: any = {
       "Content-Type": "application/json",
     };
@@ -313,7 +315,9 @@ export class SASViyaApiClient {
         }
       ).then((res: any) => res.result.items.map((i: any) => i.line).join("\n"));
     }
-    
+
+    await this.sessionManager.clearSession(executionSessionId, accessToken);
+
     return { result: jobResult?.result, log };
     // } else {
     //   console.error(
@@ -623,12 +627,16 @@ export class SASViyaApiClient {
       await this.populateRootFolder(accessToken);
     }
     if (!this.rootFolder) {
+      console.error("Root folder was not found");
       throw new Error("Root folder was not found");
     }
     if (!this.rootFolderMap.size) {
       await this.populateRootFolderMap(accessToken);
     }
     if (!this.rootFolderMap.size) {
+      console.error(
+        `The job ${sasJob} was not found in ${this.rootFolderName}`
+      );
       throw new Error(
         `The job ${sasJob} was not found in ${this.rootFolderName}`
       );
@@ -647,6 +655,7 @@ export class SASViyaApiClient {
       (l) => l.rel === "getResource"
     );
     if (!jobDefinitionLink) {
+      console.error("Job definition URI was not found.");
       throw new Error("Job definition URI was not found.");
     }
     const { result: jobDefinition } = await this.request<JobDefinition>(
@@ -661,7 +670,6 @@ export class SASViyaApiClient {
       linesToExecute,
       contextName,
       accessToken,
-      "",
       true,
       data,
       debug
@@ -1019,9 +1027,9 @@ export class SASViyaApiClient {
       `${this.serverUrl}${url}`,
       requestInfo
     ).catch((err) => {
-      return {result: null};
-    })
-    
+      return { result: null };
+    });
+
     if (!folder) return undefined;
     return `/folders/folders/${folder.id}`;
   }
@@ -1042,6 +1050,11 @@ export class SASViyaApiClient {
         [this.csrfToken.headerName]: this.csrfToken.value,
       };
     }
-    return await makeRequest<T>(url, options, this.setCsrfTokenLocal, contentType);
+    return await makeRequest<T>(
+      url,
+      options,
+      this.setCsrfTokenLocal,
+      contentType
+    );
   }
 }

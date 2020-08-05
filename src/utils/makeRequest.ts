@@ -44,24 +44,32 @@ export async function makeRequest<T>(
         if (needsRetry(body)) {
           if (retryCount < retryLimit) {
             retryCount++;
-            let retryResponse =  await makeRequest(url, retryRequest || request, callback, contentType);
+            let retryResponse = await makeRequest(
+              url,
+              retryRequest || request,
+              callback,
+              contentType
+            );
             retryCount = 0;
-  
+
             return retryResponse;
           } else {
             retryCount = 0;
-            
-            throw new Error('Request retry limit exceeded');
+
+            throw new Error("Request retry limit exceeded");
           }
         }
-        
+
         return Promise.reject({ status: response.status, body });
       }
     } else {
+      if (response.status === 204) {
+        return Promise.resolve();
+      }
       const responseTransformed = await responseTransform(response);
-      let responseText = '';
+      let responseText = "";
 
-      if (typeof responseTransformed === 'string') {
+      if (typeof responseTransformed === "string") {
         responseText = responseTransformed;
       } else {
         responseText = JSON.stringify(responseTransformed);
@@ -70,18 +78,23 @@ export async function makeRequest<T>(
       if (response.redirected && response.url.includes("SASLogon/login")) {
         return Promise.reject({ status: 401, responseTransformed });
       }
-      
+
       if (needsRetry(responseText)) {
         if (retryCount < retryLimit) {
           retryCount++;
-          let retryResponse =  await makeRequest(url, retryRequest || request, callback, contentType);
+          const retryResponse = await makeRequest(
+            url,
+            retryRequest || request,
+            callback,
+            contentType
+          );
           retryCount = 0;
 
           return retryResponse;
         } else {
           retryCount = 0;
-          
-          throw new Error('Request retry limit exceeded');
+
+          throw new Error("Request retry limit exceeded");
         }
       }
 

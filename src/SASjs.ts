@@ -21,7 +21,7 @@ import {
   SASjsWaitingRequest,
   ServerType,
   CsrfToken,
-  UploadFile
+  UploadFile,
 } from "./types";
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
@@ -122,7 +122,6 @@ export default class SASjs {
       linesOfCode,
       contextName,
       accessToken,
-      sessionId,
       silent
     );
   }
@@ -546,52 +545,52 @@ export default class SASjs {
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
         this.sasViyaApiClient
-            ?.executeComputeJob(
-              sasJob,
-              config.contextName,
-              config.debug,
-              data,
-              accessToken
-            )
-            .then((response) => {
-              if (!config.debug) {
-                this.appendSasjsRequest(null, sasJob, null);
+          ?.executeComputeJob(
+            sasJob,
+            config.contextName,
+            config.debug,
+            data,
+            accessToken
+          )
+          .then((response) => {
+            if (!config.debug) {
+              this.appendSasjsRequest(null, sasJob, null);
+            } else {
+              this.appendSasjsRequest(response, sasJob, null);
+            }
+
+            resolve(JSON.parse(response!.result));
+          })
+          .catch(async (e) => {
+            if (needsRetry(JSON.stringify(e))) {
+              if (this.retryCountComputeApi < requestRetryLimit) {
+                let retryResponse = await this.executeJobViaComputeApi(
+                  sasJob,
+                  data,
+                  config,
+                  loginRequiredCallback,
+                  accessToken
+                );
+
+                this.retryCountComputeApi++;
+
+                resolve(retryResponse);
               } else {
-                this.appendSasjsRequest(response, sasJob, null);
+                this.retryCountComputeApi = 0;
+                reject({ MESSAGE: "Compute API retry requests limit reached" });
               }
+            }
 
-              resolve(JSON.parse(response!.result));
-            })
-            .catch(async (e) => {
-              if (needsRetry(JSON.stringify(e))) {
-                if (this.retryCountComputeApi < requestRetryLimit) {
-                  let retryResponse = await this.executeJobViaComputeApi(
-                    sasJob,
-                    data,
-                    config,
-                    loginRequiredCallback,
-                    accessToken
-                  );
-
-                  this.retryCountComputeApi++;
-  
-                  resolve(retryResponse);
-                } else {
-                  this.retryCountComputeApi = 0;
-                  reject({ MESSAGE: "Compute API retry requests limit reached" });
-                }
-              }
-
-              if (e && e.status === 401) {
-                if (loginRequiredCallback) loginRequiredCallback(true);
-                sasjsWaitingRequest.requestPromise.resolve = resolve;
-                sasjsWaitingRequest.requestPromise.reject = reject;
-                sasjsWaitingRequest.config = config;
-                this.sasjsWaitingRequests.push(sasjsWaitingRequest);
-              } else {
-                reject({ MESSAGE: e || "Job execution failed" });
-              }
-            })
+            if (e && e.status === 401) {
+              if (loginRequiredCallback) loginRequiredCallback(true);
+              sasjsWaitingRequest.requestPromise.resolve = resolve;
+              sasjsWaitingRequest.requestPromise.reject = reject;
+              sasjsWaitingRequest.config = config;
+              this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+            } else {
+              reject({ MESSAGE: e || "Job execution failed" });
+            }
+          });
       }
     );
     return sasjsWaitingRequest.requestPromise.promise;
@@ -652,9 +651,9 @@ export default class SASjs {
                       loginRequiredCallback,
                       accessToken
                     );
-  
+
                     this.retryCountJeseApi++;
-    
+
                     resolve(retryResponse);
                   } else {
                     this.retryCountJeseApi = 0;
@@ -662,7 +661,7 @@ export default class SASjs {
                   }
                 }
 
-                reject({ MESSAGE: (e && e.message) || "Job execution failed" })
+                reject({ MESSAGE: (e && e.message) || "Job execution failed" });
               })
           );
         }
