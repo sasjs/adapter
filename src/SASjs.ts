@@ -1109,6 +1109,10 @@ export default class SASjs {
     return sortedRequests;
   }
 
+  public clearSasRequests() {
+    this.sasjsRequests = [];
+  }
+
   private setupConfiguration() {
     if (
       this.sasjsConfig.serverUrl === undefined ||
