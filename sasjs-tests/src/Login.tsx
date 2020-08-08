@@ -12,7 +12,7 @@ const Login = (): ReactElement<{}> => {
     (e) => {
       e.preventDefault();
       appContext.adapter.logIn(username, password).then((res) => {
-        appContext.setIsLoggedIn(true);
+        appContext.setIsLoggedIn(res.isLoggedIn);
       });
     },
     [username, password, appContext]
