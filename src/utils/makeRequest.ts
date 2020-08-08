@@ -18,6 +18,9 @@ export async function makeRequest<T>(
       : (res: Response) => res.text();
   let etag = null;
   const result = await fetch(url, request).then(async (response) => {
+    if (response.redirected && response.url.includes("SASLogon/login")) {
+      return Promise.reject({ status: 401 });
+    }
     if (!response.ok) {
       if (response.status === 403) {
         const tokenHeader = response.headers.get("X-CSRF-HEADER");
@@ -73,10 +76,6 @@ export async function makeRequest<T>(
         responseText = responseTransformed;
       } else {
         responseText = JSON.stringify(responseTransformed);
-      }
-
-      if (response.redirected && response.url.includes("SASLogon/login")) {
-        return Promise.reject({ status: 401, responseTransformed });
       }
 
       if (needsRetry(responseText)) {
