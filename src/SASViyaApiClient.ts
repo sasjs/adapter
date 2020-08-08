@@ -304,12 +304,14 @@ export class SASViyaApiClient {
         `${this.serverUrl}${resultLink}`,
         { headers },
         "text"
-      );
+      ).catch((e) => ({
+        result: JSON.stringify(e),
+      }));
     }
 
     if (true && logLink) {
       log = await this.request<any>(
-        `${this.serverUrl}${logLink.href}/content`,
+        `${this.serverUrl}${logLink.href}/content?limit=10000`,
         {
           headers,
         }
