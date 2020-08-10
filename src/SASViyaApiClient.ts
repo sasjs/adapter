@@ -208,12 +208,15 @@ export class SASViyaApiClient {
     debug = false
   ) {
     silent = !debug;
+    
     const headers: any = {
       "Content-Type": "application/json",
     };
+
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
+
     let executionSessionId: string;
     const session = await this.sessionManager.getSession(accessToken);
     executionSessionId = session!.id;
@@ -241,7 +244,9 @@ export class SASViyaApiClient {
       SYS_JES_JOB_URI: "",
       _program: this.rootFolderName + "/" + jobName,
     };
+
     let files: any[] = [];
+
     if (data) {
       if (JSON.stringify(data).includes(";")) {
         files = await this.uploadTables(data, accessToken);
@@ -269,10 +274,12 @@ export class SASViyaApiClient {
         arguments: jobArguments,
       }),
     };
+
     const { result: postedJob, etag } = await this.request<Job>(
       `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
       postJobRequest
     );
+    
     if (!silent) {
       console.log(`Job has been submitted for ${fileName}`);
       console.log(
@@ -288,17 +295,20 @@ export class SASViyaApiClient {
       accessToken,
       silent
     );
+
     const { result: currentJob } = await this.request<Job>(
       `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
       { headers }
     );
 
     let jobResult, log;
+
     if (jobStatus === "failed" || jobStatus === "error") {
       return Promise.reject(currentJob.error);
     }
     const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`;
     const logLink = currentJob.links.find((l) => l.rel === "log");
+
     if (resultLink) {
       jobResult = await this.request<any>(
         `${this.serverUrl}${resultLink}`,
@@ -708,11 +718,12 @@ export class SASViyaApiClient {
         `The job ${sasJob} was not found in ${this.rootFolderName}`
       );
     }
-
+    
     let files: any[] = [];
     if (data && Object.keys(data).length) {
       files = await this.uploadTables(data, accessToken);
     }
+    
     const jobName = path.basename(sasJob);
     const jobFolder = sasJob.replace(`/${jobName}`, "");
     const allJobsInFolder = this.rootFolderMap.get(jobFolder.replace("/", ""));
@@ -1007,12 +1018,12 @@ export class SASViyaApiClient {
         headers,
       };
 
-      const { result: file } = await this.request<any>(
+      const uploadResponse = await this.request<any>(
         `${this.serverUrl}/files/files#rawUpload`,
         createFileRequest
       );
 
-      uploadedFiles.push({ tableName, file });
+      uploadedFiles.push({ tableName, file: uploadResponse.result });
     }
     return uploadedFiles;
   }

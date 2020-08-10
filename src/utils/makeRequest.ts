@@ -55,7 +55,8 @@ export async function makeRequest<T>(
             );
             retryCount = 0;
 
-            return retryResponse;
+            etag = retryResponse.etag;
+            return retryResponse.result;
           } else {
             retryCount = 0;
 
@@ -89,7 +90,8 @@ export async function makeRequest<T>(
           );
           retryCount = 0;
 
-          return retryResponse;
+          etag = retryResponse.etag;
+          return retryResponse.result;
         } else {
           retryCount = 0;
 
