@@ -12,3 +12,4 @@ export * from "./parseSourceCode";
 export * from "./parseSasViyaLog";
 export * from "./serialize";
 export * from "./splitChunks";
+export * from "./parseWeboutResponse";

@@ -12,6 +12,7 @@ import {
   isLogInSuccess,
   parseSourceCode,
   parseGeneratedCode,
+  parseWeboutResponse,
   needsRetry,
   asyncForEach,
 } from "./utils";
@@ -559,7 +560,15 @@ export default class SASjs {
               this.appendSasjsRequest(response, sasJob, null);
             }
 
-            resolve(JSON.parse(response!.result));
+            let responseJson;
+
+            try {
+              responseJson = JSON.parse(response!.result);
+            } catch {
+              responseJson = JSON.parse(parseWeboutResponse(response!.result));
+            }
+
+            resolve(responseJson);
           })
           .catch(async (e) => {
             if (needsRetry(JSON.stringify(e))) {
@@ -639,7 +648,16 @@ export default class SASjs {
                 } else {
                   this.appendSasjsRequest(response, sasJob, null);
                 }
-                return JSON.parse(response!.result);
+
+                let responseJson;
+
+                try {
+                  responseJson = JSON.parse(response!.result);
+                } catch {
+                  responseJson = JSON.parse(parseWeboutResponse(response!.result));
+                }
+                
+                return responseJson;
               })
               .catch(async (e) => {
                 if (needsRetry(JSON.stringify(e))) {
@@ -834,7 +852,7 @@ export default class SASjs {
               } else {
                 if (config.serverType === ServerType.SAS9 && config.debug) {
                   this.updateUsername(responseText);
-                  const jsonResponseText = this.parseSAS9Response(responseText);
+                  const jsonResponseText = parseWeboutResponse(responseText);
 
                   if (jsonResponseText !== "") {
                     resolve(JSON.parse(jsonResponseText));
@@ -975,23 +993,6 @@ export default class SASjs {
     return uri;
   }
 
-  private parseSAS9Response(response: string) {
-    let sas9Response = "";
-
-    if (response.includes(">>weboutBEGIN<<")) {
-      try {
-        sas9Response = response
-          .split(">>weboutBEGIN<<")[1]
-          .split(">>weboutEND<<")[0];
-      } catch (e) {
-        sas9Response = "";
-        console.error(e);
-      }
-    }
-
-    return sas9Response;
-  }
-
   private parseSAS9ErrorResponse(response: string) {
     const logLines = response.split("\n");
     const parsedLines: string[] = [];
@@ -1049,7 +1050,12 @@ export default class SASjs {
     if (response && response.result && response.log) {
       sourceCode = parseSourceCode(response.log);
       generatedCode = parseGeneratedCode(response.log);
-      sasWork = JSON.parse(response.result).WORK;
+
+      if (this.sasjsConfig.debug) {
+        sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK;
+      } else {
+        sasWork = JSON.parse(response.result).WORK;
+      }
     } else {
       if (response) {
         sourceCode = parseSourceCode(response);
@@ -1078,7 +1084,7 @@ export default class SASjs {
 
       if (this.sasjsConfig.serverType === ServerType.SAS9) {
         try {
-          jsonResponse = JSON.parse(this.parseSAS9Response(response));
+          jsonResponse = JSON.parse(parseWeboutResponse(response));
         } catch (e) {
           console.error(e);
         }
