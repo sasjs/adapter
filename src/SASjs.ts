@@ -1,6 +1,10 @@
-import "isomorphic-fetch";
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
+if (isIEorEdgeOrOldFirefox()) {
+  window.fetch = undefined as any; // ensure the polyfill runs
+}
+// tslint:disable-next-line
+require("isomorphic-fetch");
 import {
   convertToCSV,
   compareTimestamps,
@@ -27,6 +31,7 @@ import {
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
 import { FileUploader } from "./FileUploader";
+import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: "",
@@ -654,9 +659,11 @@ export default class SASjs {
                 try {
                   responseJson = JSON.parse(response!.result);
                 } catch {
-                  responseJson = JSON.parse(parseWeboutResponse(response!.result));
+                  responseJson = JSON.parse(
+                    parseWeboutResponse(response!.result)
+                  );
                 }
-                
+
                 return responseJson;
               })
               .catch(async (e) => {
