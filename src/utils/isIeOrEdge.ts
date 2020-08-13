@@ -1,8 +1,12 @@
-export function isIEorEdgeOrFirefox60() {
+export function isIEorEdgeOrOldFirefox() {
   const ua = window.navigator.userAgent;
 
-  if (ua.indexOf("Firefox/60") > 0) {
-    return true;
+  if (ua.indexOf("Firefox") > 0) {
+    const version = parseInt(
+      ua.substring(ua.lastIndexOf("Firefox/") + 8, ua.length),
+      10
+    );
+    return version <= 60;
   }
 
   const msie = ua.indexOf("MSIE ");
