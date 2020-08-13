@@ -1,5 +1,9 @@
-export function isIEorEDGE() {
+export function isIEorEdgeOrFirefox60() {
   const ua = window.navigator.userAgent;
+
+  if (ua.indexOf("Firefox/60") > 0) {
+    return true;
+  }
 
   const msie = ua.indexOf("MSIE ");
   if (msie > 0) {

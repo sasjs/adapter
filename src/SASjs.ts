@@ -1,6 +1,6 @@
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
-if (isIEorEDGE()) {
+if (isIEorEdgeOrFirefox60()) {
   window.fetch = undefined as any; // ensure the polyfill runs
 }
 // tslint:disable-next-line
@@ -31,7 +31,7 @@ import {
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
 import { FileUploader } from "./FileUploader";
-import { isIEorEDGE } from "./utils/isIeOrEdge";
+import { isIEorEdgeOrFirefox60 } from "./utils/isIeOrEdge";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: "",
