@@ -1,3 +1,4 @@
+import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
 if (isIEorEdgeOrOldFirefox()) {
@@ -31,7 +32,6 @@ import {
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
 import { FileUploader } from "./FileUploader";
-import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: "",
