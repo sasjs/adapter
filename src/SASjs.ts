@@ -1061,7 +1061,11 @@ export default class SASjs {
       generatedCode = parseGeneratedCode(response.log);
 
       if (this.sasjsConfig.debug) {
-        sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK;
+        if (response.log) {
+          sasWork = response.log;
+        } else {
+          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK;
+        }
       } else {
         sasWork = JSON.parse(response.result).WORK;
       }
