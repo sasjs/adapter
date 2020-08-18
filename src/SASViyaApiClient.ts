@@ -206,138 +206,149 @@ export class SASViyaApiClient {
     silent = false,
     data = null,
     debug = false
-  ) {
+  ): Promise<any> {
     silent = !debug;
-    
-    const headers: any = {
-      "Content-Type": "application/json",
-    };
+    try {
+      const headers: any = {
+        "Content-Type": "application/json",
+      };
 
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-    }
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
 
-    let executionSessionId: string;
-    const session = await this.sessionManager.getSession(accessToken);
-    executionSessionId = session!.id;
+      let executionSessionId: string;
+      const session = await this.sessionManager.getSession(accessToken);
+      executionSessionId = session!.id;
 
-    const jobArguments: { [key: string]: any } = {
-      _contextName: contextName,
-      _OMITJSONLISTING: true,
-      _OMITJSONLOG: true,
-      _OMITSESSIONRESULTS: true,
-      _OMITTEXTLISTING: true,
-      _OMITTEXTLOG: true,
-    };
+      const jobArguments: { [key: string]: any } = {
+        _contextName: contextName,
+        _OMITJSONLISTING: true,
+        _OMITJSONLOG: true,
+        _OMITSESSIONRESULTS: true,
+        _OMITTEXTLISTING: true,
+        _OMITTEXTLOG: true,
+      };
 
-    if (debug) {
-      jobArguments["_OMITTEXTLOG"] = false;
-      jobArguments["_OMITSESSIONRESULTS"] = false;
-      jobArguments["_DEBUG"] = 131;
-    }
+      if (debug) {
+        jobArguments["_OMITTEXTLOG"] = false;
+        jobArguments["_OMITSESSIONRESULTS"] = false;
+        jobArguments["_DEBUG"] = 131;
+      }
 
-    const fileName = `exec-${
-      jobName.includes("/") ? jobName.split("/")[1] : jobName
-    }`;
+      const fileName = `exec-${
+        jobName.includes("/") ? jobName.split("/")[1] : jobName
+      }`;
 
-    let jobVariables: any = {
-      SYS_JES_JOB_URI: "",
-      _program: this.rootFolderName + "/" + jobName,
-    };
+      let jobVariables: any = {
+        SYS_JES_JOB_URI: "",
+        _program: this.rootFolderName + "/" + jobName,
+      };
 
-    let files: any[] = [];
+      let files: any[] = [];
 
-    if (data) {
-      if (JSON.stringify(data).includes(";")) {
-        files = await this.uploadTables(data, accessToken);
-        jobVariables["_webin_file_count"] = files.length;
-        files.forEach((fileInfo, index) => {
-          jobVariables[
-            `_webin_fileuri${index + 1}`
-          ] = `/files/files/${fileInfo.file.id}`;
-          jobVariables[`_webin_name${index + 1}`] = fileInfo.tableName;
-        });
+      if (data) {
+        if (JSON.stringify(data).includes(";")) {
+          files = await this.uploadTables(data, accessToken);
+          jobVariables["_webin_file_count"] = files.length;
+          files.forEach((fileInfo, index) => {
+            jobVariables[
+              `_webin_fileuri${index + 1}`
+            ] = `/files/files/${fileInfo.file.id}`;
+            jobVariables[`_webin_name${index + 1}`] = fileInfo.tableName;
+          });
+        } else {
+          jobVariables = { ...jobVariables, ...formatDataForRequest(data) };
+        }
+      }
+
+      // Execute job in session
+      const postJobRequest = {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: fileName,
+          description: "Powered by SASjs",
+          code: linesOfCode,
+          variables: jobVariables,
+          arguments: jobArguments,
+        }),
+      };
+
+      const { result: postedJob, etag } = await this.request<Job>(
+        `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
+        postJobRequest
+      );
+
+      if (!silent) {
+        console.log(`Job has been submitted for ${fileName}`);
+        console.log(
+          `You can monitor the job progress at ${this.serverUrl}${
+            postedJob.links.find((l: any) => l.rel === "state")!.href
+          }`
+        );
+      }
+
+      const jobStatus = await this.pollJobState(
+        postedJob,
+        etag,
+        accessToken,
+        silent
+      );
+
+      const { result: currentJob } = await this.request<Job>(
+        `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
+        { headers }
+      );
+
+      let jobResult, log;
+
+      const logLink = currentJob.links.find((l) => l.rel === "log");
+
+      if (true && logLink) {
+        log = await this.request<any>(
+          `${this.serverUrl}${logLink.href}/content?limit=10000`,
+          {
+            headers,
+          }
+        ).then((res: any) =>
+          res.result.items.map((i: any) => i.line).join("\n")
+        );
+      }
+
+      if (jobStatus === "failed" || jobStatus === "error") {
+        return Promise.reject({ error: currentJob.error, log: log });
+      }
+      const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`;
+
+      if (resultLink) {
+        jobResult = await this.request<any>(
+          `${this.serverUrl}${resultLink}`,
+          { headers },
+          "text"
+        ).catch((e) => ({
+          result: JSON.stringify(e),
+        }));
+      }
+
+      await this.sessionManager.clearSession(executionSessionId, accessToken);
+
+      return { result: jobResult?.result, log };
+    } catch (e) {
+      if (e && e.status === 404) {
+        return this.executeScript(
+          jobName,
+          linesOfCode,
+          contextName,
+          accessToken,
+          silent,
+          data,
+          debug
+        );
       } else {
-        jobVariables = { ...jobVariables, ...formatDataForRequest(data) };
+        throw e;
       }
     }
-
-    // Execute job in session
-    const postJobRequest = {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        name: fileName,
-        description: "Powered by SASjs",
-        code: linesOfCode,
-        variables: jobVariables,
-        arguments: jobArguments,
-      }),
-    };
-
-    const { result: postedJob, etag } = await this.request<Job>(
-      `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
-      postJobRequest
-    );
-    
-    if (!silent) {
-      console.log(`Job has been submitted for ${fileName}`);
-      console.log(
-        `You can monitor the job progress at ${this.serverUrl}${
-          postedJob.links.find((l: any) => l.rel === "state")!.href
-        }`
-      );
-    }
-
-    const jobStatus = await this.pollJobState(
-      postedJob,
-      etag,
-      accessToken,
-      silent
-    );
-
-    const { result: currentJob } = await this.request<Job>(
-      `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
-      { headers }
-    );
-
-    let jobResult, log;
-
-    const logLink = currentJob.links.find((l) => l.rel === "log");
-
-    if (true && logLink) {
-      log = await this.request<any>(
-        `${this.serverUrl}${logLink.href}/content?limit=10000`,
-        {
-          headers,
-        }
-      ).then((res: any) => res.result.items.map((i: any) => i.line).join("\n"));
-    }
-
-    if (jobStatus === "failed" || jobStatus === "error") {
-      return Promise.reject({error: currentJob.error, log: log});
-    }
-    const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`;
-    
-    if (resultLink) {
-      jobResult = await this.request<any>(
-        `${this.serverUrl}${resultLink}`,
-        { headers },
-        "text"
-      ).catch((e) => ({
-        result: JSON.stringify(e),
-      }));
-    }
-
-    await this.sessionManager.clearSession(executionSessionId, accessToken);
-
-    return { result: jobResult?.result, log };
-    // } else {
-    //   console.error(
-    //     `Unable to find execution context ${contextName}.\nPlease check the contextName in the tgtDeployVars and try again.`
-    //   );
-    //   console.error("Response from server: ", JSON.stringify(this.contexts));
-    // }
   }
 
   /**
@@ -719,12 +730,12 @@ export class SASViyaApiClient {
         `The job ${sasJob} was not found in ${this.rootFolderName}`
       );
     }
-    
+
     let files: any[] = [];
     if (data && Object.keys(data).length) {
       files = await this.uploadTables(data, accessToken);
     }
-    
+
     const jobName = path.basename(sasJob);
     const jobFolder = sasJob.replace(`/${jobName}`, "");
     const allJobsInFolder = this.rootFolderMap.get(jobFolder.replace("/", ""));
