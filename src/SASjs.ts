@@ -2,7 +2,9 @@ import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
 if (isIEorEdgeOrOldFirefox()) {
-  window.fetch = undefined as any; // ensure the polyfill runs
+  if (window) {
+    window.fetch = undefined as any; // ensure the polyfill runs
+  }
 }
 // tslint:disable-next-line
 require("isomorphic-fetch");
@@ -397,8 +399,10 @@ export default class SASjs {
         this.sasjsConfig.appLoc,
         this.sasjsConfig.serverUrl,
         this.jobsPath,
+        this.setCsrfTokenWeb,
         this.csrfTokenWeb
       );
+      
     return fileUploader.uploadFile(sasJob, files, params);
   }
 
@@ -909,6 +913,10 @@ export default class SASjs {
 
     return sasjsWaitingRequest.requestPromise.promise;
   }
+  
+  private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
+    this.csrfTokenWeb = csrfToken;
+  };
 
   private setCsrfTokenApi = (csrfToken: CsrfToken) => {
     this.csrfTokenApi = csrfToken;
@@ -1175,7 +1183,8 @@ export default class SASjs {
     this.fileUploader = new FileUploader(
       this.sasjsConfig.appLoc,
       this.sasjsConfig.serverUrl,
-      this.jobsPath
+      this.jobsPath,
+      this.setCsrfTokenWeb
     );
   }
 

@@ -70,6 +70,14 @@ parmcards4;
   %webout(CLOSE)
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=sendArr)
+filename ft15f001 temp;
+parmcards4;
+If you can keep your head when all about you   
+    Are losing theirs and blaming it on you,   
+If you can trust yourself when all men doubt you,
+    But make allowance for their doubting too; 
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=makeErr)
 ```
 
 The above services will return anything you send. To run the tests simply launch `npm run cypress`.
