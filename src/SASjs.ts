@@ -399,8 +399,10 @@ export default class SASjs {
         this.sasjsConfig.appLoc,
         this.sasjsConfig.serverUrl,
         this.jobsPath,
+        this.setCsrfTokenWeb,
         this.csrfTokenWeb
       );
+      
     return fileUploader.uploadFile(sasJob, files, params);
   }
 
@@ -911,6 +913,10 @@ export default class SASjs {
 
     return sasjsWaitingRequest.requestPromise.promise;
   }
+  
+  private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
+    this.csrfTokenWeb = csrfToken;
+  };
 
   private setCsrfTokenApi = (csrfToken: CsrfToken) => {
     this.csrfTokenApi = csrfToken;
@@ -1181,7 +1187,8 @@ export default class SASjs {
     this.fileUploader = new FileUploader(
       this.sasjsConfig.appLoc,
       this.sasjsConfig.serverUrl,
-      this.jobsPath
+      this.jobsPath,
+      this.setCsrfTokenWeb
     );
   }
 
