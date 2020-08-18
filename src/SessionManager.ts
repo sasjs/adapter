@@ -17,6 +17,16 @@ export class SessionManager {
     await this.createSessions(accessToken);
     this.createAndWaitForSession(accessToken);
     const session = this.sessions.pop();
+    const secondsSinceSessionCreation =
+      (new Date().getTime() - new Date(session!.creationTimeStamp).getTime()) /
+      1000;
+    if (
+      secondsSinceSessionCreation >= session!.attributes.sessionInactiveTimeout
+    ) {
+      await this.createSessions(accessToken);
+      const freshSession = this.sessions.pop();
+      return freshSession;
+    }
     return session;
   }
 
