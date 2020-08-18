@@ -1,4 +1,7 @@
 export function isIEorEdgeOrOldFirefox() {
+  if (typeof window === "undefined") {
+    return false;
+  }
   const ua = window.navigator.userAgent;
 
   if (ua.indexOf("Firefox") > 0) {

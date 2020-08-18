@@ -2,7 +2,9 @@ import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
 import * as e6p from "es6-promise";
 (e6p as any).polyfill();
 if (isIEorEdgeOrOldFirefox()) {
-  window.fetch = undefined as any; // ensure the polyfill runs
+  if (window) {
+    window.fetch = undefined as any; // ensure the polyfill runs
+  }
 }
 // tslint:disable-next-line
 require("isomorphic-fetch");
