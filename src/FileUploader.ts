@@ -9,7 +9,8 @@ export class FileUploader {
     private appLoc: string,
     private serverUrl: string,
     private jobsPath: string,
-    private csrfToken: CsrfToken | null = null
+    private setCsrfTokenWeb: any,
+    private csrfToken: CsrfToken | null = null,
   ) {}
   private retryCount = 0;
 
@@ -61,6 +62,8 @@ export class FileUploader {
                   headerName: tokenHeader,
                   value: token || "",
                 };
+
+                this.setCsrfTokenWeb(this.csrfToken);
               }
             }
           }
