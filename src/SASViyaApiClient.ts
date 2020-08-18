@@ -303,21 +303,7 @@ export class SASViyaApiClient {
 
     let jobResult, log;
 
-    if (jobStatus === "failed" || jobStatus === "error") {
-      return Promise.reject(currentJob.error);
-    }
-    const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`;
     const logLink = currentJob.links.find((l) => l.rel === "log");
-
-    if (resultLink) {
-      jobResult = await this.request<any>(
-        `${this.serverUrl}${resultLink}`,
-        { headers },
-        "text"
-      ).catch((e) => ({
-        result: JSON.stringify(e),
-      }));
-    }
 
     if (true && logLink) {
       log = await this.request<any>(
@@ -326,6 +312,21 @@ export class SASViyaApiClient {
           headers,
         }
       ).then((res: any) => res.result.items.map((i: any) => i.line).join("\n"));
+    }
+
+    if (jobStatus === "failed" || jobStatus === "error") {
+      return Promise.reject({error: currentJob.error, log: log});
+    }
+    const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`;
+    
+    if (resultLink) {
+      jobResult = await this.request<any>(
+        `${this.serverUrl}${resultLink}`,
+        { headers },
+        "text"
+      ).catch((e) => ({
+        result: JSON.stringify(e),
+      }));
     }
 
     await this.sessionManager.clearSession(executionSessionId, accessToken);

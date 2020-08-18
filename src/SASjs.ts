@@ -579,8 +579,10 @@ export default class SASjs {
 
             resolve(responseJson);
           })
-          .catch(async (e) => {
-            if (needsRetry(JSON.stringify(e))) {
+          .catch(async (response) => {
+            let error = response.error || response;
+            
+            if (needsRetry(JSON.stringify(error))) {
               if (this.retryCountComputeApi < requestRetryLimit) {
                 let retryResponse = await this.executeJobViaComputeApi(
                   sasJob,
@@ -599,15 +601,17 @@ export default class SASjs {
               }
             }
 
-            if (e && e.status === 401) {
+            if (error && error.status === 401) {
               if (loginRequiredCallback) loginRequiredCallback(true);
               sasjsWaitingRequest.requestPromise.resolve = resolve;
               sasjsWaitingRequest.requestPromise.reject = reject;
               sasjsWaitingRequest.config = config;
               this.sasjsWaitingRequests.push(sasjsWaitingRequest);
             } else {
-              reject({ MESSAGE: e || "Job execution failed" });
+              reject({ MESSAGE: error || "Job execution failed" });
             }
+
+            this.appendSasjsRequest(response.log, sasJob, null);
           });
       }
     );
