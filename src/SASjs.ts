@@ -291,7 +291,7 @@ export default class SASjs {
   public async checkSession() {
     const loginResponse = await fetch(this.loginUrl.replace(".do", ""));
     const responseText = await loginResponse.text();
-    const isLoggedIn = /You have signed in./gm.test(responseText);
+    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText);
 
     return Promise.resolve({
       isLoggedIn,
