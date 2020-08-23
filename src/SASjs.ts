@@ -730,7 +730,7 @@ export default class SASjs {
     }`;
 
     const requestParams = {
-      ...this.getRequestParamsWeb(),
+      ...this.getRequestParamsWeb(config),
     };
 
     const formData = new FormData();
@@ -941,14 +941,14 @@ export default class SASjs {
     this.sasjsWaitingRequests = [];
   }
 
-  private getRequestParamsWeb(): any {
+  private getRequestParamsWeb(config: any): any {
     const requestParams: any = {};
 
     if (this.csrfTokenWeb) {
       requestParams["_csrf"] = this.csrfTokenWeb.value;
     }
 
-    if (this.sasjsConfig.debug) {
+    if (config.debug) {
       requestParams["_omittextlog"] = "false";
       requestParams["_omitsessionresults"] = "false";
 
