@@ -523,10 +523,15 @@ export default class SASjs {
       serverUrl = sasClientConfig.serverUrl;
       appLoc = sasClientConfig.rootFolderName as string;
     }
+
+    // members of type 'folder' should be processed first
+    serviceJson.members[0].members.sort((member: {type: string}) => member.type === 'folder' ? -1 : 1)
+
     const members =
       serviceJson.members[0].name === "services"
         ? serviceJson.members[0].members
-        : serviceJson.members;
+        : serviceJson.members
+
     await this.createFoldersAndServices(
       appLoc,
       members,
