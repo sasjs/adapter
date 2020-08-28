@@ -525,7 +525,9 @@ export default class SASjs {
     }
 
     // members of type 'folder' should be processed first
-    serviceJson.members[0].members.sort((member: {type: string}) => member.type === 'folder' ? -1 : 1)
+    if (serviceJson.members[0].members) {
+        serviceJson.members[0].members.sort((member: {type: string}) => member.type === 'folder' ? -1 : 1)
+    }
 
     const members =
       serviceJson.members[0].name === "services"
