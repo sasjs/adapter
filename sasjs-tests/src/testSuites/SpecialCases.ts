@@ -13,9 +13,9 @@ const specialCharData: any = {
       doubleQuote: '"',
       crlf: "\r\n",
       euro: "€euro",
-      banghash: "!#banghash",
-    },
-  ],
+      banghash: "!#banghash"
+    }
+  ]
 };
 
 const moreSpecialCharData: any = {
@@ -31,9 +31,9 @@ const moreSpecialCharData: any = {
       sigma: "Σsigma",
       at: "@at",
       serbian: "Српски",
-      dollar: "$",
-    },
-  ],
+      dollar: "$"
+    }
+  ]
 };
 
 const getWideData = () => {
@@ -43,7 +43,7 @@ const getWideData = () => {
   }
 
   const data: any = {
-    table1: [cols],
+    table1: [cols]
   };
 
   return data;
@@ -67,7 +67,7 @@ const getLargeDataset = () => {
   }
 
   const data: any = {
-    table1: rows,
+    table1: rows
   };
 
   return data;
@@ -75,7 +75,7 @@ const getLargeDataset = () => {
 
 const errorAndCsrfData: any = {
   error: [{ col1: "q", col2: "w", col3: "e", col4: "r" }],
-  _csrf: [{ col1: "q", col2: "w", col3: "e", col4: "r" }],
+  _csrf: [{ col1: "q", col2: "w", col3: "e", col4: "r" }]
 };
 
 export const specialCaseTests = (adapter: SASjs): TestSuite => ({
@@ -100,7 +100,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res.table1[0][8] === specialCharData.table1[0].euro &&
           res.table1[0][9] === specialCharData.table1[0].banghash
         );
-      },
+      }
     },
     {
       title: "Other special characters",
@@ -122,7 +122,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res.table1[0][9] === moreSpecialCharData.table1[0].serbian &&
           res.table1[0][10] === moreSpecialCharData.table1[0].dollar
         );
-      },
+      }
     },
     {
       title: "Wide table with sendArr",
@@ -138,7 +138,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
             result && res.table1[0][i] === data.table1[0]["col" + (i + 1)];
         }
         return result;
-      },
+      }
     },
     {
       title: "Wide table with sendObj",
@@ -155,7 +155,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
             res.table1[0]["COL" + (i + 1)] === data.table1[0]["col" + (i + 1)];
         }
         return result;
-      },
+      }
     },
     {
       title: "Multiple tables",
@@ -175,7 +175,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res.table50[0][2] === data.table50[0].col3 &&
           res.table50[0][3] === data.table50[0].col4
         );
-      },
+      }
     },
     {
       title: "Large dataset with sendObj",
@@ -190,7 +190,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           result = result && res.table1[i][0] === data.table1[i][0];
         }
         return result;
-      },
+      }
     },
     {
       title: "Large dataset with sendArr",
@@ -206,7 +206,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
             result && res.table1[i][0] === Object.values(data.table1[i])[0];
         }
         return result;
-      },
+      }
     },
     {
       title: "Error and _csrf tables with sendArr",
@@ -225,7 +225,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res._csrf[0][2] === errorAndCsrfData._csrf[0].col3 &&
           res._csrf[0][3] === errorAndCsrfData._csrf[0].col4
         );
-      },
+      }
     },
     {
       title: "Error and _csrf tables with sendObj",
@@ -244,7 +244,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res._csrf[0].COL3 === errorAndCsrfData._csrf[0].col3 &&
           res._csrf[0].COL4 === errorAndCsrfData._csrf[0].col4
         );
-      },
-    },
-  ],
+      }
+    }
+  ]
 });

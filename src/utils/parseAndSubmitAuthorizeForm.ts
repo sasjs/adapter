@@ -36,7 +36,7 @@ export const parseAndSubmitAuthorizeForm = async (
         method: "POST",
         credentials: "include",
         body: formData,
-        referrerPolicy: "same-origin",
+        referrerPolicy: "same-origin"
       })
         .then((res) => res.text())
         .then((res) => {

@@ -10,7 +10,7 @@ export class FileUploader {
     private serverUrl: string,
     private jobsPath: string,
     private setCsrfTokenWeb: any,
-    private csrfToken: CsrfToken | null = null,
+    private csrfToken: CsrfToken | null = null
   ) {}
   private retryCount = 0;
 
@@ -33,7 +33,7 @@ export class FileUploader {
     }${paramsString}`;
 
     const headers = {
-      "cache-control": "no-cache",
+      "cache-control": "no-cache"
     };
 
     return new Promise((resolve, reject) => {
@@ -49,7 +49,7 @@ export class FileUploader {
         method: "POST",
         body: formData,
         referrerPolicy: "same-origin",
-        headers,
+        headers
       })
         .then(async (response) => {
           if (!response.ok) {
@@ -60,7 +60,7 @@ export class FileUploader {
                 const token = response.headers.get(tokenHeader);
                 this.csrfToken = {
                   headerName: tokenHeader,
-                  value: token || "",
+                  value: token || ""
                 };
 
                 this.setCsrfTokenWeb(this.csrfToken);

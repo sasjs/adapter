@@ -21,7 +21,7 @@ import {
   parseGeneratedCode,
   parseWeboutResponse,
   needsRetry,
-  asyncForEach,
+  asyncForEach
 } from "./utils";
 import {
   SASjsConfig,
@@ -29,7 +29,7 @@ import {
   SASjsWaitingRequest,
   ServerType,
   CsrfToken,
-  UploadFile,
+  UploadFile
 } from "./types";
 import { SASViyaApiClient } from "./SASViyaApiClient";
 import { SAS9ApiClient } from "./SAS9ApiClient";
@@ -43,7 +43,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SASViya,
   debug: true,
   contextName: "SAS Job Execution compute context",
-  useComputeApi: false,
+  useComputeApi: false
 };
 
 const requestRetryLimit = 5;
@@ -72,7 +72,7 @@ export default class SASjs {
   constructor(config?: any) {
     this.sasjsConfig = {
       ...defaultConfig,
-      ...config,
+      ...config
     };
 
     this.setupConfiguration();
@@ -270,7 +270,7 @@ export default class SASjs {
   public async setSASjsConfig(config: SASjsConfig) {
     this.sasjsConfig = {
       ...this.sasjsConfig,
-      ...config,
+      ...config
     };
     await this.setupConfiguration();
   }
@@ -295,7 +295,7 @@ export default class SASjs {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: this.userName,
+      userName: this.userName
     });
   }
 
@@ -308,7 +308,7 @@ export default class SASjs {
     const loginParams: any = {
       _service: "default",
       username,
-      password,
+      password
     };
 
     this.userName = loginParams.username;
@@ -319,7 +319,7 @@ export default class SASjs {
 
       return Promise.resolve({
         isLoggedIn,
-        userName: this.userName,
+        userName: this.userName
       });
     }
 
@@ -336,8 +336,8 @@ export default class SASjs {
       referrerPolicy: "same-origin",
       body: loginParamsStr,
       headers: new Headers({
-        "Content-Type": "application/x-www-form-urlencoded",
-      }),
+        "Content-Type": "application/x-www-form-urlencoded"
+      })
     })
       .then((response) => response.text())
       .then(async (responseText) => {
@@ -364,7 +364,7 @@ export default class SASjs {
 
         return {
           isLoggedIn: loggedIn,
-          userName: this.userName,
+          userName: this.userName
         };
       })
       .catch((e) => Promise.reject(e));
@@ -402,7 +402,7 @@ export default class SASjs {
         this.setCsrfTokenWeb,
         this.csrfTokenWeb
       );
-      
+
     return fileUploader.uploadFile(sasJob, files, params);
   }
 
@@ -435,7 +435,7 @@ export default class SASjs {
 
     config = {
       ...this.sasjsConfig,
-      ...config,
+      ...config
     };
 
     sasJob = sasJob.startsWith("/") ? sasJob.replace("/", "") : sasJob;
@@ -526,13 +526,15 @@ export default class SASjs {
 
     // members of type 'folder' should be processed first
     if (serviceJson.members[0].members) {
-        serviceJson.members[0].members.sort((member: {type: string}) => member.type === 'folder' ? -1 : 1)
+      serviceJson.members[0].members.sort((member: { type: string }) =>
+        member.type === "folder" ? -1 : 1
+      );
     }
 
     const members =
       serviceJson.members[0].name === "services"
         ? serviceJson.members[0].members
-        : serviceJson.members
+        : serviceJson.members;
 
     await this.createFoldersAndServices(
       appLoc,
@@ -553,10 +555,10 @@ export default class SASjs {
       requestPromise: {
         promise: null,
         resolve: null,
-        reject: null,
+        reject: null
       },
       SASjob: sasJob,
-      data,
+      data
     };
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
@@ -588,7 +590,7 @@ export default class SASjs {
           })
           .catch(async (response) => {
             let error = response.error || response;
-            
+
             if (needsRetry(JSON.stringify(error))) {
               if (this.retryCountComputeApi < requestRetryLimit) {
                 let retryResponse = await this.executeJobViaComputeApi(
@@ -636,10 +638,10 @@ export default class SASjs {
       requestPromise: {
         promise: null,
         resolve: null,
-        reject: null,
+        reject: null
       },
       SASjob: sasJob,
-      data,
+      data
     };
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
@@ -720,10 +722,10 @@ export default class SASjs {
       requestPromise: {
         promise: null,
         resolve: null,
-        reject: null,
+        reject: null
       },
       SASjob: sasJob,
-      data,
+      data
     };
     const program = config.appLoc
       ? config.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
@@ -737,7 +739,7 @@ export default class SASjs {
     }`;
 
     const requestParams = {
-      ...this.getRequestParamsWeb(config),
+      ...this.getRequestParamsWeb(config)
     };
 
     const formData = new FormData();
@@ -766,7 +768,7 @@ export default class SASjs {
           }
 
           const file = new Blob([csv], {
-            type: "application/csv",
+            type: "application/csv"
           });
 
           formData.append(name, file, `${name}.csv`);
@@ -823,7 +825,7 @@ export default class SASjs {
           method: "POST",
           body: formData,
           referrerPolicy: "same-origin",
-          headers,
+          headers
         })
           .then(async (response) => {
             if (!response.ok) {
@@ -834,7 +836,7 @@ export default class SASjs {
                   const token = response.headers.get(tokenHeader);
                   this.csrfTokenWeb = {
                     headerName: tokenHeader,
-                    value: token || "",
+                    value: token || ""
                   };
                 }
               }
@@ -880,7 +882,7 @@ export default class SASjs {
                     resolve(JSON.parse(jsonResponseText));
                   } else {
                     reject({
-                      MESSAGE: this.parseSAS9ErrorResponse(responseText),
+                      MESSAGE: this.parseSAS9ErrorResponse(responseText)
                     });
                   }
                 } else if (
@@ -924,7 +926,7 @@ export default class SASjs {
 
     return sasjsWaitingRequest.requestPromise.promise;
   }
-  
+
   private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
     this.csrfTokenWeb = csrfToken;
   };
@@ -1056,7 +1058,7 @@ export default class SASjs {
   private fetchLogFileContent(logLink: string) {
     return new Promise((resolve, reject) => {
       fetch(logLink, {
-        method: "GET",
+        method: "GET"
       })
         .then((response: any) => response.text())
         .then((response: any) => resolve(response))
@@ -1100,7 +1102,7 @@ export default class SASjs {
       timestamp: new Date(),
       sourceCode,
       generatedCode,
-      SASWORK: sasWork,
+      SASWORK: sasWork
     });
 
     if (this.sasjsRequests.length > 20) {

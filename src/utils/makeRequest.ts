@@ -29,12 +29,12 @@ export async function makeRequest<T>(
           const token = response.headers.get(tokenHeader);
           callback({
             headerName: tokenHeader,
-            value: token || "",
+            value: token || ""
           });
 
           retryRequest = {
             ...request,
-            headers: { ...request.headers, [tokenHeader]: token },
+            headers: { ...request.headers, [tokenHeader]: token }
           };
           return fetch(url, retryRequest).then((res) => {
             etag = res.headers.get("ETag");

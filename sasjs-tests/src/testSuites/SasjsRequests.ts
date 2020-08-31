@@ -19,28 +19,32 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
         } else {
           return requests[0].SASWORK === null;
         }
-      },
+      }
     },
     {
       title: "Make error and capture log",
       description: "Should make an error and capture log",
       test: async () => {
-        return new Promise( async (resolve, reject) => {
-          adapter.request("common/makeErr", data)
-          .then((res) => {
-            //no action here, this request must throw error
-          })
-          .catch((err) => {
-            let sasRequests = adapter.getSasRequests();
-            let makeErrRequest = sasRequests.find(req => req.serviceLink.includes('makeErr')) || null;
+        return new Promise(async (resolve, reject) => {
+          adapter
+            .request("common/makeErr", data)
+            .then((res) => {
+              //no action here, this request must throw error
+            })
+            .catch((err) => {
+              let sasRequests = adapter.getSasRequests();
+              let makeErrRequest =
+                sasRequests.find((req) =>
+                  req.serviceLink.includes("makeErr")
+                ) || null;
 
-            resolve(!!makeErrRequest);
-          })
-        })
+              resolve(!!makeErrRequest);
+            });
+        });
       },
       assertion: (response) => {
         return response;
-      },
-    },
-  ],
+      }
+    }
+  ]
 });

@@ -9,7 +9,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SASViya,
   debug: true,
   contextName: "SAS Job Execution compute context",
-  useComputeApi: false,
+  useComputeApi: false
 };
 
 const customConfig = {
@@ -18,7 +18,7 @@ const customConfig = {
   pathSASViya: "viya",
   appLoc: "/Public/seedapp",
   serverType: ServerType.SAS9,
-  debug: false,
+  debug: false
 };
 
 export const basicTests = (
@@ -35,7 +35,7 @@ export const basicTests = (
         return adapter.logIn(userName, password);
       },
       assertion: (response: any) =>
-        response && response.isLoggedIn && response.userName === userName,
+        response && response.isLoggedIn && response.userName === userName
     },
     {
       title: "Default config",
@@ -54,7 +54,7 @@ export const basicTests = (
           sasjsConfig.serverType === defaultConfig.serverType &&
           sasjsConfig.debug === defaultConfig.debug
         );
-      },
+      }
     },
     {
       title: "Custom config",
@@ -72,7 +72,7 @@ export const basicTests = (
           sasjsConfig.serverType === customConfig.serverType &&
           sasjsConfig.debug === customConfig.debug
         );
-      },
+      }
     },
     {
       title: "Config overrides",
@@ -92,7 +92,7 @@ export const basicTests = (
           sasjsConfig.serverType === defaultConfig.serverType &&
           sasjsConfig.debug === false
         );
-      },
-    },
-  ],
+      }
+    }
+  ]
 });

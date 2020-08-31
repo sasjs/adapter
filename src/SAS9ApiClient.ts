@@ -10,7 +10,7 @@ export class SAS9ApiClient {
    */
   public getConfig() {
     return {
-      serverUrl: this.serverUrl,
+      serverUrl: this.serverUrl
     };
   }
 
@@ -37,9 +37,9 @@ export class SAS9ApiClient {
     const executeScriptRequest = {
       method: "PUT",
       headers: {
-        Accept: "application/json",
+        Accept: "application/json"
       },
-      body: `command=${requestPayload}`,
+      body: `command=${requestPayload}`
     };
     const executeScriptResponse = await fetch(
       `${this.serverUrl}/sas/servers/${serverName}/cmd?repositoryName=${repositoryName}`,

@@ -2,7 +2,7 @@ import {
   isAuthorizeFormRequired,
   parseAndSubmitAuthorizeForm,
   convertToCSV,
-  makeRequest,
+  makeRequest
 } from "./utils";
 import * as NodeFormData from "form-data";
 import * as path from "path";
@@ -53,7 +53,7 @@ export class SASViyaApiClient {
   public getConfig() {
     return {
       serverUrl: this.serverUrl,
-      rootFolderName: this.rootFolderName,
+      rootFolderName: this.rootFolderName
     };
   }
 
@@ -73,7 +73,7 @@ export class SASViyaApiClient {
    */
   public async getAllContexts(accessToken?: string) {
     const headers: any = {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -88,7 +88,7 @@ export class SASViyaApiClient {
       id: context.id,
       name: context.name,
       version: context.version,
-      attributes: {},
+      attributes: {}
     }));
   }
 
@@ -98,7 +98,7 @@ export class SASViyaApiClient {
    */
   public async getExecutableContexts(accessToken?: string) {
     const headers: any = {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -139,8 +139,8 @@ export class SASViyaApiClient {
           name: contextsList[index].name,
           version: contextsList[index].version,
           attributes: {
-            sysUserId,
-          },
+            sysUserId
+          }
         });
       }
     });
@@ -155,7 +155,7 @@ export class SASViyaApiClient {
    */
   public async createSession(contextName: string, accessToken?: string) {
     const headers: any = {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     };
 
     if (accessToken) {
@@ -178,8 +178,8 @@ export class SASViyaApiClient {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+        "Content-Type": "application/json"
+      }
     };
     const { result: createdSession } = await this.request<Session>(
       `${this.serverUrl}/compute/contexts/${executionContext.id}/sessions`,
@@ -210,7 +210,7 @@ export class SASViyaApiClient {
     silent = !debug;
     try {
       const headers: any = {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       };
 
       if (accessToken) {
@@ -227,7 +227,7 @@ export class SASViyaApiClient {
         _OMITJSONLOG: true,
         _OMITSESSIONRESULTS: true,
         _OMITTEXTLISTING: true,
-        _OMITTEXTLOG: true,
+        _OMITTEXTLOG: true
       };
 
       if (debug) {
@@ -242,7 +242,7 @@ export class SASViyaApiClient {
 
       let jobVariables: any = {
         SYS_JES_JOB_URI: "",
-        _program: this.rootFolderName + "/" + jobName,
+        _program: this.rootFolderName + "/" + jobName
       };
 
       let files: any[] = [];
@@ -271,8 +271,8 @@ export class SASViyaApiClient {
           description: "Powered by SASjs",
           code: linesOfCode,
           variables: jobVariables,
-          arguments: jobArguments,
-        }),
+          arguments: jobArguments
+        })
       };
 
       const { result: postedJob, etag } = await this.request<Job>(
@@ -309,7 +309,7 @@ export class SASViyaApiClient {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content?limit=10000`,
           {
-            headers,
+            headers
           }
         ).then((res: any) =>
           res.result.items.map((i: any) => i.line).join("\n")
@@ -327,7 +327,7 @@ export class SASViyaApiClient {
           { headers },
           "text"
         ).catch((e) => ({
-          result: JSON.stringify(e),
+          result: JSON.stringify(e)
         }));
       }
 
@@ -401,8 +401,8 @@ export class SASViyaApiClient {
       method: "POST",
       body: JSON.stringify({
         name: folderName,
-        type: "folder",
-      }),
+        type: "folder"
+      })
     };
 
     createFolderRequest.headers = { "Content-Type": "application/json" };
@@ -449,7 +449,7 @@ export class SASViyaApiClient {
       method: "POST",
       headers: {
         "Content-Type": "application/vnd.sas.job.definition+json",
-        Accept: "application/vnd.sas.job.definition+json",
+        Accept: "application/vnd.sas.job.definition+json"
       },
       body: JSON.stringify({
         name: jobName,
@@ -457,18 +457,18 @@ export class SASViyaApiClient {
           {
             name: "_addjesbeginendmacros",
             type: "CHARACTER",
-            defaultValue: "false",
-          },
+            defaultValue: "false"
+          }
         ],
         type: "Compute",
-        code,
-      }),
+        code
+      })
     };
 
     if (accessToken) {
       createJobDefinitionRequest!.headers = {
         ...createJobDefinitionRequest.headers,
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`
       };
     }
 
@@ -487,7 +487,7 @@ export class SASViyaApiClient {
 
     const authCode = await fetch(authUrl, {
       referrerPolicy: "same-origin",
-      credentials: "include",
+      credentials: "include"
     })
       .then((response) => response.text())
       .then(async (response) => {
@@ -543,7 +543,7 @@ export class SASViyaApiClient {
       token = Buffer.from(clientId + ":" + clientSecret).toString("base64");
     }
     const headers = {
-      Authorization: "Basic " + token,
+      Authorization: "Basic " + token
     };
 
     let formData;
@@ -562,7 +562,7 @@ export class SASViyaApiClient {
       credentials: "include",
       headers,
       body: formData as any,
-      referrerPolicy: "same-origin",
+      referrerPolicy: "same-origin"
     }).then((res) => res.json());
 
     return authResponse;
@@ -587,7 +587,7 @@ export class SASViyaApiClient {
       token = Buffer.from(clientId + ":" + clientSecret).toString("base64");
     }
     const headers = {
-      Authorization: "Basic " + token,
+      Authorization: "Basic " + token
     };
 
     let formData;
@@ -606,7 +606,7 @@ export class SASViyaApiClient {
       credentials: "include",
       headers,
       body: formData as any,
-      referrerPolicy: "same-origin",
+      referrerPolicy: "same-origin"
     }).then((res) => res.json());
 
     return authResponse;
@@ -626,7 +626,7 @@ export class SASViyaApiClient {
     const deleteResponse = await this.request(url, {
       method: "DELETE",
       credentials: "include",
-      headers,
+      headers
     });
 
     return deleteResponse;
@@ -745,7 +745,7 @@ export class SASViyaApiClient {
         (l) => l.rel === "getResource"
       )?.href;
       const requestInfo: any = {
-        method: "GET",
+        method: "GET"
       };
       const headers: any = { "Content-Type": "application/json" };
       if (!!accessToken) {
@@ -765,7 +765,7 @@ export class SASViyaApiClient {
         _OMITJSONLOG: true,
         _OMITSESSIONRESULTS: true,
         _OMITTEXTLISTING: true,
-        _OMITTEXTLOG: true,
+        _OMITTEXTLOG: true
       };
 
       if (debug) {
@@ -788,8 +788,8 @@ export class SASViyaApiClient {
           name: `exec-${jobName}`,
           description: "Powered by SASjs",
           jobDefinition,
-          arguments: jobArguments,
-        }),
+          arguments: jobArguments
+        })
       };
       const { result: postedJob, etag } = await this.request<Job>(
         `${this.serverUrl}/jobExecution/jobs?_action=wait`,
@@ -823,7 +823,7 @@ export class SASViyaApiClient {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content`,
           {
-            headers,
+            headers
           }
         ).then((res: any) =>
           res.result.items.map((i: any) => i.line).join("\n")
@@ -841,7 +841,7 @@ export class SASViyaApiClient {
     const allItems = new Map<string, Job[]>();
     const url = "/folders/folders/@item?path=" + this.rootFolderName;
     const requestInfo: any = {
-      method: "GET",
+      method: "GET"
     };
     if (accessToken) {
       requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
@@ -893,7 +893,7 @@ export class SASViyaApiClient {
   private async populateRootFolder(accessToken?: string) {
     const url = "/folders/folders/@item?path=" + this.rootFolderName;
     const requestInfo: RequestInit = {
-      method: "GET",
+      method: "GET"
     };
     if (accessToken) {
       requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
@@ -922,7 +922,7 @@ export class SASViyaApiClient {
     let pollCount = 0;
     const headers: any = {
       "Content-Type": "application/json",
-      "If-None-Match": etag,
+      "If-None-Match": etag
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -942,7 +942,7 @@ export class SASViyaApiClient {
             const { result: jobState } = await this.request<string>(
               `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
               {
-                headers,
+                headers
               },
               "text"
             );
@@ -974,7 +974,7 @@ export class SASViyaApiClient {
     let pollCount = 0;
     const headers: any = {
       "Content-Type": "application/json",
-      "If-None-Match": etag,
+      "If-None-Match": etag
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -989,7 +989,7 @@ export class SASViyaApiClient {
           const { result: state } = await this.request<string>(
             `${this.serverUrl}${stateLink.href}?wait=30`,
             {
-              headers,
+              headers
             },
             "text"
           );
@@ -1010,7 +1010,7 @@ export class SASViyaApiClient {
   private async uploadTables(data: any, accessToken?: string) {
     const uploadedFiles = [];
     const headers: any = {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -1027,7 +1027,7 @@ export class SASViyaApiClient {
       const createFileRequest = {
         method: "POST",
         body: csv,
-        headers,
+        headers
       };
 
       const uploadResponse = await this.request<any>(
@@ -1043,7 +1043,7 @@ export class SASViyaApiClient {
   private async getFolderUri(folderPath: string, accessToken?: string) {
     const url = "/folders/folders/@item?path=" + folderPath;
     const requestInfo: any = {
-      method: "GET",
+      method: "GET"
     };
     if (accessToken) {
       requestInfo.headers = { Authorization: `Bearer ${accessToken}` };
@@ -1072,7 +1072,7 @@ export class SASViyaApiClient {
     if (this.csrfToken) {
       options.headers = {
         ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value,
+        [this.csrfToken.headerName]: this.csrfToken.value
       };
     }
     return await makeRequest<T>(

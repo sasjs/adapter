@@ -33,7 +33,7 @@ export class SessionManager {
   async clearSession(id: string, accessToken?: string) {
     const deleteSessionRequest = {
       method: "DELETE",
-      headers: this.getHeaders(accessToken),
+      headers: this.getHeaders(accessToken)
     };
     return await this.request<Session>(
       `${this.serverUrl}/compute/sessions/${id}`,
@@ -58,7 +58,7 @@ export class SessionManager {
   private async createAndWaitForSession(accessToken?: string) {
     const createSessionRequest = {
       method: "POST",
-      headers: this.getHeaders(accessToken),
+      headers: this.getHeaders(accessToken)
     };
     const { result: createdSession, etag } = await this.request<Session>(
       `${this.serverUrl}/compute/contexts/${this.currentContext!.id}/sessions`,
@@ -75,7 +75,7 @@ export class SessionManager {
       const { result: contexts } = await this.request<{
         items: Context[];
       }>(`${this.serverUrl}/compute/contexts`, {
-        headers: this.getHeaders(accessToken),
+        headers: this.getHeaders(accessToken)
       });
 
       const contextsList =
@@ -99,7 +99,7 @@ export class SessionManager {
 
   private getHeaders(accessToken?: string) {
     const headers: any = {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
@@ -117,7 +117,7 @@ export class SessionManager {
     let sessionState = session.state;
     const headers: any = {
       ...this.getHeaders(accessToken),
-      "If-None-Match": etag,
+      "If-None-Match": etag
     };
     const stateLink = session.links.find((l: any) => l.rel === "state");
     return new Promise(async (resolve, _) => {
@@ -129,7 +129,7 @@ export class SessionManager {
           const { result: state } = await this.request<string>(
             `${this.serverUrl}${stateLink.href}?wait=30`,
             {
-              headers,
+              headers
             },
             "text"
           );
@@ -154,7 +154,7 @@ export class SessionManager {
     if (this.csrfToken) {
       options.headers = {
         ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value,
+        [this.csrfToken.headerName]: this.csrfToken.value
       };
     }
     return await makeRequest<T>(

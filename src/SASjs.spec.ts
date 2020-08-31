@@ -2,7 +2,7 @@ import SASjs from "./index";
 
 const adapter = new SASjs();
 
-it("should parse SAS9 source code", async done => {
+it("should parse SAS9 source code", async (done) => {
   expect(sampleResponse).toBeTruthy();
   const parsedSourceCode = (adapter as any).parseSAS9SourceCode(sampleResponse);
   expect(parsedSourceCode).toBeTruthy();
@@ -16,7 +16,7 @@ it("should parse SAS9 source code", async done => {
   done();
 });
 
-it("should parse generated code", async done => {
+it("should parse generated code", async (done) => {
   expect(sampleResponse).toBeTruthy();
   const parsedGeneratedCode = (adapter as any).parseGeneratedCode(
     sampleResponse
