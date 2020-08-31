@@ -4,5 +4,5 @@
  */
 export enum ServerType {
   SASViya = "SASVIYA",
-  SAS9 = "SAS9",
+  SAS9 = "SAS9"
 }

@@ -5,7 +5,7 @@
     "build": "rimraf build && webpack",
     "package:lib": "npm run build && cp ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
-    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint:fix": "npx prettier --write 'src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}'",
     "lint": "tslint -p tsconfig.json",
     "test": "jest",
     "prepublishOnly": "cp -r ./build/* . && rm -rf ./build",

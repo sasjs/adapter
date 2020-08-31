@@ -3,7 +3,6 @@
  *
  */
 export interface UploadFile {
-    file: File;
-    fileName: string;
+  file: File;
+  fileName: string;
 }
-  
