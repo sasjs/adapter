@@ -3,7 +3,7 @@
  * @param data - the JSON object to convert.
  */
 export const convertToCSV = (data: any) => {
-  const replacer = (key: any, value: any) => (value === null ? "" : value)
+  const replacer = (key: any, value: any) => (value === null ? '' : value)
   const headerFields = Object.keys(data[0])
   let csvTest
   let invalidString = false
@@ -14,31 +14,31 @@ export const convertToCSV = (data: any) => {
 
     const longestValueForField = data
       .map((row: any, index: number) => {
-        if (row[field] || row[field] === "") {
+        if (row[field] || row[field] === '') {
           if (firstFoundType) {
             let currentFieldType =
-              row[field] === "" || typeof row[field] === "string"
-                ? "chars"
-                : "number"
+              row[field] === '' || typeof row[field] === 'string'
+                ? 'chars'
+                : 'number'
 
             if (!hasMixedTypes) {
               hasMixedTypes = currentFieldType !== firstFoundType
               rowNumError = hasMixedTypes ? index + 1 : -1
             }
           } else {
-            if (row[field] === "") {
-              firstFoundType = "chars"
+            if (row[field] === '') {
+              firstFoundType = 'chars'
             } else {
               firstFoundType =
-                typeof row[field] === "string" ? "chars" : "number"
+                typeof row[field] === 'string' ? 'chars' : 'number'
             }
           }
 
           let byteSize
 
-          if (typeof row[field] === "string") {
+          if (typeof row[field] === 'string') {
             let doubleQuotesFound = row[field]
-              .split("")
+              .split('')
               .filter((char: any) => char === '"')
 
             byteSize = getByteSize(row[field])
@@ -61,17 +61,17 @@ export const convertToCSV = (data: any) => {
       )
     }
 
-    return `${field}:${firstFoundType === "chars" ? "$" : ""}${
+    return `${field}:${firstFoundType === 'chars' ? '$' : ''}${
       longestValueForField
         ? longestValueForField
-        : firstFoundType === "chars"
-        ? "1"
-        : "best"
+        : firstFoundType === 'chars'
+        ? '1'
+        : 'best'
     }.`
   })
 
   if (invalidString) {
-    return "ERROR: LARGE STRING LENGTH"
+    return 'ERROR: LARGE STRING LENGTH'
   }
   csvTest = data.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
@@ -86,15 +86,15 @@ export const convertToCSV = (data: any) => {
         value = JSON.stringify(currentCell, replacer)
       }
 
-      value = value.replace(/\\\\/gm, "\\")
+      value = value.replace(/\\\\/gm, '\\')
 
       if (containsSpecialChar) {
-        if (value.includes(",") || value.includes('"')) {
+        if (value.includes(',') || value.includes('"')) {
           value = '"' + value + '"'
         }
       } else {
         if (
-          !value.includes(",") &&
+          !value.includes(',') &&
           value.includes('"') &&
           !value.includes('\\"')
         ) {
@@ -104,19 +104,19 @@ export const convertToCSV = (data: any) => {
         value = value.replace(/\\"/gm, '""')
       }
 
-      value = value.replace(/\r\n/gm, "\n")
+      value = value.replace(/\r\n/gm, '\n')
 
-      if (value === "" && headers[index].includes("best")) {
-        value = "."
+      if (value === '' && headers[index].includes('best')) {
+        value = '.'
       }
 
       return value
     })
-    return fields.join(",")
+    return fields.join(',')
   })
 
   let finalCSV =
-    headers.join(",").replace(/,/g, " ") + "\r\n" + csvTest.join("\r\n")
+    headers.join(',').replace(/,/g, ' ') + '\r\n' + csvTest.join('\r\n')
 
   return finalCSV
 }

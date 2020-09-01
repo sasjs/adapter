@@ -1,6 +1,6 @@
-import { isLogInRequired, needsRetry } from "./utils"
-import { CsrfToken } from "./types/CsrfToken"
-import { UploadFile } from "./types/UploadFile"
+import { isLogInRequired, needsRetry } from './utils'
+import { CsrfToken } from './types/CsrfToken'
+import { UploadFile } from './types/UploadFile'
 
 const requestRetryLimit = 5
 
@@ -15,9 +15,9 @@ export class FileUploader {
   private retryCount = 0
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
-    if (files?.length < 1) throw new Error("Atleast one file must be provided")
+    if (files?.length < 1) throw new Error('Atleast one file must be provided')
 
-    let paramsString = ""
+    let paramsString = ''
 
     for (let param in params) {
       if (params.hasOwnProperty(param)) {
@@ -26,41 +26,41 @@ export class FileUploader {
     }
 
     const program = this.appLoc
-      ? this.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
+      ? this.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
       : sasJob
     const uploadUrl = `${this.serverUrl}${this.jobsPath}/?${
-      "_program=" + program
+      '_program=' + program
     }${paramsString}`
 
     const headers = {
-      "cache-control": "no-cache"
+      'cache-control': 'no-cache'
     }
 
     return new Promise((resolve, reject) => {
       const formData = new FormData()
 
       for (let file of files) {
-        formData.append("file", file.file, file.fileName)
+        formData.append('file', file.file, file.fileName)
       }
 
-      if (this.csrfToken) formData.append("_csrf", this.csrfToken.value)
+      if (this.csrfToken) formData.append('_csrf', this.csrfToken.value)
 
       fetch(uploadUrl, {
-        method: "POST",
+        method: 'POST',
         body: formData,
-        referrerPolicy: "same-origin",
+        referrerPolicy: 'same-origin',
         headers
       })
         .then(async (response) => {
           if (!response.ok) {
             if (response.status === 403) {
-              const tokenHeader = response.headers.get("X-CSRF-HEADER")
+              const tokenHeader = response.headers.get('X-CSRF-HEADER')
 
               if (tokenHeader) {
                 const token = response.headers.get(tokenHeader)
                 this.csrfToken = {
                   headerName: tokenHeader,
-                  value: token || ""
+                  value: token || ''
                 }
 
                 this.setCsrfTokenWeb(this.csrfToken)
@@ -72,7 +72,7 @@ export class FileUploader {
         })
         .then((responseText) => {
           if (isLogInRequired(responseText))
-            reject("You must be logged in to upload a fle")
+            reject('You must be logged in to upload a fle')
 
           if (needsRetry(responseText)) {
             if (this.retryCount < requestRetryLimit) {

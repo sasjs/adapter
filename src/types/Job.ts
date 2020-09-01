@@ -1,5 +1,5 @@
-import { Link } from "./Link"
-import { JobResult } from "./JobResult"
+import { Link } from './Link'
+import { JobResult } from './JobResult'
 
 export interface Job {
   id: string
