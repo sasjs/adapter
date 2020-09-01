@@ -1,3 +1,3 @@
 export interface JobDefinition {
-  code: string;
+  code: string
 }

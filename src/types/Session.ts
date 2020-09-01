@@ -1,11 +1,11 @@
-import { Link } from "./Link";
+import { Link } from "./Link"
 
 export interface Session {
-  id: string;
-  state: string;
-  links: Link[];
+  id: string
+  state: string
+  links: Link[]
   attributes: {
-    sessionInactiveTimeout: number;
-  };
-  creationTimeStamp: string;
+    sessionInactiveTimeout: number
+  }
+  creationTimeStamp: string
 }

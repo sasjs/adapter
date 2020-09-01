@@ -1,7 +1,7 @@
-import { Link } from "./Link";
+import { Link } from "./Link"
 
 export interface Folder {
-  id: string;
-  uri: string;
-  links: Link[];
+  id: string
+  uri: string
+  links: Link[]
 }

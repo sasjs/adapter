@@ -2,31 +2,31 @@ export const parseAndSubmitAuthorizeForm = async (
   response: string,
   serverUrl: string
 ) => {
-  let authUrl: string | null = null;
-  const params: any = {};
+  let authUrl: string | null = null
+  const params: any = {}
 
-  const responseBody = response.split("<body>")[1].split("</body>")[0];
-  const bodyElement = document.createElement("div");
-  bodyElement.innerHTML = responseBody;
+  const responseBody = response.split("<body>")[1].split("</body>")[0]
+  const bodyElement = document.createElement("div")
+  bodyElement.innerHTML = responseBody
 
-  const form = bodyElement.querySelector("#application_authorization");
-  authUrl = form ? serverUrl + form.getAttribute("action") : null;
+  const form = bodyElement.querySelector("#application_authorization")
+  authUrl = form ? serverUrl + form.getAttribute("action") : null
 
-  const inputs: any = form?.querySelectorAll("input");
+  const inputs: any = form?.querySelectorAll("input")
 
   for (const input of inputs) {
     if (input.name === "user_oauth_approval") {
-      input.value = "true";
+      input.value = "true"
     }
 
-    params[input.name] = input.value;
+    params[input.name] = input.value
   }
 
-  const formData = new FormData();
+  const formData = new FormData()
 
   for (const key in params) {
     if (params.hasOwnProperty(key)) {
-      formData.append(key, params[key]);
+      formData.append(key, params[key])
     }
   }
 
@@ -40,10 +40,10 @@ export const parseAndSubmitAuthorizeForm = async (
       })
         .then((res) => res.text())
         .then((res) => {
-          resolve(res);
-        });
+          resolve(res)
+        })
     } else {
-      reject("Auth form url is null");
+      reject("Auth form url is null")
     }
-  });
-};
+  })
+}

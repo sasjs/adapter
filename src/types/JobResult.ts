@@ -1,3 +1,3 @@
 export interface JobResult {
-  "_webout.json": string;
+  "_webout.json": string
 }

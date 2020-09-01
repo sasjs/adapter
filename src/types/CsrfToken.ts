@@ -1,4 +1,4 @@
 export interface CsrfToken {
-  headerName: string;
-  value: string;
+  headerName: string
+  value: string
 }

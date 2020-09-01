@@ -1,13 +1,13 @@
-import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge";
-import * as e6p from "es6-promise";
-(e6p as any).polyfill();
+import { isIEorEdgeOrOldFirefox } from "./utils/isIeOrEdge"
+import * as e6p from "es6-promise"
+;(e6p as any).polyfill()
 if (isIEorEdgeOrOldFirefox()) {
   if (window) {
-    window.fetch = undefined as any; // ensure the polyfill runs
+    window.fetch = undefined as any // ensure the polyfill runs
   }
 }
 // tslint:disable-next-line
-require("isomorphic-fetch");
+require("isomorphic-fetch")
 import {
   convertToCSV,
   compareTimestamps,
@@ -22,7 +22,7 @@ import {
   parseWeboutResponse,
   needsRetry,
   asyncForEach
-} from "./utils";
+} from "./utils"
 import {
   SASjsConfig,
   SASjsRequest,
@@ -30,10 +30,10 @@ import {
   ServerType,
   CsrfToken,
   UploadFile
-} from "./types";
-import { SASViyaApiClient } from "./SASViyaApiClient";
-import { SAS9ApiClient } from "./SAS9ApiClient";
-import { FileUploader } from "./FileUploader";
+} from "./types"
+import { SASViyaApiClient } from "./SASViyaApiClient"
+import { SAS9ApiClient } from "./SAS9ApiClient"
+import { FileUploader } from "./FileUploader"
 
 const defaultConfig: SASjsConfig = {
   serverUrl: "",
@@ -44,38 +44,38 @@ const defaultConfig: SASjsConfig = {
   debug: true,
   contextName: "SAS Job Execution compute context",
   useComputeApi: false
-};
+}
 
-const requestRetryLimit = 5;
+const requestRetryLimit = 5
 
 /**
  * SASjs is a JavaScript adapter for SAS.
  *
  */
 export default class SASjs {
-  private sasjsConfig: SASjsConfig = new SASjsConfig();
-  private jobsPath: string = "";
-  private logoutUrl: string = "";
-  private loginUrl: string = "";
-  private csrfTokenApi: CsrfToken | null = null;
-  private csrfTokenWeb: CsrfToken | null = null;
-  private retryCountWeb: number = 0;
-  private retryCountComputeApi: number = 0;
-  private retryCountJeseApi: number = 0;
-  private sasjsRequests: SASjsRequest[] = [];
-  private sasjsWaitingRequests: SASjsWaitingRequest[] = [];
-  private userName: string = "";
-  private sasViyaApiClient: SASViyaApiClient | null = null;
-  private sas9ApiClient: SAS9ApiClient | null = null;
-  private fileUploader: FileUploader | null = null;
+  private sasjsConfig: SASjsConfig = new SASjsConfig()
+  private jobsPath: string = ""
+  private logoutUrl: string = ""
+  private loginUrl: string = ""
+  private csrfTokenApi: CsrfToken | null = null
+  private csrfTokenWeb: CsrfToken | null = null
+  private retryCountWeb: number = 0
+  private retryCountComputeApi: number = 0
+  private retryCountJeseApi: number = 0
+  private sasjsRequests: SASjsRequest[] = []
+  private sasjsWaitingRequests: SASjsWaitingRequest[] = []
+  private userName: string = ""
+  private sasViyaApiClient: SASViyaApiClient | null = null
+  private sas9ApiClient: SAS9ApiClient | null = null
+  private fileUploader: FileUploader | null = null
 
   constructor(config?: any) {
     this.sasjsConfig = {
       ...defaultConfig,
       ...config
-    };
+    }
 
-    this.setupConfiguration();
+    this.setupConfiguration()
   }
 
   public async executeScriptSAS9(
@@ -84,34 +84,34 @@ export default class SASjs {
     repositoryName: string
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SAS9) {
-      throw new Error("This operation is only supported on SAS9 servers.");
+      throw new Error("This operation is only supported on SAS9 servers.")
     }
     return await this.sas9ApiClient?.executeScript(
       linesOfCode,
       serverName,
       repositoryName
-    );
+    )
   }
 
   public async getAllContexts(accessToken: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
-    return await this.sasViyaApiClient!.getAllContexts(accessToken);
+    return await this.sasViyaApiClient!.getAllContexts(accessToken)
   }
 
   public async getExecutableContexts(accessToken: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
-    return await this.sasViyaApiClient!.getExecutableContexts(accessToken);
+    return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
 
   public async createSession(contextName: string, accessToken: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
-    return await this.sasViyaApiClient!.createSession(contextName, accessToken);
+    return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
 
   public async executeScriptSASViya(
@@ -123,7 +123,7 @@ export default class SASjs {
     silent = false
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
     return await this.sasViyaApiClient!.executeScript(
       fileName,
@@ -131,7 +131,7 @@ export default class SASjs {
       contextName,
       accessToken,
       silent
-    );
+    )
   }
 
   public async createFolder(
@@ -142,7 +142,7 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
     if (sasApiClient)
       return await sasApiClient.createFolder(
@@ -150,13 +150,13 @@ export default class SASjs {
         parentFolderPath,
         parentFolderUri,
         accessToken
-      );
+      )
     return await this.sasViyaApiClient!.createFolder(
       folderName,
       parentFolderPath,
       parentFolderUri,
       accessToken
-    );
+    )
   }
 
   public async createJobDefinition(
@@ -168,7 +168,7 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
     if (sasApiClient)
       return await sasApiClient!.createJobDefinition(
@@ -177,21 +177,21 @@ export default class SASjs {
         parentFolderPath,
         parentFolderUri,
         accessToken
-      );
+      )
     return await this.sasViyaApiClient!.createJobDefinition(
       jobName,
       code,
       parentFolderPath,
       parentFolderUri,
       accessToken
-    );
+    )
   }
 
   public async getAuthCode(clientId: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
-    return await this.sasViyaApiClient!.getAuthCode(clientId);
+    return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
 
   public async getAccessToken(
@@ -200,13 +200,13 @@ export default class SASjs {
     authCode: string
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
       clientSecret,
       authCode
-    );
+    )
   }
 
   public async refreshTokens(
@@ -215,20 +215,20 @@ export default class SASjs {
     refreshToken: string
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
     return await this.sasViyaApiClient!.refreshTokens(
       clientId,
       clientSecret,
       refreshToken
-    );
+    )
   }
 
   public async deleteClient(clientId: string, accessToken: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
-    return await this.sasViyaApiClient!.deleteClient(clientId, accessToken);
+    return await this.sasViyaApiClient!.deleteClient(clientId, accessToken)
   }
 
   /**
@@ -236,7 +236,7 @@ export default class SASjs {
    *
    */
   public getSasjsConfig() {
-    return this.sasjsConfig;
+    return this.sasjsConfig
   }
 
   /**
@@ -244,7 +244,7 @@ export default class SASjs {
    *
    */
   public getUserName() {
-    return this.userName;
+    return this.userName
   }
 
   /**
@@ -252,7 +252,7 @@ export default class SASjs {
    *
    */
   public getCsrfApi() {
-    return this.csrfTokenApi?.value;
+    return this.csrfTokenApi?.value
   }
 
   /**
@@ -260,7 +260,7 @@ export default class SASjs {
    *
    */
   public getCsrfWeb() {
-    return this.csrfTokenWeb?.value;
+    return this.csrfTokenWeb?.value
   }
 
   /**
@@ -271,8 +271,8 @@ export default class SASjs {
     this.sasjsConfig = {
       ...this.sasjsConfig,
       ...config
-    };
-    await this.setupConfiguration();
+    }
+    await this.setupConfiguration()
   }
 
   /**
@@ -281,7 +281,7 @@ export default class SASjs {
    * @param value - Boolean indicating debug state
    */
   public setDebugState(value: boolean) {
-    this.sasjsConfig.debug = value;
+    this.sasjsConfig.debug = value
   }
 
   /**
@@ -289,14 +289,14 @@ export default class SASjs {
    * @returns a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`
    */
   public async checkSession() {
-    const loginResponse = await fetch(this.loginUrl.replace(".do", ""));
-    const responseText = await loginResponse.text();
-    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText);
+    const loginResponse = await fetch(this.loginUrl.replace(".do", ""))
+    const responseText = await loginResponse.text()
+    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
 
     return Promise.resolve({
       isLoggedIn,
       userName: this.userName
-    });
+    })
   }
 
   /**
@@ -309,26 +309,26 @@ export default class SASjs {
       _service: "default",
       username,
       password
-    };
+    }
 
-    this.userName = loginParams.username;
+    this.userName = loginParams.username
 
-    const { isLoggedIn } = await this.checkSession();
+    const { isLoggedIn } = await this.checkSession()
     if (isLoggedIn) {
-      this.resendWaitingRequests();
+      this.resendWaitingRequests()
 
       return Promise.resolve({
         isLoggedIn,
         userName: this.userName
-      });
+      })
     }
 
-    const loginForm = await this.getLoginForm();
+    const loginForm = await this.getLoginForm()
 
     for (const key in loginForm) {
-      loginParams[key] = loginForm[key];
+      loginParams[key] = loginForm[key]
     }
-    const loginParamsStr = serialize(loginParams);
+    const loginParamsStr = serialize(loginParams)
 
     return fetch(this.loginUrl, {
       method: "post",
@@ -341,33 +341,33 @@ export default class SASjs {
     })
       .then((response) => response.text())
       .then(async (responseText) => {
-        let authFormRes: any;
-        let loggedIn;
+        let authFormRes: any
+        let loggedIn
 
         if (isAuthorizeFormRequired(responseText)) {
           authFormRes = await parseAndSubmitAuthorizeForm(
             responseText,
             this.sasjsConfig.serverUrl
-          );
+          )
         } else {
-          loggedIn = isLogInSuccess(responseText);
+          loggedIn = isLogInSuccess(responseText)
         }
 
         if (!loggedIn) {
-          const currentSession = await this.checkSession();
-          loggedIn = currentSession.isLoggedIn;
+          const currentSession = await this.checkSession()
+          loggedIn = currentSession.isLoggedIn
         }
 
         if (loggedIn) {
-          this.resendWaitingRequests();
+          this.resendWaitingRequests()
         }
 
         return {
           isLoggedIn: loggedIn,
           userName: this.userName
-        };
+        }
       })
-      .catch((e) => Promise.reject(e));
+      .catch((e) => Promise.reject(e))
   }
 
   /**
@@ -375,13 +375,13 @@ export default class SASjs {
    */
   public logOut() {
     return new Promise((resolve, reject) => {
-      const logOutURL = `${this.sasjsConfig.serverUrl}${this.logoutUrl}`;
+      const logOutURL = `${this.sasjsConfig.serverUrl}${this.logoutUrl}`
       fetch(logOutURL)
         .then(() => {
-          resolve(true);
+          resolve(true)
         })
-        .catch((err: Error) => reject(err));
-    });
+        .catch((err: Error) => reject(err))
+    })
   }
 
   /**
@@ -401,9 +401,9 @@ export default class SASjs {
         this.jobsPath,
         this.setCsrfTokenWeb,
         this.csrfTokenWeb
-      );
+      )
 
-    return fileUploader.uploadFile(sasJob, files, params);
+    return fileUploader.uploadFile(sasJob, files, params)
   }
 
   /**
@@ -431,14 +431,14 @@ export default class SASjs {
     loginRequiredCallback?: any,
     accessToken?: string
   ) {
-    let requestResponse;
+    let requestResponse
 
     config = {
       ...this.sasjsConfig,
       ...config
-    };
+    }
 
-    sasJob = sasJob.startsWith("/") ? sasJob.replace("/", "") : sasJob;
+    sasJob = sasJob.startsWith("/") ? sasJob.replace("/", "") : sasJob
 
     if (config.serverType === ServerType.SASViya && config.contextName) {
       if (config.useComputeApi) {
@@ -448,9 +448,9 @@ export default class SASjs {
           config,
           loginRequiredCallback,
           accessToken
-        );
+        )
 
-        this.retryCountComputeApi = 0;
+        this.retryCountComputeApi = 0
       } else {
         requestResponse = await this.executeJobViaJesApi(
           sasJob,
@@ -458,9 +458,9 @@ export default class SASjs {
           config,
           loginRequiredCallback,
           accessToken
-        );
+        )
 
-        this.retryCountJeseApi = 0;
+        this.retryCountJeseApi = 0
       }
     } else {
       requestResponse = await this.executeJobViaWeb(
@@ -468,10 +468,10 @@ export default class SASjs {
         data,
         config,
         loginRequiredCallback
-      );
+      )
     }
 
-    return requestResponse;
+    return requestResponse
   }
 
   /**
@@ -492,16 +492,16 @@ export default class SASjs {
     accessToken?: string
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error("This operation is only supported on SAS Viya servers.");
+      throw new Error("This operation is only supported on SAS Viya servers.")
     }
 
-    let sasApiClient: any = null;
+    let sasApiClient: any = null
     if (serverUrl || appLoc) {
       if (!serverUrl) {
-        serverUrl = this.sasjsConfig.serverUrl;
+        serverUrl = this.sasjsConfig.serverUrl
       }
       if (!appLoc) {
-        appLoc = this.sasjsConfig.appLoc;
+        appLoc = this.sasjsConfig.appLoc
       }
       if (this.sasjsConfig.serverType === ServerType.SASViya) {
         sasApiClient = new SASViyaApiClient(
@@ -509,39 +509,39 @@ export default class SASjs {
           appLoc,
           this.sasjsConfig.contextName,
           this.setCsrfTokenApi
-        );
+        )
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        sasApiClient = new SAS9ApiClient(serverUrl);
+        sasApiClient = new SAS9ApiClient(serverUrl)
       }
     } else {
-      let sasClientConfig: any = null;
+      let sasClientConfig: any = null
       if (this.sasjsConfig.serverType === ServerType.SASViya) {
-        sasClientConfig = this.sasViyaApiClient!.getConfig();
+        sasClientConfig = this.sasViyaApiClient!.getConfig()
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        sasClientConfig = this.sas9ApiClient!.getConfig();
+        sasClientConfig = this.sas9ApiClient!.getConfig()
       }
-      serverUrl = sasClientConfig.serverUrl;
-      appLoc = sasClientConfig.rootFolderName as string;
+      serverUrl = sasClientConfig.serverUrl
+      appLoc = sasClientConfig.rootFolderName as string
     }
 
     // members of type 'folder' should be processed first
     if (serviceJson.members[0].members) {
       serviceJson.members[0].members.sort((member: { type: string }) =>
         member.type === "folder" ? -1 : 1
-      );
+      )
     }
 
     const members =
       serviceJson.members[0].name === "services"
         ? serviceJson.members[0].members
-        : serviceJson.members;
+        : serviceJson.members
 
     await this.createFoldersAndServices(
       appLoc,
       members,
       accessToken,
       sasApiClient
-    );
+    )
   }
 
   private async executeJobViaComputeApi(
@@ -559,7 +559,7 @@ export default class SASjs {
       },
       SASjob: sasJob,
       data
-    };
+    }
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
@@ -573,23 +573,23 @@ export default class SASjs {
           )
           .then((response) => {
             if (!config.debug) {
-              this.appendSasjsRequest(null, sasJob, null);
+              this.appendSasjsRequest(null, sasJob, null)
             } else {
-              this.appendSasjsRequest(response, sasJob, null);
+              this.appendSasjsRequest(response, sasJob, null)
             }
 
-            let responseJson;
+            let responseJson
 
             try {
-              responseJson = JSON.parse(response!.result);
+              responseJson = JSON.parse(response!.result)
             } catch {
-              responseJson = JSON.parse(parseWeboutResponse(response!.result));
+              responseJson = JSON.parse(parseWeboutResponse(response!.result))
             }
 
-            resolve(responseJson);
+            resolve(responseJson)
           })
           .catch(async (response) => {
-            let error = response.error || response;
+            let error = response.error || response
 
             if (needsRetry(JSON.stringify(error))) {
               if (this.retryCountComputeApi < requestRetryLimit) {
@@ -599,32 +599,32 @@ export default class SASjs {
                   config,
                   loginRequiredCallback,
                   accessToken
-                );
+                )
 
-                this.retryCountComputeApi++;
+                this.retryCountComputeApi++
 
-                resolve(retryResponse);
+                resolve(retryResponse)
               } else {
-                this.retryCountComputeApi = 0;
-                reject({ MESSAGE: "Compute API retry requests limit reached" });
+                this.retryCountComputeApi = 0
+                reject({ MESSAGE: "Compute API retry requests limit reached" })
               }
             }
 
             if (error && error.status === 401) {
-              if (loginRequiredCallback) loginRequiredCallback(true);
-              sasjsWaitingRequest.requestPromise.resolve = resolve;
-              sasjsWaitingRequest.requestPromise.reject = reject;
-              sasjsWaitingRequest.config = config;
-              this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+              if (loginRequiredCallback) loginRequiredCallback(true)
+              sasjsWaitingRequest.requestPromise.resolve = resolve
+              sasjsWaitingRequest.requestPromise.reject = reject
+              sasjsWaitingRequest.config = config
+              this.sasjsWaitingRequests.push(sasjsWaitingRequest)
             } else {
-              reject({ MESSAGE: error || "Job execution failed" });
+              reject({ MESSAGE: error || "Job execution failed" })
             }
 
-            this.appendSasjsRequest(response.log, sasJob, null);
-          });
+            this.appendSasjsRequest(response.log, sasJob, null)
+          })
       }
-    );
-    return sasjsWaitingRequest.requestPromise.promise;
+    )
+    return sasjsWaitingRequest.requestPromise.promise
   }
 
   private async executeJobViaJesApi(
@@ -642,18 +642,18 @@ export default class SASjs {
       },
       SASjob: sasJob,
       data
-    };
+    }
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
-        const session = await this.checkSession();
+        const session = await this.checkSession()
 
         if (!session.isLoggedIn) {
-          if (loginRequiredCallback) loginRequiredCallback(true);
-          sasjsWaitingRequest.requestPromise.resolve = resolve;
-          sasjsWaitingRequest.requestPromise.reject = reject;
-          sasjsWaitingRequest.config = config;
-          this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+          if (loginRequiredCallback) loginRequiredCallback(true)
+          sasjsWaitingRequest.requestPromise.resolve = resolve
+          sasjsWaitingRequest.requestPromise.reject = reject
+          sasjsWaitingRequest.config = config
+          this.sasjsWaitingRequests.push(sasjsWaitingRequest)
         } else {
           resolve(
             await this.sasViyaApiClient
@@ -666,22 +666,22 @@ export default class SASjs {
               )
               .then((response) => {
                 if (!config.debug) {
-                  this.appendSasjsRequest(null, sasJob, null);
+                  this.appendSasjsRequest(null, sasJob, null)
                 } else {
-                  this.appendSasjsRequest(response, sasJob, null);
+                  this.appendSasjsRequest(response, sasJob, null)
                 }
 
-                let responseJson;
+                let responseJson
 
                 try {
-                  responseJson = JSON.parse(response!.result);
+                  responseJson = JSON.parse(response!.result)
                 } catch {
                   responseJson = JSON.parse(
                     parseWeboutResponse(response!.result)
-                  );
+                  )
                 }
 
-                return responseJson;
+                return responseJson
               })
               .catch(async (e) => {
                 if (needsRetry(JSON.stringify(e))) {
@@ -692,24 +692,24 @@ export default class SASjs {
                       config,
                       loginRequiredCallback,
                       accessToken
-                    );
+                    )
 
-                    this.retryCountJeseApi++;
+                    this.retryCountJeseApi++
 
-                    resolve(retryResponse);
+                    resolve(retryResponse)
                   } else {
-                    this.retryCountJeseApi = 0;
-                    reject({ MESSAGE: "Jes API retry requests limit reached" });
+                    this.retryCountJeseApi = 0
+                    reject({ MESSAGE: "Jes API retry requests limit reached" })
                   }
                 }
 
-                reject({ MESSAGE: (e && e.message) || "Job execution failed" });
+                reject({ MESSAGE: (e && e.message) || "Job execution failed" })
               })
-          );
+          )
         }
       }
-    );
-    return sasjsWaitingRequest.requestPromise.promise;
+    )
+    return sasjsWaitingRequest.requestPromise.promise
   }
 
   private async executeJobViaWeb(
@@ -726,29 +726,29 @@ export default class SASjs {
       },
       SASjob: sasJob,
       data
-    };
+    }
     const program = config.appLoc
       ? config.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
-      : sasJob;
+      : sasJob
     const jobUri =
-      config.serverType === "SASVIYA" ? await this.getJobUri(sasJob) : "";
+      config.serverType === "SASVIYA" ? await this.getJobUri(sasJob) : ""
     const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
       jobUri.length > 0
         ? "__program=" + program + "&_job=" + jobUri
         : "_program=" + program
-    }`;
+    }`
 
     const requestParams = {
       ...this.getRequestParamsWeb(config)
-    };
+    }
 
-    const formData = new FormData();
+    const formData = new FormData()
 
-    let isError = false;
-    let errorMsg = "";
+    let isError = false
+    let errorMsg = ""
 
     if (data) {
-      const stringifiedData = JSON.stringify(data);
+      const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.SAS9 ||
         stringifiedData.length > 500000 ||
@@ -757,69 +757,69 @@ export default class SASjs {
         // file upload approach
         for (const tableName in data) {
           if (isError) {
-            return;
+            return
           }
-          const name = tableName;
-          const csv = convertToCSV(data[tableName]);
+          const name = tableName
+          const csv = convertToCSV(data[tableName])
           if (csv === "ERROR: LARGE STRING LENGTH") {
-            isError = true;
+            isError = true
             errorMsg =
-              "The max length of a string value in SASjs is 32765 characters.";
+              "The max length of a string value in SASjs is 32765 characters."
           }
 
           const file = new Blob([csv], {
             type: "application/csv"
-          });
+          })
 
-          formData.append(name, file, `${name}.csv`);
+          formData.append(name, file, `${name}.csv`)
         }
       } else {
         // param based approach
-        const sasjsTables = [];
-        let tableCounter = 0;
+        const sasjsTables = []
+        let tableCounter = 0
         for (const tableName in data) {
           if (isError) {
-            return;
+            return
           }
-          tableCounter++;
-          sasjsTables.push(tableName);
-          const csv = convertToCSV(data[tableName]);
+          tableCounter++
+          sasjsTables.push(tableName)
+          const csv = convertToCSV(data[tableName])
           if (csv === "ERROR: LARGE STRING LENGTH") {
-            isError = true;
+            isError = true
             errorMsg =
-              "The max length of a string value in SASjs is 32765 characters.";
+              "The max length of a string value in SASjs is 32765 characters."
           }
           // if csv has length more then 16k, send in chunks
           if (csv.length > 16000) {
-            const csvChunks = splitChunks(csv);
+            const csvChunks = splitChunks(csv)
             // append chunks to form data with same key
             csvChunks.map((chunk) => {
-              formData.append(`sasjs${tableCounter}data`, chunk);
-            });
+              formData.append(`sasjs${tableCounter}data`, chunk)
+            })
           } else {
-            requestParams[`sasjs${tableCounter}data`] = csv;
+            requestParams[`sasjs${tableCounter}data`] = csv
           }
         }
-        requestParams["sasjs_tables"] = sasjsTables.join(" ");
+        requestParams["sasjs_tables"] = sasjsTables.join(" ")
       }
     }
 
     for (const key in requestParams) {
       if (requestParams.hasOwnProperty(key)) {
-        formData.append(key, requestParams[key]);
+        formData.append(key, requestParams[key])
       }
     }
 
-    let isRedirected = false;
+    let isRedirected = false
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       (resolve, reject) => {
         if (isError) {
-          reject({ MESSAGE: errorMsg });
+          reject({ MESSAGE: errorMsg })
         }
-        const headers: any = {};
+        const headers: any = {}
         if (this.csrfTokenWeb) {
-          headers[this.csrfTokenWeb.headerName] = this.csrfTokenWeb.value;
+          headers[this.csrfTokenWeb.headerName] = this.csrfTokenWeb.value
         }
         fetch(apiUrl, {
           method: "POST",
@@ -830,23 +830,23 @@ export default class SASjs {
           .then(async (response) => {
             if (!response.ok) {
               if (response.status === 403) {
-                const tokenHeader = response.headers.get("X-CSRF-HEADER");
+                const tokenHeader = response.headers.get("X-CSRF-HEADER")
 
                 if (tokenHeader) {
-                  const token = response.headers.get(tokenHeader);
+                  const token = response.headers.get(tokenHeader)
                   this.csrfTokenWeb = {
                     headerName: tokenHeader,
                     value: token || ""
-                  };
+                  }
                 }
               }
             }
 
             if (response.redirected && config.serverType === ServerType.SAS9) {
-              isRedirected = true;
+              isRedirected = true
             }
 
-            return response.text();
+            return response.text()
           })
           .then((responseText) => {
             if (
@@ -854,36 +854,36 @@ export default class SASjs {
               !isLogInRequired(responseText)
             ) {
               if (this.retryCountWeb < requestRetryLimit) {
-                this.retryCountWeb++;
+                this.retryCountWeb++
                 this.request(sasJob, data).then(
                   (res: any) => resolve(res),
                   (err: any) => reject(err)
-                );
+                )
               } else {
-                this.retryCountWeb = 0;
-                reject(responseText);
+                this.retryCountWeb = 0
+                reject(responseText)
               }
             } else {
-              this.retryCountWeb = 0;
-              this.parseLogFromResponse(responseText, program);
+              this.retryCountWeb = 0
+              this.parseLogFromResponse(responseText, program)
 
               if (isLogInRequired(responseText)) {
-                if (loginRequiredCallback) loginRequiredCallback(true);
-                sasjsWaitingRequest.requestPromise.resolve = resolve;
-                sasjsWaitingRequest.requestPromise.reject = reject;
-                sasjsWaitingRequest.config = config;
-                this.sasjsWaitingRequests.push(sasjsWaitingRequest);
+                if (loginRequiredCallback) loginRequiredCallback(true)
+                sasjsWaitingRequest.requestPromise.resolve = resolve
+                sasjsWaitingRequest.requestPromise.reject = reject
+                sasjsWaitingRequest.config = config
+                this.sasjsWaitingRequests.push(sasjsWaitingRequest)
               } else {
                 if (config.serverType === ServerType.SAS9 && config.debug) {
-                  this.updateUsername(responseText);
-                  const jsonResponseText = parseWeboutResponse(responseText);
+                  this.updateUsername(responseText)
+                  const jsonResponseText = parseWeboutResponse(responseText)
 
                   if (jsonResponseText !== "") {
-                    resolve(JSON.parse(jsonResponseText));
+                    resolve(JSON.parse(jsonResponseText))
                   } else {
                     reject({
                       MESSAGE: this.parseSAS9ErrorResponse(responseText)
-                    });
+                    })
                   }
                 } else if (
                   config.serverType === ServerType.SASViya &&
@@ -892,91 +892,91 @@ export default class SASjs {
                   try {
                     this.parseSASVIYADebugResponse(responseText).then(
                       (resText: any) => {
-                        this.updateUsername(resText);
+                        this.updateUsername(resText)
                         try {
-                          resolve(JSON.parse(resText));
+                          resolve(JSON.parse(resText))
                         } catch (e) {
-                          reject({ MESSAGE: resText });
+                          reject({ MESSAGE: resText })
                         }
                       },
                       (err: any) => {
-                        reject({ MESSAGE: err });
+                        reject({ MESSAGE: err })
                       }
-                    );
+                    )
                   } catch (e) {
-                    reject({ MESSAGE: responseText });
+                    reject({ MESSAGE: responseText })
                   }
                 } else {
-                  this.updateUsername(responseText);
+                  this.updateUsername(responseText)
                   try {
-                    const parsedJson = JSON.parse(responseText);
-                    resolve(parsedJson);
+                    const parsedJson = JSON.parse(responseText)
+                    resolve(parsedJson)
                   } catch (e) {
-                    reject({ MESSAGE: responseText });
+                    reject({ MESSAGE: responseText })
                   }
                 }
               }
             }
           })
           .catch((e: Error) => {
-            reject(e);
-          });
+            reject(e)
+          })
       }
-    );
+    )
 
-    return sasjsWaitingRequest.requestPromise.promise;
+    return sasjsWaitingRequest.requestPromise.promise
   }
 
   private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
-    this.csrfTokenWeb = csrfToken;
-  };
+    this.csrfTokenWeb = csrfToken
+  }
 
   private setCsrfTokenApi = (csrfToken: CsrfToken) => {
-    this.csrfTokenApi = csrfToken;
-  };
+    this.csrfTokenApi = csrfToken
+  }
 
   private async resendWaitingRequests() {
     for (const sasjsWaitingRequest of this.sasjsWaitingRequests) {
       this.request(sasjsWaitingRequest.SASjob, sasjsWaitingRequest.data).then(
         (res: any) => {
-          sasjsWaitingRequest.requestPromise.resolve(res);
+          sasjsWaitingRequest.requestPromise.resolve(res)
         },
         (err: any) => {
-          sasjsWaitingRequest.requestPromise.reject(err);
+          sasjsWaitingRequest.requestPromise.reject(err)
         }
-      );
+      )
     }
 
-    this.sasjsWaitingRequests = [];
+    this.sasjsWaitingRequests = []
   }
 
   private getRequestParamsWeb(config: any): any {
-    const requestParams: any = {};
+    const requestParams: any = {}
 
     if (this.csrfTokenWeb) {
-      requestParams["_csrf"] = this.csrfTokenWeb.value;
+      requestParams["_csrf"] = this.csrfTokenWeb.value
     }
 
     if (config.debug) {
-      requestParams["_omittextlog"] = "false";
-      requestParams["_omitsessionresults"] = "false";
+      requestParams["_omittextlog"] = "false"
+      requestParams["_omitsessionresults"] = "false"
 
-      requestParams["_debug"] = 131;
+      requestParams["_debug"] = 131
     }
 
-    return requestParams;
+    return requestParams
   }
 
   private updateUsername(response: any) {
     try {
-      const responseJson = JSON.parse(response);
+      const responseJson = JSON.parse(response)
       if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        this.userName = responseJson["_METAUSER"];
+        this.userName = responseJson["_METAUSER"]
       } else {
-        this.userName = responseJson["SYSUSERID"];
+        this.userName = responseJson["SYSUSERID"]
       }
     } catch (e) {
-      this.userName = "";
+      this.userName = ""
     }
   }
 
@@ -984,47 +984,47 @@ export default class SASjs {
     return new Promise((resolve, reject) => {
       const iframeStart = response.split(
         '<iframe style="width: 99%; height: 500px" src="'
-      )[1];
-      const jsonUrl = iframeStart ? iframeStart.split('"></iframe>')[0] : null;
+      )[1]
+      const jsonUrl = iframeStart ? iframeStart.split('"></iframe>')[0] : null
 
       if (jsonUrl) {
         fetch(this.sasjsConfig.serverUrl + jsonUrl)
           .then((res) => res.text())
           .then((resText) => {
-            resolve(resText);
-          });
+            resolve(resText)
+          })
       } else {
-        reject("No debug info in response");
+        reject("No debug info in response")
       }
-    });
+    })
   }
 
   private async getJobUri(sasJob: string) {
-    if (!this.sasViyaApiClient) return "";
-    const jobMap: any = await this.sasViyaApiClient.getAppLocMap();
-    let uri = "";
+    if (!this.sasViyaApiClient) return ""
+    const jobMap: any = await this.sasViyaApiClient.getAppLocMap()
+    let uri = ""
 
     if (jobMap.size) {
-      const jobKey = sasJob.split("/")[0];
-      const jobName = sasJob.split("/")[1];
+      const jobKey = sasJob.split("/")[0]
+      const jobName = sasJob.split("/")[1]
 
-      const locJobs = jobMap.get(jobKey);
+      const locJobs = jobMap.get(jobKey)
       if (locJobs) {
         const job = locJobs.find(
           (el: any) => el.name === jobName && el.contentType === "jobDefinition"
-        );
+        )
         if (job) {
-          uri = job.uri;
+          uri = job.uri
         }
       }
     }
-    return uri;
+    return uri
   }
 
   private parseSAS9ErrorResponse(response: string) {
-    const logLines = response.split("\n");
-    const parsedLines: string[] = [];
-    let firstErrorLineIndex: number = -1;
+    const logLines = response.split("\n")
+    const parsedLines: string[] = []
+    let firstErrorLineIndex: number = -1
 
     logLines.map((line: string, index: number) => {
       if (
@@ -1032,25 +1032,25 @@ export default class SASjs {
         !line.toLowerCase().includes("this request completed with errors.") &&
         firstErrorLineIndex === -1
       ) {
-        firstErrorLineIndex = index;
+        firstErrorLineIndex = index
       }
-    });
+    })
 
     for (let i = firstErrorLineIndex - 10; i <= firstErrorLineIndex + 10; i++) {
-      parsedLines.push(logLines[i]);
+      parsedLines.push(logLines[i])
     }
 
-    return parsedLines.join(", ");
+    return parsedLines.join(", ")
   }
 
   private parseLogFromResponse(response: any, program: string) {
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
-      this.appendSasjsRequest(response, program, null);
+      this.appendSasjsRequest(response, program, null)
     } else {
       if (!this.sasjsConfig.debug) {
-        this.appendSasjsRequest(null, program, null);
+        this.appendSasjsRequest(null, program, null)
       } else {
-        this.appendSasjsRequest(response, program, null);
+        this.appendSasjsRequest(response, program, null)
       }
     }
   }
@@ -1062,8 +1062,8 @@ export default class SASjs {
       })
         .then((response: any) => response.text())
         .then((response: any) => resolve(response))
-        .catch((err: Error) => reject(err));
-    });
+        .catch((err: Error) => reject(err))
+    })
   }
 
   private async appendSasjsRequest(
@@ -1071,28 +1071,28 @@ export default class SASjs {
     program: string,
     pgmData: any
   ) {
-    let sourceCode = "";
-    let generatedCode = "";
-    let sasWork = null;
+    let sourceCode = ""
+    let generatedCode = ""
+    let sasWork = null
 
     if (response && response.result && response.log) {
-      sourceCode = parseSourceCode(response.log);
-      generatedCode = parseGeneratedCode(response.log);
+      sourceCode = parseSourceCode(response.log)
+      generatedCode = parseGeneratedCode(response.log)
 
       if (this.sasjsConfig.debug) {
         if (response.log) {
-          sasWork = response.log;
+          sasWork = response.log
         } else {
-          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK;
+          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK
         }
       } else {
-        sasWork = JSON.parse(response.result).WORK;
+        sasWork = JSON.parse(response.result).WORK
       }
     } else {
       if (response) {
-        sourceCode = parseSourceCode(response);
-        generatedCode = parseGeneratedCode(response);
-        sasWork = await this.parseSasWork(response);
+        sourceCode = parseSourceCode(response)
+        generatedCode = parseGeneratedCode(response)
+        sasWork = await this.parseSasWork(response)
       }
     }
 
@@ -1103,52 +1103,52 @@ export default class SASjs {
       sourceCode,
       generatedCode,
       SASWORK: sasWork
-    });
+    })
 
     if (this.sasjsRequests.length > 20) {
-      this.sasjsRequests.splice(0, 1);
+      this.sasjsRequests.splice(0, 1)
     }
   }
 
   private async parseSasWork(response: any) {
     if (this.sasjsConfig.debug) {
-      let jsonResponse;
+      let jsonResponse
 
       if (this.sasjsConfig.serverType === ServerType.SAS9) {
         try {
-          jsonResponse = JSON.parse(parseWeboutResponse(response));
+          jsonResponse = JSON.parse(parseWeboutResponse(response))
         } catch (e) {
-          console.error(e);
+          console.error(e)
         }
       } else {
         await this.parseSASVIYADebugResponse(response).then(
           (resText: any) => {
             try {
-              jsonResponse = JSON.parse(resText);
+              jsonResponse = JSON.parse(resText)
             } catch (e) {
-              console.error(e);
+              console.error(e)
             }
           },
           (err: any) => {
-            console.error(err);
+            console.error(err)
           }
-        );
+        )
       }
 
       if (jsonResponse) {
-        return jsonResponse.WORK;
+        return jsonResponse.WORK
       }
     }
-    return null;
+    return null
   }
 
   public getSasRequests() {
-    const sortedRequests = this.sasjsRequests.sort(compareTimestamps);
-    return sortedRequests;
+    const sortedRequests = this.sasjsRequests.sort(compareTimestamps)
+    return sortedRequests
   }
 
   public clearSasRequests() {
-    this.sasjsRequests = [];
+    this.sasjsRequests = []
   }
 
   private setupConfiguration() {
@@ -1156,45 +1156,45 @@ export default class SASjs {
       this.sasjsConfig.serverUrl === undefined ||
       this.sasjsConfig.serverUrl === ""
     ) {
-      let url = `${location.protocol}//${location.hostname}`;
+      let url = `${location.protocol}//${location.hostname}`
       if (location.port) {
-        url = `${url}:${location.port}`;
+        url = `${url}:${location.port}`
       }
-      this.sasjsConfig.serverUrl = url;
+      this.sasjsConfig.serverUrl = url
     }
 
     if (this.sasjsConfig.serverUrl.slice(-1) === "/") {
-      this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1);
+      this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SASViya
         ? this.sasjsConfig.pathSASViya
-        : this.sasjsConfig.pathSAS9;
-    this.loginUrl = `${this.sasjsConfig.serverUrl}/SASLogon/login`;
+        : this.sasjsConfig.pathSAS9
+    this.loginUrl = `${this.sasjsConfig.serverUrl}/SASLogon/login`
     this.logoutUrl =
       this.sasjsConfig.serverType === ServerType.SAS9
         ? "/SASLogon/logout?"
-        : "/SASLogon/logout.do?";
+        : "/SASLogon/logout.do?"
 
     if (this.sasjsConfig.serverType === ServerType.SASViya) {
       if (this.sasViyaApiClient)
         this.sasViyaApiClient!.setConfig(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc
-        );
+        )
       else
         this.sasViyaApiClient = new SASViyaApiClient(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
           this.setCsrfTokenApi
-        );
+        )
     }
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
       if (this.sas9ApiClient)
-        this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl);
-      else this.sas9ApiClient = new SAS9ApiClient(this.sasjsConfig.serverUrl);
+        this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
+      else this.sas9ApiClient = new SAS9ApiClient(this.sasjsConfig.serverUrl)
     }
 
     this.fileUploader = new FileUploader(
@@ -1202,45 +1202,45 @@ export default class SASjs {
       this.sasjsConfig.serverUrl,
       this.jobsPath,
       this.setCsrfTokenWeb
-    );
+    )
   }
 
   private setLoginUrl = (matches: RegExpExecArray) => {
-    let parsedURL = matches[1].replace(/\?.*/, "");
+    let parsedURL = matches[1].replace(/\?.*/, "")
     if (parsedURL[0] === "/") {
-      parsedURL = parsedURL.substr(1);
+      parsedURL = parsedURL.substr(1)
 
       const tempLoginLink = this.sasjsConfig.serverUrl
         ? `${this.sasjsConfig.serverUrl}/${parsedURL}`
-        : `${parsedURL}`;
+        : `${parsedURL}`
 
-      const loginUrl = tempLoginLink;
+      const loginUrl = tempLoginLink
 
       this.loginUrl =
         this.sasjsConfig.serverType === ServerType.SASViya
           ? tempLoginLink
-          : loginUrl.replace(".do", "");
+          : loginUrl.replace(".do", "")
     }
-  };
+  }
 
   private async getLoginForm() {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/;
-    const response = await fetch(this.loginUrl).then((r) => r.text());
-    const matches = pattern.exec(response);
-    const formInputs: any = {};
+    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
+    const response = await fetch(this.loginUrl).then((r) => r.text())
+    const matches = pattern.exec(response)
+    const formInputs: any = {}
     if (matches && matches.length) {
-      this.setLoginUrl(matches);
-      const inputs = response.match(/<input.*"hidden"[^>]*>/g);
+      this.setLoginUrl(matches)
+      const inputs = response.match(/<input.*"hidden"[^>]*>/g)
       if (inputs) {
         inputs.forEach((inputStr: string) => {
-          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/);
+          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
           if (valueMatch && valueMatch.length) {
-            formInputs[valueMatch[1]] = valueMatch[2];
+            formInputs[valueMatch[1]] = valueMatch[2]
           }
-        });
+        })
       }
     }
-    return Object.keys(formInputs).length ? formInputs : null;
+    return Object.keys(formInputs).length ? formInputs : null
   }
 
   private async createFoldersAndServices(
@@ -1258,8 +1258,8 @@ export default class SASjs {
             undefined,
             accessToken,
             sasApiClient
-          );
-          break;
+          )
+          break
         case "service":
           await this.createJobDefinition(
             member.name,
@@ -1268,10 +1268,10 @@ export default class SASjs {
             undefined,
             accessToken,
             sasApiClient
-          );
-          break;
+          )
+          break
         default:
-          throw new Error(`Unidenitied member present in Json: ${member.name}`);
+          throw new Error(`Unidenitied member present in Json: ${member.name}`)
       }
       if (member.type === "folder" && member.members && member.members.length)
         await this.createFoldersAndServices(
@@ -1279,7 +1279,7 @@ export default class SASjs {
           member.members,
           accessToken,
           sasApiClient
-        );
-    });
+        )
+    })
   }
 }
