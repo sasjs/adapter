@@ -6,6 +6,7 @@ export interface Job {
   name: string;
   uri: string;
   createdBy: string;
+  code?: string;
   links: Link[];
   results: JobResult;
   error?: any;

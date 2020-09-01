@@ -675,20 +675,30 @@ export class SASViyaApiClient {
     const jobName = sasJob.split("/")[1];
     const jobFolder = this.rootFolderMap.get(folderName);
     const jobToExecute = jobFolder?.find((item) => item.name === jobName);
-    const jobDefinitionLink = jobToExecute?.links.find(
-      (l) => l.rel === "getResource"
-    );
-    if (!jobDefinitionLink) {
-      console.error("Job definition URI was not found.");
-      throw new Error("Job definition URI was not found.");
+    if (!jobToExecute) {
+      throw new Error("Job was not found.");
     }
-    const { result: jobDefinition } = await this.request<JobDefinition>(
-      `${this.serverUrl}${jobDefinitionLink.href}`,
-      headers
-    );
-    const linesToExecute = jobDefinition.code
-      .replace(/\r\n/g, "\n")
-      .split("\n");
+
+    let code = jobToExecute?.code;
+    if (!code) {
+      const jobDefinitionLink = jobToExecute?.links.find(
+        (l) => l.rel === "getResource"
+      );
+      if (!jobDefinitionLink) {
+        console.error("Job definition URI was not found.");
+        throw new Error("Job definition URI was not found.");
+      }
+      const { result: jobDefinition } = await this.request<JobDefinition>(
+        `${this.serverUrl}${jobDefinitionLink.href}`,
+        headers
+      );
+
+      code = jobDefinition.code;
+
+      // Add code to existing job definition
+      jobToExecute.code = code;
+    }
+    const linesToExecute = code.replace(/\r\n/g, "\n").split("\n");
     return await this.executeScript(
       sasJob,
       linesToExecute,
@@ -928,6 +938,23 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`;
     }
     const stateLink = postedJob.links.find((l: any) => l.rel === "state");
+    if (!stateLink) {
+      Promise.reject("Job state link was not found.");
+    }
+
+    const { result: state } = await this.request<string>(
+      `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+      {
+        headers
+      },
+      "text"
+    );
+
+    const currentState = state.trim();
+    if (currentState === "completed") {
+      return Promise.resolve(currentState);
+    }
+
     return new Promise(async (resolve, _) => {
       const interval = setInterval(async () => {
         if (
