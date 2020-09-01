@@ -11,7 +11,7 @@ export class SAS9ApiClient {
   public getConfig() {
     return {
       serverUrl: this.serverUrl
-    };
+    }
   }
 
   /**
@@ -19,7 +19,7 @@ export class SAS9ApiClient {
    * @param serverUrl - the URL of the server.
    */
   public setConfig(serverUrl: string) {
-    if (serverUrl) this.serverUrl = serverUrl;
+    if (serverUrl) this.serverUrl = serverUrl
   }
 
   /**
@@ -33,19 +33,19 @@ export class SAS9ApiClient {
     serverName: string,
     repositoryName: string
   ) {
-    const requestPayload = linesOfCode.join("\n");
+    const requestPayload = linesOfCode.join("\n")
     const executeScriptRequest = {
       method: "PUT",
       headers: {
         Accept: "application/json"
       },
       body: `command=${requestPayload}`
-    };
+    }
     const executeScriptResponse = await fetch(
       `${this.serverUrl}/sas/servers/${serverName}/cmd?repositoryName=${repositoryName}`,
       executeScriptRequest
-    ).then((res) => res.text());
+    ).then((res) => res.text())
 
-    return executeScriptResponse;
+    return executeScriptResponse
   }
 }

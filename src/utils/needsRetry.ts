@@ -10,5 +10,5 @@ export const needsRetry = (responseText: string): boolean => {
         responseText.includes(
           "Authentication success, retry original request"
         )))
-  );
-};
+  )
+}

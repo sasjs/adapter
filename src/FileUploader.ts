@@ -1,8 +1,8 @@
-import { isLogInRequired, needsRetry } from "./utils";
-import { CsrfToken } from "./types/CsrfToken";
-import { UploadFile } from "./types/UploadFile";
+import { isLogInRequired, needsRetry } from "./utils"
+import { CsrfToken } from "./types/CsrfToken"
+import { UploadFile } from "./types/UploadFile"
 
-const requestRetryLimit = 5;
+const requestRetryLimit = 5
 
 export class FileUploader {
   constructor(
@@ -12,38 +12,38 @@ export class FileUploader {
     private setCsrfTokenWeb: any,
     private csrfToken: CsrfToken | null = null
   ) {}
-  private retryCount = 0;
+  private retryCount = 0
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
-    if (files?.length < 1) throw new Error("Atleast one file must be provided");
+    if (files?.length < 1) throw new Error("Atleast one file must be provided")
 
-    let paramsString = "";
+    let paramsString = ""
 
     for (let param in params) {
       if (params.hasOwnProperty(param)) {
-        paramsString += `&${param}=${params[param]}`;
+        paramsString += `&${param}=${params[param]}`
       }
     }
 
     const program = this.appLoc
       ? this.appLoc.replace(/\/?$/, "/") + sasJob.replace(/^\//, "")
-      : sasJob;
+      : sasJob
     const uploadUrl = `${this.serverUrl}${this.jobsPath}/?${
       "_program=" + program
-    }${paramsString}`;
+    }${paramsString}`
 
     const headers = {
       "cache-control": "no-cache"
-    };
+    }
 
     return new Promise((resolve, reject) => {
-      const formData = new FormData();
+      const formData = new FormData()
 
       for (let file of files) {
-        formData.append("file", file.file, file.fileName);
+        formData.append("file", file.file, file.fileName)
       }
 
-      if (this.csrfToken) formData.append("_csrf", this.csrfToken.value);
+      if (this.csrfToken) formData.append("_csrf", this.csrfToken.value)
 
       fetch(uploadUrl, {
         method: "POST",
@@ -54,47 +54,47 @@ export class FileUploader {
         .then(async (response) => {
           if (!response.ok) {
             if (response.status === 403) {
-              const tokenHeader = response.headers.get("X-CSRF-HEADER");
+              const tokenHeader = response.headers.get("X-CSRF-HEADER")
 
               if (tokenHeader) {
-                const token = response.headers.get(tokenHeader);
+                const token = response.headers.get(tokenHeader)
                 this.csrfToken = {
                   headerName: tokenHeader,
                   value: token || ""
-                };
+                }
 
-                this.setCsrfTokenWeb(this.csrfToken);
+                this.setCsrfTokenWeb(this.csrfToken)
               }
             }
           }
 
-          return response.text();
+          return response.text()
         })
         .then((responseText) => {
           if (isLogInRequired(responseText))
-            reject("You must be logged in to upload a fle");
+            reject("You must be logged in to upload a fle")
 
           if (needsRetry(responseText)) {
             if (this.retryCount < requestRetryLimit) {
-              this.retryCount++;
+              this.retryCount++
               this.uploadFile(sasJob, files, params).then(
                 (res: any) => resolve(res),
                 (err: any) => reject(err)
-              );
+              )
             } else {
-              this.retryCount = 0;
-              reject(responseText);
+              this.retryCount = 0
+              reject(responseText)
             }
           } else {
-            this.retryCount = 0;
+            this.retryCount = 0
 
             try {
-              resolve(JSON.parse(responseText));
+              resolve(JSON.parse(responseText))
             } catch (e) {
-              reject(e);
+              reject(e)
             }
           }
-        });
-    });
+        })
+    })
   }
 }
