@@ -1,83 +1,14 @@
 # Contributing
 
-Contributions to SASjs are very welcome! When making a PR, test cases should be included. To help in unit testing, be sure to run the following when making changes:
+Contributions to SASjs are very welcome! When making a PR, test cases should be included.
 
-```
-# the following creates a tarball in the build folder of SASjs
-npm run-script package:lib
+This repository contains a suite of tests built using [@sasjs/test-framework](https://github.com/sasjs/test-framework).
 
-# now go to your app and run:
-npm install ../sasjs/build/<tarball filename>
-```
+Detailed instructions for creating and running the tests can be found [here](./sasjs-tests/readme.md).
 
-Tests are run using cypress. Before running tests, you need to define the following backend services:
+If you'd like to test your changes in an app that uses the adapter, you can do so as follows:
 
-# SAS 9
-
-```
-
-filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
-%inc mc;
-filename ft15f001 temp;
-parmcards4;
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i) %end;
-  %mend; %x()
-  %webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=sendObj)
-parmcards4;
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i) %end;
-  %mend; %x()
-  %webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=sendArr)
-```
-
-# Viya
-
-```
-filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
-%inc mc;
-filename ft15f001 temp;
-parmcards4;
-  %webout(FETCH)
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to %sysfunc(countw(&sasjs_tables));
-    %let table=%scan(&sasjs_tables,&i);
-    %webout(OBJ,&table)
-  %end;
-  %mend;
-  %x()
-  %webout(CLOSE)
-;;;;
-%mp_createwebservice(path=/Public/app/common,name=sendObj)
-filename ft15f001 temp;
-parmcards4;
-  %webout(FETCH)
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to %sysfunc(countw(&sasjs_tables));
-    %let table=%scan(&sasjs_tables,&i);
-    %webout(ARR,&table)
-  %end;
-  %mend;
-  %x()
-  %webout(CLOSE)
-;;;;
-%mp_createwebservice(path=/Public/app/common,name=sendArr)
-filename ft15f001 temp;
-parmcards4;
-If you can keep your head when all about you   
-    Are losing theirs and blaming it on you,   
-If you can trust yourself when all men doubt you,
-    But make allowance for their doubting too; 
-;;;;
-%mp_createwebservice(path=/Public/app/common,name=makeErr)
-```
-
-The above services will return anything you send. To run the tests simply launch `npm run cypress`.
+1. Run `npm run package:lib` from the root folder in this repository.
+   This creates a tarball in the `/build` folder.
+2. In your app's root folder, run `npm install <path/to/tarball>`.
+   This will install the changed version of the adapter in your app.
