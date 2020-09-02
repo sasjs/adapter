@@ -301,11 +301,12 @@ export class SASViyaApiClient {
         { headers }
       )
 
-      let jobResult, log
+      let jobResult
+      let log
 
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
-      if (true && logLink) {
+      if (debug && logLink) {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content?limit=10000`,
           {
@@ -317,7 +318,7 @@ export class SASViyaApiClient {
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
-        return Promise.reject({ error: currentJob.error, log: log })
+        return Promise.reject({ error: currentJob.error, log })
       }
       const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
 
