@@ -4,12 +4,12 @@ export const serialize = (obj: any) => {
     if (obj.hasOwnProperty(p)) {
       if (obj[p] instanceof Array) {
         for (let i = 0, n = obj[p].length; i < n; i++) {
-          str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p][i]))
+          str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p][i]))
         }
       } else {
-        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]))
+        str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]))
       }
     }
   }
-  return str.join("&")
+  return str.join('&')
 }

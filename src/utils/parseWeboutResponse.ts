@@ -1,13 +1,13 @@
 export const parseWeboutResponse = (response: string) => {
-  let sasResponse = ""
+  let sasResponse = ''
 
-  if (response.includes(">>weboutBEGIN<<")) {
+  if (response.includes('>>weboutBEGIN<<')) {
     try {
       sasResponse = response
-        .split(">>weboutBEGIN<<")[1]
-        .split(">>weboutEND<<")[0]
+        .split('>>weboutBEGIN<<')[1]
+        .split('>>weboutEND<<')[0]
     } catch (e) {
-      sasResponse = ""
+      sasResponse = ''
       console.error(e)
     }
   }

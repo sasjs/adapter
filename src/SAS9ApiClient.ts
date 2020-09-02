@@ -33,11 +33,11 @@ export class SAS9ApiClient {
     serverName: string,
     repositoryName: string
   ) {
-    const requestPayload = linesOfCode.join("\n")
+    const requestPayload = linesOfCode.join('\n')
     const executeScriptRequest = {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        Accept: "application/json"
+        Accept: 'application/json'
       },
       body: `command=${requestPayload}`
     }

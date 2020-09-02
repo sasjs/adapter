@@ -1,4 +1,4 @@
-import { Link } from "./Link"
+import { Link } from './Link'
 
 export interface Folder {
   id: string
