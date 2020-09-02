@@ -116,3 +116,24 @@ If you can trust yourself when all men doubt you,
 ```
 
 You should now be able to access the tests in your browser at the deployed path on your server.
+
+## Creating new tests
+
+The `src/testSuites` folder contains all the test suites currently available.
+Each suite contains a set of specs, each of which looks like this:
+
+```javascript
+    {
+        title: "Your test title",
+        description: "A slightly more detailed description",
+        test: async () => {
+        // typically makes a request using the adapter and returns a promise
+        },
+        assertion: (response: any) =>
+        // receives the response when the test promise resolves, runs an assertion and returns a boolean
+    }
+```
+
+A test suite is an array of such objects, along with a `name` property.
+
+You can add your test to one of the existing suites if suitable, or create a new file that specifies a new test suite.
