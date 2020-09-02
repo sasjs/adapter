@@ -4,7 +4,7 @@
   "homepage": ".",
   "private": true,
   "dependencies": {
-    "@sasjs/adapter": "^1.3.6",
+    "@sasjs/adapter": "^1.3.13",
     "@sasjs/test-framework": "^1.4.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
@@ -25,7 +25,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz && npm run build && rsync -avhe ssh ./build/* --delete kriaco@sas.analytium.co.uk:/var/www/html/kriaco/sasjs-tests"
+    "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
+    "deploy:tests": "npm run build && rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH",
+    "deploy": "npm run update:adapter && npm run deploy:tests"
   },
   "eslintConfig": {
     "extends": "react-app"

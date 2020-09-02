@@ -1,68 +1,118 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+`sasjs-tests` is a test suite for the SASjs adapter.
 
-## Available Scripts
+It is a React app bootstrapped using [Create React App](https://github.com/facebook/create-react-app) and [@sasjs/test-framework](https://github.com/sasjs/test-framework).
 
-In the project directory, you can run:
+When developing on `@sasjs/adapter`, it's good practice to run the test suite against your changed version of the adapter to ensure that existing functionality has not been impacted.
 
-### `npm start`
+You can use the provided `update:adapter` NPM script for this.
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+    npm run update:adapter
+```
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+This scripts builds a new version of the adapter and installs it in the `sasjs-tests` project.
 
-### `npm test`
+## Running tests
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+There are three prerequisites to be able to run the tests:
 
-### `npm run build`
+1. Correct server configuration for the SASjs adapter.
+2. `sasjs-tests` deployed to your SAS server.
+3. The required SAS services created on the same server.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. Configuring the SASjs adapter
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+There is a `config.json` file in the `/public` folder which specifies the configuration for the SASjs adapter. You can set the values within the `sasjsConfig` property in this file to match your SAS server configuration.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 2. Deploying to your SAS server
 
-### `npm run eject`
+There is a `deploy` NPM script provided in the `sasjs-tests` project's `package.json`.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+It updates `sasjs-tests` to use the latest version of the adapter, and deploys to a specified server via SSH using the `rsync` command.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+To be able to run the `deploy` script, two environment variables need to be set:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- `SSH_ACCOUNT` - your SSH account, this is of the form username@domain.com
+- `DEPLOY_PATH` - the path on the server where `sasjs-tests` will be deployed to, typically `/var/www/html/<some-subfolder>`.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+So you can run the script like so:
 
-## Learn More
+```
+SSH_ACCOUNT=me@my-sas-server.com DEPLOY_PATH=/var/www/html/my-folder/sasjs-tests npm run deploy
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+If you'd like to deploy just `sasjs-tests` without changing the adapter version, you can use the `deploy:tests` script, while also setting the same environment variables as above.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 3. Creating the required SAS services
 
-### Code Splitting
+The below services need to be created on your SAS server, at the location specified as the `appLoc` in the SASjs configuration.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+### SAS 9
 
-### Analyzing the Bundle Size
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
+%inc mc;
+filename ft15f001 temp;
+parmcards4;
+  %webout(OPEN)
+  %macro x();
+  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i) %end;
+  %mend; %x()
+  %webout(CLOSE)
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=sendObj)
+parmcards4;
+  %webout(OPEN)
+  %macro x();
+  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i) %end;
+  %mend; %x()
+  %webout(CLOSE)
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=sendArr)
+```
 
-### Making a Progressive Web App
+### SAS Viya
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+```
+filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
+%inc mc;
+filename ft15f001 temp;
+parmcards4;
+  %webout(FETCH)
+  %webout(OPEN)
+  %macro x();
+  %do i=1 %to %sysfunc(countw(&sasjs_tables));
+    %let table=%scan(&sasjs_tables,&i);
+    %webout(OBJ,&table)
+  %end;
+  %mend;
+  %x()
+  %webout(CLOSE)
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=sendObj)
+filename ft15f001 temp;
+parmcards4;
+  %webout(FETCH)
+  %webout(OPEN)
+  %macro x();
+  %do i=1 %to %sysfunc(countw(&sasjs_tables));
+    %let table=%scan(&sasjs_tables,&i);
+    %webout(ARR,&table)
+  %end;
+  %mend;
+  %x()
+  %webout(CLOSE)
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=sendArr)
+filename ft15f001 temp;
+parmcards4;
+If you can keep your head when all about you
+    Are losing theirs and blaming it on you,
+If you can trust yourself when all men doubt you,
+    But make allowance for their doubting too;
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=makeErr)
+```
 
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+You should now be able to access the tests in your browser at the deployed path on your server.
