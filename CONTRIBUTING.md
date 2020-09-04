@@ -4,7 +4,7 @@ Contributions to SASjs are very welcome! When making a PR, test cases should be 
 
 This repository contains a suite of tests built using [@sasjs/test-framework](https://github.com/sasjs/test-framework).
 
-Detailed instructions for creating and running the tests can be found [here](./sasjs-tests/readme.md).
+Detailed instructions for creating and running the tests can be found [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md).
 
 If you'd like to test your changes in an app that uses the adapter, you can do so as follows:
 
