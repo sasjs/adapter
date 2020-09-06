@@ -109,6 +109,7 @@ export default class SASjs {
 
   public async createContext(
     contextName: string,
+    launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string,
     accessToken: string
@@ -118,6 +119,7 @@ export default class SASjs {
     }
     return await this.sasViyaApiClient!.createContext(
       contextName,
+      launchContextName,
       sharedAccountId,
       autoExecLines,
       accessToken
