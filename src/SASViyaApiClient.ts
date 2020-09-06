@@ -198,12 +198,17 @@ export class SASViyaApiClient {
    */
   public async createContext(
     contextName: string,
+    launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string,
     accessToken?: string
   ) {
     if (!contextName) {
       throw new Error('Missing context name.')
+    }
+
+    if (!launchContextName) {
+      throw new Error('Missing launch context name.')
     }
 
     if (!sharedAccountId) {
@@ -225,6 +230,9 @@ export class SASViyaApiClient {
         name: contextName,
         environment: {
           autoExecLines: autoExecLines || ''
+        },
+        launchContext: {
+          contextName: launchContextName
         },
         authorizeAllAuthenticatedUsers: true,
         attributes: {
