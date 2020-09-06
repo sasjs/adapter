@@ -190,6 +190,58 @@ export class SASViyaApiClient {
   }
 
   /**
+   * Creates a compute context on the given server.
+   * @param contextName - the name of the context to create a session on.
+   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param autoExecLines - the lines of code to execute during session initialization.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createContext(
+    contextName: string,
+    sharedAccountId: string,
+    autoExecLines: string,
+    accessToken?: string
+  ) {
+    if (!contextName) {
+      throw new Error('Missing context name.')
+    }
+
+    if (!sharedAccountId) {
+      throw new Error('Missing shared account ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const createContextRequest: RequestInit = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: contextName,
+        environment: {
+          autoExecLines: autoExecLines || ''
+        },
+        attributes: {
+          reuseServerProcesses: true,
+          runServerAs: sharedAccountId
+        }
+      })
+    }
+
+    const { result: context } = await this.request<Context>(
+      `${this.serverUrl}/compute/contexts`,
+      createContextRequest
+    )
+
+    return context
+  }
+
+  /**
    * Executes code on the current SAS Viya server.
    * @param fileName - a name for the file being submitted for execution.
    * @param linesOfCode - an array of lines of code to execute.
