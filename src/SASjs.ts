@@ -107,11 +107,21 @@ export default class SASjs {
     return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
 
-  public async createContext(contextName: string, sharedAccountId: string, autoExecLines: string, accessToken: string) {
+  public async createContext(
+    contextName: string,
+    sharedAccountId: string,
+    autoExecLines: string,
+    accessToken: string
+  ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
     }
-    return await this.sasViyaApiClient!.createContext(contextName, sharedAccountId, autoExecLines, accessToken)
+    return await this.sasViyaApiClient!.createContext(
+      contextName,
+      sharedAccountId,
+      autoExecLines,
+      accessToken
+    )
   }
 
   public async createSession(contextName: string, accessToken: string) {
