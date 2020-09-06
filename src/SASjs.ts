@@ -139,7 +139,8 @@ export default class SASjs {
     parentFolderPath: string,
     parentFolderUri?: string,
     accessToken?: string,
-    sasApiClient?: SASViyaApiClient
+    sasApiClient?: SASViyaApiClient,
+    isForced?: boolean
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
@@ -155,7 +156,8 @@ export default class SASjs {
       folderName,
       parentFolderPath,
       parentFolderUri,
-      accessToken
+      accessToken,
+      isForced
     )
   }
 
@@ -489,7 +491,8 @@ export default class SASjs {
     serviceJson: any,
     appLoc?: string,
     serverUrl?: string,
-    accessToken?: string
+    accessToken?: string,
+    isForced = false
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
@@ -540,7 +543,8 @@ export default class SASjs {
       appLoc,
       members,
       accessToken,
-      sasApiClient
+      sasApiClient,
+      isForced
     )
   }
 
@@ -1247,7 +1251,8 @@ export default class SASjs {
     parentFolder: string,
     membersJson: any[],
     accessToken?: string,
-    sasApiClient?: SASViyaApiClient
+    sasApiClient?: SASViyaApiClient,
+    isForced?: boolean
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
@@ -1257,7 +1262,8 @@ export default class SASjs {
             parentFolder,
             undefined,
             accessToken,
-            sasApiClient
+            sasApiClient,
+            isForced
           )
           break
         case 'service':
@@ -1278,7 +1284,8 @@ export default class SASjs {
           `${parentFolder}/${member.name}`,
           member.members,
           accessToken,
-          sasApiClient
+          sasApiClient,
+          isForced
         )
     })
   }

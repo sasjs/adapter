@@ -34,6 +34,7 @@ export class SASViyaApiClient {
     this.contextName,
     this.setCsrfToken
   )
+  private isForceDeploy: boolean = false
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -365,7 +366,8 @@ export class SASViyaApiClient {
     folderName: string,
     parentFolderPath?: string,
     parentFolderUri?: string,
-    accessToken?: string
+    accessToken?: string,
+    isForced?: boolean
   ): Promise<Folder> {
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Parent folder path or uri is required')
@@ -394,6 +396,44 @@ export class SASViyaApiClient {
           accessToken
         )
         console.log(`Parent Folder "${newFolderName}" successfully created.`)
+        parentFolderUri = `/folders/folders/${parentFolder.id}`
+      } else if (isForced && accessToken && !this.isForceDeploy) {
+        this.isForceDeploy = true
+        const recycleBin = await this.getRecycleBin(accessToken)
+        const recycleBinUri = recycleBin?.id || ''
+        const oldFolderName = parentFolderPath?.split('/').pop() || ''
+        const parentFolderId = parentFolderUri?.split('/').pop() || ''
+
+        await this.moveFolder(
+          parentFolderId,
+          recycleBinUri,
+          oldFolderName,
+          accessToken
+        )
+
+        const newParentFolderPath = parentFolderPath.substring(
+          0,
+          parentFolderPath.lastIndexOf('/')
+        )
+        const newFolderName = `${parentFolderPath.split('/').pop()}`
+
+        if (newParentFolderPath === '') {
+          throw new Error('Root Folder should have been present on server')
+        }
+
+        console.log(
+          `Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`
+        )
+
+        const parentFolder = await this.createFolder(
+          newFolderName,
+          newParentFolderPath,
+          undefined,
+          accessToken
+        )
+
+        console.log(`Parent Folder "${newFolderName}" successfully created.`)
+
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       }
     }
@@ -1083,6 +1123,60 @@ export class SASViyaApiClient {
 
     if (!folder) return undefined
     return `/folders/folders/${folder.id}`
+  }
+
+  private async getRecycleBin(accessToken: string) {
+    const url = '/folders/folders/@myRecycleBin'
+    const requestInfo = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      }
+    }
+
+    const { result: folder } = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    ).catch((err) => {
+      return { result: null }
+    })
+
+    if (!folder) return undefined
+
+    return folder
+  }
+
+  private async moveFolder(
+    from: string,
+    to: string,
+    folderName: string,
+    accessToken: string
+  ) {
+    const url = '/folders/folders/' + from
+    const requestInfo = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      },
+      body: JSON.stringify({
+        id: from,
+        name: folderName,
+        parentFolderUri: '/folders/folders/' + to
+      })
+    }
+
+    const { result: folder } = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    ).catch((err) => {
+      return { result: null }
+    })
+
+    if (!folder) return undefined
+
+    return folder
   }
 
   setCsrfTokenLocal = (csrfToken: CsrfToken) => {
