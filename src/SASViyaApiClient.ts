@@ -201,6 +201,7 @@ export class SASViyaApiClient {
     launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string,
+    authorizedUsers: string[],
     accessToken?: string
   ) {
     if (!contextName) {
@@ -223,23 +224,30 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
+    const requestBody: any = {
+      name: contextName,
+      environment: {
+        autoExecLines: autoExecLines || ''
+      },
+      launchContext: {
+        contextName: launchContextName
+      },
+      attributes: {
+        reuseServerProcesses: true,
+        runServerAs: sharedAccountId
+      }
+    }
+
+    if (authorizedUsers && authorizedUsers.length) {
+      requestBody['authorizedUsers'] = authorizedUsers
+    } else {
+      requestBody['authorizeAllAuthenticatedUsers'] = true
+    }
+
     const createContextRequest: RequestInit = {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        name: contextName,
-        environment: {
-          autoExecLines: autoExecLines || ''
-        },
-        launchContext: {
-          contextName: launchContextName
-        },
-        authorizeAllAuthenticatedUsers: true,
-        attributes: {
-          reuseServerProcesses: true,
-          runServerAs: sharedAccountId
-        }
-      })
+      body: JSON.stringify(requestBody)
     }
 
     const { result: context } = await this.request<Context>(

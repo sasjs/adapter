@@ -112,6 +112,7 @@ export default class SASjs {
     launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string,
+    authorizedUsers: string[],
     accessToken: string
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
@@ -122,6 +123,7 @@ export default class SASjs {
       launchContextName,
       sharedAccountId,
       autoExecLines,
+      authorizedUsers,
       accessToken
     )
   }
