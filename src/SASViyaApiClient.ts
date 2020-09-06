@@ -226,6 +226,7 @@ export class SASViyaApiClient {
         environment: {
           autoExecLines: autoExecLines || ''
         },
+        authorizeAllAuthenticatedUsers: true,
         attributes: {
           reuseServerProcesses: true,
           runServerAs: sharedAccountId
