@@ -1143,7 +1143,7 @@ export class SASViyaApiClient {
     return folder
   }
 
-  private async moveFolder(
+  public async moveFolder(
     from: string,
     to: string,
     folderName: string,
@@ -1175,7 +1175,7 @@ export class SASViyaApiClient {
     return folder
   }
 
-  private async deleteFolder(
+  public async deleteFolder(
     folderId: string,
     folderName: string,
     accessToken: string
