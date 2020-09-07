@@ -1,5 +1,5 @@
 import { Session, Context, CsrfToken } from './types'
-import { asyncForEach, makeRequest } from './utils'
+import { asyncForEach, makeRequest, isUrl } from './utils'
 
 const MAX_SESSION_COUNT = 1
 
@@ -8,7 +8,10 @@ export class SessionManager {
     private serverUrl: string,
     private contextName: string,
     private setCsrfToken: (csrfToken: CsrfToken) => void
-  ) {}
+  ) {
+    if (serverUrl) isUrl(serverUrl)
+  }
+
   private sessions: Session[] = []
   private currentContext: Context | null = null
   private csrfToken: CsrfToken | null = null

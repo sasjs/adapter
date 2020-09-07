@@ -2,7 +2,8 @@ import {
   isAuthorizeFormRequired,
   parseAndSubmitAuthorizeForm,
   convertToCSV,
-  makeRequest
+  makeRequest,
+  isUrl
 } from './utils'
 import * as NodeFormData from 'form-data'
 import * as path from 'path'
@@ -26,7 +27,10 @@ export class SASViyaApiClient {
     if (!rootFolderName) {
       throw new Error('Root folder must be provided.')
     }
+
+    if (serverUrl) isUrl(serverUrl)
   }
+
   private csrfToken: CsrfToken | null = null
   private rootFolder: Folder | null = null
   private sessionManager = new SessionManager(

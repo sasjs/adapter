@@ -1,9 +1,13 @@
+import { isUrl } from './utils'
+
 /**
  * A client for interfacing with the SAS9 REST API
  *
  */
 export class SAS9ApiClient {
-  constructor(private serverUrl: string) {}
+  constructor(private serverUrl: string) {
+    if (serverUrl) isUrl(serverUrl)
+  }
 
   /**
    * returns on object containing the server URL
