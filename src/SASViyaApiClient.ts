@@ -1143,6 +1143,13 @@ export class SASViyaApiClient {
     return folder
   }
 
+  /**
+   * Changes location of the folder.
+   * @param from - current location of the folder
+   * @param to - new location of the folder
+   * @param folderName - folder name
+   * @param accessToken - an access token for an authorized request
+   */
   public async moveFolder(
     from: string,
     to: string,
@@ -1175,6 +1182,12 @@ export class SASViyaApiClient {
     return folder
   }
 
+  /**
+   * Moves folder to the recycle bin
+   * @param folderId - an id of the folder
+   * @param folderName - folder name
+   * @param accessToken - an access token for an authorized request
+   */
   public async deleteFolder(
     folderId: string,
     folderName: string,
