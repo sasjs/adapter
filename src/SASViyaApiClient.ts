@@ -376,6 +376,8 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
       if (!parentFolderUri) {
+        if (isForced) this.isForceDeploy = true
+
         console.log(`Parent folder is not present: ${parentFolderPath}`)
 
         const newParentFolderPath = parentFolderPath.substring(
@@ -399,17 +401,11 @@ export class SASViyaApiClient {
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       } else if (isForced && accessToken && !this.isForceDeploy) {
         this.isForceDeploy = true
-        const recycleBin = await this.getRecycleBin(accessToken)
-        const recycleBinUri = recycleBin?.id || ''
+
         const oldFolderName = parentFolderPath?.split('/').pop() || ''
         const parentFolderId = parentFolderUri?.split('/').pop() || ''
 
-        await this.moveFolder(
-          parentFolderId,
-          recycleBinUri,
-          oldFolderName,
-          accessToken
-        )
+        await this.deleteFolder(parentFolderId, oldFolderName, accessToken)
 
         const newParentFolderPath = parentFolderPath.substring(
           0,
@@ -1177,6 +1173,24 @@ export class SASViyaApiClient {
     if (!folder) return undefined
 
     return folder
+  }
+
+  private async deleteFolder(
+    folderId: string,
+    folderName: string,
+    accessToken: string
+  ) {
+    const recycleBin = await this.getRecycleBin(accessToken)
+    const recycleBinId = recycleBin?.id as string
+
+    const movedFolder = await this.moveFolder(
+      folderId,
+      recycleBinId,
+      folderName,
+      accessToken
+    )
+
+    return movedFolder
   }
 
   setCsrfTokenLocal = (csrfToken: CsrfToken) => {
