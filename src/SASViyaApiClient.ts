@@ -1142,8 +1142,8 @@ export class SASViyaApiClient {
 
   /**
    * Moves a Viya folder to a new location.  The folder may be renamed at the same time.
-   * @param sourceFolder - The full path to the source folder to be moved (eg `/Public/example/myFolder`)
-   * @param targetParentFolder - The _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. If moving to recycle bin, 'targetParentFolder' will be a uri.
+   * @param sourceFolder - The full path (eg `/Public/example/myFolder`) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.
+   * @param targetParentFolder - The full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.
    * @param targetFolderName - The name of the "moved" folder.  If left blank, the original folder name will be used (eg `myFolder` in `/Public/newDestination/myFolder` for the example above).  Optional field.
    * @param accessToken - an access token for authorizing the request
    */
@@ -1153,9 +1153,12 @@ export class SASViyaApiClient {
     targetFolderName: string,
     accessToken: string
   ) {
-    const sourceFolderUri = await this.getFolderUri(sourceFolder, accessToken)
+    // checks if 'sourceFolder' is already a URI
+    const sourceFolderUri = /^\/folders\/folders\//.test(sourceFolder)
+      ? sourceFolder
+      : await this.getFolderUri(sourceFolder, accessToken)
 
-    // checks if 'targetParentFolder' is already a uri
+    // checks if 'targetParentFolder' is already a URI
     const targetParentFolderUri = /^\/folders\/folders\//.test(
       targetParentFolder
     )

@@ -374,12 +374,12 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in SASViyaApiClient.ts:1198</li>
+									<li>Defined in SASViyaApiClient.ts:1201</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 								<div class="lead">
-									<p>For performance (and in case of accidental error) the <code>deleteFolder</code> function does not actually delete the folder (and all it&#39;s content and subfolder content).  Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.</p>
+									<p>For performance (and in case of accidental error) the <code>deleteFolder</code> function does not actually delete the folder (and all it&#39;s content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -780,13 +780,13 @@
 								<li>
 									<h5>sourceFolder: <span class="tsd-signature-type">string</span></h5>
 									<div class="tsd-comment tsd-typography tsd-comment-text">
-										<p>The full path to the source folder to be moved (eg <code>/Public/example/myFolder</code>)</p>
+										<p>The full path (eg <code>/Public/example/myFolder</code>) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.</p>
 									</div>
 								</li>
 								<li>
 									<h5>targetParentFolder: <span class="tsd-signature-type">string</span></h5>
 									<div class="tsd-comment tsd-typography tsd-comment-text">
-										<p>The <em>parent</em> folder to which the <code>sourceFolder</code> will be moved (eg <code>/Public/newDestination</code>). To move a folder, a user has to have write permissions in targetParentFolder. If moving to recycle bin, &#39;targetParentFolder&#39; will be a uri.</p>
+										<p>The full path or URI of the <em>parent</em> folder to which the <code>sourceFolder</code> will be moved (eg <code>/Public/newDestination</code>). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.</p>
 									</div>
 								</li>
 								<li>
@@ -893,7 +893,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in SASViyaApiClient.ts:1215</li>
+									<li>Defined in SASViyaApiClient.ts:1218</li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
