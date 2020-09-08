@@ -855,7 +855,7 @@ export default class SASjs {
             ) {
               if (this.retryCountWeb < requestRetryLimit) {
                 this.retryCountWeb++
-                this.request(sasJob, data).then(
+                this.request(sasJob, data, config, loginRequiredCallback).then(
                   (res: any) => resolve(res),
                   (err: any) => reject(err)
                 )
