@@ -2,7 +2,8 @@ import {
   isAuthorizeFormRequired,
   parseAndSubmitAuthorizeForm,
   convertToCSV,
-  makeRequest
+  makeRequest,
+  isUri
 } from './utils'
 import * as NodeFormData from 'form-data'
 import * as path from 'path'
@@ -1154,14 +1155,12 @@ export class SASViyaApiClient {
     accessToken: string
   ) {
     // checks if 'sourceFolder' is already a URI
-    const sourceFolderUri = /^\/folders\/folders\//.test(sourceFolder)
+    const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder
       : await this.getFolderUri(sourceFolder, accessToken)
 
     // checks if 'targetParentFolder' is already a URI
-    const targetParentFolderUri = /^\/folders\/folders\//.test(
-      targetParentFolder
-    )
+    const targetParentFolderUri = isUri(targetParentFolder)
       ? targetParentFolder
       : await this.getFolderUri(targetParentFolder, accessToken)
 
