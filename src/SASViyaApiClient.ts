@@ -402,10 +402,7 @@ export class SASViyaApiClient {
       } else if (isForced && accessToken && !this.isForceDeploy) {
         this.isForceDeploy = true
 
-        const oldFolderName = parentFolderPath?.split('/').pop() || ''
-        const parentFolderId = parentFolderUri?.split('/').pop() || ''
-
-        await this.deleteFolder(parentFolderId, oldFolderName, accessToken)
+        await this.deleteFolder(parentFolderPath, accessToken)
 
         const newParentFolderPath = parentFolderPath.substring(
           0,
@@ -1121,7 +1118,7 @@ export class SASViyaApiClient {
     return `/folders/folders/${folder.id}`
   }
 
-  private async getRecycleBin(accessToken: string) {
+  private async getRecycleBinUri(accessToken: string) {
     const url = '/folders/folders/@myRecycleBin'
     const requestInfo = {
       method: 'GET',
@@ -1140,23 +1137,34 @@ export class SASViyaApiClient {
 
     if (!folder) return undefined
 
-    return folder
+    return `/folders/folders/${folder.id}`
   }
 
   /**
-   * Changes location of the folder.
-   * @param from - current location of the folder
-   * @param to - new location of the folder
-   * @param folderName - folder name
-   * @param accessToken - an access token for an authorized request
+   * Moves a Viya folder to a new location.  The folder may be renamed at the same time.
+   * @param sourceFolder - The full path to the source folder to be moved (eg `/Public/example/myFolder`)
+   * @param targetParentFolder - The _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. If moving to recycle bin, 'targetParentFolder' will be a uri.
+   * @param targetFolderName - The name of the "moved" folder.  If left blank, the original folder name will be used (eg `myFolder` in `/Public/newDestination/myFolder` for the example above).  Optional field.
+   * @param accessToken - an access token for authorizing the request
    */
   public async moveFolder(
-    from: string,
-    to: string,
-    folderName: string,
+    sourceFolder: string,
+    targetParentFolder: string,
+    targetFolderName: string,
     accessToken: string
   ) {
-    const url = '/folders/folders/' + from
+    const sourceFolderUri = await this.getFolderUri(sourceFolder, accessToken)
+
+    // checks if 'targetParentFolder' is already a uri
+    const targetParentFolderUri = /^\/folders\/folders\//.test(
+      targetParentFolder
+    )
+      ? targetParentFolder
+      : await this.getFolderUri(targetParentFolder, accessToken)
+
+    const sourceFolderId = sourceFolderUri?.split('/').pop()
+    const url = sourceFolderUri
+
     const requestInfo = {
       method: 'PATCH',
       headers: {
@@ -1164,9 +1172,9 @@ export class SASViyaApiClient {
         Authorization: 'Bearer ' + accessToken
       },
       body: JSON.stringify({
-        id: from,
-        name: folderName,
-        parentFolderUri: '/folders/folders/' + to
+        id: sourceFolderId,
+        name: targetFolderName,
+        parentFolderUri: targetParentFolderUri
       })
     }
 
@@ -1183,23 +1191,21 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Moves folder to the recycle bin
-   * @param folderId - an id of the folder
-   * @param folderName - folder name
-   * @param accessToken - an access token for an authorized request
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all it's content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
+   * @param accessToken - an access token for authorizing the request.
    */
-  public async deleteFolder(
-    folderId: string,
-    folderName: string,
-    accessToken: string
-  ) {
-    const recycleBin = await this.getRecycleBin(accessToken)
-    const recycleBinId = recycleBin?.id as string
+  public async deleteFolder(folderPath: string, accessToken: string) {
+    const recycleBinUri = await this.getRecycleBinUri(accessToken)
+    const folderName = folderPath.split('/').pop() || ''
+    const date = new Date()
+    const timeMark = date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+    const deletedFolderName = folderName + ' ' + timeMark
 
     const movedFolder = await this.moveFolder(
-      folderId,
-      recycleBinId,
-      folderName,
+      folderPath,
+      recycleBinUri!,
+      deletedFolderName,
       accessToken
     )
 
