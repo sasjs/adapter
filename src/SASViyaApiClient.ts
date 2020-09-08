@@ -191,7 +191,7 @@ export class SASViyaApiClient {
 
   /**
    * Creates a compute context on the given server.
-   * @param contextName - the name of the context to create a session on.
+   * @param contextName - the name of the context to be created.
    * @param launchContextName - the name of the launcher context used by the compute service.
    * @param sharedAccountId - the ID of the account to run the servers for this context as.
    * @param autoExecLines - the lines of code to execute during session initialization.
@@ -202,7 +202,7 @@ export class SASViyaApiClient {
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
-    autoExecLines: string,
+    autoExecLines: string[],
     authorizedUsers: string[],
     accessToken?: string
   ) {
@@ -228,9 +228,6 @@ export class SASViyaApiClient {
 
     const requestBody: any = {
       name: contextName,
-      environment: {
-        autoExecLines: autoExecLines || ''
-      },
       launchContext: {
         contextName: launchContextName
       },
@@ -246,6 +243,12 @@ export class SASViyaApiClient {
       requestBody['authorizeAllAuthenticatedUsers'] = true
     }
 
+    if (autoExecLines) {
+      requestBody.environment = { autoExecLines }
+    }
+
+    console.log('Body', requestBody)
+
     const createContextRequest: RequestInit = {
       method: 'POST',
       headers,
@@ -258,6 +261,35 @@ export class SASViyaApiClient {
     )
 
     return context
+  }
+
+  /**
+   * Deletes a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async deleteContext(contextId: string, accessToken?: string) {
+    if (!contextId) {
+      throw new Error('Invalid context ID')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const deleteContextRequest: RequestInit = {
+      method: 'DELETE',
+      headers
+    }
+
+    return await this.request<Context>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      deleteContextRequest
+    )
   }
 
   /**

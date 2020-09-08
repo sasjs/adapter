@@ -111,7 +111,7 @@ export default class SASjs {
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
-    autoExecLines: string,
+    autoExecLines: string[],
     authorizedUsers: string[],
     accessToken: string
   ) {
@@ -126,6 +126,13 @@ export default class SASjs {
       authorizedUsers,
       accessToken
     )
+  }
+
+  public async deleteContext(contextId: string) {
+    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
+      throw new Error('This operation is only supported on SAS Viya servers.')
+    }
+    return await this.sasViyaApiClient!.deleteContext(contextId)
   }
 
   public async createSession(contextName: string, accessToken: string) {
