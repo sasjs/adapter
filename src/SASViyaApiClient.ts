@@ -270,7 +270,7 @@ export class SASViyaApiClient {
    */
   public async deleteContext(contextId: string, accessToken?: string) {
     if (!contextId) {
-      throw new Error('Invalid context ID')
+      throw new Error('Invalid context ID.')
     }
 
     const headers: any = {
