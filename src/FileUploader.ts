@@ -1,4 +1,4 @@
-import { isLogInRequired, needsRetry } from './utils'
+import { isLogInRequired, needsRetry, isUrl } from './utils'
 import { CsrfToken } from './types/CsrfToken'
 import { UploadFile } from './types/UploadFile'
 
@@ -11,7 +11,10 @@ export class FileUploader {
     private jobsPath: string,
     private setCsrfTokenWeb: any,
     private csrfToken: CsrfToken | null = null
-  ) {}
+  ) {
+    if (serverUrl) isUrl(serverUrl)
+  }
+
   private retryCount = 0
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
