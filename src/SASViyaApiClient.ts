@@ -1291,7 +1291,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}${url}`,
       requestInfo
     ).catch((err) => {
-      return { result: null }
+      throw err
     })
 
     if (!folder) return undefined
