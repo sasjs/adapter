@@ -196,6 +196,107 @@ export class SASViyaApiClient {
   }
 
   /**
+   * Creates a compute context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param launchContextName - the name of the launcher context used by the compute service.
+   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param autoExecLines - the lines of code to execute during session initialization.
+   * @param authorizedUsers - an optional list of authorized user IDs.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createContext(
+    contextName: string,
+    launchContextName: string,
+    sharedAccountId: string,
+    autoExecLines: string[],
+    authorizedUsers: string[],
+    accessToken?: string
+  ) {
+    if (!contextName) {
+      throw new Error('Missing context name.')
+    }
+
+    if (!launchContextName) {
+      throw new Error('Missing launch context name.')
+    }
+
+    if (!sharedAccountId) {
+      throw new Error('Missing shared account ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const requestBody: any = {
+      name: contextName,
+      launchContext: {
+        contextName: launchContextName
+      },
+      attributes: {
+        reuseServerProcesses: true,
+        runServerAs: sharedAccountId
+      }
+    }
+
+    if (authorizedUsers && authorizedUsers.length) {
+      requestBody['authorizedUsers'] = authorizedUsers
+    } else {
+      requestBody['authorizeAllAuthenticatedUsers'] = true
+    }
+
+    if (autoExecLines) {
+      requestBody.environment = { autoExecLines }
+    }
+
+    const createContextRequest: RequestInit = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    }
+
+    const { result: context } = await this.request<Context>(
+      `${this.serverUrl}/compute/contexts`,
+      createContextRequest
+    )
+
+    return context
+  }
+
+  /**
+   * Deletes a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async deleteContext(contextId: string, accessToken?: string) {
+    if (!contextId) {
+      throw new Error('Invalid context ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const deleteContextRequest: RequestInit = {
+      method: 'DELETE',
+      headers
+    }
+
+    return await this.request<Context>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      deleteContextRequest
+    )
+  }
+
+  /**
    * Executes code on the current SAS Viya server.
    * @param fileName - a name for the file being submitted for execution.
    * @param linesOfCode - an array of lines of code to execute.
