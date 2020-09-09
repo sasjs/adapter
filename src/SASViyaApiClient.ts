@@ -467,6 +467,8 @@ export class SASViyaApiClient {
    *  provided, the parentFolderUri must be provided.
    * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
    *  folder.  If not provided, the parentFolderPath must be provided.
+   * @param accessToken - an access token for authorizing the request.
+   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
    */
   public async createFolder(
     folderName: string,
@@ -755,7 +757,7 @@ export class SASViyaApiClient {
   /**
    * Deletes the client representing the supplied ID.
    * @param clientId - the client ID to authenticate with.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for authorizing the request.
    */
   public async deleteClient(clientId: string, accessToken?: string) {
     const url = this.serverUrl + `/oauth/clients/${clientId}`
