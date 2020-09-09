@@ -251,8 +251,6 @@ export class SASViyaApiClient {
       requestBody.environment = { autoExecLines }
     }
 
-    console.log('Body', requestBody)
-
     const createContextRequest: RequestInit = {
       method: 'POST',
       headers,
