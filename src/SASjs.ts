@@ -107,6 +107,48 @@ export default class SASjs {
     return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
 
+  /**
+   * Creates a compute context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param launchContextName - the name of the launcher context used by the compute service.
+   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param autoExecLines - the lines of code to execute during session initialization.
+   * @param authorizedUsers - an optional list of authorized user IDs.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createContext(
+    contextName: string,
+    launchContextName: string,
+    sharedAccountId: string,
+    autoExecLines: string[],
+    authorizedUsers: string[],
+    accessToken: string
+  ) {
+    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
+      throw new Error('This operation is only supported on SAS Viya servers.')
+    }
+    return await this.sasViyaApiClient!.createContext(
+      contextName,
+      launchContextName,
+      sharedAccountId,
+      autoExecLines,
+      authorizedUsers,
+      accessToken
+    )
+  }
+
+  /**
+   * Deletes a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async deleteContext(contextId: string, accessToken?: string) {
+    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
+      throw new Error('This operation is only supported on SAS Viya servers.')
+    }
+    return await this.sasViyaApiClient!.deleteContext(contextId, accessToken)
+  }
+
   public async createSession(contextName: string, accessToken: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
