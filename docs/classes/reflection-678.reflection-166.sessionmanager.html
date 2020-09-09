@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SASjsConfig | @sasjs/adapter</title>
+	<title>SessionManager | @sasjs/adapter</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,13 @@
 		<div class="container">
 			<ul class="tsd-breadcrumb">
 				<li>
-					<a href="../modules/types.html">types</a>
+					<a href="../modules/reflection-678.html"></a>
 				</li>
 				<li>
-					<a href="types.sasjsconfig.html">SASjsConfig</a>
+					<a href="../modules/reflection-678.reflection-166.html"></a>
+				</li>
+				<li>
+					<a href="reflection-678.reflection-166.sessionmanager.html">SessionManager</a>
 				</li>
 			</ul>
 		</div>
@@ -75,17 +78,12 @@
 			</nav>
 		</div>
 		<div class="col-7 offset-3 col-content">
-			<h1>Class SASjsConfig</h1>
-			<section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography tsd-comment-shorttext">
-					<div class="lead">
-						<p>Specifies the configuration for the SASjs instance.</p>
-					</div>
-			</div></section>
+			<h1>Class SessionManager</h1>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SASjsConfig</span>
+						<span class="target">SessionManager</span>
 					</li>
 				</ul>
 			</section>
@@ -93,125 +91,121 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
+							<h3>Constructors</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">appLoc</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">contextName</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsasviya" class="tsd-kind-icon">pathSASViya</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#servertype" class="tsd-kind-icon">serverType</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#serverurl" class="tsd-kind-icon">serverUrl</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#usecomputeapi" class="tsd-kind-icon">useComputeApi</a></li>
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="reflection-678.reflection-166.sessionmanager.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="reflection-678.reflection-166.sessionmanager.html#clearsession" class="tsd-kind-icon">clearSession</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="reflection-678.reflection-166.sessionmanager.html#getsession" class="tsd-kind-icon">getSession</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="apploc" class="tsd-anchor"></a>
-					<h3>app<wbr>Loc</h3>
-					<div class="tsd-signature tsd-kind-icon">app<wbr>Loc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:20</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The appLoc is the parent folder under which the SAS services (STPs or Job
-							Execution Services) are stored.</p>
-						</div>
-					</div>
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Session<wbr>Manager<span class="tsd-signature-symbol">(</span>serverUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, contextName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, setCsrfToken<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="reflection-678.reflection-166.sessionmanager.html" class="tsd-signature-type">SessionManager</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in SessionManager.ts:6</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>serverUrl: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>contextName: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>setCsrfToken: <span class="tsd-signature-type">function</span></h5>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-siganture">
+											<ul class="tsd-signatures tsd-kind-type-literal">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>csrfToken<span class="tsd-signature-symbol">: </span><a href="../interfaces/types.csrftoken.html" class="tsd-signature-type">CsrfToken</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>csrfToken: <a href="../interfaces/types.csrftoken.html" class="tsd-signature-type">CsrfToken</a></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="reflection-678.reflection-166.sessionmanager.html" class="tsd-signature-type">SessionManager</a></h4>
+						</li>
+					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="contextname" class="tsd-anchor"></a>
-					<h3>context<wbr>Name</h3>
-					<div class="tsd-signature tsd-kind-icon">context<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:29</li>
-						</ul>
-					</aside>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="clearsession" class="tsd-anchor"></a>
+					<h3>clear<wbr>Session</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">clear<wbr>Session<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, accessToken<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in SessionManager.ts:36</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> accessToken: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="debug" class="tsd-anchor"></a>
-					<h3>debug</h3>
-					<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:28</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Set to <code>true</code> to enable additional debugging.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="pathsas9" class="tsd-anchor"></a>
-					<h3>pathSAS9</h3>
-					<div class="tsd-signature tsd-kind-icon">pathSAS9<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:14</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="pathsasviya" class="tsd-anchor"></a>
-					<h3>pathSASViya</h3>
-					<div class="tsd-signature tsd-kind-icon">pathSASViya<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:15</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="servertype" class="tsd-anchor"></a>
-					<h3>server<wbr>Type</h3>
-					<div class="tsd-signature tsd-kind-icon">server<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../enums/types.servertype.html" class="tsd-signature-type">ServerType</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:24</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Can be SAS9 or SASVIYA</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="serverurl" class="tsd-anchor"></a>
-					<h3>server<wbr>Url</h3>
-					<div class="tsd-signature tsd-kind-icon">server<wbr>Url<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:13</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The location (including http protocol and port) of the SAS Server.
-								Can be omitted, eg if serving directly from the SAS Web Server or being
-							streamed.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="usecomputeapi" class="tsd-anchor"></a>
-					<h3>use<wbr>Compute<wbr>Api</h3>
-					<div class="tsd-signature tsd-kind-icon">use<wbr>Compute<wbr>Api<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/SASjsConfig.ts:30</li>
-						</ul>
-					</aside>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getsession" class="tsd-anchor"></a>
+					<h3>get<wbr>Session</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Session<span class="tsd-signature-symbol">(</span>accessToken<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/types.session.html" class="tsd-signature-type">Session</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in SessionManager.ts:19</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> accessToken: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/types.session.html" class="tsd-signature-type">Session</a><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/adapter/src/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsWaitingRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ServerType.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginSuccess.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/makeRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseAndSubmitAuthorizeForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;modules/sasjs&quot;,&quot;SASjsConfig&quot;:&quot;classes/sasjsconfig.sasjsconfig-1&quot;,&quot;ServerType&quot;:&quot;enums/servertype.servertype-1&quot;,&quot;SASjsRequest&quot;:&quot;interfaces/sasjsrequest.sasjsrequest-1&quot;,&quot;SASjsWaitingRequest&quot;:&quot;interfaces/sasjswaitingrequest.sasjswaitingrequest-1&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/sasviyaapiclient.sasviyaapiclient-1&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/sas9apiclient.sas9apiclient-1&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
@@ -219,75 +213,36 @@
 		<div class="col-2 col-menu secondary-menu">
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-module root">
-						<a href="../enums/types.servertype.html" class="tsd-kind-icon">Server<wbr>Type</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="reflection-678.reflection-166.fileuploader.html" class="tsd-kind-icon">File<wbr>Uploader</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="reflection-678.reflection-166.sas9apiclient.html" class="tsd-kind-icon">SAS9<wbr>Api<wbr>Client</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="reflection-678.reflection-166.sasviyaapiclient.html" class="tsd-kind-icon">SASViya<wbr>Api<wbr>Client</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="reflection-678.reflection-166.sasjs.html" class="tsd-kind-icon">SASjs</a>
 					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class tsd-parent-kind-module root">
-						<a href="types.sasjsconfig.html" class="tsd-kind-icon">SASjs<wbr>Config</a>
+						<a href="reflection-678.reflection-166.sessionmanager.html" class="tsd-kind-icon">Session<wbr>Manager</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">app<wbr>Loc</a>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="reflection-678.reflection-166.sessionmanager.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">context<wbr>Name</a>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="reflection-678.reflection-166.sessionmanager.html#clearsession" class="tsd-kind-icon">clear<wbr>Session</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#pathsasviya" class="tsd-kind-icon">pathSASViya</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#servertype" class="tsd-kind-icon">server<wbr>Type</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#serverurl" class="tsd-kind-icon">server<wbr>Url</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#usecomputeapi" class="tsd-kind-icon">use<wbr>Compute<wbr>Api</a>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="reflection-678.reflection-166.sessionmanager.html#getsession" class="tsd-kind-icon">get<wbr>Session</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.context.html" class="tsd-kind-icon">Context</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.csrftoken.html" class="tsd-kind-icon">Csrf<wbr>Token</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.folder.html" class="tsd-kind-icon">Folder</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.job.html" class="tsd-kind-icon">Job</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.jobdefinition.html" class="tsd-kind-icon">Job<wbr>Definition</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.jobresult.html" class="tsd-kind-icon">Job<wbr>Result</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.link.html" class="tsd-kind-icon">Link</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.sasjsrequest.html" class="tsd-kind-icon">SASjs<wbr>Request</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.sasjswaitingrequest.html" class="tsd-kind-icon">SASjs<wbr>Waiting<wbr>Request</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.session.html" class="tsd-kind-icon">Session</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
-					</li>
 				</ul>
 			</nav>
 		</div>

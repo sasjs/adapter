@@ -176,12 +176,22 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Creates a folder at SAS file system
+   * @param folderName - name of the folder to be created.
+   * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
+   * @param parentFolderUri - the URI of the parent folder.
+   * @param accessToken - the access token to authorizing the request.
+   * @param sasApiClient - a client for interfacing with SAS API.
+   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted. Applicable for SAS VIYA only.
+   */
   public async createFolder(
     folderName: string,
     parentFolderPath: string,
     parentFolderUri?: string,
     accessToken?: string,
-    sasApiClient?: SASViyaApiClient
+    sasApiClient?: SASViyaApiClient,
+    isForced?: boolean
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
@@ -197,7 +207,8 @@ export default class SASjs {
       folderName,
       parentFolderPath,
       parentFolderUri,
-      accessToken
+      accessToken,
+      isForced
     )
   }
 
@@ -526,12 +537,14 @@ export default class SASjs {
    * If not provided, is taken from SASjsConfig.
    * @param accessToken - an optional access token to be passed in when
    * using this function from the command line.
+   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
    */
   public async deployServicePack(
     serviceJson: any,
     appLoc?: string,
     serverUrl?: string,
-    accessToken?: string
+    accessToken?: string,
+    isForced = false
   ) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
@@ -582,7 +595,8 @@ export default class SASjs {
       appLoc,
       members,
       accessToken,
-      sasApiClient
+      sasApiClient,
+      isForced
     )
   }
 
@@ -1289,7 +1303,8 @@ export default class SASjs {
     parentFolder: string,
     membersJson: any[],
     accessToken?: string,
-    sasApiClient?: SASViyaApiClient
+    sasApiClient?: SASViyaApiClient,
+    isForced?: boolean
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
@@ -1299,7 +1314,8 @@ export default class SASjs {
             parentFolder,
             undefined,
             accessToken,
-            sasApiClient
+            sasApiClient,
+            isForced
           )
           break
         case 'service':
@@ -1320,7 +1336,8 @@ export default class SASjs {
           `${parentFolder}/${member.name}`,
           member.members,
           accessToken,
-          sasApiClient
+          sasApiClient,
+          isForced
         )
     })
   }
