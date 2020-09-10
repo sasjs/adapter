@@ -172,7 +172,9 @@ export default class SASjs {
       linesOfCode,
       contextName,
       accessToken,
-      silent
+      silent,
+      null,
+      this.sasjsConfig.debug
     )
   }
 
