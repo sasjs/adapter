@@ -29,7 +29,8 @@ import {
   SASjsWaitingRequest,
   ServerType,
   CsrfToken,
-  UploadFile
+  UploadFile,
+  EditContextInput
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -133,6 +134,27 @@ export default class SASjs {
       sharedAccountId,
       autoExecLines,
       authorizedUsers,
+      accessToken
+    )
+  }
+
+  /**
+   * Updates a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param editedContext - an object with the properties to be updated.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async editContext(
+    contextId: string,
+    editedContext: EditContextInput,
+    accessToken?: string
+  ) {
+    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
+      throw new Error('This operation is only supported on SAS Viya servers.')
+    }
+    return await this.sasViyaApiClient!.editContext(
+      contextId,
+      editedContext,
       accessToken
     )
   }
