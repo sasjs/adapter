@@ -302,7 +302,18 @@ export class SASViyaApiClient {
       {
         headers
       }
-    )
+    ).catch((e) => {
+      console.error(e)
+
+      if (e && e.status === 404) {
+        throw new Error(
+          `The context with ID ${contextId} was not found on this server.`
+        )
+      }
+      throw new Error(
+        `An error occurred when fetching the context with ID ${contextId}`
+      )
+    })
 
     // An If-Match header with the value of the last ETag for the context
     // is required to be able to update it
