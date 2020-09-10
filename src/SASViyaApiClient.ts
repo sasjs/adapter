@@ -8,7 +8,14 @@ import {
 } from './utils'
 import * as NodeFormData from 'form-data'
 import * as path from 'path'
-import { Job, Session, Context, Folder, CsrfToken } from './types'
+import {
+  Job,
+  Session,
+  Context,
+  Folder,
+  CsrfToken,
+  EditContextInput
+} from './types'
 import { JobDefinition } from './types/JobDefinition'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
@@ -265,6 +272,53 @@ export class SASViyaApiClient {
     )
 
     return context
+  }
+
+  /**
+   * Updates a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param editedContext - an object with the properties to be updated.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async editContext(
+    contextId: string,
+    updatedContext: EditContextInput,
+    accessToken?: string
+  ) {
+    if (!contextId) {
+      throw new Error('Invalid context ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const { result: context, etag } = await this.request<Context>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      {
+        headers
+      }
+    )
+
+    // An If-Match header with the value of the last ETag for the context
+    // is required to be able to update it
+    // https://developer.sas.com/apis/rest/Compute/#update-a-context-definition
+    headers['If-Match'] = etag
+
+    const updateContextRequest: RequestInit = {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ ...context, ...updatedContext })
+    }
+
+    return await this.request<Context>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      updateContextRequest
+    )
   }
 
   /**
