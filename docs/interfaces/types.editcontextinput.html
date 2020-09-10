@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Session | @sasjs/adapter</title>
+	<title>EditContextInput | @sasjs/adapter</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -58,7 +58,7 @@
 					<a href="../modules/types.html">types</a>
 				</li>
 				<li>
-					<a href="types.session.html">Session</a>
+					<a href="types.editcontextinput.html">EditContextInput</a>
 				</li>
 			</ul>
 		</div>
@@ -75,12 +75,12 @@
 			</nav>
 		</div>
 		<div class="col-7 offset-3 col-content">
-			<h1>Interface Session</h1>
+			<h1>Interface EditContextInput</h1>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">Session</span>
+						<span class="target">EditContextInput</span>
 					</li>
 				</ul>
 			</section>
@@ -90,11 +90,12 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.session.html#attributes" class="tsd-kind-icon">attributes</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.session.html#creationtimestamp" class="tsd-kind-icon">creationTimeStamp</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.session.html#id" class="tsd-kind-icon">id</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.session.html#links" class="tsd-kind-icon">links</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.session.html#state" class="tsd-kind-icon">state</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#authorizeallauthenticatedusers" class="tsd-kind-icon">authorizeAllAuthenticatedUsers</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#authorizedusers" class="tsd-kind-icon">authorizedUsers</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#description" class="tsd-kind-icon">description</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#environment" class="tsd-kind-icon">environment</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#launchcontext" class="tsd-kind-icon">launchContext</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.editcontextinput.html#name" class="tsd-kind-icon">name</a></li>
 							</ul>
 						</section>
 					</div>
@@ -103,60 +104,62 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="attributes" class="tsd-anchor"></a>
-					<h3>attributes</h3>
-					<div class="tsd-signature tsd-kind-icon">attributes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="authorizeallauthenticatedusers" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> authorize<wbr>All<wbr>Authenticated<wbr>Users</h3>
+					<div class="tsd-signature tsd-kind-icon">authorize<wbr>All<wbr>Authenticated<wbr>Users<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Session.ts:7</li>
-						</ul>
-					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>session<wbr>Inactive<wbr>Timeout<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
-							</li>
-						</ul>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="creationtimestamp" class="tsd-anchor"></a>
-					<h3>creation<wbr>Time<wbr>Stamp</h3>
-					<div class="tsd-signature tsd-kind-icon">creation<wbr>Time<wbr>Stamp<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in types/Session.ts:10</li>
+							<li>Defined in types/Context.ts:14</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="id" class="tsd-anchor"></a>
-					<h3>id</h3>
-					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="authorizedusers" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> authorized<wbr>Users</h3>
+					<div class="tsd-signature tsd-kind-icon">authorized<wbr>Users<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Session.ts:4</li>
+							<li>Defined in types/Context.ts:13</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="links" class="tsd-anchor"></a>
-					<h3>links</h3>
-					<div class="tsd-signature tsd-kind-icon">links<span class="tsd-signature-symbol">:</span> <a href="types.link.html" class="tsd-signature-type">Link</a><span class="tsd-signature-symbol">[]</span></div>
+					<a name="description" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> description</h3>
+					<div class="tsd-signature tsd-kind-icon">description<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Session.ts:6</li>
+							<li>Defined in types/Context.ts:10</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="state" class="tsd-anchor"></a>
-					<h3>state</h3>
-					<div class="tsd-signature tsd-kind-icon">state<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="environment" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> environment</h3>
+					<div class="tsd-signature tsd-kind-icon">environment<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in types/Session.ts:5</li>
+							<li>Defined in types/Context.ts:12</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="launchcontext" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> launch<wbr>Context</h3>
+					<div class="tsd-signature tsd-kind-icon">launch<wbr>Context<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in types/Context.ts:11</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="name" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> name</h3>
+					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in types/Context.ts:9</li>
 						</ul>
 					</aside>
 				</section>
@@ -178,9 +181,33 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.csrftoken.html" class="tsd-kind-icon">Csrf<wbr>Token</a>
 					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.editcontextinput.html" class="tsd-kind-icon">Edit<wbr>Context<wbr>Input</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#authorizeallauthenticatedusers" class="tsd-kind-icon">authorize<wbr>All<wbr>Authenticated<wbr>Users</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#authorizedusers" class="tsd-kind-icon">authorized<wbr>Users</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#description" class="tsd-kind-icon">description</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#environment" class="tsd-kind-icon">environment</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#launchcontext" class="tsd-kind-icon">launch<wbr>Context</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.editcontextinput.html#name" class="tsd-kind-icon">name</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.folder.html" class="tsd-kind-icon">Folder</a>
 					</li>
@@ -202,30 +229,9 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.sasjswaitingrequest.html" class="tsd-kind-icon">SASjs<wbr>Waiting<wbr>Request</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-module root">
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.session.html" class="tsd-kind-icon">Session</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.session.html#attributes" class="tsd-kind-icon">attributes</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.session.html#creationtimestamp" class="tsd-kind-icon">creation<wbr>Time<wbr>Stamp</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.session.html#id" class="tsd-kind-icon">id</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.session.html#links" class="tsd-kind-icon">links</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="types.session.html#state" class="tsd-kind-icon">state</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
 					</li>
