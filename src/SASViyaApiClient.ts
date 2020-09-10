@@ -3,6 +3,7 @@ import {
   parseAndSubmitAuthorizeForm,
   convertToCSV,
   makeRequest,
+  isUri,
   isUrl
 } from './utils'
 import * as NodeFormData from 'form-data'
@@ -38,6 +39,7 @@ export class SASViyaApiClient {
     this.contextName,
     this.setCsrfToken
   )
+  private isForceDeploy: boolean = false
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -191,6 +193,107 @@ export class SASViyaApiClient {
     )
 
     return createdSession
+  }
+
+  /**
+   * Creates a compute context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param launchContextName - the name of the launcher context used by the compute service.
+   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param autoExecLines - the lines of code to execute during session initialization.
+   * @param authorizedUsers - an optional list of authorized user IDs.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createContext(
+    contextName: string,
+    launchContextName: string,
+    sharedAccountId: string,
+    autoExecLines: string[],
+    authorizedUsers: string[],
+    accessToken?: string
+  ) {
+    if (!contextName) {
+      throw new Error('Missing context name.')
+    }
+
+    if (!launchContextName) {
+      throw new Error('Missing launch context name.')
+    }
+
+    if (!sharedAccountId) {
+      throw new Error('Missing shared account ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const requestBody: any = {
+      name: contextName,
+      launchContext: {
+        contextName: launchContextName
+      },
+      attributes: {
+        reuseServerProcesses: true,
+        runServerAs: sharedAccountId
+      }
+    }
+
+    if (authorizedUsers && authorizedUsers.length) {
+      requestBody['authorizedUsers'] = authorizedUsers
+    } else {
+      requestBody['authorizeAllAuthenticatedUsers'] = true
+    }
+
+    if (autoExecLines) {
+      requestBody.environment = { autoExecLines }
+    }
+
+    const createContextRequest: RequestInit = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    }
+
+    const { result: context } = await this.request<Context>(
+      `${this.serverUrl}/compute/contexts`,
+      createContextRequest
+    )
+
+    return context
+  }
+
+  /**
+   * Deletes a compute context on the given server.
+   * @param contextId - the ID of the context to be deleted.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async deleteContext(contextId: string, accessToken?: string) {
+    if (!contextId) {
+      throw new Error('Invalid context ID.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const deleteContextRequest: RequestInit = {
+      method: 'DELETE',
+      headers
+    }
+
+    return await this.request<Context>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      deleteContextRequest
+    )
   }
 
   /**
@@ -364,12 +467,15 @@ export class SASViyaApiClient {
    *  provided, the parentFolderUri must be provided.
    * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
    *  folder.  If not provided, the parentFolderPath must be provided.
+   * @param accessToken - an access token for authorizing the request.
+   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
    */
   public async createFolder(
     folderName: string,
     parentFolderPath?: string,
     parentFolderUri?: string,
-    accessToken?: string
+    accessToken?: string,
+    isForced?: boolean
   ): Promise<Folder> {
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Parent folder path or uri is required')
@@ -378,6 +484,8 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
       if (!parentFolderUri) {
+        if (isForced) this.isForceDeploy = true
+
         console.log(`Parent folder is not present: ${parentFolderPath}`)
 
         const newParentFolderPath = parentFolderPath.substring(
@@ -398,6 +506,35 @@ export class SASViyaApiClient {
           accessToken
         )
         console.log(`Parent Folder "${newFolderName}" successfully created.`)
+        parentFolderUri = `/folders/folders/${parentFolder.id}`
+      } else if (isForced && accessToken && !this.isForceDeploy) {
+        this.isForceDeploy = true
+
+        await this.deleteFolder(parentFolderPath, accessToken)
+
+        const newParentFolderPath = parentFolderPath.substring(
+          0,
+          parentFolderPath.lastIndexOf('/')
+        )
+        const newFolderName = `${parentFolderPath.split('/').pop()}`
+
+        if (newParentFolderPath === '') {
+          throw new Error('Root Folder should have been present on server')
+        }
+
+        console.log(
+          `Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`
+        )
+
+        const parentFolder = await this.createFolder(
+          newFolderName,
+          newParentFolderPath,
+          undefined,
+          accessToken
+        )
+
+        console.log(`Parent Folder "${newFolderName}" successfully created.`)
+
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       }
     }
@@ -620,7 +757,7 @@ export class SASViyaApiClient {
   /**
    * Deletes the client representing the supplied ID.
    * @param clientId - the client ID to authenticate with.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for authorizing the request.
    */
   public async deleteClient(clientId: string, accessToken?: string) {
     const url = this.serverUrl + `/oauth/clients/${clientId}`
@@ -1087,6 +1224,101 @@ export class SASViyaApiClient {
 
     if (!folder) return undefined
     return `/folders/folders/${folder.id}`
+  }
+
+  private async getRecycleBinUri(accessToken: string) {
+    const url = '/folders/folders/@myRecycleBin'
+    const requestInfo = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      }
+    }
+
+    const { result: folder } = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    ).catch((err) => {
+      return { result: null }
+    })
+
+    if (!folder) return undefined
+
+    return `/folders/folders/${folder.id}`
+  }
+
+  /**
+   * Moves a Viya folder to a new location.  The folder may be renamed at the same time.
+   * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.
+   * @param targetParentFolder - the full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.
+   * @param targetFolderName - the name of the "moved" folder.  If left blank, the original folder name will be used (eg `myFolder` in `/Public/newDestination/myFolder` for the example above).  Optional field.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async moveFolder(
+    sourceFolder: string,
+    targetParentFolder: string,
+    targetFolderName: string,
+    accessToken: string
+  ) {
+    // checks if 'sourceFolder' is already a URI
+    const sourceFolderUri = isUri(sourceFolder)
+      ? sourceFolder
+      : await this.getFolderUri(sourceFolder, accessToken)
+
+    // checks if 'targetParentFolder' is already a URI
+    const targetParentFolderUri = isUri(targetParentFolder)
+      ? targetParentFolder
+      : await this.getFolderUri(targetParentFolder, accessToken)
+
+    const sourceFolderId = sourceFolderUri?.split('/').pop()
+    const url = sourceFolderUri
+
+    const requestInfo = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      },
+      body: JSON.stringify({
+        id: sourceFolderId,
+        name: targetFolderName,
+        parentFolderUri: targetParentFolderUri
+      })
+    }
+
+    const { result: folder } = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    ).catch((err) => {
+      throw err
+    })
+
+    if (!folder) return undefined
+
+    return folder
+  }
+
+  /**
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all it's content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async deleteFolder(folderPath: string, accessToken: string) {
+    const recycleBinUri = await this.getRecycleBinUri(accessToken)
+    const folderName = folderPath.split('/').pop() || ''
+    const date = new Date()
+    const timeMark = date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+    const deletedFolderName = folderName + ' ' + timeMark
+
+    const movedFolder = await this.moveFolder(
+      folderPath,
+      recycleBinUri!,
+      deletedFolderName,
+      accessToken
+    )
+
+    return movedFolder
   }
 
   setCsrfTokenLocal = (csrfToken: CsrfToken) => {
