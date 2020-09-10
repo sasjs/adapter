@@ -24,6 +24,7 @@ export class SessionManager {
       (new Date().getTime() - new Date(session!.creationTimeStamp).getTime()) /
       1000
     if (
+      !session!.attributes ||
       secondsSinceSessionCreation >= session!.attributes.sessionInactiveTimeout
     ) {
       await this.createSessions(accessToken)
