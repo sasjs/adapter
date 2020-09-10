@@ -323,7 +323,11 @@ export class SASViyaApiClient {
     const updateContextRequest: RequestInit = {
       method: 'PUT',
       headers,
-      body: JSON.stringify({ ...context, ...updatedContext })
+      body: JSON.stringify({
+        ...context,
+        ...updatedContext,
+        attributes: { ...context.attributes, ...updatedContext.attributes }
+      })
     }
 
     return await this.request<Context>(

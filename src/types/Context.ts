@@ -3,6 +3,7 @@ export interface Context {
   id: string
   createdBy: string
   version: number
+  attributes?: any
 }
 
 export interface EditContextInput {
@@ -10,6 +11,7 @@ export interface EditContextInput {
   description?: string
   launchContext?: { name: string }
   environment?: { options?: string[]; autoExecLines?: string[] }
+  attributes?: any
   authorizedUsers?: string[]
   authorizeAllAuthenticatedUsers?: boolean
 }
