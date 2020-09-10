@@ -68,7 +68,7 @@ export class SessionManager {
       createSessionRequest
     )
 
-    await this.waitForSession(createdSession, etag)
+    await this.waitForSession(createdSession, etag, accessToken)
     this.sessions.push(createdSession)
     return createdSession
   }
