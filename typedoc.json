@@ -11,14 +11,11 @@
   "outline": [
     {
       "SAS Adapter": {
-        "SASjs": "modules/_sasjs_",
-        "SASjsConfig": "modules/_types_sasjsconfig_",
-        "ServerType": "modules/_types_servertype_",
-        "SASjsRequest": "modules/_types_sasjsrequest_",
-        "SASjsWaitingRequest": "modules/_types_sasjswaitingrequest_"
+        "SASjs": "classes/reflection-708.reflection-180.sasjs",
+        "Types": "modules/types"
       },
-      "SAS Viya API Client": "classes/_sasviyaapiclient_.sasviyaapiclient",
-      "SAS 9 API Client": "classes/_sas9apiclient_.sas9apiclient"
+      "SAS Viya API Client": "classes/reflection-708.reflection-180.sasviyaapiclient",
+      "SAS 9 API Client": "classes/reflection-708.reflection-180.sas9apiclient"
     }
   ],
   "links": [
