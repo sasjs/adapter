@@ -338,12 +338,12 @@ export class SASViyaApiClient {
 
   /**
    * Deletes a compute context on the given server.
-   * @param contextId - the ID of the context to be deleted.
+   * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextId: string, accessToken?: string) {
-    if (!contextId) {
-      throw new Error('Invalid context ID.')
+  public async deleteContext(contextName: string, accessToken?: string) {
+    if (!contextName) {
+      throw new Error('Invalid context Name.')
     }
 
     const headers: any = {
@@ -354,13 +354,24 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
+    const { result: contexts } = await this.request<{ items: Context[] }>(
+      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
+      { headers }
+    )
+
+    if (!contexts || !(contexts.items && contexts.items.length)) {
+      throw new Error(
+        `The context ${contextName} was not found on ${this.serverUrl}.`
+      )
+    }
+
     const deleteContextRequest: RequestInit = {
       method: 'DELETE',
       headers
     }
 
     return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
+      `${this.serverUrl}/compute/contexts/${contexts.items[0].id}`,
       deleteContextRequest
     )
   }
