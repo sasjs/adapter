@@ -25,6 +25,8 @@ jobs:
         run: npm ci
       - name: Check code style
         run: npm run lint
+      - name: Run unit tests
+        run: npm test
       - name: Build Package
         run: npm run package:lib
         env:
