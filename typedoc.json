@@ -11,14 +11,14 @@
   "outline": [
     {
       "SAS Adapter": {
-        "SASjs": "modules/sasjs",
-        "SASjsConfig": "classes/sasjsconfig.sasjsconfig-1",
-        "ServerType": "enums/servertype.servertype-1",
-        "SASjsRequest": "interfaces/sasjsrequest.sasjsrequest-1",
-        "SASjsWaitingRequest": "interfaces/sasjswaitingrequest.sasjswaitingrequest-1"
+        "SASjs": "modules/_sasjs_",
+        "SASjsConfig": "classes/_index_sasjsconfig",
+        "ServerType": "enums/_types_servertype_.servertype",
+        "SASjsRequest": "interfaces/_types_sasjsrequest_.sasjsrequest",
+        "SASjsWaitingRequest": "interfaces/_types_sasjswaitingrequest_.sasjswaitingrequest"
       },
-      "SAS Viya API Client": "classes/sasviyaapiclient.sasviyaapiclient-1",
-      "SAS 9 API Client": "classes/sas9apiclient.sas9apiclient-1"
+      "SAS Viya API Client": "classes/_sasviyaapiclient_.sasviyaapiclient",
+      "SAS 9 API Client": "classes/_sas9apiclient_.sas9apiclient"
     }
   ],
   "links": [
@@ -37,6 +37,12 @@
     {
       "label": "React Seed App",
       "url": "https://github.com/sasjs/react-seed-app"
+    }
+  ],
+  "source": [
+    {
+      "path": "https://github.com/sasjs/adapter/blob/master/src/",
+      "line": "L"
     }
   ]
 }
