@@ -17,6 +17,7 @@ export async function makeRequest<T>(
       ? (res: Response) => res.json()
       : (res: Response) => res.text()
   let etag = null
+
   const result = await fetch(url, request).then(async (response) => {
     if (response.redirected && response.url.includes('SASLogon/login')) {
       return Promise.reject({ status: 401 })
