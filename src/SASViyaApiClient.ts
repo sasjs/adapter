@@ -276,17 +276,17 @@ export class SASViyaApiClient {
 
   /**
    * Updates a compute context on the given server.
-   * @param contextId - the ID of the context to be deleted.
+   * @param contextName - the original name of the context to be updated.
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
   public async editContext(
-    contextId: string,
+    contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    if (!contextId) {
-      throw new Error('Invalid context ID.')
+    if (!contextName) {
+      throw new Error('Invalid context name.')
     }
 
     const headers: any = {
@@ -297,8 +297,13 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
+    const originalContext = await this.getContextByName(
+      contextName,
+      accessToken
+    )
+
     const { result: context, etag } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
+      `${this.serverUrl}/compute/contexts/${originalContext.id}`,
       {
         headers
       }
@@ -307,11 +312,11 @@ export class SASViyaApiClient {
 
       if (e && e.status === 404) {
         throw new Error(
-          `The context with ID ${contextId} was not found on this server.`
+          `The context ${contextName} was not found on this server.`
         )
       }
       throw new Error(
-        `An error occurred when fetching the context with ID ${contextId}`
+        `An error occurred when fetching the context ${contextName}`
       )
     })
 
@@ -331,7 +336,7 @@ export class SASViyaApiClient {
     }
 
     return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
+      `${this.serverUrl}/compute/contexts/${context.id}`,
       updateContextRequest
     )
   }
@@ -354,16 +359,7 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
-      { headers }
-    )
-
-    if (!contexts || !(contexts.items && contexts.items.length)) {
-      throw new Error(
-        `The context ${contextName} was not found on ${this.serverUrl}.`
-      )
-    }
+    const context = await this.getContextByName(contextName, accessToken)
 
     const deleteContextRequest: RequestInit = {
       method: 'DELETE',
@@ -371,7 +367,7 @@ export class SASViyaApiClient {
     }
 
     return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${contexts.items[0].id}`,
+      `${this.serverUrl}/compute/contexts/${context.id}`,
       deleteContextRequest
     )
   }
@@ -1326,6 +1322,38 @@ export class SASViyaApiClient {
     if (!folder) return undefined
 
     return `/folders/folders/${folder.id}`
+  }
+
+  private async getContextByName(
+    contextName: string,
+    accessToken?: string
+  ): Promise<Context> {
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const { result: contexts } = await this.request<{ items: Context[] }>(
+      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
+      { headers }
+    ).catch((e) => {
+      console.error(e)
+
+      throw new Error(
+        `An error occurred when fetching the context with ID ${contextName}`
+      )
+    })
+
+    if (!contexts || !(contexts.items && contexts.items.length)) {
+      throw new Error(
+        `The context ${contextName} was not found on ${this.serverUrl}.`
+      )
+    }
+
+    return contexts.items[0]
   }
 
   /**
