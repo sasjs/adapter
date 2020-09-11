@@ -282,7 +282,7 @@ export class SASViyaApiClient {
    */
   public async editContext(
     contextId: string,
-    updatedContext: EditContextInput,
+    editedContext: EditContextInput,
     accessToken?: string
   ) {
     if (!contextId) {
@@ -325,8 +325,8 @@ export class SASViyaApiClient {
       headers,
       body: JSON.stringify({
         ...context,
-        ...updatedContext,
-        attributes: { ...context.attributes, ...updatedContext.attributes }
+        ...editedContext,
+        attributes: { ...context.attributes, ...editedContext.attributes }
       })
     }
 
