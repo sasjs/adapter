@@ -12,10 +12,10 @@
     {
       "SAS Adapter": {
         "SASjs": "modules/_sasjs_",
-        "SASjsConfig": "classes/_index_sasjsconfig",
-        "ServerType": "enums/_types_servertype_.servertype",
-        "SASjsRequest": "interfaces/_types_sasjsrequest_.sasjsrequest",
-        "SASjsWaitingRequest": "interfaces/_types_sasjswaitingrequest_.sasjswaitingrequest"
+        "SASjsConfig": "modules/_types_sasjsconfig_",
+        "ServerType": "modules/_types_servertype_",
+        "SASjsRequest": "modules/_types_sasjsrequest_",
+        "SASjsWaitingRequest": "modules/_types_sasjswaitingrequest_"
       },
       "SAS Viya API Client": "classes/_sasviyaapiclient_.sasviyaapiclient",
       "SAS 9 API Client": "classes/_sas9apiclient_.sas9apiclient"
