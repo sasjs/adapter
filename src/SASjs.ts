@@ -140,12 +140,12 @@ export default class SASjs {
 
   /**
    * Updates a compute context on the given server.
-   * @param contextId - the ID of the context to be deleted.
+   * @param contextName - the original name of the context to be deleted.
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
   public async editContext(
-    contextId: string,
+    contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
@@ -153,7 +153,7 @@ export default class SASjs {
       throw new Error('This operation is only supported on SAS Viya servers.')
     }
     return await this.sasViyaApiClient!.editContext(
-      contextId,
+      contextName,
       editedContext,
       accessToken
     )
