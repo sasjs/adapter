@@ -161,14 +161,14 @@ export default class SASjs {
 
   /**
    * Deletes a compute context on the given server.
-   * @param contextId - the ID of the context to be deleted.
+   * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextId: string, accessToken?: string) {
+  public async deleteContext(contextName: string, accessToken?: string) {
     if (this.sasjsConfig.serverType !== ServerType.SASViya) {
       throw new Error('This operation is only supported on SAS Viya servers.')
     }
-    return await this.sasViyaApiClient!.deleteContext(contextId, accessToken)
+    return await this.sasViyaApiClient!.deleteContext(contextName, accessToken)
   }
 
   public async createSession(contextName: string, accessToken: string) {
