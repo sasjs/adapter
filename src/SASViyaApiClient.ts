@@ -918,22 +918,26 @@ export class SASViyaApiClient {
     const jobName = sasJob.split('/')[1]
     const jobFolder = this.rootFolderMap.get(folderName)
     const jobToExecute = jobFolder?.find((item) => item.name === jobName)
+
     if (!jobToExecute) {
       throw new Error('Job was not found.')
     }
 
     let code = jobToExecute?.code
+
     if (!code) {
       const jobDefinitionLink = jobToExecute?.links.find(
         (l) => l.rel === 'getResource'
       )
+
       if (!jobDefinitionLink) {
         console.error('Job definition URI was not found.')
         throw new Error('Job definition URI was not found.')
       }
+
       const { result: jobDefinition } = await this.request<JobDefinition>(
         `${this.serverUrl}${jobDefinitionLink.href}`,
-        headers
+        { headers }
       )
 
       code = jobDefinition.code
@@ -941,6 +945,7 @@ export class SASViyaApiClient {
       // Add code to existing job definition
       jobToExecute.code = code
     }
+
     const linesToExecute = code.replace(/\r\n/g, '\n').split('\n')
     return await this.executeScript(
       sasJob,
@@ -993,6 +998,7 @@ export class SASViyaApiClient {
     const jobName = path.basename(sasJob)
     const jobFolder = sasJob.replace(`/${jobName}`, '')
     const allJobsInFolder = this.rootFolderMap.get(jobFolder.replace('/', ''))
+
     if (allJobsInFolder) {
       const jobSpec = allJobsInFolder.find((j: Job) => j.name === jobName)
       const jobDefinitionLink = jobSpec?.links.find(
@@ -1002,10 +1008,13 @@ export class SASViyaApiClient {
         method: 'GET'
       }
       const headers: any = { 'Content-Type': 'application/json' }
+
       if (!!accessToken) {
         headers.Authorization = `Bearer ${accessToken}`
       }
+
       requestInfo.headers = headers
+
       const { result: jobDefinition } = await this.request<Job>(
         `${this.serverUrl}${jobDefinitionLink}`,
         requestInfo

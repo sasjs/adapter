@@ -728,7 +728,7 @@ export default class SASjs {
       async (resolve, reject) => {
         const session = await this.checkSession()
 
-        if (!session.isLoggedIn) {
+        if (!session.isLoggedIn && !accessToken) {
           if (loginRequiredCallback) loginRequiredCallback(true)
           sasjsWaitingRequest.requestPromise.resolve = resolve
           sasjsWaitingRequest.requestPromise.reject = reject
