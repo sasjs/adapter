@@ -88,14 +88,18 @@ export class SASViyaApiClient {
     const headers: any = {
       'Content-Type': 'application/json'
     }
+
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
     }
+
     const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
+      `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     )
+
     const contextsList = contexts && contexts.items ? contexts.items : []
+
     return contextsList.map((context: any) => ({
       createdBy: context.createdBy,
       id: context.id,
@@ -113,36 +117,48 @@ export class SASViyaApiClient {
     const headers: any = {
       'Content-Type': 'application/json'
     }
+
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
     const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
+      `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
-    )
-    const contextsList = contexts && contexts.items ? contexts.items : []
+    ).catch((err) => {
+      throw new Error(err)
+    })
+
+    const contextsList = contexts.items || []
     const executableContexts: any[] = []
 
     const promises = contextsList.map((context: any) => {
       const linesOfCode = ['%put &=sysuserid;']
+
       return this.executeScript(
         `test-${context.name}`,
         linesOfCode,
         context.name,
-        accessToken
+        accessToken,
+        false,
+        null,
+        true
       ).catch(() => null)
     })
+
     const results = await Promise.all(promises)
+
     results.forEach((result: any, index: number) => {
-      if (result && result.jobStatus === 'completed') {
+      if (result) {
         let sysUserId = ''
-        if (result && result.log && result.log.items) {
-          const sysUserIdLog = result.log.items.find((i: any) =>
-            i.line.startsWith('SYSUSERID=')
-          )
+
+        if (result.log) {
+          const sysUserIdLog = result.log
+            .split('\n')
+            .find((line: string) => line.startsWith('SYSUSERID='))
+
           if (sysUserIdLog) {
-            sysUserId = sysUserIdLog.line.replace('SYSUSERID=', '')
+            sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
           }
         }
 
@@ -380,6 +396,9 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    * @param sessionId - optional session ID to reuse.
    * @param silent - optional flag to turn of logging.
+   * @param data - execution data.
+   * @param debug - flag taht indicates debug mode.
+   * @param expectWebout - flag that indicates that web output is expected
    */
   public async executeScript(
     jobName: string,
@@ -388,7 +407,8 @@ export class SASViyaApiClient {
     accessToken?: string,
     silent = false,
     data = null,
-    debug = false
+    debug = false,
+    expectWebout = false
   ): Promise<any> {
     silent = !debug
     try {
@@ -433,7 +453,9 @@ export class SASViyaApiClient {
       if (data) {
         if (JSON.stringify(data).includes(';')) {
           files = await this.uploadTables(data, accessToken)
+
           jobVariables['_webin_file_count'] = files.length
+
           files.forEach((fileInfo, index) => {
             jobVariables[
               `_webin_fileuri${index + 1}`
@@ -503,7 +525,12 @@ export class SASViyaApiClient {
       if (jobStatus === 'failed' || jobStatus === 'error') {
         return Promise.reject({ error: currentJob.error, log })
       }
-      const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+
+      let resultLink
+
+      if (expectWebout) {
+        resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+      }
 
       if (resultLink) {
         jobResult = await this.request<any>(
@@ -927,7 +954,8 @@ export class SASViyaApiClient {
       accessToken,
       true,
       data,
-      debug
+      debug,
+      true
     )
   }
 
