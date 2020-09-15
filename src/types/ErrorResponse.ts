@@ -2,14 +2,25 @@ export class ErrorResponse {
   body: ErrorBody
 
   constructor(message: string, details?: any) {
+    let detailsString = '';
+    let raw
+
+    try {
+      detailsString = JSON.stringify(details)
+    } catch {
+      raw = details
+    }
+
     this.body = {
       message,
-      details
+      details: detailsString,
+      raw
     }
   }
 }
 
 interface ErrorBody {
   message: string
-  details: any
+  details: string,
+  raw: any
 }
