@@ -397,8 +397,8 @@ export class SASViyaApiClient {
    * @param sessionId - optional session ID to reuse.
    * @param silent - optional flag to disable logging.
    * @param data - execution data.
-   * @param debug - flag that indicates debug mode.
-   * @param expectWebout - flag that indicates that web output is expected
+   * @param debug - when set to true, the log will be returned.
+   * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    */
   public async executeScript(
     jobName: string,
