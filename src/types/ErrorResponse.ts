@@ -2,7 +2,7 @@ export class ErrorResponse {
   body: ErrorBody
 
   constructor(message: string, details?: any) {
-    let detailsString = '';
+    let detailsString = ''
     let raw
 
     try {
@@ -21,6 +21,6 @@ export class ErrorResponse {
 
 interface ErrorBody {
   message: string
-  details: string,
+  details: string
   raw: any
 }
