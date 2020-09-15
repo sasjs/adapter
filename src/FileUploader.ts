@@ -18,7 +18,8 @@ export class FileUploader {
   private retryCount = 0
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
-    if (files?.length < 1) throw new Error('Atleast one file must be provided')
+    if (files?.length < 1)
+      throw new Error('At least one file must be provided.')
 
     let paramsString = ''
 
@@ -75,7 +76,7 @@ export class FileUploader {
         })
         .then((responseText) => {
           if (isLogInRequired(responseText))
-            reject('You must be logged in to upload a fle')
+            reject('You must be logged in to upload a file') // FIXME: use ErrorResponse
 
           if (needsRetry(responseText)) {
             if (this.retryCount < requestRetryLimit) {

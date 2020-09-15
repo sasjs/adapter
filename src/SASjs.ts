@@ -84,9 +84,8 @@ export default class SASjs {
     serverName: string,
     repositoryName: string
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SAS9) {
-      throw new Error('This operation is only supported on SAS9 servers.')
-    }
+    this.isMethodSupported('executeScriptSAS9', ServerType.SAS9)
+
     return await this.sas9ApiClient?.executeScript(
       linesOfCode,
       serverName,
@@ -95,16 +94,14 @@ export default class SASjs {
   }
 
   public async getAllContexts(accessToken: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('getAllContexts', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.getAllContexts(accessToken)
   }
 
   public async getExecutableContexts(accessToken: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('getExecutableContexts', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
 
@@ -125,9 +122,8 @@ export default class SASjs {
     authorizedUsers: string[],
     accessToken: string
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('createContext', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.createContext(
       contextName,
       launchContextName,
@@ -149,9 +145,8 @@ export default class SASjs {
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('editContext', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.editContext(
       contextName,
       editedContext,
@@ -165,16 +160,14 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async deleteContext(contextName: string, accessToken?: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('deleteContext', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.deleteContext(contextName, accessToken)
   }
 
   public async createSession(contextName: string, accessToken: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('createSession', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
 
@@ -186,9 +179,8 @@ export default class SASjs {
     sessionId = '',
     silent = false
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('executeScriptSASViya', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.executeScript(
       fileName,
       linesOfCode,
@@ -217,9 +209,8 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient,
     isForced?: boolean
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('createFolder', ServerType.SASViya)
+
     if (sasApiClient)
       return await sasApiClient.createFolder(
         folderName,
@@ -244,9 +235,8 @@ export default class SASjs {
     accessToken?: string,
     sasApiClient?: SASViyaApiClient
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('createJobDefinition', ServerType.SASViya)
+
     if (sasApiClient)
       return await sasApiClient!.createJobDefinition(
         jobName,
@@ -265,9 +255,8 @@ export default class SASjs {
   }
 
   public async getAuthCode(clientId: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('getAuthCode', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
 
@@ -276,9 +265,8 @@ export default class SASjs {
     clientSecret: string,
     authCode: string
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('getAccessToken', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
       clientSecret,
@@ -291,9 +279,8 @@ export default class SASjs {
     clientSecret: string,
     refreshToken: string
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('refreshTokens', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.refreshTokens(
       clientId,
       clientSecret,
@@ -302,9 +289,8 @@ export default class SASjs {
   }
 
   public async deleteClient(clientId: string, accessToken: string) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('deleteClient', ServerType.SASViya)
+
     return await this.sasViyaApiClient!.deleteClient(clientId, accessToken)
   }
 
@@ -570,9 +556,7 @@ export default class SASjs {
     accessToken?: string,
     isForced = false
   ) {
-    if (this.sasjsConfig.serverType !== ServerType.SASViya) {
-      throw new Error('This operation is only supported on SAS Viya servers.')
-    }
+    this.isMethodSupported('deployServicePack', ServerType.SASViya)
 
     let sasApiClient: any = null
     if (serverUrl || appLoc) {
@@ -686,7 +670,7 @@ export default class SASjs {
                 resolve(retryResponse)
               } else {
                 this.retryCountComputeApi = 0
-                reject({ MESSAGE: 'Compute API retry requests limit reached' })
+                reject({ MESSAGE: 'Compute API retry requests limit reached.' }) // FIXME: use ErrorResponse
               }
             }
 
@@ -697,7 +681,7 @@ export default class SASjs {
               sasjsWaitingRequest.config = config
               this.sasjsWaitingRequests.push(sasjsWaitingRequest)
             } else {
-              reject({ MESSAGE: error || 'Job execution failed' })
+              reject({ MESSAGE: error || 'Job execution failed.' }) // FIXME: use ErrorResponse
             }
 
             this.appendSasjsRequest(response.log, sasJob, null)
@@ -779,11 +763,11 @@ export default class SASjs {
                     resolve(retryResponse)
                   } else {
                     this.retryCountJeseApi = 0
-                    reject({ MESSAGE: 'Jes API retry requests limit reached' })
+                    reject({ MESSAGE: 'JES API retry requests limit reached' }) // FIXME: use ErrorResponse
                   }
                 }
 
-                reject({ MESSAGE: (e && e.message) || 'Job execution failed' })
+                reject({ MESSAGE: (e && e.message) || 'Job execution failed.' }) // FIXME: use ErrorResponse
               })
           )
         }
@@ -1074,7 +1058,7 @@ export default class SASjs {
             resolve(resText)
           })
       } else {
-        reject('No debug info in response')
+        reject('No debug info found in response.') // FIXME: use ErrorResponse
       }
     })
   }
@@ -1353,7 +1337,7 @@ export default class SASjs {
           )
           break
         default:
-          throw new Error(`Unidenitied member present in Json: ${member.name}`)
+          throw new Error(`Unidentified member '${member.name}' provided.`)
       }
       if (member.type === 'folder' && member.members && member.members.length)
         await this.createFoldersAndServices(
@@ -1364,5 +1348,15 @@ export default class SASjs {
           isForced
         )
     })
+  }
+
+  private isMethodSupported(method: string, serverType: string) {
+    if (this.sasjsConfig.serverType !== serverType) {
+      throw new Error(
+        `Method '${method}' is only supported on ${
+          serverType === ServerType.SAS9 ? 'SAS9' : 'SAS Viya'
+        } servers.`
+      )
+    }
   }
 }
