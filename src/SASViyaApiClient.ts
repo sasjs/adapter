@@ -3,6 +3,7 @@ import {
   parseAndSubmitAuthorizeForm,
   convertToCSV,
   makeRequest,
+  isRelativePath,
   isUri,
   isUrl
 } from './utils'
@@ -32,10 +33,6 @@ export class SASViyaApiClient {
     private setCsrfToken: (csrfToken: CsrfToken) => void,
     private rootFolderMap = new Map<string, Job[]>()
   ) {
-    if (!rootFolderName) {
-      throw new Error('Root folder must be provided.')
-    }
-
     if (serverUrl) isUrl(serverUrl)
   }
 
@@ -47,6 +44,7 @@ export class SASViyaApiClient {
     this.setCsrfToken
   )
   private isForceDeploy: boolean = false
+  private folderMap = new Map<string, Job[]>()
 
   /**
    * Returns a map containing the directory structure in the currently set root folder.
@@ -192,7 +190,7 @@ export class SASViyaApiClient {
     }
 
     const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
+      `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     )
     const executionContext =
@@ -892,21 +890,36 @@ export class SASViyaApiClient {
     data?: any,
     accessToken?: string
   ) {
-    if (!this.rootFolder) {
-      await this.populateRootFolder(accessToken)
-    }
-    if (!this.rootFolder) {
-      console.error('Root folder was not found')
-      throw new Error('Root folder was not found')
-    }
-    if (!this.rootFolderMap.size) {
-      await this.populateRootFolderMap(accessToken)
-    }
-    if (!this.rootFolderMap.size) {
-      console.error(`The job ${sasJob} was not found in ${this.rootFolderName}`)
+    if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
-        `The job ${sasJob} was not found in ${this.rootFolderName}`
+        'Relative paths cannot be used without specifying a root folder name'
       )
+    }
+
+    if (isRelativePath(sasJob)) {
+      if (!this.rootFolder) {
+        await this.populateRootFolder(accessToken)
+      }
+      if (!this.rootFolder) {
+        console.error('Root folder was not found')
+        throw new Error('Root folder was not found')
+      }
+      if (!this.rootFolderMap.size) {
+        await this.populateRootFolderMap(accessToken)
+      }
+      if (!this.rootFolderMap.size) {
+        console.error(
+          `The job ${sasJob} was not found in ${this.rootFolderName}`
+        )
+        throw new Error(
+          `The job ${sasJob} was not found in ${this.rootFolderName}`
+        )
+      }
+    } else {
+      const folderPathParts = sasJob.split('/')
+      folderPathParts.pop()
+      const folderPath = folderPathParts.join('/')
+      await this.populateFolderMap(folderPath, accessToken)
     }
 
     const headers: any = { 'Content-Type': 'application/json' }
@@ -914,10 +927,19 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const folderName = sasJob.split('/')[0]
-    const jobName = sasJob.split('/')[1]
-    const jobFolder = this.rootFolderMap.get(folderName)
-    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    let jobToExecute
+    if (isRelativePath(sasJob)) {
+      const folderName = sasJob.split('/')[0]
+      const jobName = sasJob.split('/')[1]
+      const jobFolder = this.rootFolderMap.get(folderName)
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    } else {
+      const folderPathParts = sasJob.split('/')
+      const jobName = folderPathParts.pop()
+      const folderPath = folderPathParts.join('/')
+      const jobFolder = this.folderMap.get(folderPath)
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    }
 
     if (!jobToExecute) {
       throw new Error('Job was not found.')
@@ -1098,6 +1120,32 @@ export class SASViyaApiClient {
         `The job ${sasJob} was not found at the location ${this.rootFolderName}`
       )
     }
+  }
+
+  private async populateFolderMap(folderPath: string, accessToken?: string) {
+    const url = '/folders/folders/@item?path=' + folderPath
+    const requestInfo: any = {
+      method: 'GET'
+    }
+    if (accessToken) {
+      requestInfo.headers = { Authorization: `Bearer ${accessToken}` }
+    }
+    const { result: folder } = await this.request<Folder>(
+      `${this.serverUrl}${url}`,
+      requestInfo
+    )
+    if (!folder) {
+      throw new Error(
+        `The path ${folderPath} does not exist on ${this.serverUrl}`
+      )
+    }
+    const { result: members } = await this.request<{ items: any[] }>(
+      `${this.serverUrl}/folders/folders/${folder.id}/members`,
+      requestInfo
+    )
+
+    const itemsAtRoot = members.items
+    this.folderMap.set(folderPath, itemsAtRoot)
   }
 
   private async populateRootFolderMap(accessToken?: string) {

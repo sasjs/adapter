@@ -515,8 +515,6 @@ export default class SASjs {
       ...config
     }
 
-    sasJob = sasJob.startsWith('/') ? sasJob.replace('/', '') : sasJob
-
     if (config.serverType === ServerType.SASViya && config.contextName) {
       if (config.useComputeApi) {
         requestResponse = await this.executeJobViaComputeApi(

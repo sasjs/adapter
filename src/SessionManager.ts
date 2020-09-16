@@ -78,7 +78,7 @@ export class SessionManager {
     if (!this.currentContext) {
       const { result: contexts } = await this.request<{
         items: Context[]
-      }>(`${this.serverUrl}/compute/contexts`, {
+      }>(`${this.serverUrl}/compute/contexts?limit=10000`, {
         headers: this.getHeaders(accessToken)
       })
 
