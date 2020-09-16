@@ -126,7 +126,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     ).catch((err) => {
-      throw new Error(err)
+      throw err
     })
 
     const contextsList = contexts.items || []
@@ -563,13 +563,12 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Creates a folder in the specified location.  Either parentFolderPath or
-   *   parentFolderUri must be provided.
+   * Creates a folder. Path to or URI of the parent folder is required.
    * @param folderName - the name of the new folder.
    * @param parentFolderPath - the full path to the parent folder.  If not
    *  provided, the parentFolderUri must be provided.
    * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
-   *  folder.  If not provided, the parentFolderPath must be provided.
+   *  folder. If not provided, the parentFolderPath must be provided.
    * @param accessToken - an access token for authorizing the request.
    * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
    */
@@ -666,7 +665,7 @@ export class SASViyaApiClient {
       createFolderRequest
     )
 
-    // update rootFolderMap with newly created folder.
+    // updates rootFolderMap with newly created folder.
     await this.populateRootFolderMap(accessToken)
     return createFolderResponse
   }
@@ -728,7 +727,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Performs a login redirect and returns an auth code for the given client
+   * Performs a login redirect and returns an auth code for the given client.
    * @param clientId - the client ID to authenticate with.
    */
   public async getAuthCode(clientId: string) {
@@ -882,7 +881,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Executes a job via the SAS Viya Compute API
+   * Executes a job via the SAS Viya Compute API.
    * @param sasJob - the relative path to the job.
    * @param contextName - the name of the context where the job is to be executed.
    * @param debug - sets the _debug flag in the job arguments.
@@ -943,7 +942,7 @@ export class SASViyaApiClient {
 
       code = jobDefinition.code
 
-      // Add code to existing job definition
+      // Adds code to existing job definition
       jobToExecute.code = code
     }
 
@@ -961,7 +960,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Executes a job via the SAS Viya Job Execution API
+   * Executes a job via the SAS Viya Job Execution API.
    * @param sasJob - the relative path to the job.
    * @param contextName - the name of the context where the job is to be executed.
    * @param debug - sets the _debug flag in the job arguments.
@@ -1448,7 +1447,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all it's content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all its content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
    * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
    * @param accessToken - an access token for authorizing the request.
    */

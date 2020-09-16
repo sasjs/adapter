@@ -76,7 +76,7 @@ export class FileUploader {
         })
         .then((responseText) => {
           if (isLogInRequired(responseText))
-            reject('You must be logged in to upload a file') // FIXME: use ErrorResponse
+            reject('You must be logged in to upload a file')
 
           if (needsRetry(responseText)) {
             if (this.retryCount < requestRetryLimit) {
