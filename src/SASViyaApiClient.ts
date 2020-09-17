@@ -21,7 +21,7 @@ import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 
 /**
- * A client for interfacing with the SAS Viya REST API
+ * A client for interfacing with the SAS Viya REST API.
  *
  */
 export class SASViyaApiClient {
@@ -61,7 +61,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * returns an object containing the Server URL and root folder name
+   * Returns an object containing the server URL and root folder name.
    */
   public getConfig() {
     return {
@@ -71,9 +71,9 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Updates server URL or root folder name when not null
+   * Updates server URL and root folder name, if it was not set.
    * @param serverUrl - the URL of the server.
-   * @param rootFolderName - the name for rootFolderName.
+   * @param rootFolderName - the name for root folder.
    */
   public setConfig(serverUrl: string, rootFolderName: string) {
     if (serverUrl) this.serverUrl = serverUrl
@@ -126,7 +126,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     ).catch((err) => {
-      throw new Error(err)
+      throw err
     })
 
     const contextsList = contexts.items || []
@@ -222,7 +222,7 @@ export class SASViyaApiClient {
    * Creates a compute context on the given server.
    * @param contextName - the name of the context to be created.
    * @param launchContextName - the name of the launcher context used by the compute service.
-   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param sharedAccountId - the ID of the account to run the servers for this context.
    * @param autoExecLines - the lines of code to execute during session initialization.
    * @param authorizedUsers - an optional list of authorized user IDs.
    * @param accessToken - an access token for an authorized user.
@@ -236,15 +236,15 @@ export class SASViyaApiClient {
     accessToken?: string
   ) {
     if (!contextName) {
-      throw new Error('Missing context name.')
+      throw new Error('Context name is required.')
     }
 
     if (!launchContextName) {
-      throw new Error('Missing launch context name.')
+      throw new Error('Launch context name is required.')
     }
 
     if (!sharedAccountId) {
-      throw new Error('Missing shared account ID.')
+      throw new Error('Shared account ID is required.')
     }
 
     const headers: any = {
@@ -328,11 +328,11 @@ export class SASViyaApiClient {
 
       if (e && e.status === 404) {
         throw new Error(
-          `The context ${contextName} was not found on this server.`
+          `The context '${contextName}' was not found on this server.`
         )
       }
       throw new Error(
-        `An error occurred when fetching the context ${contextName}`
+        `An error occurred when fetching the context '${contextName}'.`
       )
     })
 
@@ -364,7 +364,7 @@ export class SASViyaApiClient {
    */
   public async deleteContext(contextName: string, accessToken?: string) {
     if (!contextName) {
-      throw new Error('Invalid context Name.')
+      throw new Error('Invalid context name.')
     }
 
     const headers: any = {
@@ -391,11 +391,11 @@ export class SASViyaApiClient {
   /**
    * Executes code on the current SAS Viya server.
    * @param fileName - a name for the file being submitted for execution.
-   * @param linesOfCode - an array of lines of code to execute.
+   * @param linesOfCode - an array of code lines to execute.
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
    * @param sessionId - optional session ID to reuse.
-   * @param silent - optional flag to turn of logging.
+   * @param silent - optional flag to disable logging.
    * @param data - execution data.
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
@@ -486,11 +486,11 @@ export class SASViyaApiClient {
       )
 
       if (!silent) {
-        console.log(`Job has been submitted for ${fileName}`)
+        console.log(`Job has been submitted for '${fileName}'.`)
         console.log(
-          `You can monitor the job progress at ${this.serverUrl}${
+          `You can monitor the job progress at '${this.serverUrl}${
             postedJob.links.find((l: any) => l.rel === 'state')!.href
-          }`
+          }'.`
         )
       }
 
@@ -563,13 +563,12 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Creates a folder in the specified location.  Either parentFolderPath or
-   *   parentFolderUri must be provided.
+   * Creates a folder. Path to or URI of the parent folder is required.
    * @param folderName - the name of the new folder.
    * @param parentFolderPath - the full path to the parent folder.  If not
    *  provided, the parentFolderUri must be provided.
    * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
-   *  folder.  If not provided, the parentFolderPath must be provided.
+   *  folder. If not provided, the parentFolderPath must be provided.
    * @param accessToken - an access token for authorizing the request.
    * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
    */
@@ -581,7 +580,7 @@ export class SASViyaApiClient {
     isForced?: boolean
   ): Promise<Folder> {
     if (!parentFolderPath && !parentFolderUri) {
-      throw new Error('Parent folder path or uri is required')
+      throw new Error('Path or URI of the parent folder is required.')
     }
 
     if (!parentFolderUri && parentFolderPath) {
@@ -589,7 +588,9 @@ export class SASViyaApiClient {
       if (!parentFolderUri) {
         if (isForced) this.isForceDeploy = true
 
-        console.log(`Parent folder is not present: ${parentFolderPath}`)
+        console.log(
+          `Parent folder at path '${parentFolderPath}' is not present.`
+        )
 
         const newParentFolderPath = parentFolderPath.substring(
           0,
@@ -597,10 +598,10 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          throw new Error('Root Folder should have been present on server')
+          throw new Error('Root folder has to be present on the server.')
         }
         console.log(
-          `Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`
+          `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
         const parentFolder = await this.createFolder(
           newFolderName,
@@ -608,7 +609,9 @@ export class SASViyaApiClient {
           undefined,
           accessToken
         )
-        console.log(`Parent Folder "${newFolderName}" successfully created.`)
+        console.log(
+          `Parent folder '${newFolderName}' has been successfully created.`
+        )
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       } else if (isForced && accessToken && !this.isForceDeploy) {
         this.isForceDeploy = true
@@ -622,11 +625,11 @@ export class SASViyaApiClient {
         const newFolderName = `${parentFolderPath.split('/').pop()}`
 
         if (newParentFolderPath === '') {
-          throw new Error('Root Folder should have been present on server')
+          throw new Error(`Root folder has to be present on the server.`)
         }
 
         console.log(
-          `Creating Parent Folder:\n${newFolderName} in ${newParentFolderPath}`
+          `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
 
         const parentFolder = await this.createFolder(
@@ -636,7 +639,9 @@ export class SASViyaApiClient {
           accessToken
         )
 
-        console.log(`Parent Folder "${newFolderName}" successfully created.`)
+        console.log(
+          `Parent folder '${newFolderName}' has been successfully created.`
+        )
 
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       }
@@ -660,7 +665,7 @@ export class SASViyaApiClient {
       createFolderRequest
     )
 
-    // update rootFolderMap with newly created folder.
+    // updates rootFolderMap with newly created folder.
     await this.populateRootFolderMap(accessToken)
     return createFolderResponse
   }
@@ -681,9 +686,7 @@ export class SASViyaApiClient {
     accessToken?: string
   ) {
     if (!parentFolderPath && !parentFolderUri) {
-      throw new Error(
-        'Either parentFolderPath or parentFolderUri must be provided'
-      )
+      throw new Error(`Path to or URI of the parent folder is required.`)
     }
 
     if (!parentFolderUri && parentFolderPath) {
@@ -724,7 +727,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Performs a login redirect and returns an auth code for the given client
+   * Performs a login redirect and returns an auth code for the given client.
    * @param clientId - the client ID to authenticate with.
    */
   public async getAuthCode(clientId: string) {
@@ -878,7 +881,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Executes a job via the SAS Viya Compute API
+   * Executes a job via the SAS Viya Compute API.
    * @param sasJob - the relative path to the job.
    * @param contextName - the name of the context where the job is to be executed.
    * @param debug - sets the _debug flag in the job arguments.
@@ -896,16 +899,14 @@ export class SASViyaApiClient {
       await this.populateRootFolder(accessToken)
     }
     if (!this.rootFolder) {
-      console.error('Root folder was not found')
-      throw new Error('Root folder was not found')
+      throw new Error(`Root folder was not found.`)
     }
     if (!this.rootFolderMap.size) {
       await this.populateRootFolderMap(accessToken)
     }
     if (!this.rootFolderMap.size) {
-      console.error(`The job ${sasJob} was not found in ${this.rootFolderName}`)
       throw new Error(
-        `The job ${sasJob} was not found in ${this.rootFolderName}`
+        `The job '${sasJob}' was not found in '${this.rootFolderName}'.`
       )
     }
 
@@ -920,7 +921,7 @@ export class SASViyaApiClient {
     const jobToExecute = jobFolder?.find((item) => item.name === jobName)
 
     if (!jobToExecute) {
-      throw new Error('Job was not found.')
+      throw new Error(`Job was not found.`)
     }
 
     let code = jobToExecute?.code
@@ -931,8 +932,7 @@ export class SASViyaApiClient {
       )
 
       if (!jobDefinitionLink) {
-        console.error('Job definition URI was not found.')
-        throw new Error('Job definition URI was not found.')
+        throw new Error(`URI of job definition was not found.`)
       }
 
       const { result: jobDefinition } = await this.request<JobDefinition>(
@@ -942,7 +942,7 @@ export class SASViyaApiClient {
 
       code = jobDefinition.code
 
-      // Add code to existing job definition
+      // Adds code to existing job definition
       jobToExecute.code = code
     }
 
@@ -960,7 +960,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Executes a job via the SAS Viya Job Execution API
+   * Executes a job via the SAS Viya Job Execution API.
    * @param sasJob - the relative path to the job.
    * @param contextName - the name of the context where the job is to be executed.
    * @param debug - sets the _debug flag in the job arguments.
@@ -979,14 +979,14 @@ export class SASViyaApiClient {
     }
 
     if (!this.rootFolder) {
-      throw new Error('Root folder was not found')
+      throw new Error(`Root folder was not found.`)
     }
     if (!this.rootFolderMap.size) {
       await this.populateRootFolderMap(accessToken)
     }
     if (!this.rootFolderMap.size) {
       throw new Error(
-        `The job ${sasJob} was not found in ${this.rootFolderName}`
+        `The job '${sasJob}' was not found in folder '${this.rootFolderName}'.`
       )
     }
 
@@ -1107,7 +1107,7 @@ export class SASViyaApiClient {
       return { result: jobResult?.result, log }
     } else {
       throw new Error(
-        `The job ${sasJob} was not found at the location ${this.rootFolderName}`
+        `The job '${sasJob}' was not found in folder '${this.rootFolderName}'.`
       )
     }
   }
@@ -1126,7 +1126,9 @@ export class SASViyaApiClient {
       requestInfo
     )
     if (!folder) {
-      throw new Error('Cannot populate RootFolderMap unless rootFolder exists')
+      throw new Error(
+        `Not able to populate root folder map, because folder '${this.rootFolderName}' does not exist.`
+      )
     }
     const { result: members } = await this.request<{ items: any[] }>(
       `${this.serverUrl}/folders/folders/${folder.id}/members`,
@@ -1204,7 +1206,7 @@ export class SASViyaApiClient {
     }
     const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
     if (!stateLink) {
-      Promise.reject('Job state link was not found.')
+      Promise.reject(`Job state link was not found.`)
     }
 
     const { result: state } = await this.request<string>(
@@ -1392,13 +1394,13 @@ export class SASViyaApiClient {
       console.error(e)
 
       throw new Error(
-        `An error occurred when fetching the context with ID ${contextName}`
+        `An error occurred when fetching the context '${contextName}'.`
       )
     })
 
     if (!contexts || !(contexts.items && contexts.items.length)) {
       throw new Error(
-        `The context ${contextName} was not found on ${this.serverUrl}.`
+        `The context '${contextName}' was not found at '${this.serverUrl}'.`
       )
     }
 
@@ -1457,7 +1459,7 @@ export class SASViyaApiClient {
   }
 
   /**
-   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all it's content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all its content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
    * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
    * @param accessToken - an access token for authorizing the request.
    */
