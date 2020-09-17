@@ -1003,7 +1003,6 @@ export class SASViyaApiClient {
       const jobSpec = allJobsInFolder.find((j: Job) => j.name === jobName)
 
       if (!jobSpec) {
-        console.error('Job was not found.')
         throw new Error('Job was not found.')
       }
 
@@ -1012,7 +1011,6 @@ export class SASViyaApiClient {
       )?.href
 
       if (!jobDefinitionLink) {
-        console.error('Job definition URI was not found.')
         throw new Error('Job definition URI was not found.')
       }
 
