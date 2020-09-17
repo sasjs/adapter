@@ -1079,21 +1079,18 @@ export default class SASjs {
 
   private async getJobUri(sasJob: string) {
     if (!this.sasViyaApiClient) return ''
-    const jobMap: any = await this.sasViyaApiClient.getAppLocMap()
     let uri = ''
 
-    if (jobMap.size) {
-      const jobKey = sasJob.split('/')[0]
-      const jobName = sasJob.split('/')[1]
+    const jobKey = sasJob.split('/')[0]
+    const jobName = sasJob.split('/')[1]
 
-      const locJobs = jobMap.get(jobKey)
-      if (locJobs) {
-        const job = locJobs.find(
-          (el: any) => el.name === jobName && el.contentType === 'jobDefinition'
-        )
-        if (job) {
-          uri = job.uri
-        }
+    const locJobs = await this.sasViyaApiClient.getJobsInFolder(jobKey)
+    if (locJobs) {
+      const job = locJobs.find(
+        (el: any) => el.name === jobName && el.contentType === 'jobDefinition'
+      )
+      if (job) {
+        uri = job.uri
       }
     }
     return uri
