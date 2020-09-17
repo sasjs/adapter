@@ -93,7 +93,7 @@ export class SessionManager {
 
       if (!currentContext) {
         throw new Error(
-          `The context ${this.contextName} was not found on the server ${this.serverUrl}`
+          `The context '${this.contextName}' was not found on the server ${this.serverUrl}.`
         )
       }
 
@@ -128,7 +128,7 @@ export class SessionManager {
       if (sessionState === 'pending') {
         if (stateLink) {
           if (!silent) {
-            console.log('Polling session status... \n')
+            console.log('Polling session status... \n') // ?
           }
           const { result: state } = await this.request<string>(
             `${this.serverUrl}${stateLink.href}?wait=30`,
@@ -140,7 +140,7 @@ export class SessionManager {
 
           sessionState = state.trim()
           if (!silent) {
-            console.log(`Current state: ${sessionState}\n`)
+            console.log(`Current state is '${sessionState}'\n`)
           }
           resolve(sessionState)
         }

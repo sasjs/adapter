@@ -11,11 +11,11 @@
   "outline": [
     {
       "SAS Adapter": {
-        "SASjs": "classes/reflection-708.reflection-180.sasjs",
+        "SASjs": "classes/reflection-717.reflection-180.sasjs",
         "Types": "modules/types"
       },
-      "SAS Viya API Client": "classes/reflection-708.reflection-180.sasviyaapiclient",
-      "SAS 9 API Client": "classes/reflection-708.reflection-180.sas9apiclient"
+      "SAS Viya API Client": "classes/reflection-717.reflection-180.sasviyaapiclient",
+      "SAS 9 API Client": "classes/reflection-717.reflection-180.sas9apiclient"
     }
   ],
   "links": [
