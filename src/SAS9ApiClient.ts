@@ -1,7 +1,7 @@
 import { isUrl } from './utils'
 
 /**
- * A client for interfacing with the SAS9 REST API
+ * A client for interfacing with the SAS9 REST API.
  *
  */
 export class SAS9ApiClient {
@@ -10,7 +10,7 @@ export class SAS9ApiClient {
   }
 
   /**
-   * returns on object containing the server URL
+   * Returns an object containing server URL.
    */
   public getConfig() {
     return {
@@ -19,8 +19,8 @@ export class SAS9ApiClient {
   }
 
   /**
-   * Updates serverurl which is not null
-   * @param serverUrl - the URL of the server.
+   * Updates server URL which is not null.
+   * @param serverUrl - URL of the server to be set.
    */
   public setConfig(serverUrl: string) {
     if (serverUrl) this.serverUrl = serverUrl
@@ -28,9 +28,9 @@ export class SAS9ApiClient {
 
   /**
    * Executes code on a SAS9 server.
-   * @param linesOfCode - an array of lines of code to execute
-   * @param serverName - the server to execute the code on
-   * @param repositoryName - the repository to execute the code on
+   * @param linesOfCode - an array of code lines to execute.
+   * @param serverName - the server to execute the code on.
+   * @param repositoryName - the repository to execute the code in.
    */
   public async executeScript(
     linesOfCode: string[],
