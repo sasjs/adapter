@@ -323,17 +323,14 @@ export class SASViyaApiClient {
       {
         headers
       }
-    ).catch((e) => {
-      console.error(e)
-
-      if (e && e.status === 404) {
+    ).catch((err) => {
+      if (err && err.status === 404) {
         throw new Error(
           `The context '${contextName}' was not found on this server.`
         )
       }
-      throw new Error(
-        `An error occurred when fetching the context '${contextName}'.`
-      )
+
+      throw err
     })
 
     // An If-Match header with the value of the last ETag for the context
@@ -1388,12 +1385,8 @@ export class SASViyaApiClient {
     const { result: contexts } = await this.request<{ items: Context[] }>(
       `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
       { headers }
-    ).catch((e) => {
-      console.error(e)
-
-      throw new Error(
-        `An error occurred when fetching the context '${contextName}'.`
-      )
+    ).catch((err) => {
+      throw err
     })
 
     if (!contexts || !(contexts.items && contexts.items.length)) {
