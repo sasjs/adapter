@@ -1,5 +1,5 @@
 /**
- * Server type - Viya or SAS9.
+ * Server type that can be `Viya` or `SAS9`.
  *
  */
 export enum ServerType {

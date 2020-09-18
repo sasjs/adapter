@@ -1,5 +1,5 @@
 /**
- * Represents requests that are queued, pending a signon event
+ * Represents requests that are queued, pending a signon event.
  *
  */
 export interface SASjsWaitingRequest {

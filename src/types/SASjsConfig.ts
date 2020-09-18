@@ -19,7 +19,7 @@ export class SASjsConfig {
    */
   appLoc: string = ''
   /**
-   * Can be SAS9 or SASVIYA
+   * Can be `SAS9` or `SASVIYA`.
    */
   serverType: ServerType | null = null
   /**

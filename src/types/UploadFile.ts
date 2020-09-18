@@ -1,5 +1,5 @@
 /**
- * Represents a object that is passed to file uploader
+ * Represents an object that is passed to the file uploader.
  *
  */
 export interface UploadFile {
