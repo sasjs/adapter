@@ -31,7 +31,8 @@ import {
   ServerType,
   CsrfToken,
   UploadFile,
-  EditContextInput
+  EditContextInput,
+  ErrorResponse
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -667,7 +668,9 @@ export default class SASjs {
                 resolve(retryResponse)
               } else {
                 this.retryCountComputeApi = 0
-                reject({ MESSAGE: 'Compute API retry requests limit reached.' })
+                reject(
+                  new ErrorResponse('Compute API retry requests limit reached')
+                )
               }
             }
 
@@ -678,7 +681,7 @@ export default class SASjs {
               sasjsWaitingRequest.config = config
               this.sasjsWaitingRequests.push(sasjsWaitingRequest)
             } else {
-              reject({ MESSAGE: error || 'Job execution failed.' })
+              reject(new ErrorResponse('Job execution failed', error))
             }
 
             this.appendSasjsRequest(response.log, sasJob, null)
@@ -760,11 +763,13 @@ export default class SASjs {
                     resolve(retryResponse)
                   } else {
                     this.retryCountJeseApi = 0
-                    reject({ MESSAGE: 'JES API retry requests limit reached' })
+                    reject(
+                      new ErrorResponse('Jes API retry requests limit reached')
+                    )
                   }
                 }
 
-                reject({ MESSAGE: (e && e.message) || 'Job execution failed.' })
+                reject(new ErrorResponse('Job execution failed', e))
               })
           )
         }
@@ -878,7 +883,7 @@ export default class SASjs {
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       (resolve, reject) => {
         if (isError) {
-          reject({ MESSAGE: errorMsg })
+          reject(new ErrorResponse(errorMsg))
         }
         const headers: any = {}
         if (this.csrfTokenWeb) {
@@ -944,9 +949,12 @@ export default class SASjs {
                   if (jsonResponseText !== '') {
                     resolve(JSON.parse(jsonResponseText))
                   } else {
-                    reject({
-                      MESSAGE: this.parseSAS9ErrorResponse(responseText)
-                    })
+                    reject(
+                      new ErrorResponse(
+                        'Job WEB execution failed',
+                        this.parseSAS9ErrorResponse(responseText)
+                      )
+                    )
                   }
                 } else if (
                   config.serverType === ServerType.SASViya &&
@@ -959,15 +967,30 @@ export default class SASjs {
                         try {
                           resolve(JSON.parse(resText))
                         } catch (e) {
-                          reject({ MESSAGE: resText })
+                          reject(
+                            new ErrorResponse(
+                              'Job WEB debug response parsing failed',
+                              { response: resText, exception: e }
+                            )
+                          )
                         }
                       },
                       (err: any) => {
-                        reject({ MESSAGE: err })
+                        reject(
+                          new ErrorResponse(
+                            'Job WEB debug response parsing failed',
+                            err
+                          )
+                        )
                       }
                     )
                   } catch (e) {
-                    reject({ MESSAGE: responseText })
+                    reject(
+                      new ErrorResponse(
+                        'Job WEB debug response parsing failed',
+                        { response: responseText, exception: e }
+                      )
+                    )
                   }
                 } else {
                   this.updateUsername(responseText)
@@ -975,14 +998,19 @@ export default class SASjs {
                     const parsedJson = JSON.parse(responseText)
                     resolve(parsedJson)
                   } catch (e) {
-                    reject({ MESSAGE: responseText })
+                    reject(
+                      new ErrorResponse('Job WEB response parsing failed', {
+                        response: responseText,
+                        exception: e
+                      })
+                    )
                   }
                 }
               }
             }
           })
           .catch((e: Error) => {
-            reject(e)
+            reject(new ErrorResponse('Job WEB request failed', e))
           })
       }
     )
