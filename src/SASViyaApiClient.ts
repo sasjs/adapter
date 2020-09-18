@@ -1032,18 +1032,18 @@ export class SASViyaApiClient {
 
     let jobToExecute: Job | undefined
     let jobName: string | undefined
+    let jobPath: string | undefined
     if (isRelativePath(sasJob)) {
       const folderName = sasJob.split('/')[0]
       jobName = sasJob.split('/')[1]
-      const jobFolder = this.folderMap.get(
-        `${this.rootFolderName}/${folderName}`
-      )
+      jobPath = `${this.rootFolderName}/${folderName}`
+      const jobFolder = this.folderMap.get(jobPath)
       jobToExecute = jobFolder?.find((item) => item.name === jobName)
     } else {
       const folderPathParts = sasJob.split('/')
       jobName = folderPathParts.pop()
-      const folderPath = folderPathParts.join('/')
-      const jobFolder = this.folderMap.get(folderPath)
+      jobPath = folderPathParts.join('/')
+      const jobFolder = this.folderMap.get(jobPath)
       jobToExecute = jobFolder?.find((item) => item.name === jobName)
     }
 
@@ -1071,7 +1071,7 @@ export class SASViyaApiClient {
 
     const jobArguments: { [key: string]: any } = {
       _contextName: contextName,
-      _program: `${this.rootFolderName}/${sasJob}`,
+      _program: `${jobPath}/${sasJob}`,
       _webin_file_count: files.length,
       _OMITJSONLISTING: true,
       _OMITJSONLOG: true,
