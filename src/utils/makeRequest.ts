@@ -37,13 +37,28 @@ export async function makeRequest<T>(
             ...request,
             headers: { ...request.headers, [tokenHeader]: token }
           }
+
           return fetch(url, retryRequest).then((res) => {
             etag = res.headers.get('ETag')
             return responseTransform(res)
           })
+        } else {
+          let body: any = await response.text()
+
+          try {
+            body = JSON.parse(body)
+
+            body.message = `Forbidden. Check your permissions and user groups. ${
+              body.message || ''
+            }`
+
+            body = JSON.stringify(body)
+          } catch (_) {}
+
+          return Promise.reject({ status: response.status, body })
         }
       } else {
-        const body = await response.text()
+        let body: any = await response.text()
 
         if (needsRetry(body)) {
           if (retryCount < retryLimit) {
@@ -63,6 +78,18 @@ export async function makeRequest<T>(
 
             throw new Error('Request retry limit exceeded')
           }
+        }
+
+        if (response.status === 401) {
+          try {
+            body = JSON.parse(body)
+
+            body.message = `Unauthorized request. Check your credentials(client, secret, access token). ${
+              body.message || ''
+            }`
+
+            body = JSON.stringify(body)
+          } catch (_) {}
         }
 
         return Promise.reject({ status: response.status, body })
@@ -104,5 +131,6 @@ export async function makeRequest<T>(
       return responseTransformed
     }
   })
+
   return { result, etag }
 }
