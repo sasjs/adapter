@@ -13,7 +13,7 @@ const defaultConfig: SASjsConfig = {
 };
 
 const customConfig = {
-  serverUrl: "url",
+  serverUrl: "http://url.com",
   pathSAS9: "sas9",
   pathSASViya: "viya",
   appLoc: "/Public/seedapp",
