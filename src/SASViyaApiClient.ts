@@ -385,7 +385,7 @@ export class SASViyaApiClient {
 
   /**
    * Executes code on the current SAS Viya server.
-   * @param fileName - a name for the file being submitted for execution.
+   * @param jobPath - the path to the file being submitted for execution.
    * @param linesOfCode - an array of code lines to execute.
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
@@ -396,7 +396,7 @@ export class SASViyaApiClient {
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    */
   public async executeScript(
-    jobName: string,
+    jobPath: string,
     linesOfCode: string[],
     contextName: string,
     accessToken?: string,
@@ -434,13 +434,21 @@ export class SASViyaApiClient {
         jobArguments['_DEBUG'] = 131
       }
 
-      const fileName = `exec-${
-        jobName.includes('/') ? jobName.split('/')[1] : jobName
-      }`
+      let fileName
+      if (isRelativePath(jobPath)) {
+        fileName = `exec-${
+          jobPath.includes('/') ? jobPath.split('/')[1] : jobPath
+        }`
+      } else {
+        const jobPathParts = jobPath.split('/')
+        fileName = jobPathParts.pop()
+      }
 
       let jobVariables: any = {
         SYS_JES_JOB_URI: '',
-        _program: this.rootFolderName + '/' + jobName
+        _program: isRelativePath(jobPath)
+          ? this.rootFolderName + '/' + jobPath
+          : jobPath
       }
 
       let files: any[] = []
@@ -543,7 +551,7 @@ export class SASViyaApiClient {
     } catch (e) {
       if (e && e.status === 404) {
         return this.executeScript(
-          jobName,
+          jobPath,
           linesOfCode,
           contextName,
           accessToken,
