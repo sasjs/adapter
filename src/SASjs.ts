@@ -21,7 +21,8 @@ import {
   parseGeneratedCode,
   parseWeboutResponse,
   needsRetry,
-  asyncForEach
+  asyncForEach,
+  isRelativePath
 } from './utils'
 import {
   SASjsConfig,
@@ -791,7 +792,9 @@ export default class SASjs {
       ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
       : sasJob
     const jobUri =
-      config.serverType === 'SASVIYA' ? await this.getJobUri(sasJob) : ''
+      config.serverType === ServerType.SASViya
+        ? await this.getJobUri(sasJob)
+        : ''
     const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
       jobUri.length > 0
         ? '__program=' + program + '&_job=' + jobUri
@@ -1063,10 +1066,18 @@ export default class SASjs {
     if (!this.sasViyaApiClient) return ''
     let uri = ''
 
-    const jobKey = sasJob.split('/')[0]
-    const jobName = sasJob.split('/')[1]
+    let folderPath
+    let jobName: string
+    if (isRelativePath(sasJob)) {
+      folderPath = sasJob.split('/')[0]
+      jobName = sasJob.split('/')[1]
+    } else {
+      const folderPathParts = sasJob.split('/')
+      jobName = folderPathParts.pop() || ''
+      folderPath = folderPathParts.join('/')
+    }
 
-    const locJobs = await this.sasViyaApiClient.getJobsInFolder(jobKey)
+    const locJobs = await this.sasViyaApiClient.getJobsInFolder(folderPath)
     if (locJobs) {
       const job = locJobs.find(
         (el: any) => el.name === jobName && el.contentType === 'jobDefinition'
@@ -1075,6 +1086,7 @@ export default class SASjs {
         uri = job.uri
       }
     }
+    console.log('URI', uri)
     return uri
   }
 

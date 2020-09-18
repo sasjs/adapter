@@ -47,12 +47,15 @@ export class SASViyaApiClient {
    * Returns a list of jobs in the currently set root folder.
    */
   public async getJobsInFolder(folderPath: string) {
-    if (this.folderMap.get(folderPath)) {
-      return this.folderMap.get(folderPath)
+    const path = isRelativePath(folderPath)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
+    if (this.folderMap.get(path)) {
+      return this.folderMap.get(path)
     }
 
-    await this.populateFolderMap(folderPath)
-    return this.folderMap.get(folderPath)
+    await this.populateFolderMap(path)
+    return this.folderMap.get(path)
   }
 
   /**
@@ -1136,11 +1139,14 @@ export class SASViyaApiClient {
   }
 
   private async populateFolderMap(folderPath: string, accessToken?: string) {
-    if (this.folderMap.get(folderPath)) {
+    const path = isRelativePath(folderPath)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
+    if (this.folderMap.get(path)) {
       return
     }
 
-    const url = '/folders/folders/@item?path=' + folderPath
+    const url = '/folders/folders/@item?path=' + path
     const requestInfo: any = {
       method: 'GET'
     }
@@ -1152,9 +1158,7 @@ export class SASViyaApiClient {
       requestInfo
     )
     if (!folder) {
-      throw new Error(
-        `The path ${folderPath} does not exist on ${this.serverUrl}`
-      )
+      throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
     const { result: members } = await this.request<{ items: any[] }>(
       `${this.serverUrl}/folders/folders/${folder.id}/members`,
@@ -1162,7 +1166,7 @@ export class SASViyaApiClient {
     )
 
     const itemsAtRoot = members.items
-    this.folderMap.set(folderPath, itemsAtRoot)
+    this.folderMap.set(path, itemsAtRoot)
   }
 
   private async pollJobState(
