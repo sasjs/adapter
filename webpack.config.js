@@ -1,49 +1,57 @@
-const path = require("path");
-const webpack = require("webpack");
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+const path = require('path')
+const webpack = require('webpack')
+const terserPlugin = require('terser-webpack-plugin')
 
 const browserConfig = {
-  entry: "./src/index.ts",
-  devtool: "inline-source-map",
-  mode: "development",
+  entry: './src/index.ts',
+  devtool: 'inline-source-map',
+  mode: 'production',
   optimization: {
-    minimize: false,
+    minimizer: [
+      new terserPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true,
+        terserOptions: {}
+      })
+    ]
   },
   module: {
     rules: [
       {
         test: /\.ts?$/,
-        use: "ts-loader",
-        exclude: /node_modules/,
-      },
-    ],
+        use: 'ts-loader',
+        exclude: /node_modules/
+      }
+    ]
   },
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: ['.ts', '.js']
   },
   output: {
-    filename: "index.js",
-    path: path.resolve(__dirname, "build"),
-    libraryTarget: "umd",
-    library: "SASjs",
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'build'),
+    libraryTarget: 'umd',
+    library: 'SASjs'
   },
   plugins: [
     new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
     new webpack.SourceMapDevToolPlugin({
       filename: null,
       exclude: [/node_modules/],
-      test: /\.ts($|\?)/i,
+      test: /\.ts($|\?)/i
     }),
-  ],
-};
+    new webpack.IgnorePlugin(/\/iconv-loader$/)
+  ]
+}
 
 const nodeConfig = {
   ...browserConfig,
-  target: "node",
+  target: 'node',
   output: {
     ...browserConfig.output,
-    path: path.resolve(__dirname, "build", "node"),
-  },
-};
+    path: path.resolve(__dirname, 'build', 'node')
+  }
+}
 
-module.exports = [browserConfig, nodeConfig];
+module.exports = [browserConfig, nodeConfig]
