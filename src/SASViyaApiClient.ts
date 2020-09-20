@@ -14,9 +14,10 @@ import {
   Context,
   Folder,
   CsrfToken,
-  EditContextInput
+  EditContextInput,
+  ErrorResponse,
+  JobDefinition
 } from './types'
-import { JobDefinition } from './types/JobDefinition'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 
@@ -540,9 +541,30 @@ export class SASViyaApiClient {
           `${this.serverUrl}${resultLink}`,
           { headers },
           'text'
-        ).catch((e) => ({
-          result: JSON.stringify(e)
-        }))
+        ).catch(async (e) => {
+          if (e && e.status === 404) {
+            if (logLink) {
+              log = await this.request<any>(
+                `${this.serverUrl}${logLink.href}/content?limit=10000`,
+                {
+                  headers
+                }
+              ).then((res: any) =>
+                res.result.items.map((i: any) => i.line).join('\n')
+              )
+
+              return Promise.reject(
+                new ErrorResponse('Job execution failed', {
+                  status: 500,
+                  body: log
+                })
+              )
+            }
+          }
+          return {
+            result: JSON.stringify(e)
+          }
+        })
       }
 
       await this.sessionManager.clearSession(executionSessionId, accessToken)
