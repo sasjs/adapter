@@ -1071,7 +1071,7 @@ export class SASViyaApiClient {
 
     const jobArguments: { [key: string]: any } = {
       _contextName: contextName,
-      _program: `${jobPath}/${sasJob}`,
+      _program: `${jobPath}/${jobName}`,
       _webin_file_count: files.length,
       _OMITJSONLISTING: true,
       _OMITJSONLOG: true,
