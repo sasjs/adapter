@@ -793,8 +793,10 @@ export default class SASjs {
       SASjob: sasJob,
       data
     }
-    const program = config.appLoc
-      ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
+    const program = isRelativePath(sasJob)
+      ? config.appLoc
+        ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
+        : sasJob
       : sasJob
     const jobUri =
       config.serverType === ServerType.SASViya
