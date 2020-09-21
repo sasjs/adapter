@@ -1,8 +1,8 @@
 import { ServerType } from './ServerType'
 
 /**
- * Specifies the configuration for the SASjs instance - eg where and how to 
- * connect to SAS. 
+ * Specifies the configuration for the SASjs instance - eg where and how to
+ * connect to SAS.
  */
 export class SASjsConfig {
   /**
@@ -43,7 +43,7 @@ export class SASjsConfig {
    * The name of the compute context to use when calling the Viya APIs directly.
    * Example value: 'SAS Job Execution compute context'
    * If set to missing or empty, and useComputeApi is true, the adapter will use
-   * the JES APIs.  If provided, the Job Code will be executed in pooled 
+   * the JES APIs.  If provided, the Job Code will be executed in pooled
    * compute sessions on this named context.
    */
   contextName: string = ''
@@ -52,7 +52,7 @@ export class SASjsConfig {
    * performance, set to `true` and provide a `contextName` on which to run
    * the code.  When running on a named context, the code executes under the
    * user identity.  When running as a Job Execution service, the code runs
-   * under the identity in the JES context.  If no `contextName` is provided, 
+   * under the identity in the JES context.  If no `contextName` is provided,
    * and `useComputeApi` is `true`, then the service will run as a Job, except
    * triggered using the APIs instead of the Job Execution Web Service broker.
    */
