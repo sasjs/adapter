@@ -1114,7 +1114,6 @@ export default class SASjs {
         uri = job.uri
       }
     }
-    console.log('URI', uri)
     return uri
   }
 
