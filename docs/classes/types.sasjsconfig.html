@@ -78,7 +78,8 @@
 			<h1>Class SASjsConfig</h1>
 			<section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography tsd-comment-shorttext">
 					<div class="lead">
-						<p>Specifies the configuration for the SASjs instance.</p>
+						<p>Specifies the configuration for the SASjs instance - eg where and how to
+						connect to SAS.</p>
 					</div>
 			</div></section>
 			<section class="tsd-panel tsd-hierarchy">
@@ -117,8 +118,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L20">
-									types/SASjsConfig.ts:20
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L33">
+									types/SASjsConfig.ts:33
 								</a>
 							</li>
 						</ul>
@@ -126,7 +127,12 @@
 					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 						<div class="lead">
 							<p>The appLoc is the parent folder under which the SAS services (STPs or Job
-							Execution Services) are stored.</p>
+								Execution Services) are stored.  We recommend that each app is stored in
+								a dedicated parent folder (the appLoc) and the services are grouped inside
+								subfolders within the appLoc - allowing functionality to be restricted
+								according to those groups at backend.
+								When using appLoc, the paths provided in the <code>request</code> function should be
+							<em>without</em> a leading slash (/).</p>
 						</div>
 					</div>
 				</section>
@@ -137,12 +143,21 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L29">
-									types/SASjsConfig.ts:29
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L49">
+									types/SASjsConfig.ts:49
 								</a>
 							</li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>The name of the compute context to use when calling the Viya APIs directly.
+								Example value: &#39;SAS Job Execution compute context&#39;
+								If set to missing or empty, and useComputeApi is true, the adapter will use
+								the JES APIs.  If provided, the Job Code will be executed in pooled
+							compute sessions on this named context.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="debug" class="tsd-anchor"></a>
@@ -151,8 +166,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L28">
-									types/SASjsConfig.ts:28
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L41">
+									types/SASjsConfig.ts:41
 								</a>
 							</li>
 						</ul>
@@ -170,12 +185,18 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L14">
-									types/SASjsConfig.ts:14
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L18">
+									types/SASjsConfig.ts:18
 								</a>
 							</li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>The location of the Stored Process Web Application.  By default the adapter
+							will use &#39;/SASStoredProcess/do&#39; on SAS 9.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="pathsasviya" class="tsd-anchor"></a>
@@ -184,12 +205,18 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L15">
-									types/SASjsConfig.ts:15
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L23">
+									types/SASjsConfig.ts:23
 								</a>
 							</li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>The location of the Job Execution Web Application.  By default the adapter
+							will use &#39;/SASJobExecution&#39; on SAS Viya.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="servertype" class="tsd-anchor"></a>
@@ -198,8 +225,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L24">
-									types/SASjsConfig.ts:24
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L37">
+									types/SASjsConfig.ts:37
 								</a>
 							</li>
 						</ul>
@@ -238,12 +265,23 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L30">
-									types/SASjsConfig.ts:30
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L59">
+									types/SASjsConfig.ts:59
 								</a>
 							</li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>Set to <code>false</code> to use the Job Execution Web Service.  To enhance VIYA
+								performance, set to <code>true</code> and provide a <code>contextName</code> on which to run
+								the code.  When running on a named context, the code executes under the
+								user identity.  When running as a Job Execution service, the code runs
+								under the identity in the JES context.  If no <code>contextName</code> is provided,
+								and <code>useComputeApi</code> is <code>true</code>, then the service will run as a Job, except
+							triggered using the APIs instead of the Job Execution Web Service broker.</p>
+						</div>
+					</div>
 				</section>
 			</section>
 			<!--{&quot;options&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/ErrorResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsWaitingRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/ServerType.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isAuthorizeFormRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isLoginRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isLoginSuccess.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/makeRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseAndSubmitAuthorizeForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
