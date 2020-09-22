@@ -3,20 +3,21 @@ import {
   parseAndSubmitAuthorizeForm,
   convertToCSV,
   makeRequest,
+  isRelativePath,
   isUri,
   isUrl
 } from './utils'
 import * as NodeFormData from 'form-data'
-import * as path from 'path'
 import {
   Job,
   Session,
   Context,
   Folder,
   CsrfToken,
-  EditContextInput
+  EditContextInput,
+  ErrorResponse,
+  JobDefinition
 } from './types'
-import { JobDefinition } from './types/JobDefinition'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 
@@ -29,35 +30,33 @@ export class SASViyaApiClient {
     private serverUrl: string,
     private rootFolderName: string,
     private contextName: string,
-    private setCsrfToken: (csrfToken: CsrfToken) => void,
-    private rootFolderMap = new Map<string, Job[]>()
+    private setCsrfToken: (csrfToken: CsrfToken) => void
   ) {
-    if (!rootFolderName) {
-      throw new Error('Root folder must be provided.')
-    }
-
     if (serverUrl) isUrl(serverUrl)
   }
 
   private csrfToken: CsrfToken | null = null
-  private rootFolder: Folder | null = null
   private sessionManager = new SessionManager(
     this.serverUrl,
     this.contextName,
     this.setCsrfToken
   )
   private isForceDeploy: boolean = false
+  private folderMap = new Map<string, Job[]>()
 
   /**
-   * Returns a map containing the directory structure in the currently set root folder.
+   * Returns a list of jobs in the currently set root folder.
    */
-  public async getAppLocMap() {
-    if (this.rootFolderMap.size) {
-      return this.rootFolderMap
+  public async getJobsInFolder(folderPath: string) {
+    const path = isRelativePath(folderPath)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
+    if (this.folderMap.get(path)) {
+      return this.folderMap.get(path)
     }
 
-    this.populateRootFolderMap()
-    return this.rootFolderMap
+    await this.populateFolderMap(path)
+    return this.folderMap.get(path)
   }
 
   /**
@@ -192,7 +191,7 @@ export class SASViyaApiClient {
     }
 
     const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts`,
+      `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     )
     const executionContext =
@@ -387,7 +386,7 @@ export class SASViyaApiClient {
 
   /**
    * Executes code on the current SAS Viya server.
-   * @param fileName - a name for the file being submitted for execution.
+   * @param jobPath - the path to the file being submitted for execution.
    * @param linesOfCode - an array of code lines to execute.
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
@@ -398,7 +397,7 @@ export class SASViyaApiClient {
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    */
   public async executeScript(
-    jobName: string,
+    jobPath: string,
     linesOfCode: string[],
     contextName: string,
     accessToken?: string,
@@ -436,13 +435,21 @@ export class SASViyaApiClient {
         jobArguments['_DEBUG'] = 131
       }
 
-      const fileName = `exec-${
-        jobName.includes('/') ? jobName.split('/')[1] : jobName
-      }`
+      let fileName
+      if (isRelativePath(jobPath)) {
+        fileName = `exec-${
+          jobPath.includes('/') ? jobPath.split('/')[1] : jobPath
+        }`
+      } else {
+        const jobPathParts = jobPath.split('/')
+        fileName = jobPathParts.pop()
+      }
 
       let jobVariables: any = {
         SYS_JES_JOB_URI: '',
-        _program: this.rootFolderName + '/' + jobName
+        _program: isRelativePath(jobPath)
+          ? this.rootFolderName + '/' + jobPath
+          : jobPath
       }
 
       let files: any[] = []
@@ -534,9 +541,30 @@ export class SASViyaApiClient {
           `${this.serverUrl}${resultLink}`,
           { headers },
           'text'
-        ).catch((e) => ({
-          result: JSON.stringify(e)
-        }))
+        ).catch(async (e) => {
+          if (e && e.status === 404) {
+            if (logLink) {
+              log = await this.request<any>(
+                `${this.serverUrl}${logLink.href}/content?limit=10000`,
+                {
+                  headers
+                }
+              ).then((res: any) =>
+                res.result.items.map((i: any) => i.line).join('\n')
+              )
+
+              return Promise.reject(
+                new ErrorResponse('Job execution failed', {
+                  status: 500,
+                  body: log
+                })
+              )
+            }
+          }
+          return {
+            result: JSON.stringify(e)
+          }
+        })
       }
 
       await this.sessionManager.clearSession(executionSessionId, accessToken)
@@ -545,7 +573,7 @@ export class SASViyaApiClient {
     } catch (e) {
       if (e && e.status === 404) {
         return this.executeScript(
-          jobName,
+          jobPath,
           linesOfCode,
           contextName,
           accessToken,
@@ -662,8 +690,11 @@ export class SASViyaApiClient {
       createFolderRequest
     )
 
-    // updates rootFolderMap with newly created folder.
-    await this.populateRootFolderMap(accessToken)
+    // update folder map with newly created folder.
+    await this.populateFolderMap(
+      `${parentFolderPath}/${folderName}`,
+      accessToken
+    )
     return createFolderResponse
   }
 
@@ -892,19 +923,26 @@ export class SASViyaApiClient {
     data?: any,
     accessToken?: string
   ) {
-    if (!this.rootFolder) {
-      await this.populateRootFolder(accessToken)
-    }
-    if (!this.rootFolder) {
-      throw new Error(`Root folder was not found.`)
-    }
-    if (!this.rootFolderMap.size) {
-      await this.populateRootFolderMap(accessToken)
-    }
-    if (!this.rootFolderMap.size) {
+    if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
-        `The job '${sasJob}' was not found in '${this.rootFolderName}'.`
+        'Relative paths cannot be used without specifying a root folder name'
       )
+    }
+
+    if (isRelativePath(sasJob)) {
+      const folderName = sasJob.split('/')[0]
+      await this.populateFolderMap(`${this.rootFolderName}/${folderName}`)
+
+      if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
+        throw new Error(
+          `The folder '${folderName}' was not found at '${this.serverUrl}/${this.rootFolderName}'`
+        )
+      }
+    } else {
+      const folderPathParts = sasJob.split('/')
+      folderPathParts.pop()
+      const folderPath = folderPathParts.join('/')
+      await this.populateFolderMap(folderPath, accessToken)
     }
 
     const headers: any = { 'Content-Type': 'application/json' }
@@ -912,10 +950,21 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const folderName = sasJob.split('/')[0]
-    const jobName = sasJob.split('/')[1]
-    const jobFolder = this.rootFolderMap.get(folderName)
-    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    let jobToExecute
+    if (isRelativePath(sasJob)) {
+      const folderName = sasJob.split('/')[0]
+      const jobName = sasJob.split('/')[1]
+      const jobFolder = this.folderMap.get(
+        `${this.rootFolderName}/${folderName}`
+      )
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    } else {
+      const folderPathParts = sasJob.split('/')
+      const jobName = folderPathParts.pop()
+      const folderPath = folderPathParts.join('/')
+      const jobFolder = this.folderMap.get(folderPath)
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    }
 
     if (!jobToExecute) {
       throw new Error(`Job was not found.`)
@@ -957,8 +1006,8 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Executes a job via the SAS Viya Job Execution API.
-   * @param sasJob - the relative path to the job.
+   * Executes a job via the SAS Viya Job Execution API
+   * @param sasJob - the relative or absolute path to the job.
    * @param contextName - the name of the context where the job is to be executed.
    * @param debug - sets the _debug flag in the job arguments.
    * @param data - any data to be passed in as input to the job.
@@ -971,20 +1020,31 @@ export class SASViyaApiClient {
     data?: any,
     accessToken?: string
   ) {
-    if (!this.rootFolder) {
-      await this.populateRootFolder(accessToken)
+    if (isRelativePath(sasJob) && !this.rootFolderName) {
+      throw new Error(
+        'Relative paths cannot be used without specifying a root folder name.'
+      )
     }
 
-    if (!this.rootFolder) {
-      throw new Error(`Root folder was not found.`)
-    }
-    if (!this.rootFolderMap.size) {
-      await this.populateRootFolderMap(accessToken)
-    }
-    if (!this.rootFolderMap.size) {
-      throw new Error(
-        `The job '${sasJob}' was not found in folder '${this.rootFolderName}'.`
-      )
+    if (isRelativePath(sasJob)) {
+      const folderName = sasJob.split('/')[0]
+      await this.populateFolderMap(`${this.rootFolderName}/${folderName}`)
+
+      if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
+        throw new Error(
+          `The folder '${folderName}' was not found at '${this.serverUrl}/${this.rootFolderName}'.`
+        )
+      }
+    } else {
+      const folderPathParts = sasJob.split('/')
+      folderPathParts.pop()
+      const folderPath = folderPathParts.join('/')
+      await this.populateFolderMap(folderPath, accessToken)
+      if (!this.folderMap.get(folderPath)) {
+        throw new Error(
+          `The folder '${folderPath}' was not found at '${this.serverUrl}'.`
+        )
+      }
     }
 
     let files: any[] = []
@@ -992,124 +1052,128 @@ export class SASViyaApiClient {
       files = await this.uploadTables(data, accessToken)
     }
 
-    const jobName = path.basename(sasJob)
-    const jobFolder = sasJob.replace(`/${jobName}`, '')
-    const allJobsInFolder = this.rootFolderMap.get(jobFolder.replace('/', ''))
-
-    if (allJobsInFolder) {
-      const jobSpec = allJobsInFolder.find((j: Job) => j.name === jobName)
-
-      if (!jobSpec) {
-        throw new Error('Job was not found.')
-      }
-
-      const jobDefinitionLink = jobSpec?.links.find(
-        (l) => l.rel === 'getResource'
-      )?.href
-
-      if (!jobDefinitionLink) {
-        throw new Error('Job definition URI was not found.')
-      }
-
-      const requestInfo: any = {
-        method: 'GET'
-      }
-      const headers: any = { 'Content-Type': 'application/json' }
-
-      if (!!accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`
-      }
-
-      requestInfo.headers = headers
-
-      const { result: jobDefinition } = await this.request<Job>(
-        `${this.serverUrl}${jobDefinitionLink}`,
-        requestInfo
-      )
-
-      const jobArguments: { [key: string]: any } = {
-        _contextName: contextName,
-        _program: `${this.rootFolderName}/${sasJob}`,
-        _webin_file_count: files.length,
-        _OMITJSONLISTING: true,
-        _OMITJSONLOG: true,
-        _OMITSESSIONRESULTS: true,
-        _OMITTEXTLISTING: true,
-        _OMITTEXTLOG: true
-      }
-
-      if (debug) {
-        jobArguments['_OMITTEXTLOG'] = 'false'
-        jobArguments['_OMITSESSIONRESULTS'] = 'false'
-        jobArguments['_DEBUG'] = 131
-      }
-
-      files.forEach((fileInfo, index) => {
-        jobArguments[
-          `_webin_fileuri${index + 1}`
-        ] = `/files/files/${fileInfo.file.id}`
-        jobArguments[`_webin_name${index + 1}`] = fileInfo.tableName
-      })
-
-      const postJobRequest = {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          name: `exec-${jobName}`,
-          description: 'Powered by SASjs',
-          jobDefinition,
-          arguments: jobArguments
-        })
-      }
-      const { result: postedJob, etag } = await this.request<Job>(
-        `${this.serverUrl}/jobExecution/jobs?_action=wait`,
-        postJobRequest
-      )
-      const jobStatus = await this.pollJobState(
-        postedJob,
-        etag,
-        accessToken,
-        true
-      )
-      const { result: currentJob } = await this.request<Job>(
-        `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
-        { headers }
-      )
-
-      let jobResult, log
-      if (jobStatus === 'failed') {
-        return Promise.reject(currentJob.error)
-      }
-      const resultLink = currentJob.results['_webout.json']
-      const logLink = currentJob.links.find((l) => l.rel === 'log')
-      if (resultLink) {
-        jobResult = await this.request<any>(
-          `${this.serverUrl}${resultLink}/content`,
-          { headers },
-          'text'
-        )
-      }
-      if (debug && logLink) {
-        log = await this.request<any>(
-          `${this.serverUrl}${logLink.href}/content`,
-          {
-            headers
-          }
-        ).then((res: any) =>
-          res.result.items.map((i: any) => i.line).join('\n')
-        )
-      }
-      return { result: jobResult?.result, log }
+    let jobToExecute: Job | undefined
+    let jobName: string | undefined
+    let jobPath: string | undefined
+    if (isRelativePath(sasJob)) {
+      const folderName = sasJob.split('/')[0]
+      jobName = sasJob.split('/')[1]
+      jobPath = `${this.rootFolderName}/${folderName}`
+      const jobFolder = this.folderMap.get(jobPath)
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
     } else {
-      throw new Error(
-        `The job '${sasJob}' was not found in folder '${this.rootFolderName}'.`
+      const folderPathParts = sasJob.split('/')
+      jobName = folderPathParts.pop()
+      jobPath = folderPathParts.join('/')
+      const jobFolder = this.folderMap.get(jobPath)
+      jobToExecute = jobFolder?.find((item) => item.name === jobName)
+    }
+
+    if (!jobToExecute) {
+      throw new Error(`The job ${sasJob} was not found.`)
+    }
+    const jobDefinitionLink = jobToExecute?.links.find(
+      (l) => l.rel === 'getResource'
+    )?.href
+    const requestInfo: any = {
+      method: 'GET'
+    }
+    const headers: any = { 'Content-Type': 'application/json' }
+
+    if (!!accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    requestInfo.headers = headers
+
+    const { result: jobDefinition } = await this.request<Job>(
+      `${this.serverUrl}${jobDefinitionLink}`,
+      requestInfo
+    )
+
+    const jobArguments: { [key: string]: any } = {
+      _contextName: contextName,
+      _program: `${jobPath}/${jobName}`,
+      _webin_file_count: files.length,
+      _OMITJSONLISTING: true,
+      _OMITJSONLOG: true,
+      _OMITSESSIONRESULTS: true,
+      _OMITTEXTLISTING: true,
+      _OMITTEXTLOG: true
+    }
+
+    if (debug) {
+      jobArguments['_OMITTEXTLOG'] = 'false'
+      jobArguments['_OMITSESSIONRESULTS'] = 'false'
+      jobArguments['_DEBUG'] = 131
+    }
+
+    files.forEach((fileInfo, index) => {
+      jobArguments[
+        `_webin_fileuri${index + 1}`
+      ] = `/files/files/${fileInfo.file.id}`
+      jobArguments[`_webin_name${index + 1}`] = fileInfo.tableName
+    })
+
+    const postJobRequest = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: `exec-${jobName}`,
+        description: 'Powered by SASjs',
+        jobDefinition,
+        arguments: jobArguments
+      })
+    }
+    const { result: postedJob, etag } = await this.request<Job>(
+      `${this.serverUrl}/jobExecution/jobs?_action=wait`,
+      postJobRequest
+    )
+    const jobStatus = await this.pollJobState(
+      postedJob,
+      etag,
+      accessToken,
+      true
+    )
+    const { result: currentJob } = await this.request<Job>(
+      `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
+      { headers }
+    )
+
+    let jobResult
+    let log
+    if (jobStatus === 'failed') {
+      return Promise.reject(currentJob.error)
+    }
+    const resultLink = currentJob.results['_webout.json']
+    const logLink = currentJob.links.find((l) => l.rel === 'log')
+    if (resultLink) {
+      jobResult = await this.request<any>(
+        `${this.serverUrl}${resultLink}/content`,
+        { headers },
+        'text'
       )
     }
+    if (debug && logLink) {
+      log = await this.request<any>(
+        `${this.serverUrl}${logLink.href}/content`,
+        {
+          headers
+        }
+      ).then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
+    }
+    return { result: jobResult?.result, log }
   }
 
-  private async populateRootFolderMap(accessToken?: string) {
-    const allItems = new Map<string, Job[]>()
-    const url = '/folders/folders/@item?path=' + this.rootFolderName
+  private async populateFolderMap(folderPath: string, accessToken?: string) {
+    const path = isRelativePath(folderPath)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
+    if (this.folderMap.get(path)) {
+      return
+    }
+
+    const url = '/folders/folders/@item?path=' + path
     const requestInfo: any = {
       method: 'GET'
     }
@@ -1121,9 +1185,7 @@ export class SASViyaApiClient {
       requestInfo
     )
     if (!folder) {
-      throw new Error(
-        `Not able to populate root folder map, because folder '${this.rootFolderName}' does not exist.`
-      )
+      throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
     const { result: members } = await this.request<{ items: any[] }>(
       `${this.serverUrl}/folders/folders/${folder.id}/members`,
@@ -1131,55 +1193,7 @@ export class SASViyaApiClient {
     )
 
     const itemsAtRoot = members.items
-    allItems.set('', itemsAtRoot)
-    const subfolderRequests = members.items
-      .filter((i: any) => i.contentType === 'folder')
-      .map(async (member: any) => {
-        const subFolderUrl =
-          '/folders/folders/@item?path=' +
-          this.rootFolderName +
-          '/' +
-          member.name
-        const { result: memberDetail } = await this.request<Folder>(
-          `${this.serverUrl}${subFolderUrl}`,
-          requestInfo
-        )
-
-        const membersLink = memberDetail.links.find(
-          (l: any) => l.rel === 'members'
-        )
-
-        const { result: memberContents } = await this.request<{ items: any[] }>(
-          `${this.serverUrl}${membersLink!.href}`,
-          requestInfo
-        )
-        const itemsInFolder = memberContents.items as any[]
-        allItems.set(member.name, itemsInFolder)
-        return itemsInFolder
-      })
-    await Promise.all(subfolderRequests)
-
-    this.rootFolderMap = allItems
-  }
-
-  private async populateRootFolder(accessToken?: string) {
-    const url = '/folders/folders/@item?path=' + this.rootFolderName
-    const requestInfo: RequestInit = {
-      method: 'GET'
-    }
-    if (accessToken) {
-      requestInfo.headers = { Authorization: `Bearer ${accessToken}` }
-    }
-    let error
-    const rootFolder = await this.request<Folder>(
-      `${this.serverUrl}${url}`,
-      requestInfo
-    )
-
-    this.rootFolder = rootFolder?.result || null
-    if (error) {
-      throw new Error(JSON.stringify(error))
-    }
+    this.folderMap.set(path, itemsAtRoot)
   }
 
   private async pollJobState(
