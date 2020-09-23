@@ -36,6 +36,7 @@ export class SASViyaApiClient {
   }
 
   private csrfToken: CsrfToken | null = null
+  private fileUploadCsrfToken: CsrfToken | null = null
   private sessionManager = new SessionManager(
     this.serverUrl,
     this.contextName,
@@ -1335,7 +1336,9 @@ export class SASViyaApiClient {
 
       const uploadResponse = await this.request<any>(
         `${this.serverUrl}/files/files#rawUpload`,
-        createFileRequest
+        createFileRequest,
+        'json',
+        'fileUpload'
       )
 
       uploadedFiles.push({ tableName, file: uploadResponse.result })
@@ -1490,22 +1493,36 @@ export class SASViyaApiClient {
     this.setCsrfToken(csrfToken)
   }
 
+  setFileUploadCsrfToken = (csrfToken: CsrfToken) => {
+    this.fileUploadCsrfToken = csrfToken
+  }
+
   private async request<T>(
     url: string,
     options: RequestInit,
-    contentType: 'text' | 'json' = 'json'
+    contentType: 'text' | 'json' = 'json',
+    type: 'fileUpload' | 'other' = 'other'
   ) {
-    if (this.csrfToken) {
-      options.headers = {
-        ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value
+    const callback =
+      type === 'fileUpload'
+        ? this.setFileUploadCsrfToken
+        : this.setCsrfTokenLocal
+
+    if (type === 'other') {
+      if (this.csrfToken) {
+        options.headers = {
+          ...options.headers,
+          [this.csrfToken.headerName]: this.csrfToken.value
+        }
+      }
+    } else {
+      if (this.fileUploadCsrfToken) {
+        options.headers = {
+          ...options.headers,
+          [this.fileUploadCsrfToken.headerName]: this.fileUploadCsrfToken.value
+        }
       }
     }
-    return await makeRequest<T>(
-      url,
-      options,
-      this.setCsrfTokenLocal,
-      contentType
-    )
+    return await makeRequest<T>(url, options, callback, contentType)
   }
 }
