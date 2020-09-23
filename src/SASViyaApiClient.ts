@@ -1387,7 +1387,12 @@ export class SASViyaApiClient {
     return `/folders/folders/${folder.id}`
   }
 
-  private async getContextByName(
+  /**
+   * Returns a compute context.
+   * @param contextName - the name of the context to return.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getContextByName(
     contextName: string,
     accessToken?: string
   ): Promise<Context> {
