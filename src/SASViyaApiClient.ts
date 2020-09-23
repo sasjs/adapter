@@ -283,7 +283,7 @@ export class SASViyaApiClient {
     }
 
     const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts`,
+      `${this.serverUrl}/compute/contexts?limit=10000`,
       createContextRequest
     )
 
