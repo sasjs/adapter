@@ -168,14 +168,18 @@ export default class SASjs {
   }
 
   /**
-   * Returns a compute context.
+   * Returns a JSON representation of a compute context.
+   * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
    * @param contextName - the name of the context to return.
    * @param accessToken - an access token for an authorized user.
    */
-  public async getContextByName(contextName: string, accessToken?: string) {
-    this.isMethodSupported('getContextByName', ServerType.SASViya)
+  public async getComputeContextByName(
+    contextName: string,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('getComputeContextByName', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.getContextByName(
+    return await this.sasViyaApiClient!.getComputeContextByName(
       contextName,
       accessToken
     )
