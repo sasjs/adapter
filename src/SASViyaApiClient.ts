@@ -932,7 +932,10 @@ export class SASViyaApiClient {
 
     if (isRelativePath(sasJob)) {
       const folderName = sasJob.split('/')[0]
-      await this.populateFolderMap(`${this.rootFolderName}/${folderName}`, accessToken)
+      await this.populateFolderMap(
+        `${this.rootFolderName}/${folderName}`,
+        accessToken
+      )
 
       if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
         throw new Error(
@@ -1029,7 +1032,10 @@ export class SASViyaApiClient {
 
     if (isRelativePath(sasJob)) {
       const folderName = sasJob.split('/')[0]
-      await this.populateFolderMap(`${this.rootFolderName}/${folderName}`, accessToken)
+      await this.populateFolderMap(
+        `${this.rootFolderName}/${folderName}`,
+        accessToken
+      )
 
       if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
         throw new Error(
