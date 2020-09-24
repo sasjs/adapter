@@ -185,6 +185,11 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Returns a JSON representation of a compute context.
+   * @param contextId - an id of the context to return.
+   * @param accessToken - an access token for an authorized user.
+   */
   public async getComputeContextById(contextId: string, accessToken?: string) {
     this.isMethodSupported('getComputeContextById', ServerType.SASViya)
 
