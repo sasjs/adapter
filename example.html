@@ -30,8 +30,8 @@
         $('#chart-container').append('<canvas id="myChart" style="display: none;"></canvas>')
         // make a request to a SAS service
         var type = $("#cars")[0].options[$("#cars")[0].selectedIndex].value;
-        // request data from an endpoint under your appLoc
-        sasJs.request("/common/getdata", {
+        // request data from an endpoint under your appLoc (missing opening slash implies relative path)
+        sasJs.request("common/getdata", {
             // send data as an array of objects - each object is one row
             fromjs: [{ type: type }] 
         }).then((response) => {
