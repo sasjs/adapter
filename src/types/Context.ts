@@ -26,6 +26,9 @@ export interface ContextAllAttributes {
   createdBy: string
   creationTimeStamp: string
   launchType: string
+  environment: {
+    autoExecLines: [string]
+  }
   launchContext: {
     contextName: string
   }
