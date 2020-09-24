@@ -113,16 +113,16 @@ export default class SASjs {
    * @param launchContextName - the name of the launcher context used by the compute service.
    * @param sharedAccountId - the ID of the account to run the servers for this context as.
    * @param autoExecLines - the lines of code to execute during session initialization.
-   * @param authorizedUsers - an optional list of authorized user IDs.
    * @param accessToken - an access token for an authorized user.
+   * @param authorizedUsers - an optional list of authorized user IDs.
    */
   public async createContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string[],
-    authorizedUsers: string[],
-    accessToken: string
+    accessToken: string,
+    authorizedUsers?: string[]
   ) {
     this.isMethodSupported('createContext', ServerType.SASViya)
 
@@ -131,8 +131,8 @@ export default class SASjs {
       launchContextName,
       sharedAccountId,
       autoExecLines,
-      authorizedUsers,
-      accessToken
+      accessToken,
+      authorizedUsers
     )
   }
 
@@ -181,6 +181,15 @@ export default class SASjs {
 
     return await this.sasViyaApiClient!.getComputeContextByName(
       contextName,
+      accessToken
+    )
+  }
+
+  public async getComputeContextById(contextId: string, accessToken?: string) {
+    this.isMethodSupported('getComputeContextById', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.getComputeContextById(
+      contextId,
       accessToken
     )
   }
