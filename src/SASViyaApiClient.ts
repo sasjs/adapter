@@ -313,7 +313,7 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const originalContext = await this.getContextByName(
+    const originalContext = await this.getComputeContextByName(
       contextName,
       accessToken
     )
@@ -372,7 +372,7 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const context = await this.getContextByName(contextName, accessToken)
+    const context = await this.getComputeContextByName(contextName, accessToken)
 
     const deleteContextRequest: RequestInit = {
       method: 'DELETE',
@@ -1393,7 +1393,13 @@ export class SASViyaApiClient {
     return `/folders/folders/${folder.id}`
   }
 
-  private async getContextByName(
+  /**
+   * Returns a JSON representation of a compute context.
+   * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
+   * @param contextName - the name of the context to return.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getComputeContextByName(
     contextName: string,
     accessToken?: string
   ): Promise<Context> {

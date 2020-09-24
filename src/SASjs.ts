@@ -167,6 +167,24 @@ export default class SASjs {
     return await this.sasViyaApiClient!.deleteContext(contextName, accessToken)
   }
 
+  /**
+   * Returns a JSON representation of a compute context.
+   * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
+   * @param contextName - the name of the context to return.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getComputeContextByName(
+    contextName: string,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('getComputeContextByName', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.getComputeContextByName(
+      contextName,
+      accessToken
+    )
+  }
+
   public async createSession(contextName: string, accessToken: string) {
     this.isMethodSupported('createSession', ServerType.SASViya)
 
