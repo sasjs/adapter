@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SASjsConfig | @sasjs/adapter</title>
+	<title>ContextAllAttributes | @sasjs/adapter</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -58,7 +58,7 @@
 					<a href="../modules/types.html">types</a>
 				</li>
 				<li>
-					<a href="types.sasjsconfig.html">SASjsConfig</a>
+					<a href="types.contextallattributes.html">ContextAllAttributes</a>
 				</li>
 			</ul>
 		</div>
@@ -75,18 +75,12 @@
 			</nav>
 		</div>
 		<div class="col-7 offset-3 col-content">
-			<h1>Class SASjsConfig</h1>
-			<section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography tsd-comment-shorttext">
-					<div class="lead">
-						<p>Specifies the configuration for the SASjs instance - eg where and how to
-						connect to SAS.</p>
-					</div>
-			</div></section>
+			<h1>Interface ContextAllAttributes</h1>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SASjsConfig</span>
+						<span class="target">ContextAllAttributes</span>
 					</li>
 				</ul>
 			</section>
@@ -96,14 +90,16 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">appLoc</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">contextName</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsasviya" class="tsd-kind-icon">pathSASViya</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#servertype" class="tsd-kind-icon">serverType</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#serverurl" class="tsd-kind-icon">serverUrl</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#usecomputeapi" class="tsd-kind-icon">useComputeApi</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#attributes" class="tsd-kind-icon">attributes</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#createdby" class="tsd-kind-icon">createdBy</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#creationtimestamp" class="tsd-kind-icon">creationTimeStamp</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#id" class="tsd-kind-icon">id</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#launchcontext" class="tsd-kind-icon">launchContext</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#launchtype" class="tsd-kind-icon">launchType</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#modifiedby" class="tsd-kind-icon">modifiedBy</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#modifiedtimestamp" class="tsd-kind-icon">modifiedTimeStamp</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#name" class="tsd-kind-icon">name</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="types.contextallattributes.html#version" class="tsd-kind-icon">version</a></li>
 							</ul>
 						</section>
 					</div>
@@ -111,177 +107,164 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="apploc" class="tsd-anchor"></a>
-					<h3>app<wbr>Loc</h3>
-					<div class="tsd-signature tsd-kind-icon">app<wbr>Loc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="attributes" class="tsd-anchor"></a>
+					<h3>attributes</h3>
+					<div class="tsd-signature tsd-kind-icon">attributes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L33">
-									types/SASjsConfig.ts:33
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L21">
+									types/Context.ts:21
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The appLoc is the parent folder under which the SAS services (STPs or Job
-								Execution Services) are stored.  We recommend that each app is stored in
-								a dedicated parent folder (the appLoc) and the services are grouped inside
-								subfolders within the appLoc - allowing functionality to be restricted
-								according to those groups at backend.
-								When using appLoc, the paths provided in the <code>request</code> function should be
-							<em>without</em> a leading slash (/).</p>
-						</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>reuse<wbr>Server<wbr>Processes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>run<wbr>Server<wbr>As<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="contextname" class="tsd-anchor"></a>
-					<h3>context<wbr>Name</h3>
-					<div class="tsd-signature tsd-kind-icon">context<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="createdby" class="tsd-anchor"></a>
+					<h3>created<wbr>By</h3>
+					<div class="tsd-signature tsd-kind-icon">created<wbr>By<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L49">
-									types/SASjsConfig.ts:49
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L26">
+									types/Context.ts:26
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The name of the compute context to use when calling the Viya APIs directly.
-								Example value: &#39;SAS Job Execution compute context&#39;
-								If set to missing or empty, and useComputeApi is true, the adapter will use
-								the JES APIs.  If provided, the Job Code will be executed in pooled
-							compute sessions on this named context.</p>
-						</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="creationtimestamp" class="tsd-anchor"></a>
+					<h3>creation<wbr>Time<wbr>Stamp</h3>
+					<div class="tsd-signature tsd-kind-icon">creation<wbr>Time<wbr>Stamp<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L27">
+									types/Context.ts:27
+								</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="id" class="tsd-anchor"></a>
+					<h3>id</h3>
+					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L33">
+									types/Context.ts:33
+								</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="launchcontext" class="tsd-anchor"></a>
+					<h3>launch<wbr>Context</h3>
+					<div class="tsd-signature tsd-kind-icon">launch<wbr>Context<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L29">
+									types/Context.ts:29
+								</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>context<wbr>Name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="debug" class="tsd-anchor"></a>
-					<h3>debug</h3>
-					<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="launchtype" class="tsd-anchor"></a>
+					<h3>launch<wbr>Type</h3>
+					<div class="tsd-signature tsd-kind-icon">launch<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L41">
-									types/SASjsConfig.ts:41
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L28">
+									types/Context.ts:28
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Set to <code>true</code> to enable additional debugging.</p>
-						</div>
-					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="pathsas9" class="tsd-anchor"></a>
-					<h3>pathSAS9</h3>
-					<div class="tsd-signature tsd-kind-icon">pathSAS9<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="modifiedby" class="tsd-anchor"></a>
+					<h3>modified<wbr>By</h3>
+					<div class="tsd-signature tsd-kind-icon">modified<wbr>By<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L18">
-									types/SASjsConfig.ts:18
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L32">
+									types/Context.ts:32
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The location of the Stored Process Web Application.  By default the adapter
-							will use &#39;/SASStoredProcess/do&#39; on SAS 9.</p>
-						</div>
-					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="pathsasviya" class="tsd-anchor"></a>
-					<h3>pathSASViya</h3>
-					<div class="tsd-signature tsd-kind-icon">pathSASViya<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="modifiedtimestamp" class="tsd-anchor"></a>
+					<h3>modified<wbr>Time<wbr>Stamp</h3>
+					<div class="tsd-signature tsd-kind-icon">modified<wbr>Time<wbr>Stamp<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L23">
-									types/SASjsConfig.ts:23
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L25">
+									types/Context.ts:25
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The location of the Job Execution Web Application.  By default the adapter
-							will use &#39;/SASJobExecution&#39; on SAS Viya.</p>
-						</div>
-					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="servertype" class="tsd-anchor"></a>
-					<h3>server<wbr>Type</h3>
-					<div class="tsd-signature tsd-kind-icon">server<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../enums/types.servertype.html" class="tsd-signature-type">ServerType</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="name" class="tsd-anchor"></a>
+					<h3>name</h3>
+					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L37">
-									types/SASjsConfig.ts:37
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L35">
+									types/Context.ts:35
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Can be <code>SAS9</code> or <code>SASVIYA</code>.</p>
-						</div>
-					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="serverurl" class="tsd-anchor"></a>
-					<h3>server<wbr>Url</h3>
-					<div class="tsd-signature tsd-kind-icon">server<wbr>Url<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="version" class="tsd-anchor"></a>
+					<h3>version</h3>
+					<div class="tsd-signature tsd-kind-icon">version<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L13">
-									types/SASjsConfig.ts:13
+								<a href="https://github.com/sasjs/adapter/blob/master/src/types/Context.ts#L34">
+									types/Context.ts:34
 								</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>The location (including http protocol and port) of the SAS Server.
-								Can be omitted, eg if serving directly from the SAS Web Server or being
-							streamed.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="usecomputeapi" class="tsd-anchor"></a>
-					<h3>use<wbr>Compute<wbr>Api</h3>
-					<div class="tsd-signature tsd-kind-icon">use<wbr>Compute<wbr>Api<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L59">
-									types/SASjsConfig.ts:59
-								</a>
-							</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Set to <code>false</code> to use the Job Execution Web Service.  To enhance VIYA
-								performance, set to <code>true</code> and provide a <code>contextName</code> on which to run
-								the code.  When running on a named context, the code executes under the
-								user identity.  When running as a Job Execution service, the code runs
-								under the identity in the JES context.  If no <code>contextName</code> is provided,
-								and <code>useComputeApi</code> is <code>true</code>, then the service will run as a Job, except
-							triggered using the APIs instead of the Job Execution Web Service broker.</p>
-						</div>
-					</div>
 				</section>
 			</section>
 			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/adapter/src/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ErrorResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsWaitingRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ServerType.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginSuccess.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/makeRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseAndSubmitAuthorizeForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
@@ -293,79 +276,85 @@
 						<a href="../enums/types.servertype.html" class="tsd-kind-icon">Server<wbr>Type</a>
 					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-module root">
-						<a href="types.errorresponse.html" class="tsd-kind-icon">Error<wbr>Response</a>
+						<a href="../classes/types.errorresponse.html" class="tsd-kind-icon">Error<wbr>Response</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="../classes/types.sasjsconfig.html" class="tsd-kind-icon">SASjs<wbr>Config</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="types.context.html" class="tsd-kind-icon">Context</a>
 					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-class tsd-parent-kind-module root">
-						<a href="types.sasjsconfig.html" class="tsd-kind-icon">SASjs<wbr>Config</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-module root">
+						<a href="types.contextallattributes.html" class="tsd-kind-icon">Context<wbr>All<wbr>Attributes</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">app<wbr>Loc</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#attributes" class="tsd-kind-icon">attributes</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">context<wbr>Name</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#createdby" class="tsd-kind-icon">created<wbr>By</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#creationtimestamp" class="tsd-kind-icon">creation<wbr>Time<wbr>Stamp</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#id" class="tsd-kind-icon">id</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#pathsasviya" class="tsd-kind-icon">pathSASViya</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#launchcontext" class="tsd-kind-icon">launch<wbr>Context</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#servertype" class="tsd-kind-icon">server<wbr>Type</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#launchtype" class="tsd-kind-icon">launch<wbr>Type</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#serverurl" class="tsd-kind-icon">server<wbr>Url</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#modifiedby" class="tsd-kind-icon">modified<wbr>By</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#usecomputeapi" class="tsd-kind-icon">use<wbr>Compute<wbr>Api</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#modifiedtimestamp" class="tsd-kind-icon">modified<wbr>Time<wbr>Stamp</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#name" class="tsd-kind-icon">name</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="types.contextallattributes.html#version" class="tsd-kind-icon">version</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.context.html" class="tsd-kind-icon">Context</a>
+						<a href="types.csrftoken.html" class="tsd-kind-icon">Csrf<wbr>Token</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.contextallattributes.html" class="tsd-kind-icon">Context<wbr>All<wbr>Attributes</a>
+						<a href="types.editcontextinput.html" class="tsd-kind-icon">Edit<wbr>Context<wbr>Input</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.csrftoken.html" class="tsd-kind-icon">Csrf<wbr>Token</a>
+						<a href="types.folder.html" class="tsd-kind-icon">Folder</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.editcontextinput.html" class="tsd-kind-icon">Edit<wbr>Context<wbr>Input</a>
+						<a href="types.job.html" class="tsd-kind-icon">Job</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.folder.html" class="tsd-kind-icon">Folder</a>
+						<a href="types.jobdefinition.html" class="tsd-kind-icon">Job<wbr>Definition</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.job.html" class="tsd-kind-icon">Job</a>
+						<a href="types.jobresult.html" class="tsd-kind-icon">Job<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.jobdefinition.html" class="tsd-kind-icon">Job<wbr>Definition</a>
+						<a href="types.link.html" class="tsd-kind-icon">Link</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.jobresult.html" class="tsd-kind-icon">Job<wbr>Result</a>
+						<a href="types.sasjsrequest.html" class="tsd-kind-icon">SASjs<wbr>Request</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.link.html" class="tsd-kind-icon">Link</a>
+						<a href="types.sasjswaitingrequest.html" class="tsd-kind-icon">SASjs<wbr>Waiting<wbr>Request</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.sasjsrequest.html" class="tsd-kind-icon">SASjs<wbr>Request</a>
+						<a href="types.session.html" class="tsd-kind-icon">Session</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.sasjswaitingrequest.html" class="tsd-kind-icon">SASjs<wbr>Waiting<wbr>Request</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.session.html" class="tsd-kind-icon">Session</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
+						<a href="types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
 					</li>
 				</ul>
 			</nav>

@@ -12,6 +12,7 @@ import {
   Job,
   Session,
   Context,
+  ContextAllAttributes,
   Folder,
   CsrfToken,
   EditContextInput,
@@ -224,16 +225,16 @@ export class SASViyaApiClient {
    * @param launchContextName - the name of the launcher context used by the compute service.
    * @param sharedAccountId - the ID of the account to run the servers for this context.
    * @param autoExecLines - the lines of code to execute during session initialization.
-   * @param authorizedUsers - an optional list of authorized user IDs.
    * @param accessToken - an access token for an authorized user.
+   * @param authorizedUsers - an optional list of authorized user IDs.
    */
   public async createContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
     autoExecLines: string[],
-    authorizedUsers: string[],
-    accessToken?: string
+    accessToken?: string,
+    authorizedUsers?: string[]
   ) {
     if (!contextName) {
       throw new Error('Context name is required.')
@@ -313,10 +314,22 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const originalContext = await this.getComputeContextByName(
+    let originalContext
+
+    originalContext = await this.getComputeContextByName(
       contextName,
       accessToken
-    )
+    ).catch((_) => {})
+
+    // Try to find context by id, when context name has been changed.
+    if (!originalContext) {
+      originalContext = await this.getComputeContextById(
+        editedContext.id!,
+        accessToken
+      ).catch((err) => {
+        throw err
+      })
+    }
 
     const { result: context, etag } = await this.request<Context>(
       `${this.serverUrl}/compute/contexts/${originalContext.id}`,
@@ -1414,9 +1427,7 @@ export class SASViyaApiClient {
     const { result: contexts } = await this.request<{ items: Context[] }>(
       `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
       { headers }
-    ).catch((err) => {
-      throw err
-    })
+    )
 
     if (!contexts || !(contexts.items && contexts.items.length)) {
       throw new Error(
@@ -1425,6 +1436,33 @@ export class SASViyaApiClient {
     }
 
     return contexts.items[0]
+  }
+
+  /**
+   * Returns a JSON representation of a compute context.
+   * @param contextId - an id of the context to return.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getComputeContextById(
+    contextId: string,
+    accessToken?: string
+  ): Promise<ContextAllAttributes> {
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const { result: context } = await this.request<ContextAllAttributes>(
+      `${this.serverUrl}/compute/contexts/${contextId}`,
+      { headers }
+    ).catch((err) => {
+      throw err
+    })
+
+    return context
   }
 
   /**

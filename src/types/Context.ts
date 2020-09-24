@@ -14,4 +14,23 @@ export interface EditContextInput {
   attributes?: any
   authorizedUsers?: string[]
   authorizeAllAuthenticatedUsers?: boolean
+  id?: string
+}
+
+export interface ContextAllAttributes {
+  attributes: {
+    reuseServerProcesses: boolean
+    runServerAs: string
+  }
+  modifiedTimeStamp: string
+  createdBy: string
+  creationTimeStamp: string
+  launchType: string
+  launchContext: {
+    contextName: string
+  }
+  modifiedBy: string
+  id: string
+  version: number
+  name: string
 }
