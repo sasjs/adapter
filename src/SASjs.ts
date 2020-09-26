@@ -243,8 +243,6 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient,
     isForced?: boolean
   ) {
-    this.isMethodSupported('createFolder', ServerType.SASViya)
-
     if (sasApiClient)
       return await sasApiClient.createFolder(
         folderName,
@@ -259,6 +257,17 @@ export default class SASjs {
       accessToken,
       isForced
     )
+  }
+
+  /**
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all its content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async deleteFolder(folderPath: string, accessToken: string) {
+    this.isMethodSupported('deleteFolder', ServerType.SASViya)
+
+    return await this.sasViyaApiClient?.deleteFolder(folderPath, accessToken)
   }
 
   public async createJobDefinition(

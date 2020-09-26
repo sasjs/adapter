@@ -1508,6 +1508,8 @@ export class SASViyaApiClient {
       `${this.serverUrl}${url}`,
       requestInfo
     ).catch((err) => {
+      // FIXME: handle 'code: 'ENOTFOUND'' properly
+
       throw err
     })
 
