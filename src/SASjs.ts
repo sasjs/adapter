@@ -243,8 +243,6 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient,
     isForced?: boolean
   ) {
-    this.isMethodSupported('createFolder', ServerType.SASViya)
-
     if (sasApiClient)
       return await sasApiClient.createFolder(
         folderName,
@@ -258,6 +256,40 @@ export default class SASjs {
       parentFolderUri,
       accessToken,
       isForced
+    )
+  }
+
+  /**
+   * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all its content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
+   * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async deleteFolder(folderPath: string, accessToken: string) {
+    this.isMethodSupported('deleteFolder', ServerType.SASViya)
+
+    return await this.sasViyaApiClient?.deleteFolder(folderPath, accessToken)
+  }
+
+  /**
+   * Moves folder to a new location.  The folder may be renamed at the same time.
+   * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.
+   * @param targetParentFolder - the full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.
+   * @param targetFolderName - the name of the "moved" folder.  If left blank, the original folder name will be used (eg `myFolder` in `/Public/newDestination/myFolder` for the example above).  Optional field.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async moveFolder(
+    sourceFolder: string,
+    targetParentFolder: string,
+    targetFolderName: string,
+    accessToken: string
+  ) {
+    this.isMethodSupported('moveFolder', ServerType.SASViya)
+
+    return await this.sasViyaApiClient?.moveFolder(
+      sourceFolder,
+      targetParentFolder,
+      targetFolderName,
+      accessToken
     )
   }
 

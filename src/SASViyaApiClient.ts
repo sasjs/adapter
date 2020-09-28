@@ -43,7 +43,6 @@ export class SASViyaApiClient {
     this.contextName,
     this.setCsrfToken
   )
-  private isForceDeploy: boolean = false
   private folderMap = new Map<string, Job[]>()
 
   /**
@@ -625,8 +624,6 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
       if (!parentFolderUri) {
-        if (isForced) this.isForceDeploy = true
-
         console.log(
           `Parent folder at path '${parentFolderPath}' is not present.`
         )
@@ -652,37 +649,16 @@ export class SASViyaApiClient {
           `Parent folder '${newFolderName}' has been successfully created.`
         )
         parentFolderUri = `/folders/folders/${parentFolder.id}`
-      } else if (isForced && accessToken && !this.isForceDeploy) {
-        this.isForceDeploy = true
+      } else if (isForced && accessToken) {
+        const folderPath = parentFolderPath + '/' + folderName
+        const folderUri = await this.getFolderUri(folderPath, accessToken)
 
-        await this.deleteFolder(parentFolderPath, accessToken)
-
-        const newParentFolderPath = parentFolderPath.substring(
-          0,
-          parentFolderPath.lastIndexOf('/')
-        )
-        const newFolderName = `${parentFolderPath.split('/').pop()}`
-
-        if (newParentFolderPath === '') {
-          throw new Error(`Root folder has to be present on the server.`)
+        if (folderUri) {
+          await this.deleteFolder(
+            parentFolderPath + '/' + folderName,
+            accessToken
+          )
         }
-
-        console.log(
-          `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
-        )
-
-        const parentFolder = await this.createFolder(
-          newFolderName,
-          newParentFolderPath,
-          undefined,
-          accessToken
-        )
-
-        console.log(
-          `Parent folder '${newFolderName}' has been successfully created.`
-        )
-
-        parentFolderUri = `/folders/folders/${parentFolder.id}`
       }
     }
 
@@ -1508,6 +1484,16 @@ export class SASViyaApiClient {
       `${this.serverUrl}${url}`,
       requestInfo
     ).catch((err) => {
+      if (err.code && err.code === 'ENOTFOUND') {
+        const notFoundError = {
+          body: JSON.stringify({
+            message: `Folder '${sourceFolder.split('/').pop()}' was not found.`
+          })
+        }
+
+        throw notFoundError
+      }
+
       throw err
     })
 
