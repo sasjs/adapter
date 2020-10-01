@@ -48,7 +48,7 @@ export async function makeRequest<T>(
           try {
             body = JSON.parse(body)
 
-            body.message = `Forbidden. Check your permissions and user groups. ${
+            body.message = `Forbidden. Check your permissions and user groups, and also the scopes granted when registering your CLIENT_ID. ${
               body.message || ''
             }`
 
