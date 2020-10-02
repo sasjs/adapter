@@ -7,11 +7,64 @@ export const convertToCSV = (data: any) => {
     return ''
   }
 
-  const replacer = (key: any, value: any) => (value === null ? '' : value)
+  const headers = generateCSVHeaders(data)
+
+  const csvData = data.map((row: any) => generateCSVRow(row, headers))
+
+  const finalCSV =
+    headers.join(',').replace(/,/g, ' ') + '\r\n' + csvData.join('\r\n')
+
+  return finalCSV
+}
+
+export const replacer = (value: any) => (value === null ? '' : value)
+
+export const generateCSVRow = (row: any, headers: string[]) => {
+  const fields = Object.keys(row).map((fieldName, index) => {
+    let value
+    let containsSpecialChar = false
+    const currentCell = row[fieldName]
+
+    if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
+      value = currentCell.toString()
+      containsSpecialChar = true
+    } else {
+      value = JSON.stringify(currentCell, (_, v: any) => replacer(v))
+    }
+
+    value = value.replace(/\\\\/gm, '\\')
+
+    if (containsSpecialChar) {
+      if (value.includes(',') || value.includes('"')) {
+        value = '"' + value + '"'
+      }
+    } else {
+      if (
+        !value.includes(',') &&
+        value.includes('"') &&
+        !value.includes('\\"')
+      ) {
+        value = value.substring(1, value.length - 1)
+      }
+
+      value = value.replace(/\\"/gm, '""')
+    }
+
+    value = value.replace(/\r\n/gm, '\n')
+
+    if (value === '' && headers[index].includes('best')) {
+      value = '.'
+    }
+
+    return value
+  })
+
+  return fields.join(',')
+}
+
+export const generateCSVHeaders = (data: any) => {
   const headerFields = Object.keys(data[0])
-  let csvTest
-  let invalidString = false
-  const headers = headerFields.map((field) => {
+  return headerFields.map((field) => {
     let firstFoundType: string | null = null
     let hasMixedTypes: boolean = false
     let rowNumError: number = -1
@@ -20,7 +73,7 @@ export const convertToCSV = (data: any) => {
       .map((row: any, index: number) => {
         if (row[field] || row[field] === '') {
           if (firstFoundType) {
-            let currentFieldType =
+            const currentFieldType =
               row[field] === '' || typeof row[field] === 'string'
                 ? 'chars'
                 : 'number'
@@ -41,14 +94,14 @@ export const convertToCSV = (data: any) => {
           let byteSize
 
           if (typeof row[field] === 'string') {
-            let doubleQuotesFound = row[field]
+            const doubleQuotes = row[field]
               .split('')
               .filter((char: any) => char === '"')
 
             byteSize = getByteSize(row[field])
 
-            if (doubleQuotesFound.length > 0) {
-              byteSize += doubleQuotesFound.length
+            if (doubleQuotes.length > 0) {
+              byteSize += doubleQuotes.length
             }
           }
 
@@ -56,12 +109,14 @@ export const convertToCSV = (data: any) => {
         }
       })
       .sort((a: number, b: number) => b - a)[0]
-    if (longestValueForField && longestValueForField > 32765) {
-      invalidString = true
+    if (longestValueForField > 32765) {
+      throw new Error(
+        'The max length of a string value in SASjs is 32765 characters.'
+      )
     }
     if (hasMixedTypes) {
-      console.error(
-        `Row (${rowNumError}), Column (${field}) has mixed types: ERROR`
+      throw new Error(
+        `Row (${rowNumError}), Column (${field}) has mixed types.`
       )
     }
 
@@ -73,56 +128,6 @@ export const convertToCSV = (data: any) => {
         : 'best'
     }.`
   })
-
-  if (invalidString) {
-    return 'ERROR: LARGE STRING LENGTH'
-  }
-  csvTest = data.map((row: any) => {
-    const fields = Object.keys(row).map((fieldName, index) => {
-      let value
-      let containsSpecialChar = false
-      const currentCell = row[fieldName]
-
-      if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
-        value = currentCell.toString()
-        containsSpecialChar = true
-      } else {
-        value = JSON.stringify(currentCell, replacer)
-      }
-
-      value = value.replace(/\\\\/gm, '\\')
-
-      if (containsSpecialChar) {
-        if (value.includes(',') || value.includes('"')) {
-          value = '"' + value + '"'
-        }
-      } else {
-        if (
-          !value.includes(',') &&
-          value.includes('"') &&
-          !value.includes('\\"')
-        ) {
-          value = value.substring(1, value.length - 1)
-        }
-
-        value = value.replace(/\\"/gm, '""')
-      }
-
-      value = value.replace(/\r\n/gm, '\n')
-
-      if (value === '' && headers[index].includes('best')) {
-        value = '.'
-      }
-
-      return value
-    })
-    return fields.join(',')
-  })
-
-  let finalCSV =
-    headers.join(',').replace(/,/g, ' ') + '\r\n' + csvTest.join('\r\n')
-
-  return finalCSV
 }
 
 const getByteSize = (str: string) => {

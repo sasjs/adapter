@@ -1,6 +1,6 @@
 export * from './asyncForEach'
 export * from './compareTimestamps'
-export * from './convertToCsv'
+export { convertToCSV } from './convertToCsv'
 export * from './isAuthorizeFormRequired'
 export * from './isLoginRequired'
 export * from './isLoginSuccess'
