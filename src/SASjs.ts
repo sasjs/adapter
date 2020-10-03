@@ -209,9 +209,7 @@ export default class SASjs {
     fileName: string,
     linesOfCode: string[],
     contextName: string,
-    accessToken?: string,
-    sessionId = '',
-    silent = false
+    accessToken?: string
   ) {
     this.isMethodSupported('executeScriptSASViya', ServerType.SASViya)
 
@@ -220,9 +218,7 @@ export default class SASjs {
       linesOfCode,
       contextName,
       accessToken,
-      silent,
-      null,
-      this.sasjsConfig.debug
+      null
     )
   }
 
@@ -410,6 +406,9 @@ export default class SASjs {
    */
   public setDebugState(value: boolean) {
     this.sasjsConfig.debug = value
+    if (this.sasViyaApiClient) {
+      this.sasViyaApiClient.debug = value
+    }
   }
 
   /**
@@ -635,6 +634,7 @@ export default class SASjs {
           this.sasjsConfig.contextName,
           this.setCsrfTokenApi
         )
+        sasApiClient.debug = this.sasjsConfig.debug
       } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
         sasApiClient = new SAS9ApiClient(serverUrl)
       }
@@ -1352,6 +1352,8 @@ export default class SASjs {
           this.sasjsConfig.contextName,
           this.setCsrfTokenApi
         )
+
+      this.sasViyaApiClient.debug = this.sasjsConfig.debug
     }
     if (this.sasjsConfig.serverType === ServerType.SAS9) {
       if (this.sas9ApiClient)

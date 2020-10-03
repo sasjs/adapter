@@ -38,12 +38,22 @@ export class SASViyaApiClient {
 
   private csrfToken: CsrfToken | null = null
   private fileUploadCsrfToken: CsrfToken | null = null
+  private _debug = false
   private sessionManager = new SessionManager(
     this.serverUrl,
     this.contextName,
     this.setCsrfToken
   )
   private folderMap = new Map<string, Job[]>()
+
+  public get debug() {
+    return this._debug
+  }
+
+  public set debug(value: boolean) {
+    this._debug = value
+    this.sessionManager.debug = value
+  }
 
   /**
    * Returns a list of jobs in the currently set root folder.
@@ -140,7 +150,6 @@ export class SASViyaApiClient {
         linesOfCode,
         context.name,
         accessToken,
-        false,
         null,
         true
       ).catch(() => null)
@@ -404,7 +413,6 @@ export class SASViyaApiClient {
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
    * @param sessionId - optional session ID to reuse.
-   * @param silent - optional flag to disable logging.
    * @param data - execution data.
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
@@ -414,12 +422,9 @@ export class SASViyaApiClient {
     linesOfCode: string[],
     contextName: string,
     accessToken?: string,
-    silent = false,
     data = null,
-    debug = false,
     expectWebout = false
   ): Promise<any> {
-    silent = !debug
     try {
       const headers: any = {
         'Content-Type': 'application/json'
@@ -442,7 +447,7 @@ export class SASViyaApiClient {
         _OMITTEXTLOG: true
       }
 
-      if (debug) {
+      if (this.debug) {
         jobArguments['_OMITTEXTLOG'] = false
         jobArguments['_OMITSESSIONRESULTS'] = false
         jobArguments['_DEBUG'] = 131
@@ -502,7 +507,7 @@ export class SASViyaApiClient {
         postJobRequest
       )
 
-      if (!silent) {
+      if (this.debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
         console.log(
           `You can monitor the job progress at '${this.serverUrl}${
@@ -511,12 +516,7 @@ export class SASViyaApiClient {
         )
       }
 
-      const jobStatus = await this.pollJobState(
-        postedJob,
-        etag,
-        accessToken,
-        silent
-      )
+      const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
 
       const { result: currentJob } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
@@ -528,7 +528,7 @@ export class SASViyaApiClient {
 
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
-      if (debug && logLink) {
+      if (this.debug && logLink) {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content?limit=10000`,
           {
@@ -590,9 +590,7 @@ export class SASViyaApiClient {
           linesOfCode,
           contextName,
           accessToken,
-          silent,
-          data,
-          debug
+          data
         )
       } else {
         throw e
@@ -991,9 +989,7 @@ export class SASViyaApiClient {
       linesToExecute,
       contextName,
       accessToken,
-      true,
       data,
-      debug,
       true
     )
   }
@@ -1125,12 +1121,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequest
     )
-    const jobStatus = await this.pollJobState(
-      postedJob,
-      etag,
-      accessToken,
-      true
-    )
+    const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
     const { result: currentJob } = await this.request<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       { headers }
@@ -1195,8 +1186,7 @@ export class SASViyaApiClient {
   private async pollJobState(
     postedJob: any,
     etag: string | null,
-    accessToken?: string,
-    silent = false
+    accessToken?: string
   ) {
     const MAX_POLL_COUNT = 1000
     const POLL_INTERVAL = 100
@@ -1235,7 +1225,7 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            if (!silent) {
+            if (this.debug) {
               console.log('Polling job status... \n')
             }
             const { result: jobState } = await this.request<string>(
@@ -1247,7 +1237,7 @@ export class SASViyaApiClient {
             )
 
             postedJobState = jobState.trim()
-            if (!silent) {
+            if (this.debug) {
               console.log(`Current state: ${postedJobState}\n`)
             }
             pollCount++
@@ -1260,49 +1250,6 @@ export class SASViyaApiClient {
           resolve(postedJobState)
         }
       }, POLL_INTERVAL)
-    })
-  }
-
-  private async waitForSession(
-    session: Session,
-    etag: string | null,
-    accessToken?: string,
-    silent = false
-  ) {
-    let sessionState = session.state
-    let pollCount = 0
-    const headers: any = {
-      'Content-Type': 'application/json',
-      'If-None-Match': etag
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-    const stateLink = session.links.find((l: any) => l.rel === 'state')
-    return new Promise(async (resolve, _) => {
-      if (sessionState === 'pending') {
-        if (stateLink) {
-          if (!silent) {
-            console.log('Polling session status... \n')
-          }
-          const { result: state } = await this.request<string>(
-            `${this.serverUrl}${stateLink.href}?wait=30`,
-            {
-              headers
-            },
-            'text'
-          )
-
-          sessionState = state.trim()
-          if (!silent) {
-            console.log(`Current state: ${sessionState}\n`)
-          }
-          pollCount++
-          resolve(sessionState)
-        }
-      } else {
-        resolve(sessionState)
-      }
     })
   }
 

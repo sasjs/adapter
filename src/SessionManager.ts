@@ -15,6 +15,15 @@ export class SessionManager {
   private sessions: Session[] = []
   private currentContext: Context | null = null
   private csrfToken: CsrfToken | null = null
+  private _debug: boolean = false
+
+  public get debug() {
+    return this._debug
+  }
+
+  public set debug(value: boolean) {
+    this._debug = value
+  }
 
   async getSession(accessToken?: string) {
     await this.createSessions(accessToken)
@@ -115,8 +124,7 @@ export class SessionManager {
   private async waitForSession(
     session: Session,
     etag: string | null,
-    accessToken?: string,
-    silent = false
+    accessToken?: string
   ) {
     let sessionState = session.state
     const headers: any = {
@@ -127,7 +135,7 @@ export class SessionManager {
     return new Promise(async (resolve, _) => {
       if (sessionState === 'pending') {
         if (stateLink) {
-          if (!silent) {
+          if (this.debug) {
             console.log('Polling session status... \n') // ?
           }
           const { result: state } = await this.request<string>(
@@ -139,7 +147,7 @@ export class SessionManager {
           )
 
           sessionState = state.trim()
-          if (!silent) {
+          if (this.debug) {
             console.log(`Current state is '${sessionState}'\n`)
           }
           resolve(sessionState)
