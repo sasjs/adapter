@@ -52,7 +52,9 @@ export class SASViyaApiClient {
 
   public set debug(value: boolean) {
     this._debug = value
-    this.sessionManager.debug = value
+    if (this.sessionManager) {
+      this.sessionManager.debug = value
+    }
   }
 
   /**
