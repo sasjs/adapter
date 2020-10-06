@@ -153,6 +153,7 @@ export class SASViyaApiClient {
         context.name,
         accessToken,
         null,
+        true,
         true
       ).catch(() => null)
     })
@@ -425,7 +426,8 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string,
     data = null,
-    expectWebout = false
+    expectWebout = false,
+    waitForResult = true
   ): Promise<any> {
     try {
       const headers: any = {
@@ -508,6 +510,10 @@ export class SASViyaApiClient {
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
         postJobRequest
       )
+
+      if (!waitForResult) {
+        return session
+      }
 
       if (this.debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
@@ -592,7 +598,9 @@ export class SASViyaApiClient {
           linesOfCode,
           contextName,
           accessToken,
-          data
+          data,
+          false,
+          true
         )
       } else {
         throw e
@@ -909,9 +917,9 @@ export class SASViyaApiClient {
   public async executeComputeJob(
     sasJob: string,
     contextName: string,
-    debug: boolean,
     data?: any,
-    accessToken?: string
+    accessToken?: string,
+    waitForResult = true
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -992,7 +1000,8 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       data,
-      true
+      true,
+      waitForResult
     )
   }
 
