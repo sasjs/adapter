@@ -1,5 +1,5 @@
 export class ErrorResponse {
-  body: ErrorBody
+  error: ErrorBody
 
   constructor(message: string, details?: any) {
     let detailsString = ''
@@ -11,7 +11,7 @@ export class ErrorResponse {
       raw = details
     }
 
-    this.body = {
+    this.error = {
       message,
       details: detailsString,
       raw
