@@ -52,7 +52,9 @@ export class SASViyaApiClient {
 
   public set debug(value: boolean) {
     this._debug = value
-    this.sessionManager.debug = value
+    if (this.sessionManager) {
+      this.sessionManager.debug = value
+    }
   }
 
   /**
@@ -152,6 +154,7 @@ export class SASViyaApiClient {
           context.name,
           accessToken,
           null,
+          true,
           true
         ).catch((err) => err)
     })
@@ -434,7 +437,8 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string,
     data = null,
-    expectWebout = false
+    expectWebout = false,
+    waitForResult = true
   ): Promise<any> {
     try {
       const headers: any = {
@@ -527,6 +531,10 @@ export class SASViyaApiClient {
         throw err
       })
 
+      if (!waitForResult) {
+        return session
+      }
+
       if (this.debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
         console.log(
@@ -573,6 +581,8 @@ export class SASViyaApiClient {
 
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+      } else {
+        return currentJob
       }
 
       if (resultLink) {
@@ -624,7 +634,9 @@ export class SASViyaApiClient {
           linesOfCode,
           contextName,
           accessToken,
-          data
+          data,
+          false,
+          true
         )
       } else {
         throw e
@@ -937,13 +949,16 @@ export class SASViyaApiClient {
    * @param debug - sets the _debug flag in the job arguments.
    * @param data - any data to be passed in as input to the job.
    * @param accessToken - an optional access token for an authorized user.
+   * @param waitForResult - a boolean indicating if the function should wait for a result.
+   * @param expectWebout - a boolean indicating whether to expect a _webout response.
    */
   public async executeComputeJob(
     sasJob: string,
     contextName: string,
-    debug: boolean,
     data?: any,
-    accessToken?: string
+    accessToken?: string,
+    waitForResult = true,
+    expectWebout = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1024,7 +1039,8 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       data,
-      true
+      expectWebout,
+      waitForResult
     )
   }
 
