@@ -949,6 +949,8 @@ export class SASViyaApiClient {
    * @param debug - sets the _debug flag in the job arguments.
    * @param data - any data to be passed in as input to the job.
    * @param accessToken - an optional access token for an authorized user.
+   * @param waitForResult - a boolean indicating if the function should wait for a result.
+   * @param expectWebout - a boolean indicating whether to expect a _webout response.
    */
   public async executeComputeJob(
     sasJob: string,

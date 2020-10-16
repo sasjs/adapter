@@ -683,6 +683,7 @@ export default class SASjs {
    * for that particular function call.
    * @param accessToken - a valid access token that is authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
+   * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
    */
   public async startComputeJob(
     sasJob: string,
