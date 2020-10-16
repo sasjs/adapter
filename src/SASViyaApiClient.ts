@@ -581,6 +581,8 @@ export class SASViyaApiClient {
 
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+      } else {
+        return currentJob;
       }
 
       if (resultLink) {
@@ -953,7 +955,8 @@ export class SASViyaApiClient {
     contextName: string,
     data?: any,
     accessToken?: string,
-    waitForResult = true
+    waitForResult = true,
+    expectWebout = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1034,7 +1037,7 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       data,
-      true,
+      expectWebout,
       waitForResult
     )
   }

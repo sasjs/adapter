@@ -44,7 +44,7 @@ const defaultConfig: SASjsConfig = {
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
   serverType: ServerType.SASViya,
-  debug: true,
+  debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false
 }
@@ -688,7 +688,8 @@ export default class SASjs {
     sasJob: string,
     data: any,
     config: any = {},
-    accessToken?: string
+    accessToken?: string,
+    waitForResult?: boolean
   ) {
     config = {
       ...this.sasjsConfig,
@@ -702,13 +703,13 @@ export default class SASjs {
       )
     }
 
-    const waitForResult = false
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
       config.contextName,
       data,
       accessToken,
-      waitForResult
+      !!waitForResult,
+      false
     )
   }
 
@@ -732,13 +733,15 @@ export default class SASjs {
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
         const waitForResult = true
+        const expectWebout = true
         this.sasViyaApiClient
           ?.executeComputeJob(
             sasJob,
             config.contextName,
             data,
             accessToken,
-            waitForResult
+            waitForResult,
+            expectWebout
           )
           .then((response) => {
             if (!config.debug) {
