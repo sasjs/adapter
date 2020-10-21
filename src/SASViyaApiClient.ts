@@ -1032,6 +1032,8 @@ export class SASViyaApiClient {
       jobToExecute.code = code
     }
 
+    if (!code) code = ''
+
     const linesToExecute = code.replace(/\r\n/g, '\n').split('\n')
     return await this.executeScript(
       sasJob,
