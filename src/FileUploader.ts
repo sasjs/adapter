@@ -99,6 +99,9 @@ export class FileUploader {
             }
           }
         })
+        .catch((err: any) => {
+          reject(err)
+        })
     })
   }
 }
