@@ -44,7 +44,7 @@ const defaultConfig: SASjsConfig = {
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
   serverType: ServerType.SASViya,
-  debug: true,
+  debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false
 }
@@ -670,6 +670,50 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Kicks off execution of the given job via the compute API.
+   * @returns an object representing the compute session created for the given job.
+   * @param sasJob - the path to the SAS program (ultimately resolves to
+   *  the SAS `_program` parameter to run a Job Definition or SAS 9 Stored
+   *  Process). Is prepended at runtime with the value of `appLoc`.
+   * @param data - a JSON object containing one or more tables to be sent to
+   * SAS. Can be `null` if no inputs required.
+   * @param config - provide any changes to the config here, for instance to
+   * enable/disable `debug`. Any change provided will override the global config,
+   * for that particular function call.
+   * @param accessToken - a valid access token that is authorised to execute compute jobs.
+   * The access token is not required when the user is authenticated via the browser.
+   * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
+   */
+  public async startComputeJob(
+    sasJob: string,
+    data: any,
+    config: any = {},
+    accessToken?: string,
+    waitForResult?: boolean
+  ) {
+    config = {
+      ...this.sasjsConfig,
+      ...config
+    }
+
+    this.isMethodSupported('startComputeJob', ServerType.SASViya)
+    if (!config.contextName) {
+      throw new Error(
+        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+      )
+    }
+
+    return this.sasViyaApiClient?.executeComputeJob(
+      sasJob,
+      config.contextName,
+      data,
+      accessToken,
+      !!waitForResult,
+      false
+    )
+  }
+
   private async executeJobViaComputeApi(
     sasJob: string,
     data: any,
@@ -689,13 +733,16 @@ export default class SASjs {
 
     sasjsWaitingRequest.requestPromise.promise = new Promise(
       async (resolve, reject) => {
+        const waitForResult = true
+        const expectWebout = true
         this.sasViyaApiClient
           ?.executeComputeJob(
             sasJob,
             config.contextName,
-            config.debug,
             data,
-            accessToken
+            accessToken,
+            waitForResult,
+            expectWebout
           )
           .then((response) => {
             if (!config.debug) {

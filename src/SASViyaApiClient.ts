@@ -52,7 +52,9 @@ export class SASViyaApiClient {
 
   public set debug(value: boolean) {
     this._debug = value
-    this.sessionManager.debug = value
+    if (this.sessionManager) {
+      this.sessionManager.debug = value
+    }
   }
 
   /**
@@ -145,41 +147,51 @@ export class SASViyaApiClient {
     const promises = contextsList.map((context: any) => {
       const linesOfCode = ['%put &=sysuserid;']
 
-      return this.executeScript(
-        `test-${context.name}`,
-        linesOfCode,
-        context.name,
-        accessToken,
-        null,
-        true
-      ).catch(() => null)
+      return () =>
+        this.executeScript(
+          `test-${context.name}`,
+          linesOfCode,
+          context.name,
+          accessToken,
+          null,
+          true,
+          true
+        ).catch((err) => err)
     })
 
-    const results = await Promise.all(promises)
+    let results: any[] = []
+
+    for (const promise of promises) results.push(await promise())
 
     results.forEach((result: any, index: number) => {
-      if (result) {
-        let sysUserId = ''
+      if (result && result.body && result.body.details) {
+        try {
+          const resultParsed = JSON.parse(result.body.details)
 
-        if (result.log) {
-          const sysUserIdLog = result.log
-            .split('\n')
-            .find((line: string) => line.startsWith('SYSUSERID='))
+          if (resultParsed && resultParsed.body) {
+            let sysUserId = ''
 
-          if (sysUserIdLog) {
-            sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
+            const sysUserIdLog = resultParsed.body
+              .split('\n')
+              .find((line: string) => line.startsWith('SYSUSERID='))
+
+            if (sysUserIdLog) {
+              sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
+
+              executableContexts.push({
+                createdBy: contextsList[index].createdBy,
+                id: contextsList[index].id,
+                name: contextsList[index].name,
+                version: contextsList[index].version,
+                attributes: {
+                  sysUserId
+                }
+              })
+            }
           }
+        } catch (error) {
+          throw error
         }
-
-        executableContexts.push({
-          createdBy: contextsList[index].createdBy,
-          id: contextsList[index].id,
-          name: contextsList[index].name,
-          version: contextsList[index].version,
-          attributes: {
-            sysUserId
-          }
-        })
       }
     })
 
@@ -327,7 +339,9 @@ export class SASViyaApiClient {
     originalContext = await this.getComputeContextByName(
       contextName,
       accessToken
-    ).catch((_) => {})
+    ).catch((err) => {
+      throw err
+    })
 
     // Try to find context by id, when context name has been changed.
     if (!originalContext) {
@@ -423,7 +437,8 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string,
     data = null,
-    expectWebout = false
+    expectWebout = false,
+    waitForResult = true
   ): Promise<any> {
     try {
       const headers: any = {
@@ -435,7 +450,12 @@ export class SASViyaApiClient {
       }
 
       let executionSessionId: string
-      const session = await this.sessionManager.getSession(accessToken)
+      const session = await this.sessionManager
+        .getSession(accessToken)
+        .catch((err) => {
+          throw err
+        })
+
       executionSessionId = session!.id
 
       const jobArguments: { [key: string]: any } = {
@@ -474,7 +494,9 @@ export class SASViyaApiClient {
 
       if (data) {
         if (JSON.stringify(data).includes(';')) {
-          files = await this.uploadTables(data, accessToken)
+          files = await this.uploadTables(data, accessToken).catch((err) => {
+            throw err
+          })
 
           jobVariables['_webin_file_count'] = files.length
 
@@ -505,7 +527,13 @@ export class SASViyaApiClient {
       const { result: postedJob, etag } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
         postJobRequest
-      )
+      ).catch((err) => {
+        throw err
+      })
+
+      if (!waitForResult) {
+        return session
+      }
 
       if (this.debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
@@ -521,7 +549,9 @@ export class SASViyaApiClient {
       const { result: currentJob } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
         { headers }
-      )
+      ).catch((err) => {
+        throw err
+      })
 
       let jobResult
       let log
@@ -534,9 +564,13 @@ export class SASViyaApiClient {
           {
             headers
           }
-        ).then((res: any) =>
-          res.result.items.map((i: any) => i.line).join('\n')
         )
+          .then((res: any) =>
+            res.result.items.map((i: any) => i.line).join('\n')
+          )
+          .catch((err) => {
+            throw err
+          })
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
@@ -547,6 +581,8 @@ export class SASViyaApiClient {
 
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+      } else {
+        return currentJob
       }
 
       if (resultLink) {
@@ -562,9 +598,13 @@ export class SASViyaApiClient {
                 {
                   headers
                 }
-              ).then((res: any) =>
-                res.result.items.map((i: any) => i.line).join('\n')
               )
+                .then((res: any) =>
+                  res.result.items.map((i: any) => i.line).join('\n')
+                )
+                .catch((err) => {
+                  throw err
+                })
 
               return Promise.reject(
                 new ErrorResponse('Job execution failed', {
@@ -580,7 +620,11 @@ export class SASViyaApiClient {
         })
       }
 
-      await this.sessionManager.clearSession(executionSessionId, accessToken)
+      await this.sessionManager
+        .clearSession(executionSessionId, accessToken)
+        .catch((err) => {
+          throw err
+        })
 
       return { result: jobResult?.result, log }
     } catch (e) {
@@ -590,7 +634,9 @@ export class SASViyaApiClient {
           linesOfCode,
           contextName,
           accessToken,
-          data
+          data,
+          false,
+          true
         )
       } else {
         throw e
@@ -903,13 +949,16 @@ export class SASViyaApiClient {
    * @param debug - sets the _debug flag in the job arguments.
    * @param data - any data to be passed in as input to the job.
    * @param accessToken - an optional access token for an authorized user.
+   * @param waitForResult - a boolean indicating if the function should wait for a result.
+   * @param expectWebout - a boolean indicating whether to expect a _webout response.
    */
   public async executeComputeJob(
     sasJob: string,
     contextName: string,
-    debug: boolean,
     data?: any,
-    accessToken?: string
+    accessToken?: string,
+    waitForResult = true,
+    expectWebout = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -983,6 +1032,8 @@ export class SASViyaApiClient {
       jobToExecute.code = code
     }
 
+    if (!code) code = ''
+
     const linesToExecute = code.replace(/\r\n/g, '\n').split('\n')
     return await this.executeScript(
       sasJob,
@@ -990,7 +1041,8 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       data,
-      true
+      expectWebout,
+      waitForResult
     )
   }
 
