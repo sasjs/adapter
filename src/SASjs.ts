@@ -1365,11 +1365,15 @@ export default class SASjs {
       this.sasjsConfig.serverUrl === undefined ||
       this.sasjsConfig.serverUrl === ''
     ) {
-      let url = `${location.protocol}//${location.hostname}`
-      if (location.port) {
-        url = `${url}:${location.port}`
+      if (typeof location !== 'undefined') {
+        let url = `${location.protocol}//${location.hostname}`
+
+        if (location.port) url = `${url}:${location.port}`
+
+        this.sasjsConfig.serverUrl = url
+      } else {
+        this.sasjsConfig.serverUrl = ''
       }
-      this.sasjsConfig.serverUrl = url
     }
 
     if (this.sasjsConfig.serverUrl.slice(-1) === '/') {
