@@ -1,4 +1,4 @@
-import { parseSourceCode } from './index'
+import { parseSourceCode } from '../../utils/index'
 
 it('should parse SAS9 source code', async (done) => {
   expect(sampleResponse).toBeTruthy()
