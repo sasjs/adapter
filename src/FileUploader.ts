@@ -20,8 +20,10 @@ export class FileUploader {
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
     return new Promise((resolve, reject) => {
-      if (files?.length < 1) reject(new ErrorResponse('At least one file must be provided.'))
-      if (!sasJob || sasJob === '') reject(new ErrorResponse('sasJob must be provided.'))
+      if (files?.length < 1)
+        reject(new ErrorResponse('At least one file must be provided.'))
+      if (!sasJob || sasJob === '')
+        reject(new ErrorResponse('sasJob must be provided.'))
 
       let paramsString = ''
 
@@ -49,7 +51,7 @@ export class FileUploader {
       }
 
       if (this.csrfToken) formData.append('_csrf', this.csrfToken.value)
-      
+
       fetch(uploadUrl, {
         method: 'POST',
         body: formData,
@@ -96,7 +98,12 @@ export class FileUploader {
             try {
               resolve(JSON.parse(responseText))
             } catch (e) {
-              reject(new ErrorResponse('Error while parsing json from upload response.', e))
+              reject(
+                new ErrorResponse(
+                  'Error while parsing json from upload response.',
+                  e
+                )
+              )
             }
           }
         })
