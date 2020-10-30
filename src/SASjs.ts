@@ -1264,10 +1264,19 @@ export default class SASjs {
     }
   }
 
-  private fetchLogFileContent(logLink: string) {
+  /**
+   * Fetches content of the log file
+   * @param logLink - url of the log file.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public fetchLogFileContent(logLink: string, accessToken: string) {
     return new Promise((resolve, reject) => {
       fetch(logLink, {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + accessToken
+        }
       })
         .then((response: any) => response.text())
         .then((response: any) => resolve(response))
