@@ -1264,10 +1264,20 @@ export default class SASjs {
     }
   }
 
-  private fetchLogFileContent(logLink: string) {
+  /**
+   * Fetches content of the log file
+   * @param logLink - url of the log file.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public fetchLogFileContent(logLink: string, accessToken?: string) {
+    const headers: any = { 'Content-Type': 'application/json' }
+
+    if (accessToken) headers.Authorization = 'Bearer ' + accessToken
+
     return new Promise((resolve, reject) => {
       fetch(logLink, {
-        method: 'GET'
+        method: 'GET',
+        headers
       })
         .then((response: any) => response.text())
         .then((response: any) => resolve(response))
@@ -1365,11 +1375,15 @@ export default class SASjs {
       this.sasjsConfig.serverUrl === undefined ||
       this.sasjsConfig.serverUrl === ''
     ) {
-      let url = `${location.protocol}//${location.hostname}`
-      if (location.port) {
-        url = `${url}:${location.port}`
+      if (typeof location !== 'undefined') {
+        let url = `${location.protocol}//${location.hostname}`
+
+        if (location.port) url = `${url}:${location.port}`
+
+        this.sasjsConfig.serverUrl = url
+      } else {
+        this.sasjsConfig.serverUrl = ''
       }
-      this.sasjsConfig.serverUrl = url
     }
 
     if (this.sasjsConfig.serverUrl.slice(-1) === '/') {

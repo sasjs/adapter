@@ -3,17 +3,17 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>@sasjs/adapter</title>
+	<title> | @sasjs/adapter</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="assets/css/main.css">
+	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
 <header>
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -24,7 +24,7 @@
 					</ul>
 					<ul class="results-priority" style="display:none">
 					</ul>
-					<a href="index.html" class="title">@sasjs/adapter</a>
+					<a href="../index.html" class="title">@sasjs/adapter</a>
 					&emsp;<a href="https://github.com/sasjs/adapter" class="title">SASjs on Github</a>
 					&emsp;<a href="https://sasjs.io" class="title">SASjs.io</a>
 					&emsp;<a href="https://github.com/sasjs/cli" class="title">SASjs CLI</a>
@@ -54,6 +54,9 @@
 	<div class="tsd-page-title">
 		<div class="container">
 			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="reflection-790.html"></a>
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -62,52 +65,26 @@
 	<div class="row">
 		<div class="col-3 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation outline primary">
-				<a style="margin-left:0em" href="globals.html">Globals</a>
+				<a style="margin-left:0em" href="../globals.html">Globals</a>
 				<ul style="display:none">
 					{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}
 				</ul>
 			</nav>
 		</div>
 		<div class="col-7 offset-3 col-content">
-			<h1>@sasjs/adapter</h1>
-			<div class="tsd-panel tsd-typography">
-				<p><a href="https://www.jsdelivr.com/package/npm/@sasjs/adapter"><img src="https://data.jsdelivr.com/v1/package/npm/@sasjs/adapter/badge" alt=""></a></p>
-				<a href="#sasjsadapter" id="sasjsadapter" style="color: inherit; text-decoration: none;">
-					<h1>@sasjs/adapter</h1>
-				</a>
-				<p>SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:</p>
-				<p>1 - <code>npm install @sasjs/adapter</code> - for use in a node project</p>
-				<p>2 - <a href="https://cdn.jsdelivr.net/npm/@sasjs/adapter@1/index.js">Download</a> and use a copy of the latest JS file</p>
-				<p>3 - Reference directly from the CDN - in which case click <a href="https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection">here</a> and select &quot;SRI&quot; to get the script tag with the integrity hash.</p>
-				<p>If you are short on time and just need to build an app quickly, then check out <a href="https://vimeo.com/393161794">this video</a> and the <a href="https://github.com/sasjs/react-seed-app">react-seed-app</a> which provides some boilerplate.</p>
-				<p>For more information on building web apps with SAS, check out <a href="https://sasjs.io">sasjs.io</a></p>
-				<a href="#none-of-this-makes-sense-how-do-i-build-an-app-with-it" id="none-of-this-makes-sense-how-do-i-build-an-app-with-it" style="color: inherit; text-decoration: none;">
-					<h2>None of this makes sense. How do I build an app with it?</h2>
-				</a>
-				<p>Ok ok. Deploy this <a href="https://raw.githubusercontent.com/sasjs/adapter/master/example.html">example.html</a> file to your web server, and update <code>servertype</code> to <code>SAS9</code> or <code>SASVIYA</code> depending on your backend.</p>
-				<p>The backend part can be deployed as follows:</p>
-				<pre><code>%let appLoc=/<span class="hljs-built_in">Public</span>/app/readme;  <span class="hljs-comment">/* Metadata or Viya Folder per SASjs config */</span>
-filename mc url &quot;https://raw.githubusercontent.com/sasjs/core/main/all.sas&quot;;
-%inc mc; <span class="hljs-comment">/* compile macros (can also be downloaded &amp; compiled seperately) */</span>
-filename ft15f001 <span class="hljs-keyword">temp</span>;
-parmcards4;
-  %webout(<span class="hljs-keyword">FETCH</span>) <span class="hljs-comment">/* receive all data as SAS datasets */</span>
-  proc <span class="hljs-keyword">sql</span>;
-  <span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> areas <span class="hljs-keyword">as</span> <span class="hljs-keyword">select</span> make,mean(invoice) <span class="hljs-keyword">as</span> avprice
-    <span class="hljs-keyword">from</span> sashelp.cars
-    <span class="hljs-keyword">where</span> <span class="hljs-keyword">type</span> <span class="hljs-keyword">in</span> (<span class="hljs-keyword">select</span> <span class="hljs-keyword">type</span> <span class="hljs-keyword">from</span> <span class="hljs-keyword">work</span>.fromjs)
-    <span class="hljs-keyword">group</span> <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>;
-  %webout(<span class="hljs-keyword">OPEN</span>)
-  %webout(OBJ,areas)
-  %webout(<span class="hljs-keyword">CLOSE</span>)
-;;;;
-%mp_createwebservice(<span class="hljs-type">path</span>=&amp;appLoc/common,<span class="hljs-type">name</span>=getdata)</code></pre><p>You now have a simple web app with a backend service!</p>
-				<a href="#more-resources" id="more-resources" style="color: inherit; text-decoration: none;">
-					<h1>More resources</h1>
-				</a>
-				<p>For more information and examples specific to this adapter you can check out the <a href="https://sasjs.io/sasjs-adapter/">user guide</a> or the <a href="http://adapter.sasjs.io/">technical</a> documentation.</p>
-				<p>For more information on building web apps in general, check out these <a href="https://sasjs.io/training/resources/">resources</a> or contact the <a href="https://www.linkedin.com/in/allanbowe/">author</a> directly.</p>
-			</div>
+			<h1>Module</h1>
+			<section class="tsd-panel-group tsd-index-group">
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Modules</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-module tsd-parent-kind-module"><a href="reflection-790.reflection-214.html" class="tsd-kind-icon"><em>Module</em></a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
 			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/adapter/src/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ErrorResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsWaitingRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ServerType.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isLoginSuccess.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/makeRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseAndSubmitAuthorizeForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
 		</div>
 		<div class="col-2 col-menu secondary-menu">
@@ -124,6 +101,6 @@ parmcards4;
 	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
 </div>
 <div class="overlay"></div>
-<script src="assets/js/main.js"></script>
+<script src="../assets/js/main.js"></script>
 </body>
 </html>
