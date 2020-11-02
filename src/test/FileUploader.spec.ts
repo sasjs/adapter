@@ -1,6 +1,5 @@
 import { FileUploader } from '../FileUploader'
 import { UploadFile } from '../types'
-
 ;(global as any).fetch = jest.fn().mockImplementation(() =>
   Promise.resolve({
     text: () => Promise.resolve(sampleResponse)
