@@ -25,6 +25,13 @@ const prepareFilesAndParams = () => {
 
 describe('FileUploader', () => {
   let originalFetch: any
+  const fileUploader = new FileUploader(
+    '/sample/apploc',
+    'https://sample.server.com',
+    '/jobs/path',
+    null,
+    null
+  )
 
   beforeAll(() => {
     originalFetch = (global as any).fetch
@@ -43,14 +50,6 @@ describe('FileUploader', () => {
   })
 
   it('should upload successfully', async (done) => {
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
-    )
-
     const sasJob = 'test/upload'
     const { files, params } = prepareFilesAndParams()
 
@@ -63,14 +62,6 @@ describe('FileUploader', () => {
   })
 
   it('should an error when no files are provided', async (done) => {
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
-    )
-
     const sasJob = 'test/upload'
     const files: UploadFile[] = []
     const params = { table: 'libtable' }
@@ -82,14 +73,6 @@ describe('FileUploader', () => {
   })
 
   it('should throw an error when no sasJob is provided', async (done) => {
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
-    )
-
     const sasJob = ''
     const { files, params } = prepareFilesAndParams()
 
@@ -104,14 +87,6 @@ describe('FileUploader', () => {
       Promise.resolve({
         text: () => Promise.resolve('<form action="Logon">')
       })
-    )
-
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
     )
 
     const sasJob = 'test'
@@ -132,14 +107,6 @@ describe('FileUploader', () => {
       })
     )
 
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
-    )
-
     const sasJob = 'test'
     const { files, params } = prepareFilesAndParams()
 
@@ -156,14 +123,6 @@ describe('FileUploader', () => {
       Promise.resolve({
         text: () => Promise.reject('{message: "Server error"}')
       })
-    )
-
-    const fileUploader = new FileUploader(
-      '/sample/apploc',
-      'https://sample.server.com',
-      '/jobs/path',
-      null,
-      null
     )
 
     const sasJob = 'test'
