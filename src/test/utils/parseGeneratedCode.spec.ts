@@ -1,4 +1,4 @@
-import { parseGeneratedCode } from './index'
+import { parseGeneratedCode } from '../../utils/index'
 
 it('should parse generated code', async (done) => {
   expect(sampleResponse).toBeTruthy()
