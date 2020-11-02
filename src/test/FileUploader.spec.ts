@@ -11,6 +11,18 @@ const sampleResponse = `{
   "SYSWARNINGTEXT" : ""
 }`
 
+const prepareFilesAndParams = () => {
+  const files: UploadFile[] = [
+    {
+      file: new File([''], 'testfile'),
+      fileName: 'testfile'
+    }
+  ]
+  const params = { table: 'libtable' }
+
+  return { files, params }
+}
+
 describe('FileUploader', () => {
   let originalFetch: any
 
@@ -40,13 +52,7 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test/upload'
-    const files: UploadFile[] = [
-      {
-        file: new File([''], 'testfile'),
-        fileName: 'testfile'
-      }
-    ]
-    const params = { table: 'libtable' }
+    const { files, params } = prepareFilesAndParams()
 
     fileUploader.uploadFile(sasJob, files, params).then((res: any) => {
       expect(JSON.stringify(res)).toEqual(
@@ -85,13 +91,7 @@ describe('FileUploader', () => {
     )
 
     const sasJob = ''
-    const files: UploadFile[] = [
-      {
-        file: new File([''], 'testfile'),
-        fileName: 'testfile'
-      }
-    ]
-    const params = { table: 'libtable' }
+    const { files, params } = prepareFilesAndParams()
 
     fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
       expect(err.error.message).toEqual('sasJob must be provided.')
@@ -115,13 +115,7 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test'
-    const files: UploadFile[] = [
-      {
-        file: new File([''], 'testfile'),
-        fileName: 'testfile'
-      }
-    ]
-    const params = { table: 'libtable' }
+    const { files, params } = prepareFilesAndParams()
 
     fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
       expect(err.error.message).toEqual(
@@ -147,13 +141,7 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test'
-    const files: UploadFile[] = [
-      {
-        file: new File([''], 'testfile'),
-        fileName: 'testfile'
-      }
-    ]
-    const params = { table: 'libtable' }
+    const { files, params } = prepareFilesAndParams()
 
     fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
       expect(err.error.message).toEqual(
@@ -179,13 +167,7 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test'
-    const files: UploadFile[] = [
-      {
-        file: new File([''], 'testfile'),
-        fileName: 'testfile'
-      }
-    ]
-    const params = { table: 'libtable' }
+    const { files, params } = prepareFilesAndParams()
 
     fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
       expect(err.error.message).toEqual('Upload request failed.')
