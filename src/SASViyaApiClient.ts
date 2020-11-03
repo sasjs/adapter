@@ -38,12 +38,24 @@ export class SASViyaApiClient {
 
   private csrfToken: CsrfToken | null = null
   private fileUploadCsrfToken: CsrfToken | null = null
+  private _debug = false
   private sessionManager = new SessionManager(
     this.serverUrl,
     this.contextName,
     this.setCsrfToken
   )
   private folderMap = new Map<string, Job[]>()
+
+  public get debug() {
+    return this._debug
+  }
+
+  public set debug(value: boolean) {
+    this._debug = value
+    if (this.sessionManager) {
+      this.sessionManager.debug = value
+    }
+  }
 
   /**
    * Returns a list of jobs in the currently set root folder.
@@ -135,42 +147,51 @@ export class SASViyaApiClient {
     const promises = contextsList.map((context: any) => {
       const linesOfCode = ['%put &=sysuserid;']
 
-      return this.executeScript(
-        `test-${context.name}`,
-        linesOfCode,
-        context.name,
-        accessToken,
-        false,
-        null,
-        true
-      ).catch(() => null)
+      return () =>
+        this.executeScript(
+          `test-${context.name}`,
+          linesOfCode,
+          context.name,
+          accessToken,
+          null,
+          true,
+          true
+        ).catch((err) => err)
     })
 
-    const results = await Promise.all(promises)
+    let results: any[] = []
+
+    for (const promise of promises) results.push(await promise())
 
     results.forEach((result: any, index: number) => {
-      if (result) {
-        let sysUserId = ''
+      if (result && result.body && result.body.details) {
+        try {
+          const resultParsed = JSON.parse(result.body.details)
 
-        if (result.log) {
-          const sysUserIdLog = result.log
-            .split('\n')
-            .find((line: string) => line.startsWith('SYSUSERID='))
+          if (resultParsed && resultParsed.body) {
+            let sysUserId = ''
 
-          if (sysUserIdLog) {
-            sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
+            const sysUserIdLog = resultParsed.body
+              .split('\n')
+              .find((line: string) => line.startsWith('SYSUSERID='))
+
+            if (sysUserIdLog) {
+              sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
+
+              executableContexts.push({
+                createdBy: contextsList[index].createdBy,
+                id: contextsList[index].id,
+                name: contextsList[index].name,
+                version: contextsList[index].version,
+                attributes: {
+                  sysUserId
+                }
+              })
+            }
           }
+        } catch (error) {
+          throw error
         }
-
-        executableContexts.push({
-          createdBy: contextsList[index].createdBy,
-          id: contextsList[index].id,
-          name: contextsList[index].name,
-          version: contextsList[index].version,
-          attributes: {
-            sysUserId
-          }
-        })
       }
     })
 
@@ -318,7 +339,9 @@ export class SASViyaApiClient {
     originalContext = await this.getComputeContextByName(
       contextName,
       accessToken
-    ).catch((_) => {})
+    ).catch((err) => {
+      throw err
+    })
 
     // Try to find context by id, when context name has been changed.
     if (!originalContext) {
@@ -404,7 +427,6 @@ export class SASViyaApiClient {
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
    * @param sessionId - optional session ID to reuse.
-   * @param silent - optional flag to disable logging.
    * @param data - execution data.
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
@@ -414,12 +436,10 @@ export class SASViyaApiClient {
     linesOfCode: string[],
     contextName: string,
     accessToken?: string,
-    silent = false,
     data = null,
-    debug = false,
-    expectWebout = false
+    expectWebout = false,
+    waitForResult = true
   ): Promise<any> {
-    silent = !debug
     try {
       const headers: any = {
         'Content-Type': 'application/json'
@@ -430,7 +450,12 @@ export class SASViyaApiClient {
       }
 
       let executionSessionId: string
-      const session = await this.sessionManager.getSession(accessToken)
+      const session = await this.sessionManager
+        .getSession(accessToken)
+        .catch((err) => {
+          throw err
+        })
+
       executionSessionId = session!.id
 
       const jobArguments: { [key: string]: any } = {
@@ -442,7 +467,7 @@ export class SASViyaApiClient {
         _OMITTEXTLOG: true
       }
 
-      if (debug) {
+      if (this.debug) {
         jobArguments['_OMITTEXTLOG'] = false
         jobArguments['_OMITSESSIONRESULTS'] = false
         jobArguments['_DEBUG'] = 131
@@ -469,7 +494,9 @@ export class SASViyaApiClient {
 
       if (data) {
         if (JSON.stringify(data).includes(';')) {
-          files = await this.uploadTables(data, accessToken)
+          files = await this.uploadTables(data, accessToken).catch((err) => {
+            throw err
+          })
 
           jobVariables['_webin_file_count'] = files.length
 
@@ -500,9 +527,15 @@ export class SASViyaApiClient {
       const { result: postedJob, etag } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs`,
         postJobRequest
-      )
+      ).catch((err) => {
+        throw err
+      })
 
-      if (!silent) {
+      if (!waitForResult) {
+        return session
+      }
+
+      if (this.debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
         console.log(
           `You can monitor the job progress at '${this.serverUrl}${
@@ -511,32 +544,33 @@ export class SASViyaApiClient {
         )
       }
 
-      const jobStatus = await this.pollJobState(
-        postedJob,
-        etag,
-        accessToken,
-        silent
-      )
+      const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
 
       const { result: currentJob } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
         { headers }
-      )
+      ).catch((err) => {
+        throw err
+      })
 
       let jobResult
       let log
 
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
-      if (debug && logLink) {
+      if (this.debug && logLink) {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content?limit=10000`,
           {
             headers
           }
-        ).then((res: any) =>
-          res.result.items.map((i: any) => i.line).join('\n')
         )
+          .then((res: any) =>
+            res.result.items.map((i: any) => i.line).join('\n')
+          )
+          .catch((err) => {
+            throw err
+          })
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
@@ -547,6 +581,8 @@ export class SASViyaApiClient {
 
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
+      } else {
+        return currentJob
       }
 
       if (resultLink) {
@@ -562,9 +598,13 @@ export class SASViyaApiClient {
                 {
                   headers
                 }
-              ).then((res: any) =>
-                res.result.items.map((i: any) => i.line).join('\n')
               )
+                .then((res: any) =>
+                  res.result.items.map((i: any) => i.line).join('\n')
+                )
+                .catch((err) => {
+                  throw err
+                })
 
               return Promise.reject(
                 new ErrorResponse('Job execution failed', {
@@ -580,7 +620,11 @@ export class SASViyaApiClient {
         })
       }
 
-      await this.sessionManager.clearSession(executionSessionId, accessToken)
+      await this.sessionManager
+        .clearSession(executionSessionId, accessToken)
+        .catch((err) => {
+          throw err
+        })
 
       return { result: jobResult?.result, log }
     } catch (e) {
@@ -590,9 +634,9 @@ export class SASViyaApiClient {
           linesOfCode,
           contextName,
           accessToken,
-          silent,
           data,
-          debug
+          false,
+          true
         )
       } else {
         throw e
@@ -905,13 +949,16 @@ export class SASViyaApiClient {
    * @param debug - sets the _debug flag in the job arguments.
    * @param data - any data to be passed in as input to the job.
    * @param accessToken - an optional access token for an authorized user.
+   * @param waitForResult - a boolean indicating if the function should wait for a result.
+   * @param expectWebout - a boolean indicating whether to expect a _webout response.
    */
   public async executeComputeJob(
     sasJob: string,
     contextName: string,
-    debug: boolean,
     data?: any,
-    accessToken?: string
+    accessToken?: string,
+    waitForResult = true,
+    expectWebout = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -985,16 +1032,17 @@ export class SASViyaApiClient {
       jobToExecute.code = code
     }
 
+    if (!code) code = ''
+
     const linesToExecute = code.replace(/\r\n/g, '\n').split('\n')
     return await this.executeScript(
       sasJob,
       linesToExecute,
       contextName,
       accessToken,
-      true,
       data,
-      debug,
-      true
+      expectWebout,
+      waitForResult
     )
   }
 
@@ -1125,12 +1173,7 @@ export class SASViyaApiClient {
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequest
     )
-    const jobStatus = await this.pollJobState(
-      postedJob,
-      etag,
-      accessToken,
-      true
-    )
+    const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
     const { result: currentJob } = await this.request<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       { headers }
@@ -1195,8 +1238,7 @@ export class SASViyaApiClient {
   private async pollJobState(
     postedJob: any,
     etag: string | null,
-    accessToken?: string,
-    silent = false
+    accessToken?: string
   ) {
     const MAX_POLL_COUNT = 1000
     const POLL_INTERVAL = 100
@@ -1235,7 +1277,7 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            if (!silent) {
+            if (this.debug) {
               console.log('Polling job status... \n')
             }
             const { result: jobState } = await this.request<string>(
@@ -1247,7 +1289,7 @@ export class SASViyaApiClient {
             )
 
             postedJobState = jobState.trim()
-            if (!silent) {
+            if (this.debug) {
               console.log(`Current state: ${postedJobState}\n`)
             }
             pollCount++
@@ -1260,49 +1302,6 @@ export class SASViyaApiClient {
           resolve(postedJobState)
         }
       }, POLL_INTERVAL)
-    })
-  }
-
-  private async waitForSession(
-    session: Session,
-    etag: string | null,
-    accessToken?: string,
-    silent = false
-  ) {
-    let sessionState = session.state
-    let pollCount = 0
-    const headers: any = {
-      'Content-Type': 'application/json',
-      'If-None-Match': etag
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-    const stateLink = session.links.find((l: any) => l.rel === 'state')
-    return new Promise(async (resolve, _) => {
-      if (sessionState === 'pending') {
-        if (stateLink) {
-          if (!silent) {
-            console.log('Polling session status... \n')
-          }
-          const { result: state } = await this.request<string>(
-            `${this.serverUrl}${stateLink.href}?wait=30`,
-            {
-              headers
-            },
-            'text'
-          )
-
-          sessionState = state.trim()
-          if (!silent) {
-            console.log(`Current state: ${sessionState}\n`)
-          }
-          pollCount++
-          resolve(sessionState)
-        }
-      } else {
-        resolve(sessionState)
-      }
     })
   }
 

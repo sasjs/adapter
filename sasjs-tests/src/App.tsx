@@ -5,6 +5,7 @@ import { sendArrTests, sendObjTests } from "./testSuites/RequestData";
 import { specialCaseTests } from "./testSuites/SpecialCases";
 import { sasjsRequestTests } from "./testSuites/SasjsRequests";
 import "@sasjs/test-framework/dist/index.css";
+import { computeTests } from "./testSuites/Compute";
 
 const App = (): ReactElement<{}> => {
   const { adapter, config } = useContext(AppContext);
@@ -17,7 +18,8 @@ const App = (): ReactElement<{}> => {
         sendArrTests(adapter),
         sendObjTests(adapter),
         specialCaseTests(adapter),
-        sasjsRequestTests(adapter)
+        sasjsRequestTests(adapter),
+        computeTests(adapter)
       ]);
     }
   }, [adapter, config]);
