@@ -25,6 +25,7 @@ export const generateCSVRow = (row: any, headers: string[]) => {
     let containsSpecialChar = false
     const currentCell = row[fieldName]
 
+    // Check if cell contains new lines or tabs
     if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
       value = currentCell.toString()
       containsSpecialChar = true
@@ -32,6 +33,7 @@ export const generateCSVRow = (row: any, headers: string[]) => {
       value = JSON.stringify(currentCell, (_, v: any) => replacer(v))
     }
 
+    // Escape slashes
     value = value.replace(/\\\\/gm, '\\')
 
     if (containsSpecialChar) {

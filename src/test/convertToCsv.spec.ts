@@ -1,9 +1,8 @@
 import {
   convertToCSV,
   replacer,
-  generateCSVRow,
   generateCSVHeaders
-} from './convertToCsv'
+} from '../utils/convertToCsv'
 
 describe('replacer', () => {
   it('should replace null value with empty string', () => {
