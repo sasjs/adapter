@@ -3,7 +3,7 @@ export class ErrorResponse {
 
   constructor(message: string, details?: any, raw?: any) {
     let detailsString = details
-    
+
     if (typeof details !== 'object') {
       try {
         detailsString = JSON.parse(details)

@@ -1107,9 +1107,19 @@ export default class SASjs {
                   }
                 } else {
                   this.updateUsername(responseText)
-                  if (responseText.includes('The requested URL /SASStoredProcess/do/ was not found on this server.') ||
-                      responseText.includes('Stored process not found')) {
-                    reject(new ErrorResponse('Service not found on the server', {service: sasJob}, responseText))
+                  if (
+                    responseText.includes(
+                      'The requested URL /SASStoredProcess/do/ was not found on this server.'
+                    ) ||
+                    responseText.includes('Stored process not found')
+                  ) {
+                    reject(
+                      new ErrorResponse(
+                        'Service not found on the server',
+                        { service: sasJob },
+                        responseText
+                      )
+                    )
                   }
 
                   try {
