@@ -1,14 +1,16 @@
 export class ErrorResponse {
   error: ErrorBody
 
-  constructor(message: string, details?: any) {
-    let detailsString = ''
-    let raw
+  constructor(message: string, details?: any, raw?: any) {
+    let detailsString = details
 
-    try {
-      detailsString = JSON.stringify(details)
-    } catch {
-      raw = details
+    if (typeof details !== 'object') {
+      try {
+        detailsString = JSON.parse(details)
+      } catch {
+        raw = details
+        detailsString = ''
+      }
     }
 
     this.error = {

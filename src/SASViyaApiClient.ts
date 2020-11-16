@@ -607,7 +607,7 @@ export class SASViyaApiClient {
                 })
 
               return Promise.reject(
-                new ErrorResponse('Job execution failed', {
+                new ErrorResponse('Job execution failed.', {
                   status: 500,
                   body: log
                 })
@@ -1114,7 +1114,7 @@ export class SASViyaApiClient {
     }
 
     if (!jobToExecute) {
-      throw new Error(`The job ${sasJob} was not found.`)
+      throw new Error(`Job was not found.`)
     }
     const jobDefinitionLink = jobToExecute?.links.find(
       (l) => l.rel === 'getResource'

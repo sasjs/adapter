@@ -780,9 +780,21 @@ export default class SASjs {
               } else {
                 this.retryCountComputeApi = 0
                 reject(
-                  new ErrorResponse('Compute API retry requests limit reached')
+                  new ErrorResponse('Compute API retry requests limit reached.')
                 )
               }
+            }
+
+            if (response?.log) {
+              this.appendSasjsRequest(response.log, sasJob, null)
+            }
+
+            if (error.toString().includes('Job was not found')) {
+              reject(
+                new ErrorResponse('Service not found on the server.', {
+                  sasJob: sasJob
+                })
+              )
             }
 
             if (error && error.status === 401) {
@@ -792,10 +804,8 @@ export default class SASjs {
               sasjsWaitingRequest.config = config
               this.sasjsWaitingRequests.push(sasjsWaitingRequest)
             } else {
-              reject(new ErrorResponse('Job execution failed', error))
+              reject(new ErrorResponse('Job execution failed.', error))
             }
-
-            this.appendSasjsRequest(response.log, sasJob, null)
           })
       }
     )
@@ -875,12 +885,24 @@ export default class SASjs {
                   } else {
                     this.retryCountJeseApi = 0
                     reject(
-                      new ErrorResponse('Jes API retry requests limit reached')
+                      new ErrorResponse('Jes API retry requests limit reached.')
                     )
                   }
                 }
 
-                reject(new ErrorResponse('Job execution failed', e))
+                if (e?.log) {
+                  this.appendSasjsRequest(e.log, sasJob, null)
+                }
+
+                if (e.toString().includes('Job was not found')) {
+                  reject(
+                    new ErrorResponse('Service not found on the server.', {
+                      sasJob: sasJob
+                    })
+                  )
+                }
+
+                reject(new ErrorResponse('Job execution failed.', e))
               })
           )
         }
@@ -1064,7 +1086,7 @@ export default class SASjs {
                   } else {
                     reject(
                       new ErrorResponse(
-                        'Job WEB execution failed',
+                        'Job WEB execution failed.',
                         this.parseSAS9ErrorResponse(responseText)
                       )
                     )
@@ -1082,7 +1104,7 @@ export default class SASjs {
                         } catch (e) {
                           reject(
                             new ErrorResponse(
-                              'Job WEB debug response parsing failed',
+                              'Job WEB debug response parsing failed.',
                               { response: resText, exception: e }
                             )
                           )
@@ -1091,7 +1113,7 @@ export default class SASjs {
                       (err: any) => {
                         reject(
                           new ErrorResponse(
-                            'Job WEB debug response parsing failed',
+                            'Job WEB debug response parsing failed.',
                             err
                           )
                         )
@@ -1100,19 +1122,34 @@ export default class SASjs {
                   } catch (e) {
                     reject(
                       new ErrorResponse(
-                        'Job WEB debug response parsing failed',
+                        'Job WEB debug response parsing failed.',
                         { response: responseText, exception: e }
                       )
                     )
                   }
                 } else {
                   this.updateUsername(responseText)
+                  if (
+                    responseText.includes(
+                      'The requested URL /SASStoredProcess/do/ was not found on this server.'
+                    ) ||
+                    responseText.includes('Stored process not found')
+                  ) {
+                    reject(
+                      new ErrorResponse(
+                        'Service not found on the server.',
+                        { service: sasJob },
+                        responseText
+                      )
+                    )
+                  }
+
                   try {
                     const parsedJson = JSON.parse(responseText)
                     resolve(parsedJson)
                   } catch (e) {
                     reject(
-                      new ErrorResponse('Job WEB response parsing failed', {
+                      new ErrorResponse('Job WEB response parsing failed.', {
                         response: responseText,
                         exception: e
                       })
@@ -1123,7 +1160,7 @@ export default class SASjs {
             }
           })
           .catch((e: Error) => {
-            reject(new ErrorResponse('Job WEB request failed', e))
+            reject(new ErrorResponse('Job WEB request failed.', e))
           })
       }
     )
