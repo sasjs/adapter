@@ -415,22 +415,22 @@ export default class SASjs {
     const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
-    
+
     if (matches && matches.length) {
       this.setLoginUrl(matches)
       const inputs = response.match(/<input.*"hidden"[^>]*>/g)
-    
+
       if (inputs) {
         inputs.forEach((inputStr: string) => {
           const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
-    
+
           if (valueMatch && valueMatch.length) {
             formInputs[valueMatch[1]] = valueMatch[2]
           }
         })
       }
     }
-    
+
     return Object.keys(formInputs).length ? formInputs : null
   }
 
