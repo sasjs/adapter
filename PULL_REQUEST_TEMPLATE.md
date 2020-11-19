@@ -14,4 +14,5 @@ What code changes have been made to achieve the intent.
 
 - [ ] Code is formatted correctly (`npm run lint:fix`).
 - [ ] All unit tests are passing (`npm test`).
+- [ ] All `sasjs-tests` unit tests are passing (`npm test`).
 - [ ] All `sasjs-tests` are passing (instructions available [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md)).
