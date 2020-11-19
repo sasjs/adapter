@@ -38,6 +38,17 @@ export const basicTests = (
         response && response.isLoggedIn && response.userName === userName
     },
     {
+      title: "Multiple Log in attempts",
+      description: "Should fail on first attempt and should log the user in on second attempt",
+      test: async () => {
+        await adapter.logOut()
+        await adapter.logIn('invalid', 'invalid')
+        return adapter.logIn(userName, password)
+      },
+      assertion: (response: any) =>
+        response && response.isLoggedIn && response.userName === userName
+    },
+    {
       title: "Default config",
       description:
         "Should instantiate with default config when none is provided",

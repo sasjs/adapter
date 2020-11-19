@@ -411,6 +411,29 @@ export default class SASjs {
     }
   }
 
+  private async getLoginForm(response: any) {
+    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
+    const matches = pattern.exec(response)
+    const formInputs: any = {}
+
+    if (matches && matches.length) {
+      this.setLoginUrl(matches)
+      const inputs = response.match(/<input.*"hidden"[^>]*>/g)
+
+      if (inputs) {
+        inputs.forEach((inputStr: string) => {
+          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
+
+          if (valueMatch && valueMatch.length) {
+            formInputs[valueMatch[1]] = valueMatch[2]
+          }
+        })
+      }
+    }
+
+    return Object.keys(formInputs).length ? formInputs : null
+  }
+
   /**
    * Checks whether a session is active, or login is required.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
@@ -419,10 +442,16 @@ export default class SASjs {
     const loginResponse = await fetch(this.loginUrl.replace('.do', ''))
     const responseText = await loginResponse.text()
     const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
+    let loginForm: any = null
+
+    if (!isLoggedIn) {
+      loginForm = await this.getLoginForm(responseText)
+    }
 
     return Promise.resolve({
       isLoggedIn,
-      userName: this.userName
+      userName: this.userName,
+      loginForm
     })
   }
 
@@ -440,7 +469,7 @@ export default class SASjs {
 
     this.userName = loginParams.username
 
-    const { isLoggedIn } = await this.checkSession()
+    const { isLoggedIn, loginForm } = await this.checkSession()
     if (isLoggedIn) {
       this.resendWaitingRequests()
 
@@ -450,15 +479,13 @@ export default class SASjs {
       })
     }
 
-    const loginForm = await this.getLoginForm()
-
     for (const key in loginForm) {
       loginParams[key] = loginForm[key]
     }
     const loginParamsStr = serialize(loginParams)
 
     return fetch(this.loginUrl, {
-      method: 'post',
+      method: 'POST',
       credentials: 'include',
       referrerPolicy: 'same-origin',
       body: loginParamsStr,
@@ -1483,26 +1510,6 @@ export default class SASjs {
           ? tempLoginLink
           : loginUrl.replace('.do', '')
     }
-  }
-
-  private async getLoginForm() {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
-    const response = await fetch(this.loginUrl).then((r) => r.text())
-    const matches = pattern.exec(response)
-    const formInputs: any = {}
-    if (matches && matches.length) {
-      this.setLoginUrl(matches)
-      const inputs = response.match(/<input.*"hidden"[^>]*>/g)
-      if (inputs) {
-        inputs.forEach((inputStr: string) => {
-          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
-          if (valueMatch && valueMatch.length) {
-            formInputs[valueMatch[1]] = valueMatch[2]
-          }
-        })
-      }
-    }
-    return Object.keys(formInputs).length ? formInputs : null
   }
 
   private async createFoldersAndServices(
