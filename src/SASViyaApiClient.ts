@@ -164,9 +164,9 @@ export class SASViyaApiClient {
     for (const promise of promises) results.push(await promise())
 
     results.forEach((result: any, index: number) => {
-      if (result && result.body && result.body.details) {
+      if (result && result.error && result.error.details) {
         try {
-          const resultParsed = JSON.parse(result.body.details)
+          const resultParsed = result.error.details
 
           if (resultParsed && resultParsed.body) {
             let sysUserId = ''
