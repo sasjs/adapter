@@ -941,14 +941,17 @@ export default class SASjs {
             return
           }
           const name = tableName
-          const csv = convertToCSV(data[tableName])
-          if (csv === 'ERROR: LARGE STRING LENGTH') {
-            isError = true
-            errorMsg =
-              'The max length of a string value in SASjs is 32765 characters.'
+          let csv
+          try {
+            csv = convertToCSV(data[tableName])
+          } catch (e) {
+            if (e.message === 'The max length of a string value in SASjs is 32765 characters.') {
+              isError = true
+              errorMsg = e.message
+            }
           }
 
-          const file = new Blob([csv], {
+          const file = new Blob([csv as string], {
             type: 'application/csv'
           })
 
@@ -964,15 +967,18 @@ export default class SASjs {
           }
           tableCounter++
           sasjsTables.push(tableName)
-          const csv = convertToCSV(data[tableName])
-          if (csv === 'ERROR: LARGE STRING LENGTH') {
-            isError = true
-            errorMsg =
-              'The max length of a string value in SASjs is 32765 characters.'
+          let csv
+          try {
+            csv = convertToCSV(data[tableName])
+          } catch (e) {
+            if (e.message === 'The max length of a string value in SASjs is 32765 characters.') {
+              isError = true
+              errorMsg = e.message
+            }
           }
           // if csv has length more then 16k, send in chunks
-          if (csv.length > 16000) {
-            const csvChunks = splitChunks(csv)
+          if ((csv as string).length > 16000) {
+            const csvChunks = splitChunks(csv as string)
             // append chunks to form data with same key
             csvChunks.map((chunk) => {
               formData.append(`sasjs${tableCounter}data`, chunk)

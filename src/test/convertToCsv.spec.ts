@@ -68,7 +68,6 @@ describe('convertToCsv', () => {
 
   it('should throw an error when a column contains a value that is too long', () => {
     const data: any[] = [{ foo: 'bar' }, { foo: longString }]
-
     expect(() => convertToCSV(data)).toThrowError(
       'The max length of a string value in SASjs is 32765 characters.'
     )
