@@ -37,7 +37,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/isomorphic-fetch": "0.0.35",
-    "@types/jest": "^26.0.14",
+    "@types/jest": "^26.0.15",
     "cp": "^0.2.0",
     "jest": "^25.5.4",
     "path": "^0.12.7",
