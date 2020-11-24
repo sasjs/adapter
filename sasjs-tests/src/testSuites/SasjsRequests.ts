@@ -27,7 +27,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
       test: async () => {
         return new Promise(async (resolve, reject) => {
           adapter
-            .request("common/makeErr", data)
+            .request("common/makeErr", data, {debug: true})
             .then((res) => {
               //no action here, this request must throw error
             })
