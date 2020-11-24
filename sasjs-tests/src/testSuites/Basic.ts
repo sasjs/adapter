@@ -3,12 +3,12 @@ import { TestSuite } from "@sasjs/test-framework";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,
-  pathSAS9: "/SASStoredProcess/do",
-  pathSASViya: "/SASJobExecution",
-  appLoc: "/Public/seedapp",
+  pathSAS9: '/SASStoredProcess/do',
+  pathSASViya: '/SASJobExecution',
+  appLoc: '/Public/seedapp',
   serverType: ServerType.SASViya,
-  debug: true,
-  contextName: "SAS Job Execution compute context",
+  debug: false,
+  contextName: 'SAS Job Execution compute context',
   useComputeApi: false
 };
 
@@ -57,6 +57,7 @@ export const basicTests = (
       },
       assertion: (sasjsInstance: SASjs) => {
         const sasjsConfig = sasjsInstance.getSasjsConfig();
+
         return (
           sasjsConfig.serverUrl === defaultConfig.serverUrl &&
           sasjsConfig.pathSAS9 === defaultConfig.pathSAS9 &&

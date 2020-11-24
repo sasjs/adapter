@@ -23,7 +23,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
     },
     {
       title: "Make error and capture log",
-      description: "Should make an error and capture log",
+      description: "Should make an error and capture log, in the same time it is testing if debug override is working",
       test: async () => {
         return new Promise(async (resolve, reject) => {
           adapter
@@ -33,12 +33,14 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
             })
             .catch((err) => {
               let sasRequests = adapter.getSasRequests();
-              let makeErrRequest =
+              let makeErrRequest: any =
                 sasRequests.find((req) =>
                   req.serviceLink.includes("makeErr")
                 ) || null;
 
-              resolve(!!makeErrRequest);
+              if (!makeErrRequest) resolve(false)
+
+              resolve(!!(makeErrRequest.logFile && makeErrRequest.logFile.length > 0));
             });
         });
       },

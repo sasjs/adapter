@@ -734,6 +734,7 @@ export default class SASjs {
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
       config.contextName,
+      config.debug,
       data,
       accessToken,
       !!waitForResult,
@@ -766,6 +767,7 @@ export default class SASjs {
           ?.executeComputeJob(
             sasJob,
             config.contextName,
+            config.debug,
             data,
             accessToken,
             waitForResult,
