@@ -574,7 +574,7 @@ export class SASViyaApiClient {
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
-        return Promise.reject({ error: currentJob.error, log })
+        return Promise.reject({ job: currentJob, log })
       }
 
       let resultLink
