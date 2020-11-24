@@ -606,12 +606,10 @@ export class SASViyaApiClient {
                   throw err
                 })
 
-              return Promise.reject(
-                new ErrorResponse('Job execution failed.', {
-                  status: 500,
-                  body: log
-                })
-              )
+              return Promise.reject({
+                status: 500,
+                log: log
+              })
             }
           }
           return {
