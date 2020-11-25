@@ -88,7 +88,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
         return adapter.request("common/sendArr", data).catch((e) => e);
       },
       assertion: (error: any) => {
-        return !!error && !!error.body && !!error.body.message;
+        return !!error && !!error.error && !!error.error.message;
       }
     },
     {
@@ -185,7 +185,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         };
         return adapter.request("common/sendObj", invalidData).catch((e) => e);
       },
-      assertion: (error: any) => !!error && !!error.body && !!error.body.message
+      assertion: (error: any) => !!error && !!error.error && !!error.error.message
     },
     {
       title: "Single string value",
@@ -219,7 +219,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           .catch((e) => e);
       },
       assertion: (error: any) => {
-        return !!error && !!error.body && !!error.body.message;
+        return !!error && !!error.error && !!error.error.message;
       }
     },
     {

@@ -734,6 +734,7 @@ export default class SASjs {
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
       config.contextName,
+      config.debug,
       data,
       accessToken,
       !!waitForResult,
@@ -766,6 +767,7 @@ export default class SASjs {
           ?.executeComputeJob(
             sasJob,
             config.contextName,
+            config.debug,
             data,
             accessToken,
             waitForResult,
@@ -895,8 +897,8 @@ export default class SASjs {
 
                 return responseJson
               })
-              .catch(async (e) => {
-                if (needsRetry(JSON.stringify(e))) {
+              .catch(async (response) => {
+                if (needsRetry(JSON.stringify(response))) {
                   if (this.retryCountJeseApi < requestRetryLimit) {
                     let retryResponse = await this.executeJobViaJesApi(
                       sasJob,
@@ -917,11 +919,11 @@ export default class SASjs {
                   }
                 }
 
-                if (e?.log) {
-                  this.appendSasjsRequest(e.log, sasJob, null)
+                if (response?.log) {
+                  this.appendSasjsRequest(response.log, sasJob, null)
                 }
 
-                if (e.toString().includes('Job was not found')) {
+                if (response.toString().includes('Job was not found')) {
                   reject(
                     new ErrorResponse('Service not found on the server.', {
                       sasJob: sasJob
@@ -929,7 +931,7 @@ export default class SASjs {
                   )
                 }
 
-                reject(new ErrorResponse('Job execution failed.', e))
+                reject(new ErrorResponse('Job execution failed.', response))
               })
           )
         }

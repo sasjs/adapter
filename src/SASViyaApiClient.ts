@@ -426,10 +426,10 @@ export class SASViyaApiClient {
    * @param linesOfCode - an array of code lines to execute.
    * @param contextName - the context to execute the code in.
    * @param accessToken - an access token for an authorized user.
-   * @param sessionId - optional session ID to reuse.
    * @param data - execution data.
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
+   * @param waitForResult - when set to true, function will return the session
    */
   public async executeScript(
     jobPath: string,
@@ -437,6 +437,7 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string,
     data = null,
+    debug: boolean = false,
     expectWebout = false,
     waitForResult = true
   ): Promise<any> {
@@ -467,7 +468,7 @@ export class SASViyaApiClient {
         _OMITTEXTLOG: true
       }
 
-      if (this.debug) {
+      if (debug) {
         jobArguments['_OMITTEXTLOG'] = false
         jobArguments['_OMITSESSIONRESULTS'] = false
         jobArguments['_DEBUG'] = 131
@@ -535,7 +536,7 @@ export class SASViyaApiClient {
         return session
       }
 
-      if (this.debug) {
+      if (debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
         console.log(
           `You can monitor the job progress at '${this.serverUrl}${
@@ -558,7 +559,7 @@ export class SASViyaApiClient {
 
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
-      if (this.debug && logLink) {
+      if (debug && logLink) {
         log = await this.request<any>(
           `${this.serverUrl}${logLink.href}/content?limit=10000`,
           {
@@ -606,12 +607,10 @@ export class SASViyaApiClient {
                   throw err
                 })
 
-              return Promise.reject(
-                new ErrorResponse('Job execution failed.', {
-                  status: 500,
-                  body: log
-                })
-              )
+              return Promise.reject({
+                status: 500,
+                log: log
+              })
             }
           }
           return {
@@ -635,6 +634,7 @@ export class SASViyaApiClient {
           contextName,
           accessToken,
           data,
+          debug,
           false,
           true
         )
@@ -955,6 +955,7 @@ export class SASViyaApiClient {
   public async executeComputeJob(
     sasJob: string,
     contextName: string,
+    debug?: boolean,
     data?: any,
     accessToken?: string,
     waitForResult = true,
@@ -1041,6 +1042,7 @@ export class SASViyaApiClient {
       contextName,
       accessToken,
       data,
+      debug,
       expectWebout,
       waitForResult
     )
