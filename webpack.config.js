@@ -47,6 +47,7 @@ const browserConfig = {
 const nodeConfig = {
   ...browserConfig,
   target: 'node',
+  entry: './node/index.ts',
   output: {
     ...browserConfig.output,
     path: path.resolve(__dirname, 'build', 'node')
