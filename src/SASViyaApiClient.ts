@@ -154,6 +154,7 @@ export class SASViyaApiClient {
           context.name,
           accessToken,
           null,
+          false,
           true,
           true
         ).catch((err) => err)
@@ -164,30 +165,27 @@ export class SASViyaApiClient {
     for (const promise of promises) results.push(await promise())
 
     results.forEach((result: any, index: number) => {
-      if (result && result.error && result.error.details) {
+      if (result && result.log) {
         try {
-          const resultParsed = result.error.details
+          const resultParsed = result.log
+          let sysUserId = ''
 
-          if (resultParsed && resultParsed.body) {
-            let sysUserId = ''
+          const sysUserIdLog = resultParsed
+            .split('\n')
+            .find((line: string) => line.startsWith('SYSUSERID='))
 
-            const sysUserIdLog = resultParsed.body
-              .split('\n')
-              .find((line: string) => line.startsWith('SYSUSERID='))
+          if (sysUserIdLog) {
+            sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
 
-            if (sysUserIdLog) {
-              sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
-
-              executableContexts.push({
-                createdBy: contextsList[index].createdBy,
-                id: contextsList[index].id,
-                name: contextsList[index].name,
-                version: contextsList[index].version,
-                attributes: {
-                  sysUserId
-                }
-              })
-            }
+            executableContexts.push({
+              createdBy: contextsList[index].createdBy,
+              id: contextsList[index].id,
+              name: contextsList[index].name,
+              version: contextsList[index].version,
+              attributes: {
+                sysUserId
+              }
+            })
           }
         } catch (error) {
           throw error
