@@ -2,7 +2,7 @@
   "name": "@sasjs/adapter",
   "description": "JavaScript adapter for SAS",
   "scripts": {
-    "build": "rimraf build && rimraf node && mkdir node && cp -r src/* node && webpack && rimraf build/src",
+    "build": "rimraf build && rimraf node && mkdir node && cp -r src/* node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && cp ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --write 'src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}'",
