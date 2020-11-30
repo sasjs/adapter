@@ -712,7 +712,7 @@ export default class SASjs {
    * @param accessToken - a valid access token that is authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
-   * @param pollOptions - an object that represents poll interval and maximum amount of attempts.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async startComputeJob(
     sasJob: string,

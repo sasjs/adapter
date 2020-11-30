@@ -429,7 +429,7 @@ export class SASViyaApiClient {
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
-   * @param pollOptions - an object that represents poll interval and maximum amount of attempts.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async executeScript(
     jobPath: string,
@@ -1246,6 +1246,7 @@ export class SASViyaApiClient {
     this.folderMap.set(path, itemsAtRoot)
   }
 
+  // REFACTOR: set default value for 'pollOptions' attribute
   private async pollJobState(
     postedJob: any,
     etag: string | null,
