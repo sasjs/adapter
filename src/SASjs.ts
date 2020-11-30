@@ -32,7 +32,8 @@ import {
   CsrfToken,
   UploadFile,
   EditContextInput,
-  ErrorResponse
+  ErrorResponse,
+  PollOptions
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -711,13 +712,15 @@ export default class SASjs {
    * @param accessToken - a valid access token that is authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async startComputeJob(
     sasJob: string,
     data: any,
     config: any = {},
     accessToken?: string,
-    waitForResult?: boolean
+    waitForResult?: boolean,
+    pollOptions?: PollOptions
   ) {
     config = {
       ...this.sasjsConfig,
@@ -738,7 +741,8 @@ export default class SASjs {
       data,
       accessToken,
       !!waitForResult,
-      false
+      false,
+      pollOptions
     )
   }
 

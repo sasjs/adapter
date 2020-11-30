@@ -17,7 +17,8 @@ import {
   CsrfToken,
   EditContextInput,
   ErrorResponse,
-  JobDefinition
+  JobDefinition,
+  PollOptions
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
@@ -428,6 +429,7 @@ export class SASViyaApiClient {
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async executeScript(
     jobPath: string,
@@ -437,7 +439,8 @@ export class SASViyaApiClient {
     data = null,
     debug: boolean = false,
     expectWebout = false,
-    waitForResult = true
+    waitForResult = true,
+    pollOptions?: PollOptions
   ): Promise<any> {
     try {
       const headers: any = {
@@ -543,7 +546,12 @@ export class SASViyaApiClient {
         )
       }
 
-      const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
+      const jobStatus = await this.pollJobState(
+        postedJob,
+        etag,
+        accessToken,
+        pollOptions
+      )
 
       const { result: currentJob } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
@@ -949,6 +957,7 @@ export class SASViyaApiClient {
    * @param accessToken - an optional access token for an authorized user.
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -957,7 +966,8 @@ export class SASViyaApiClient {
     data?: any,
     accessToken?: string,
     waitForResult = true,
-    expectWebout = false
+    expectWebout = false,
+    pollOptions?: PollOptions
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1042,7 +1052,8 @@ export class SASViyaApiClient {
       data,
       debug,
       expectWebout,
-      waitForResult
+      waitForResult,
+      pollOptions
     )
   }
 
@@ -1235,13 +1246,21 @@ export class SASViyaApiClient {
     this.folderMap.set(path, itemsAtRoot)
   }
 
+  // REFACTOR: set default value for 'pollOptions' attribute
   private async pollJobState(
     postedJob: any,
     etag: string | null,
-    accessToken?: string
+    accessToken?: string,
+    pollOptions?: PollOptions
   ) {
-    const MAX_POLL_COUNT = 1000
-    const POLL_INTERVAL = 100
+    let POLL_INTERVAL = 100
+    let MAX_POLL_COUNT = 1000
+
+    if (pollOptions) {
+      POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
+      MAX_POLL_COUNT = pollOptions.MAX_POLL_COUNT || MAX_POLL_COUNT
+    }
+
     let postedJobState = ''
     let pollCount = 0
     const headers: any = {
