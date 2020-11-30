@@ -957,7 +957,7 @@ export class SASViyaApiClient {
    * @param accessToken - an optional access token for an authorized user.
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
-   * @param pollOptions - an object that represents poll interval and maximum amount of attempts.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -1252,12 +1252,12 @@ export class SASViyaApiClient {
     accessToken?: string,
     pollOptions?: PollOptions
   ) {
-    let MAX_POLL_COUNT = 1000
     let POLL_INTERVAL = 100
+    let MAX_POLL_COUNT = 1000
 
     if (pollOptions) {
-      MAX_POLL_COUNT = pollOptions.MAX_POLL_COUNT
-      POLL_INTERVAL = pollOptions.POLL_INTERVAL
+      POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
+      MAX_POLL_COUNT = pollOptions.MAX_POLL_COUNT || MAX_POLL_COUNT
     }
 
     let postedJobState = ''
