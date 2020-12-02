@@ -25,7 +25,7 @@ export const computeTests = (adapter: SASjs): TestSuite => ({
       },
       assertion: (res: any) => {
         const expectedProperties = ["id", "state", "creationTimeStamp", "jobConditionCode"]
-        return validate(expectedProperties, res);
+        return validate(expectedProperties, res.result);
       }
     }
   ]
