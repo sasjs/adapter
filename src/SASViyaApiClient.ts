@@ -589,7 +589,7 @@ export class SASViyaApiClient {
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
       } else {
-        return currentJob
+        return { result: currentJob, log }
       }
 
       if (resultLink) {
