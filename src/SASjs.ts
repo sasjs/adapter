@@ -208,11 +208,11 @@ export default class SASjs {
 
   /**
    * Executes the sas code against given sas server
-   * @param fileName - name of the file to run.
+   * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
    * @param linesOfCode - lines of sas code from the file to run.
-   * @param contextName - context name override on which code will be run.
-   * @param accessToken - the access tokne to authorizing the request.
-   * @param debug - debug flag override
+   * @param contextName - context name on which code will be run on the server.
+   * @param accessToken - (optional) the access token for authorizing the request.
+   * @param debug - (optional) if true, global debug config will be overriden
    */
   public async executeScriptSASViya(
     fileName: string,

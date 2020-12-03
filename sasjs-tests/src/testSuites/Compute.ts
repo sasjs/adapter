@@ -80,7 +80,6 @@ export const computeTests = (adapter: SASjs): TestSuite => ({
 });
 
 const validateLog = (text: string, log: string): boolean => {
-  console.log(`[JSON.stringify(log)]`, JSON.stringify(log))
   const isValid = JSON.stringify(log).includes(text)
 
   return isValid
