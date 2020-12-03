@@ -206,11 +206,20 @@ export default class SASjs {
     return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
 
+  /**
+   * Executes the sas code against given sas server
+   * @param fileName - name of the file to run.
+   * @param linesOfCode - lines of sas code from the file to run.
+   * @param contextName - context name override on which code will be run.
+   * @param accessToken - the access tokne to authorizing the request.
+   * @param debug - debug flag override
+   */
   public async executeScriptSASViya(
     fileName: string,
     linesOfCode: string[],
     contextName: string,
-    accessToken?: string
+    accessToken?: string,
+    debug?: boolean
   ) {
     this.isMethodSupported('executeScriptSASViya', ServerType.SASViya)
 
@@ -220,7 +229,7 @@ export default class SASjs {
       contextName,
       accessToken,
       null,
-      this.sasjsConfig.debug
+      debug ? debug : this.sasjsConfig.debug
     )
   }
 
