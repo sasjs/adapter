@@ -1238,7 +1238,7 @@ export class SASViyaApiClient {
       throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
     const { result: members } = await this.request<{ items: any[] }>(
-      `${this.serverUrl}/folders/folders/${folder.id}/members`,
+      `${this.serverUrl}/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
       requestInfo
     )
 
