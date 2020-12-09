@@ -96,12 +96,30 @@ export default class SASjs {
     )
   }
 
-  public async getAllContexts(accessToken: string) {
-    this.isMethodSupported('getAllContexts', ServerType.SASViya)
+  /**
+   * Gets compute contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getComputeContexts(accessToken: string) {
+    this.isMethodSupported('getComputeContexts', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.getAllContexts(accessToken)
+    return await this.sasViyaApiClient!.getComputeContexts(accessToken)
   }
 
+  /**
+   * Gets launcher contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getLauncherContexts(accessToken: string) {
+    this.isMethodSupported('getLauncherContexts', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
+  }
+
+  /**
+   * Gets executable compute contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
   public async getExecutableContexts(accessToken: string) {
     this.isMethodSupported('getExecutableContexts', ServerType.SASViya)
 
@@ -117,7 +135,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    * @param authorizedUsers - an optional list of authorized user IDs.
    */
-  public async createContext(
+  public async createComputeContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
@@ -125,9 +143,9 @@ export default class SASjs {
     accessToken: string,
     authorizedUsers?: string[]
   ) {
-    this.isMethodSupported('createContext', ServerType.SASViya)
+    this.isMethodSupported('createComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.createContext(
+    return await this.sasViyaApiClient!.createComputeContext(
       contextName,
       launchContextName,
       sharedAccountId,

@@ -97,7 +97,7 @@ export class SASViyaApiClient {
    * Returns all available compute contexts on this server.
    * @param accessToken - an access token for an authorized user.
    */
-  public async getAllContexts(accessToken?: string) {
+  public async getComputeContexts(accessToken?: string) {
     const headers: any = {
       'Content-Type': 'application/json'
     }
@@ -108,6 +108,35 @@ export class SASViyaApiClient {
 
     const { result: contexts } = await this.request<{ items: Context[] }>(
       `${this.serverUrl}/compute/contexts?limit=10000`,
+      { headers }
+    )
+
+    const contextsList = contexts && contexts.items ? contexts.items : []
+
+    return contextsList.map((context: any) => ({
+      createdBy: context.createdBy,
+      id: context.id,
+      name: context.name,
+      version: context.version,
+      attributes: {}
+    }))
+  }
+
+  /**
+   * Returns all available launcher contexts on this server.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getLauncherContexts(accessToken?: string) {
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const { result: contexts } = await this.request<{ items: Context[] }>(
+      `${this.serverUrl}/launcher/contexts?limit=10000`,
       { headers }
     )
 
@@ -247,7 +276,7 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    * @param authorizedUsers - an optional list of authorized user IDs.
    */
-  public async createContext(
+  public async createComputeContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
@@ -259,12 +288,30 @@ export class SASViyaApiClient {
       throw new Error('Context name is required.')
     }
 
-    if (!launchContextName) {
-      throw new Error('Launch context name is required.')
-    }
+    if (launchContextName) {
+      const launcherContexts = await this.getLauncherContexts(accessToken)
 
-    if (!sharedAccountId) {
-      throw new Error('Shared account ID is required.')
+      if (
+        !launcherContexts.find((context) => context.name === launchContextName)
+      ) {
+        const description = `The launcher context for ${launchContextName}`
+        const launchType = 'direct'
+
+        const newLauncherContext = await this.createLauncherContext(
+          launchContextName,
+          description,
+          launchType,
+          accessToken
+        ).catch((err) => {
+          throw new Error(`Error while creating launcher context. ${err}`)
+        })
+
+        if (newLauncherContext && newLauncherContext.name) {
+          launchContextName = newLauncherContext.name
+        } else {
+          throw new Error('Error while creating launcher context.')
+        }
+      }
     }
 
     const headers: any = {
@@ -275,15 +322,17 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
+    let attributes = { reuseServerProcesses: true } as object
+
+    if (sharedAccountId)
+      attributes = { ...attributes, runServerAs: sharedAccountId }
+
     const requestBody: any = {
       name: contextName,
       launchContext: {
-        contextName: launchContextName
+        contextName: launchContextName || ''
       },
-      attributes: {
-        reuseServerProcesses: true,
-        runServerAs: sharedAccountId
-      }
+      attributes
     }
 
     if (authorizedUsers && authorizedUsers.length) {
@@ -304,6 +353,51 @@ export class SASViyaApiClient {
 
     const { result: context } = await this.request<Context>(
       `${this.serverUrl}/compute/contexts`,
+      createContextRequest
+    )
+
+    return context
+  }
+
+  /**
+   * Creates a launcher context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param description - the description of the context to be created.
+   * @param launchType - launch type of the context to be created.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createLauncherContext(
+    contextName: string,
+    description: string,
+    launchType = 'direct',
+    accessToken?: string
+  ) {
+    if (!contextName) {
+      throw new Error('Context name is required.')
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    }
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    const requestBody: any = {
+      name: contextName,
+      description: description,
+      launchType
+    }
+
+    const createContextRequest: RequestInit = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    }
+
+    const { result: context } = await this.request<Context>(
+      `${this.serverUrl}/launcher/contexts`,
       createContextRequest
     )
 
