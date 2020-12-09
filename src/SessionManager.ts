@@ -168,7 +168,11 @@ export class SessionManager {
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
     return new Promise(async (resolve, _) => {
-      if (sessionState === 'pending') {
+      if (
+        sessionState === 'pending' ||
+        sessionState === 'running' ||
+        sessionState === ''
+      ) {
         if (stateLink) {
           if (this.debug) {
             console.log('Polling session status... \n') // ?
