@@ -156,6 +156,29 @@ export default class SASjs {
   }
 
   /**
+   * Creates a launcher context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param description - the description of the context to be created.
+   * @param launchType - launch type of the context to be created.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createLauncherContext(
+    contextName: string,
+    description: string,
+    launchType: string,
+    accessToken: string
+  ) {
+    this.isMethodSupported('createLauncherContext', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.createLauncherContext(
+      contextName,
+      description,
+      launchType,
+      accessToken
+    )
+  }
+
+  /**
    * Updates a compute context on the given server.
    * @param contextName - the original name of the context to be deleted.
    * @param editedContext - an object with the properties to be updated.
