@@ -50,7 +50,7 @@
     "tslint-config-prettier": "^1.18.0",
     "typedoc": "^0.17.8",
     "typedoc-neo-theme": "^1.0.10",
-    "typedoc-plugin-external-module-name": "^4.0.3",
+    "typedoc-plugin-external-module-name": "^4.0.4",
     "typescript": "^3.9.7",
     "webpack": "^4.44.2",
     "webpack-cli": "^4.2.0"
