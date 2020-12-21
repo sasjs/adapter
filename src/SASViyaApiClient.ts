@@ -22,6 +22,7 @@ import {
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
+import { ContextManager } from './ContextManager'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -45,6 +46,7 @@ export class SASViyaApiClient {
     this.contextName,
     this.setCsrfToken
   )
+  private contextManager = new ContextManager(this.serverUrl, this.setCsrfToken)
   private folderMap = new Map<string, Job[]>()
 
   public get debug() {
@@ -98,28 +100,7 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async getComputeContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    )
-
-    const contextsList = contexts && contexts.items ? contexts.items : []
-
-    return contextsList.map((context: any) => ({
-      createdBy: context.createdBy,
-      id: context.id,
-      name: context.name,
-      version: context.version,
-      attributes: {}
-    }))
+    return await this.contextManager.getComputeContexts(accessToken)
   }
 
   /**
@@ -127,28 +108,7 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async getLauncherContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/launcher/contexts?limit=10000`,
-      { headers }
-    )
-
-    const contextsList = contexts && contexts.items ? contexts.items : []
-
-    return contextsList.map((context: any) => ({
-      createdBy: context.createdBy,
-      id: context.id,
-      name: context.name,
-      version: context.version,
-      attributes: {}
-    }))
+    return await this.contextManager.getLauncherContexts(accessToken)
   }
 
   /**
@@ -156,74 +116,10 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async getExecutableContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    ).catch((err) => {
-      throw err
-    })
-
-    const contextsList = contexts.items || []
-    const executableContexts: any[] = []
-
-    const promises = contextsList.map((context: any) => {
-      const linesOfCode = ['%put &=sysuserid;']
-
-      return () =>
-        this.executeScript(
-          `test-${context.name}`,
-          linesOfCode,
-          context.name,
-          accessToken,
-          null,
-          false,
-          true,
-          true
-        ).catch((err) => err)
-    })
-
-    let results: any[] = []
-
-    for (const promise of promises) results.push(await promise())
-
-    results.forEach((result: any, index: number) => {
-      if (result && result.log) {
-        try {
-          const resultParsed = result.log
-          let sysUserId = ''
-
-          const sysUserIdLog = resultParsed
-            .split('\n')
-            .find((line: string) => line.startsWith('SYSUSERID='))
-
-          if (sysUserIdLog) {
-            sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
-
-            executableContexts.push({
-              createdBy: contextsList[index].createdBy,
-              id: contextsList[index].id,
-              name: contextsList[index].name,
-              version: contextsList[index].version,
-              attributes: {
-                sysUserId
-              }
-            })
-          }
-        } catch (error) {
-          throw error
-        }
-      }
-    })
-
-    return executableContexts
+    return await this.contextManager.getExecutableContexts(
+      this.executeScript,
+      accessToken
+    )
   }
 
   /**
@@ -284,79 +180,14 @@ export class SASViyaApiClient {
     accessToken?: string,
     authorizedUsers?: string[]
   ) {
-    if (!contextName) {
-      throw new Error('Context name is required.')
-    }
-
-    if (launchContextName) {
-      const launcherContexts = await this.getLauncherContexts(accessToken)
-
-      if (
-        !launcherContexts.find((context) => context.name === launchContextName)
-      ) {
-        const description = `The launcher context for ${launchContextName}`
-        const launchType = 'direct'
-
-        const newLauncherContext = await this.createLauncherContext(
-          launchContextName,
-          description,
-          launchType,
-          accessToken
-        ).catch((err) => {
-          throw new Error(`Error while creating launcher context. ${err}`)
-        })
-
-        if (newLauncherContext && newLauncherContext.name) {
-          launchContextName = newLauncherContext.name
-        } else {
-          throw new Error('Error while creating launcher context.')
-        }
-      }
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    let attributes = { reuseServerProcesses: true } as object
-
-    if (sharedAccountId)
-      attributes = { ...attributes, runServerAs: sharedAccountId }
-
-    const requestBody: any = {
-      name: contextName,
-      launchContext: {
-        contextName: launchContextName || ''
-      },
-      attributes
-    }
-
-    if (authorizedUsers && authorizedUsers.length) {
-      requestBody['authorizedUsers'] = authorizedUsers
-    } else {
-      requestBody['authorizeAllAuthenticatedUsers'] = true
-    }
-
-    if (autoExecLines) {
-      requestBody.environment = { autoExecLines }
-    }
-
-    const createContextRequest: RequestInit = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    }
-
-    const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts`,
-      createContextRequest
+    return await this.contextManager.createComputeContext(
+      contextName,
+      launchContextName,
+      sharedAccountId,
+      autoExecLines,
+      accessToken,
+      authorizedUsers
     )
-
-    return context
   }
 
   /**
@@ -372,36 +203,12 @@ export class SASViyaApiClient {
     launchType = 'direct',
     accessToken?: string
   ) {
-    if (!contextName) {
-      throw new Error('Context name is required.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const requestBody: any = {
-      name: contextName,
-      description: description,
-      launchType
-    }
-
-    const createContextRequest: RequestInit = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    }
-
-    const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/launcher/contexts`,
-      createContextRequest
+    return await this.contextManager.createLauncherContext(
+      contextName,
+      description,
+      launchType,
+      accessToken
     )
-
-    return context
   }
 
   /**
@@ -415,70 +222,10 @@ export class SASViyaApiClient {
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    let originalContext
-
-    originalContext = await this.getComputeContextByName(
+    return await this.contextManager.editContext(
       contextName,
+      editedContext,
       accessToken
-    ).catch((err) => {
-      throw err
-    })
-
-    // Try to find context by id, when context name has been changed.
-    if (!originalContext) {
-      originalContext = await this.getComputeContextById(
-        editedContext.id!,
-        accessToken
-      ).catch((err) => {
-        throw err
-      })
-    }
-
-    const { result: context, etag } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${originalContext.id}`,
-      {
-        headers
-      }
-    ).catch((err) => {
-      if (err && err.status === 404) {
-        throw new Error(
-          `The context '${contextName}' was not found on this server.`
-        )
-      }
-
-      throw err
-    })
-
-    // An If-Match header with the value of the last ETag for the context
-    // is required to be able to update it
-    // https://developer.sas.com/apis/rest/Compute/#update-a-context-definition
-    headers['If-Match'] = etag
-
-    const updateContextRequest: RequestInit = {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({
-        ...context,
-        ...editedContext,
-        attributes: { ...context.attributes, ...editedContext.attributes }
-      })
-    }
-
-    return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${context.id}`,
-      updateContextRequest
     )
   }
 
@@ -488,29 +235,7 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async deleteContext(contextName: string, accessToken?: string) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const context = await this.getComputeContextByName(contextName, accessToken)
-
-    const deleteContextRequest: RequestInit = {
-      method: 'DELETE',
-      headers
-    }
-
-    return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${context.id}`,
-      deleteContextRequest
-    )
+    return await this.contextManager.deleteContext(contextName, accessToken)
   }
 
   /**
@@ -1504,26 +1229,10 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string
   ): Promise<Context> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
-      { headers }
+    return await this.contextManager.getComputeContextByName(
+      contextName,
+      accessToken
     )
-
-    if (!contexts || !(contexts.items && contexts.items.length)) {
-      throw new Error(
-        `The context '${contextName}' was not found at '${this.serverUrl}'.`
-      )
-    }
-
-    return contexts.items[0]
   }
 
   /**
@@ -1535,22 +1244,10 @@ export class SASViyaApiClient {
     contextId: string,
     accessToken?: string
   ): Promise<ContextAllAttributes> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: context } = await this.request<ContextAllAttributes>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
-      { headers }
-    ).catch((err) => {
-      throw err
-    })
-
-    return context
+    return await this.contextManager.getComputeContextById(
+      contextId,
+      accessToken
+    )
   }
 
   /**
