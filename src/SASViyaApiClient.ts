@@ -16,12 +16,13 @@ import {
   Folder,
   CsrfToken,
   EditContextInput,
-  ErrorResponse,
   JobDefinition,
   PollOptions
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
+import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -459,6 +460,26 @@ export class SASViyaApiClient {
         })
 
       executionSessionId = session!.id
+
+      const { result: jobIdVariable } = await this.sessionManager.getVariable(
+        executionSessionId,
+        'SYSJOBID',
+        accessToken
+      )
+
+      if (jobIdVariable && jobIdVariable.value) {
+        const relativeJobPath = this.rootFolderName
+          ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
+          : jobPath
+
+        const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
+
+        logger.info(
+          `Triggered '${relativeJobPath}' with PID ${
+            jobIdVariable.value
+          } at ${timestampToYYYYMMDDHHMMSS()}`
+        )
+      }
 
       const jobArguments: { [key: string]: any } = {
         _contextName: contextName,
