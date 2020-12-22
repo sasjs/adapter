@@ -1,0 +1,9 @@
+groups:
+  - name: SASjs Devs # name of the group
+    reviewers: 1 # how many reviewers do you want to assign?
+    usernames: # github usernames of the reviewers
+      - krishna-acondy
+      - YuryShkoda
+      - saadjutt01
+      - medjedovicm
+      - allanbowe
