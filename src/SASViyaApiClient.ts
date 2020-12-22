@@ -1359,8 +1359,13 @@ export class SASViyaApiClient {
     return uploadedFiles
   }
 
-  private async getFolderUri(folderPath: string, accessToken?: string) {
-    const url = '/folders/folders/@item?path=' + folderPath
+  private async getFolderDetails(
+    folderPath: string,
+    accessToken?: string
+  ): Promise<Folder | undefined> {
+    const url = isUri(folderPath)
+      ? folderPath
+      : `/folders/folders/@item?path=${folderPath}`
     const requestInfo: any = {
       method: 'GET'
     }
@@ -1375,7 +1380,15 @@ export class SASViyaApiClient {
     })
 
     if (!folder) return undefined
-    return `/folders/folders/${folder.id}`
+    return folder
+  }
+
+  private async getFolderUri(folderPath: string, accessToken?: string) {
+    const folderDetails = await this.getFolderDetails(folderPath, accessToken)
+
+    if (!folderDetails) return undefined
+
+    return `/folders/folders/${folderDetails.id}`
   }
 
   private async getRecycleBinUri(accessToken: string) {
@@ -1457,6 +1470,47 @@ export class SASViyaApiClient {
     })
 
     return context
+  }
+
+  /**
+   * Lists a children folders for given Viya folder.
+   * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async listFolder(sourceFolder: string, accessToken?: string) {
+    // checks if 'sourceFolder' is already a URI
+    const sourceFolderUri = isUri(sourceFolder)
+      ? sourceFolder
+      : await this.getFolderUri(sourceFolder, accessToken)
+
+    const requestInfo = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      }
+    }
+
+    const url = sourceFolderUri
+
+    const { result: members } = await this.request<{ items: any[] }>(
+      `${this.serverUrl}${url}/members`,
+      requestInfo
+    ).catch((err) => {
+      if (err.code && err.code === 'ENOTFOUND') {
+        const notFoundError = {
+          body: JSON.stringify({
+            message: `Folder '${sourceFolder.split('/').pop()}' was not found.`
+          })
+        }
+
+        throw notFoundError
+      }
+
+      throw err
+    })
+
+    return members.items.map((item: any) => item.name)
   }
 
   /**
