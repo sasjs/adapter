@@ -441,7 +441,8 @@ export class SASViyaApiClient {
     debug: boolean = false,
     expectWebout = false,
     waitForResult = true,
-    pollOptions?: PollOptions
+    pollOptions?: PollOptions,
+    printPid = false
   ): Promise<any> {
     try {
       const headers: any = {
@@ -461,24 +462,26 @@ export class SASViyaApiClient {
 
       executionSessionId = session!.id
 
-      const { result: jobIdVariable } = await this.sessionManager.getVariable(
-        executionSessionId,
-        'SYSJOBID',
-        accessToken
-      )
-
-      if (jobIdVariable && jobIdVariable.value) {
-        const relativeJobPath = this.rootFolderName
-          ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
-          : jobPath
-
-        const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
-
-        logger.info(
-          `Triggered '${relativeJobPath}' with PID ${
-            jobIdVariable.value
-          } at ${timestampToYYYYMMDDHHMMSS()}`
+      if (printPid) {
+        const { result: jobIdVariable } = await this.sessionManager.getVariable(
+          executionSessionId,
+          'SYSJOBID',
+          accessToken
         )
+
+        if (jobIdVariable && jobIdVariable.value) {
+          const relativeJobPath = this.rootFolderName
+            ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
+            : jobPath
+
+          const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
+
+          logger.info(
+            `Triggered '${relativeJobPath}' with PID ${
+              jobIdVariable.value
+            } at ${timestampToYYYYMMDDHHMMSS()}`
+          )
+        }
       }
 
       const jobArguments: { [key: string]: any } = {
@@ -988,7 +991,8 @@ export class SASViyaApiClient {
     accessToken?: string,
     waitForResult = true,
     expectWebout = false,
-    pollOptions?: PollOptions
+    pollOptions?: PollOptions,
+    printPid = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1074,7 +1078,8 @@ export class SASViyaApiClient {
       debug,
       expectWebout,
       waitForResult,
-      pollOptions
+      pollOptions,
+      printPid
     )
   }
 

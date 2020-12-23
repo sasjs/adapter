@@ -730,7 +730,8 @@ export default class SASjs {
     config: any = {},
     accessToken?: string,
     waitForResult?: boolean,
-    pollOptions?: PollOptions
+    pollOptions?: PollOptions,
+    printPid = false
   ) {
     config = {
       ...this.sasjsConfig,
@@ -752,7 +753,8 @@ export default class SASjs {
       accessToken,
       !!waitForResult,
       false,
-      pollOptions
+      pollOptions,
+      printPid
     )
   }
 
