@@ -16,13 +16,14 @@ import {
   Folder,
   CsrfToken,
   EditContextInput,
-  ErrorResponse,
   JobDefinition,
   PollOptions
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
+import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -249,6 +250,7 @@ export class SASViyaApiClient {
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    */
   public async executeScript(
     jobPath: string,
@@ -259,7 +261,8 @@ export class SASViyaApiClient {
     debug: boolean = false,
     expectWebout = false,
     waitForResult = true,
-    pollOptions?: PollOptions
+    pollOptions?: PollOptions,
+    printPid = false
   ): Promise<any> {
     try {
       const headers: any = {
@@ -278,6 +281,28 @@ export class SASViyaApiClient {
         })
 
       executionSessionId = session!.id
+
+      if (printPid) {
+        const { result: jobIdVariable } = await this.sessionManager.getVariable(
+          executionSessionId,
+          'SYSJOBID',
+          accessToken
+        )
+
+        if (jobIdVariable && jobIdVariable.value) {
+          const relativeJobPath = this.rootFolderName
+            ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
+            : jobPath
+
+          const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
+
+          logger.info(
+            `Triggered '${relativeJobPath}' with PID ${
+              jobIdVariable.value
+            } at ${timestampToYYYYMMDDHHMMSS()}`
+          )
+        }
+      }
 
       const jobArguments: { [key: string]: any } = {
         _contextName: contextName,
@@ -777,6 +802,7 @@ export class SASViyaApiClient {
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -786,7 +812,8 @@ export class SASViyaApiClient {
     accessToken?: string,
     waitForResult = true,
     expectWebout = false,
-    pollOptions?: PollOptions
+    pollOptions?: PollOptions,
+    printPid = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -872,7 +899,8 @@ export class SASViyaApiClient {
       debug,
       expectWebout,
       waitForResult,
-      pollOptions
+      pollOptions,
+      printPid
     )
   }
 
