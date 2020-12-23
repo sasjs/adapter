@@ -9,3 +9,7 @@ export interface Session {
   }
   creationTimeStamp: string
 }
+
+export interface SessionVariable {
+  value: string
+}
