@@ -325,7 +325,6 @@ export class ContextManager {
     executeScript: Function,
     accessToken?: string
   ) {
-    console.log(`[324]`, 324)
     const headers: any = {
       'Content-Type': 'application/json'
     }
@@ -344,13 +343,11 @@ export class ContextManager {
     const contextsList = contexts.items || []
     const executableContexts: any[] = []
 
-    console.log(`[this.sasViyaApiClient]`, this.sasViyaApiClient)
-
     const promises = contextsList.map((context: any) => {
       const linesOfCode = ['%put &=sysuserid;']
 
       return () =>
-        this.sasViyaApiClient!.executeScript(
+        executeScript(
           `test-${context.name}`,
           linesOfCode,
           context.name,
@@ -365,8 +362,6 @@ export class ContextManager {
     let results: any[] = []
 
     for (const promise of promises) results.push(await promise())
-
-    console.log(`[results]`, results)
 
     results.forEach((result: any, index: number) => {
       if (result && result.log) {

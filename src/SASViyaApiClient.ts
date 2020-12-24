@@ -117,8 +117,10 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async getExecutableContexts(accessToken?: string) {
+    const bindedExecuteScript = this.executeScript.bind(this)
+
     return await this.contextManager.getExecutableContexts(
-      this.executeScript,
+      bindedExecuteScript,
       accessToken
     )
   }
