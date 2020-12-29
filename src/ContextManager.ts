@@ -422,6 +422,14 @@ export class ContextManager {
       throw new Error('Invalid context name.')
     }
 
+    if (this.defaultComputeContexts.includes(contextName)) {
+      throw new Error(
+        `Deleting default SAS compute contexts is not allowed.\nDefault contexts:${this.defaultComputeContexts.map(
+          (context, i) => `\n${i + 1}. ${context}`
+        )}`
+      )
+    }
+
     const headers: any = {
       'Content-Type': 'application/json'
     }
