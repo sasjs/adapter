@@ -9,8 +9,6 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { prefixMessage } from '@sasjs/utils/error'
 
 export class ContextManager {
-  private sasViyaApiClient: SASViyaApiClient | null = null
-
   constructor(
     private serverUrl: string,
     private setCsrfToken: (csrfToken: CsrfToken) => void
@@ -74,7 +72,6 @@ export class ContextManager {
     }))
   }
 
-  // TODO: Check if context already exist, reject with the error if so
   public async createComputeContext(
     contextName: string,
     launchContextName: string,
@@ -85,6 +82,14 @@ export class ContextManager {
   ) {
     if (!contextName) {
       throw new Error('Context name is required.')
+    }
+
+    const existingComputeContexts = await this.getComputeContexts(accessToken)
+
+    if (
+      existingComputeContexts.find((context) => context.name === contextName)
+    ) {
+      throw new Error(`Compute context '${contextName}' already exists.`)
     }
 
     if (launchContextName) {
