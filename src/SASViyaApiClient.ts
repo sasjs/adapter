@@ -105,6 +105,13 @@ export class SASViyaApiClient {
   }
 
   /**
+   * Returns default(system) compute contexts.
+   */
+  public getDefaultComputeContexts() {
+    return this.contextManager.defaultComputeContexts
+  }
+
+  /**
    * Returns all available launcher contexts on this server.
    * @param accessToken - an access token for an authorized user.
    */
@@ -220,12 +227,12 @@ export class SASViyaApiClient {
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
-  public async editContext(
+  public async editComputeContext(
     contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    return await this.contextManager.editContext(
+    return await this.contextManager.editComputeContext(
       contextName,
       editedContext,
       accessToken

@@ -9,14 +9,23 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { prefixMessage } from '@sasjs/utils/error'
 
 export class ContextManager {
+  public defaultComputeContexts = [
+    'CAS Formats service compute context',
+    'SAS Model Manager compute context',
+    'SAS Studio compute context',
+    'SAS Visual Forecasting compute context',
+    'Data Mining compute context',
+    'SAS Job Execution compute context'
+  ]
+
+  private csrfToken: CsrfToken | null = null
+
   constructor(
     private serverUrl: string,
     private setCsrfToken: (csrfToken: CsrfToken) => void
   ) {
     if (serverUrl) isUrl(serverUrl) // ?
   }
-
-  private csrfToken: CsrfToken | null = null
 
   public async getComputeContexts(accessToken?: string) {
     const headers: any = {
@@ -206,15 +215,21 @@ export class ContextManager {
     return context
   }
 
-  // TODO: Check if trying to edit one of default SAS contexts, reject with the error if so
-  // TODO: rename to editComputeContext
-  public async editContext(
+  public async editComputeContext(
     contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
     if (!contextName) {
       throw new Error('Invalid context name.')
+    }
+
+    if (this.defaultComputeContexts.includes(contextName)) {
+      throw new Error(
+        `Editing default SAS compute contexts is not allowed.\nDefault contexts:${this.defaultComputeContexts.map(
+          (context, i) => `\n${i + 1}. ${context}`
+        )}`
+      )
     }
 
     const headers: any = {

@@ -117,6 +117,15 @@ export default class SASjs {
   }
 
   /**
+   * Gets default(system) launcher contexts.
+   */
+  public getDefaultComputeContexts() {
+    this.isMethodSupported('getDefaultComputeContexts', ServerType.SASViya)
+
+    return this.sasViyaApiClient!.getDefaultComputeContexts()
+  }
+
+  /**
    * Gets executable compute contexts.
    * @param accessToken - an access token for an authorized user.
    */
@@ -184,14 +193,14 @@ export default class SASjs {
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
-  public async editContext(
+  public async editComputeContext(
     contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    this.isMethodSupported('editContext', ServerType.SASViya)
+    this.isMethodSupported('editComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.editContext(
+    return await this.sasViyaApiClient!.editComputeContext(
       contextName,
       editedContext,
       accessToken
