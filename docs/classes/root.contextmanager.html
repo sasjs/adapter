@@ -97,6 +97,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="root.contextmanager.html#defaultcomputecontexts" class="tsd-kind-icon">defaultComputeContexts</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="root.contextmanager.html#defaultlaunchercontexts" class="tsd-kind-icon">defaultLauncherContexts</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -104,13 +105,14 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#createcomputecontext" class="tsd-kind-icon">createComputeContext</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#createlaunchercontext" class="tsd-kind-icon">createLauncherContext</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#deletecontext" class="tsd-kind-icon">deleteContext</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#deletecomputecontext" class="tsd-kind-icon">deleteComputeContext</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#editcomputecontext" class="tsd-kind-icon">editComputeContext</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#getcomputecontextbyid" class="tsd-kind-icon">getComputeContextById</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#getcomputecontextbyname" class="tsd-kind-icon">getComputeContextByName</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#getcomputecontexts" class="tsd-kind-icon">getComputeContexts</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#getexecutablecontexts" class="tsd-kind-icon">getExecutableContexts</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#getlaunchercontexts" class="tsd-kind-icon">getLauncherContexts</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="root.contextmanager.html#isdefaultcontext" class="tsd-kind-icon">isDefaultContext</a></li>
 							</ul>
 						</section>
 					</div>
@@ -129,8 +131,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L21">
-											ContextManager.ts:21
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L32">
+											ContextManager.ts:32
 										</a>
 									</li>
 								</ul>
@@ -172,12 +174,26 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="defaultcomputecontexts" class="tsd-anchor"></a>
 					<h3>default<wbr>Compute<wbr>Contexts</h3>
-					<div class="tsd-signature tsd-kind-icon">default<wbr>Compute<wbr>Contexts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = [&#x27;CAS Formats service compute context&#x27;,&#x27;SAS Model Manager compute context&#x27;,&#x27;SAS Studio compute context&#x27;,&#x27;SAS Visual Forecasting compute context&#x27;,&#x27;Data Mining compute context&#x27;,&#x27;SAS Job Execution compute context&#x27;]</span></div>
+					<div class="tsd-signature tsd-kind-icon">default<wbr>Compute<wbr>Contexts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = [&#x27;CAS Formats service compute context&#x27;,&#x27;Data Mining compute context&#x27;,&#x27;Import 9 service compute context&#x27;,&#x27;SAS Job Execution compute context&#x27;,&#x27;SAS Model Manager compute context&#x27;,&#x27;SAS Studio compute context&#x27;,&#x27;SAS Visual Forecasting compute context&#x27;]</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
 								<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L12">
 									ContextManager.ts:12
+								</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="defaultlaunchercontexts" class="tsd-anchor"></a>
+					<h3>default<wbr>Launcher<wbr>Contexts</h3>
+					<div class="tsd-signature tsd-kind-icon">default<wbr>Launcher<wbr>Contexts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = [&#x27;CAS Formats service launcher context&#x27;,&#x27;Data Mining launcher context&#x27;,&#x27;Import 9 service launcher context&#x27;,&#x27;Job Flow Execution launcher context&#x27;,&#x27;SAS Job Execution launcher context&#x27;,&#x27;SAS Model Manager launcher context&#x27;,&#x27;SAS Studio launcher context&#x27;,&#x27;SAS Visual Forecasting launcher context&#x27;]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L21">
+									ContextManager.ts:21
 								</a>
 							</li>
 						</ul>
@@ -197,8 +213,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L84">
-											ContextManager.ts:84
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L95">
+											ContextManager.ts:95
 										</a>
 									</li>
 								</ul>
@@ -239,8 +255,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L178">
-											ContextManager.ts:178
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L196">
+											ContextManager.ts:196
 										</a>
 									</li>
 								</ul>
@@ -265,18 +281,18 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="deletecontext" class="tsd-anchor"></a>
-					<h3>delete<wbr>Context</h3>
+					<a name="deletecomputecontext" class="tsd-anchor"></a>
+					<h3>delete<wbr>Compute<wbr>Context</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">delete<wbr>Context<span class="tsd-signature-symbol">(</span>contextName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, accessToken<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">delete<wbr>Compute<wbr>Context<span class="tsd-signature-symbol">(</span>contextName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, accessToken<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L420">
-											ContextManager.ts:420
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L447">
+											ContextManager.ts:447
 										</a>
 									</li>
 								</ul>
@@ -305,8 +321,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L218">
-											ContextManager.ts:218
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L250">
+											ContextManager.ts:250
 										</a>
 									</li>
 								</ul>
@@ -338,8 +354,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L322">
-											ContextManager.ts:322
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L351">
+											ContextManager.ts:351
 										</a>
 									</li>
 								</ul>
@@ -368,8 +384,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L294">
-											ContextManager.ts:294
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L323">
+											ContextManager.ts:323
 										</a>
 									</li>
 								</ul>
@@ -398,8 +414,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L30">
-											ContextManager.ts:30
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L41">
+											ContextManager.ts:41
 										</a>
 									</li>
 								</ul>
@@ -425,8 +441,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L344">
-											ContextManager.ts:344
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L373">
+											ContextManager.ts:373
 										</a>
 									</li>
 								</ul>
@@ -455,8 +471,8 @@
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L57">
-											ContextManager.ts:57
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L68">
+											ContextManager.ts:68
 										</a>
 									</li>
 								</ul>
@@ -468,6 +484,42 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="isdefaultcontext" class="tsd-anchor"></a>
+					<h3>is<wbr>Default<wbr>Context</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Default<wbr>Context<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, defaultContexts<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, errorMessage<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, listDefaults<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/ContextManager.ts#L514">
+											ContextManager.ts:514
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>context: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> defaultContexts: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = this.defaultComputeContexts</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> errorMessage: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> listDefaults: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -488,6 +540,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="root.contextmanager.html#defaultcomputecontexts" class="tsd-kind-icon">default<wbr>Compute<wbr>Contexts</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="root.contextmanager.html#defaultlaunchercontexts" class="tsd-kind-icon">default<wbr>Launcher<wbr>Contexts</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="root.contextmanager.html#createcomputecontext" class="tsd-kind-icon">create<wbr>Compute<wbr>Context</a>
 							</li>
@@ -495,7 +550,7 @@
 								<a href="root.contextmanager.html#createlaunchercontext" class="tsd-kind-icon">create<wbr>Launcher<wbr>Context</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="root.contextmanager.html#deletecontext" class="tsd-kind-icon">delete<wbr>Context</a>
+								<a href="root.contextmanager.html#deletecomputecontext" class="tsd-kind-icon">delete<wbr>Compute<wbr>Context</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="root.contextmanager.html#editcomputecontext" class="tsd-kind-icon">edit<wbr>Compute<wbr>Context</a>
@@ -514,6 +569,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="root.contextmanager.html#getlaunchercontexts" class="tsd-kind-icon">get<wbr>Launcher<wbr>Contexts</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="root.contextmanager.html#isdefaultcontext" class="tsd-kind-icon">is<wbr>Default<wbr>Context</a>
 							</li>
 						</ul>
 					</li>
