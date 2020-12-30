@@ -176,7 +176,7 @@ export class SessionManager {
       ) {
         if (stateLink) {
           if (this.debug) {
-            console.log('Polling session status... \n') // ?
+            console.log('Polling session status... \n')
           }
 
           const { result: state } = await this.requestSessionStatus<string>(
