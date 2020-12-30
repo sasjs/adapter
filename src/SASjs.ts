@@ -215,7 +215,10 @@ export default class SASjs {
   public async deleteComputeContext(contextName: string, accessToken?: string) {
     this.isMethodSupported('deleteComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.deleteComputeContext(contextName, accessToken)
+    return await this.sasViyaApiClient!.deleteComputeContext(
+      contextName,
+      accessToken
+    )
   }
 
   /**
