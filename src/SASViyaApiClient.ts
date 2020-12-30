@@ -244,8 +244,11 @@ export class SASViyaApiClient {
    * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextName: string, accessToken?: string) {
-    return await this.contextManager.deleteContext(contextName, accessToken)
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    return await this.contextManager.deleteComputeContext(
+      contextName,
+      accessToken
+    )
   }
 
   /**
