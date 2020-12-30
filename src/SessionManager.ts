@@ -1,5 +1,6 @@
-import { Session, Context, CsrfToken } from './types'
+import { Session, Context, CsrfToken, SessionVariable } from './types'
 import { asyncForEach, makeRequest, isUrl } from './utils'
+import { prefixMessage } from '@sasjs/utils/error'
 
 const MAX_SESSION_COUNT = 1
 const RETRY_LIMIT: number = 3
@@ -168,10 +169,14 @@ export class SessionManager {
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
     return new Promise(async (resolve, _) => {
-      if (sessionState === 'pending') {
+      if (
+        sessionState === 'pending' ||
+        sessionState === 'running' ||
+        sessionState === ''
+      ) {
         if (stateLink) {
           if (this.debug) {
-            console.log('Polling session status... \n') // ?
+            console.log('Polling session status... \n')
           }
 
           const { result: state } = await this.requestSessionStatus<string>(
@@ -259,6 +264,23 @@ export class SessionManager {
         return { result: INTERNAL_SAS_ERROR.message }
 
       throw err
+    })
+  }
+
+  async getVariable(sessionId: string, variable: string, accessToken?: string) {
+    const getSessionVariable = {
+      method: 'GET',
+      headers: this.getHeaders(accessToken)
+    }
+
+    return await this.request<SessionVariable>(
+      `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
+      getSessionVariable
+    ).catch((err) => {
+      throw prefixMessage(
+        err,
+        `Error while fetching session variable '${variable}'.`
+      )
     })
   }
 }

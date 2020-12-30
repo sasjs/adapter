@@ -16,11 +16,14 @@ import {
   Folder,
   CsrfToken,
   EditContextInput,
-  ErrorResponse,
-  JobDefinition
+  JobDefinition,
+  PollOptions
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
+import { ContextManager } from './ContextManager'
+import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -44,6 +47,7 @@ export class SASViyaApiClient {
     this.contextName,
     this.setCsrfToken
   )
+  private contextManager = new ContextManager(this.serverUrl, this.setCsrfToken)
   private folderMap = new Map<string, Job[]>()
 
   public get debug() {
@@ -96,29 +100,23 @@ export class SASViyaApiClient {
    * Returns all available compute contexts on this server.
    * @param accessToken - an access token for an authorized user.
    */
-  public async getAllContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
+  public async getComputeContexts(accessToken?: string) {
+    return await this.contextManager.getComputeContexts(accessToken)
+  }
 
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
+  /**
+   * Returns default(system) compute contexts.
+   */
+  public getDefaultComputeContexts() {
+    return this.contextManager.getDefaultComputeContexts
+  }
 
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    )
-
-    const contextsList = contexts && contexts.items ? contexts.items : []
-
-    return contextsList.map((context: any) => ({
-      createdBy: context.createdBy,
-      id: context.id,
-      name: context.name,
-      version: context.version,
-      attributes: {}
-    }))
+  /**
+   * Returns all available launcher contexts on this server.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getLauncherContexts(accessToken?: string) {
+    return await this.contextManager.getLauncherContexts(accessToken)
   }
 
   /**
@@ -126,76 +124,12 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    */
   public async getExecutableContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
+    const bindedExecuteScript = this.executeScript.bind(this)
 
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    ).catch((err) => {
-      throw err
-    })
-
-    const contextsList = contexts.items || []
-    const executableContexts: any[] = []
-
-    const promises = contextsList.map((context: any) => {
-      const linesOfCode = ['%put &=sysuserid;']
-
-      return () =>
-        this.executeScript(
-          `test-${context.name}`,
-          linesOfCode,
-          context.name,
-          accessToken,
-          null,
-          true,
-          true
-        ).catch((err) => err)
-    })
-
-    let results: any[] = []
-
-    for (const promise of promises) results.push(await promise())
-
-    results.forEach((result: any, index: number) => {
-      if (result && result.error && result.error.details) {
-        try {
-          const resultParsed = result.error.details
-
-          if (resultParsed && resultParsed.body) {
-            let sysUserId = ''
-
-            const sysUserIdLog = resultParsed.body
-              .split('\n')
-              .find((line: string) => line.startsWith('SYSUSERID='))
-
-            if (sysUserIdLog) {
-              sysUserId = sysUserIdLog.replace('SYSUSERID=', '')
-
-              executableContexts.push({
-                createdBy: contextsList[index].createdBy,
-                id: contextsList[index].id,
-                name: contextsList[index].name,
-                version: contextsList[index].version,
-                attributes: {
-                  sysUserId
-                }
-              })
-            }
-          }
-        } catch (error) {
-          throw error
-        }
-      }
-    })
-
-    return executableContexts
+    return await this.contextManager.getExecutableContexts(
+      bindedExecuteScript,
+      accessToken
+    )
   }
 
   /**
@@ -248,7 +182,7 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for an authorized user.
    * @param authorizedUsers - an optional list of authorized user IDs.
    */
-  public async createContext(
+  public async createComputeContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
@@ -256,59 +190,35 @@ export class SASViyaApiClient {
     accessToken?: string,
     authorizedUsers?: string[]
   ) {
-    if (!contextName) {
-      throw new Error('Context name is required.')
-    }
-
-    if (!launchContextName) {
-      throw new Error('Launch context name is required.')
-    }
-
-    if (!sharedAccountId) {
-      throw new Error('Shared account ID is required.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const requestBody: any = {
-      name: contextName,
-      launchContext: {
-        contextName: launchContextName
-      },
-      attributes: {
-        reuseServerProcesses: true,
-        runServerAs: sharedAccountId
-      }
-    }
-
-    if (authorizedUsers && authorizedUsers.length) {
-      requestBody['authorizedUsers'] = authorizedUsers
-    } else {
-      requestBody['authorizeAllAuthenticatedUsers'] = true
-    }
-
-    if (autoExecLines) {
-      requestBody.environment = { autoExecLines }
-    }
-
-    const createContextRequest: RequestInit = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    }
-
-    const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts`,
-      createContextRequest
+    return await this.contextManager.createComputeContext(
+      contextName,
+      launchContextName,
+      sharedAccountId,
+      autoExecLines,
+      accessToken,
+      authorizedUsers
     )
+  }
 
-    return context
+  /**
+   * Creates a launcher context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param description - the description of the context to be created.
+   * @param launchType - launch type of the context to be created.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createLauncherContext(
+    contextName: string,
+    description: string,
+    launchType = 'direct',
+    accessToken?: string
+  ) {
+    return await this.contextManager.createLauncherContext(
+      contextName,
+      description,
+      launchType,
+      accessToken
+    )
   }
 
   /**
@@ -317,75 +227,15 @@ export class SASViyaApiClient {
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
-  public async editContext(
+  public async editComputeContext(
     contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    let originalContext
-
-    originalContext = await this.getComputeContextByName(
+    return await this.contextManager.editComputeContext(
       contextName,
+      editedContext,
       accessToken
-    ).catch((err) => {
-      throw err
-    })
-
-    // Try to find context by id, when context name has been changed.
-    if (!originalContext) {
-      originalContext = await this.getComputeContextById(
-        editedContext.id!,
-        accessToken
-      ).catch((err) => {
-        throw err
-      })
-    }
-
-    const { result: context, etag } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${originalContext.id}`,
-      {
-        headers
-      }
-    ).catch((err) => {
-      if (err && err.status === 404) {
-        throw new Error(
-          `The context '${contextName}' was not found on this server.`
-        )
-      }
-
-      throw err
-    })
-
-    // An If-Match header with the value of the last ETag for the context
-    // is required to be able to update it
-    // https://developer.sas.com/apis/rest/Compute/#update-a-context-definition
-    headers['If-Match'] = etag
-
-    const updateContextRequest: RequestInit = {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({
-        ...context,
-        ...editedContext,
-        attributes: { ...context.attributes, ...editedContext.attributes }
-      })
-    }
-
-    return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${context.id}`,
-      updateContextRequest
     )
   }
 
@@ -394,29 +244,10 @@ export class SASViyaApiClient {
    * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextName: string, accessToken?: string) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
-
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const context = await this.getComputeContextByName(contextName, accessToken)
-
-    const deleteContextRequest: RequestInit = {
-      method: 'DELETE',
-      headers
-    }
-
-    return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${context.id}`,
-      deleteContextRequest
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    return await this.contextManager.deleteComputeContext(
+      contextName,
+      accessToken
     )
   }
 
@@ -430,6 +261,8 @@ export class SASViyaApiClient {
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    */
   public async executeScript(
     jobPath: string,
@@ -439,7 +272,9 @@ export class SASViyaApiClient {
     data = null,
     debug: boolean = false,
     expectWebout = false,
-    waitForResult = true
+    waitForResult = true,
+    pollOptions?: PollOptions,
+    printPid = false
   ): Promise<any> {
     try {
       const headers: any = {
@@ -458,6 +293,28 @@ export class SASViyaApiClient {
         })
 
       executionSessionId = session!.id
+
+      if (printPid) {
+        const { result: jobIdVariable } = await this.sessionManager.getVariable(
+          executionSessionId,
+          'SYSJOBID',
+          accessToken
+        )
+
+        if (jobIdVariable && jobIdVariable.value) {
+          const relativeJobPath = this.rootFolderName
+            ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
+            : jobPath
+
+          const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
+
+          logger.info(
+            `Triggered '${relativeJobPath}' with PID ${
+              jobIdVariable.value
+            } at ${timestampToYYYYMMDDHHMMSS()}`
+          )
+        }
+      }
 
       const jobArguments: { [key: string]: any } = {
         _contextName: contextName,
@@ -545,7 +402,12 @@ export class SASViyaApiClient {
         )
       }
 
-      const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
+      const jobStatus = await this.pollJobState(
+        postedJob,
+        etag,
+        accessToken,
+        pollOptions
+      )
 
       const { result: currentJob } = await this.request<Job>(
         `${this.serverUrl}/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
@@ -583,7 +445,7 @@ export class SASViyaApiClient {
       if (expectWebout) {
         resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
       } else {
-        return currentJob
+        return { job: currentJob, log }
       }
 
       if (resultLink) {
@@ -951,6 +813,8 @@ export class SASViyaApiClient {
    * @param accessToken - an optional access token for an authorized user.
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -959,7 +823,9 @@ export class SASViyaApiClient {
     data?: any,
     accessToken?: string,
     waitForResult = true,
-    expectWebout = false
+    expectWebout = false,
+    pollOptions?: PollOptions,
+    printPid = false
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1044,7 +910,9 @@ export class SASViyaApiClient {
       data,
       debug,
       expectWebout,
-      waitForResult
+      waitForResult,
+      pollOptions,
+      printPid
     )
   }
 
@@ -1229,7 +1097,7 @@ export class SASViyaApiClient {
       throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
     const { result: members } = await this.request<{ items: any[] }>(
-      `${this.serverUrl}/folders/folders/${folder.id}/members`,
+      `${this.serverUrl}/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
       requestInfo
     )
 
@@ -1237,13 +1105,21 @@ export class SASViyaApiClient {
     this.folderMap.set(path, itemsAtRoot)
   }
 
+  // REFACTOR: set default value for 'pollOptions' attribute
   private async pollJobState(
     postedJob: any,
     etag: string | null,
-    accessToken?: string
+    accessToken?: string,
+    pollOptions?: PollOptions
   ) {
-    const MAX_POLL_COUNT = 1000
-    const POLL_INTERVAL = 100
+    let POLL_INTERVAL = 100
+    let MAX_POLL_COUNT = 1000
+
+    if (pollOptions) {
+      POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
+      MAX_POLL_COUNT = pollOptions.MAX_POLL_COUNT || MAX_POLL_COUNT
+    }
+
     let postedJobState = ''
     let pollCount = 0
     const headers: any = {
@@ -1393,26 +1269,10 @@ export class SASViyaApiClient {
     contextName: string,
     accessToken?: string
   ): Promise<Context> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
-      { headers }
+    return await this.contextManager.getComputeContextByName(
+      contextName,
+      accessToken
     )
-
-    if (!contexts || !(contexts.items && contexts.items.length)) {
-      throw new Error(
-        `The context '${contextName}' was not found at '${this.serverUrl}'.`
-      )
-    }
-
-    return contexts.items[0]
   }
 
   /**
@@ -1424,22 +1284,10 @@ export class SASViyaApiClient {
     contextId: string,
     accessToken?: string
   ): Promise<ContextAllAttributes> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: context } = await this.request<ContextAllAttributes>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
-      { headers }
-    ).catch((err) => {
-      throw err
-    })
-
-    return context
+    return await this.contextManager.getComputeContextById(
+      contextId,
+      accessToken
+    )
   }
 
   /**
