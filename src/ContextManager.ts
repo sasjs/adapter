@@ -9,7 +9,7 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { prefixMessage } from '@sasjs/utils/error'
 
 export class ContextManager {
-  public defaultComputeContexts = [
+  private defaultComputeContexts = [
     'CAS Formats service compute context',
     'Data Mining compute context',
     'Import 9 service compute context',
@@ -18,7 +18,7 @@ export class ContextManager {
     'SAS Studio compute context',
     'SAS Visual Forecasting compute context'
   ]
-  public defaultLauncherContexts = [
+  private defaultLauncherContexts = [
     'CAS Formats service launcher context',
     'Data Mining launcher context',
     'Import 9 service launcher context',
@@ -30,6 +30,13 @@ export class ContextManager {
   ]
 
   private csrfToken: CsrfToken | null = null
+
+  get getDefaultComputeContexts() {
+    return this.defaultComputeContexts
+  }
+  get getDefaultLauncherContexts() {
+    return this.defaultLauncherContexts
+  }
 
   constructor(
     private serverUrl: string,

@@ -108,7 +108,7 @@ export class SASViyaApiClient {
    * Returns default(system) compute contexts.
    */
   public getDefaultComputeContexts() {
-    return this.contextManager.defaultComputeContexts
+    return this.contextManager.getDefaultComputeContexts
   }
 
   /**

@@ -31,8 +31,8 @@ describe('ContextManager', () => {
     () => {}
   )
 
-  const defaultComputeContexts = contextManager.defaultComputeContexts
-  const defaultLauncherContexts = contextManager.defaultLauncherContexts
+  const defaultComputeContexts = contextManager.getDefaultComputeContexts
+  const defaultLauncherContexts = contextManager.getDefaultLauncherContexts
 
   const getRandomDefaultComputeContext = () =>
     defaultComputeContexts[
