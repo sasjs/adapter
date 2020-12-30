@@ -212,10 +212,10 @@ export default class SASjs {
    * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextName: string, accessToken?: string) {
-    this.isMethodSupported('deleteContext', ServerType.SASViya)
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    this.isMethodSupported('deleteComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.deleteContext(contextName, accessToken)
+    return await this.sasViyaApiClient!.deleteComputeContext(contextName, accessToken)
   }
 
   /**
