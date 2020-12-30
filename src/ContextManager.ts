@@ -11,11 +11,22 @@ import { prefixMessage } from '@sasjs/utils/error'
 export class ContextManager {
   public defaultComputeContexts = [
     'CAS Formats service compute context',
+    'Data Mining compute context',
+    'Import 9 service compute context',
+    'SAS Job Execution compute context',
     'SAS Model Manager compute context',
     'SAS Studio compute context',
-    'SAS Visual Forecasting compute context',
-    'Data Mining compute context',
-    'SAS Job Execution compute context'
+    'SAS Visual Forecasting compute context'
+  ]
+  public defaultLauncherContexts = [
+    'CAS Formats service launcher context',
+    'Data Mining launcher context',
+    'Import 9 service launcher context',
+    'Job Flow Execution launcher context',
+    'SAS Job Execution launcher context',
+    'SAS Model Manager launcher context',
+    'SAS Studio launcher context',
+    'SAS Visual Forecasting launcher context'
   ]
 
   private csrfToken: CsrfToken | null = null
@@ -24,7 +35,7 @@ export class ContextManager {
     private serverUrl: string,
     private setCsrfToken: (csrfToken: CsrfToken) => void
   ) {
-    if (serverUrl) isUrl(serverUrl) // ?
+    if (serverUrl) isUrl(serverUrl)
   }
 
   public async getComputeContexts(accessToken?: string) {
@@ -89,9 +100,13 @@ export class ContextManager {
     accessToken?: string,
     authorizedUsers?: string[]
   ) {
-    if (!contextName) {
-      throw new Error('Context name is required.')
-    }
+    this.validateContextName(contextName)
+
+    this.isDefaultContext(
+      contextName,
+      this.defaultComputeContexts,
+      `Compute context '${contextName}' already exists.`
+    )
 
     const existingComputeContexts = await this.getComputeContexts(accessToken)
 
@@ -102,27 +117,31 @@ export class ContextManager {
     }
 
     if (launchContextName) {
-      const launcherContexts = await this.getLauncherContexts(accessToken)
+      if (!this.defaultLauncherContexts.includes(launchContextName)) {
+        const launcherContexts = await this.getLauncherContexts(accessToken)
 
-      if (
-        !launcherContexts.find((context) => context.name === launchContextName)
-      ) {
-        const description = `The launcher context for ${launchContextName}`
-        const launchType = 'direct'
+        if (
+          !launcherContexts.find(
+            (context) => context.name === launchContextName
+          )
+        ) {
+          const description = `The launcher context for ${launchContextName}`
+          const launchType = 'direct'
 
-        const newLauncherContext = await this.createLauncherContext(
-          launchContextName,
-          description,
-          launchType,
-          accessToken
-        ).catch((err) => {
-          throw new Error(`Error while creating launcher context. ${err}`)
-        })
+          const newLauncherContext = await this.createLauncherContext(
+            launchContextName,
+            description,
+            launchType,
+            accessToken
+          ).catch((err) => {
+            throw new Error(`Error while creating launcher context. ${err}`)
+          })
 
-        if (newLauncherContext && newLauncherContext.name) {
-          launchContextName = newLauncherContext.name
-        } else {
-          throw new Error('Error while creating launcher context.')
+          if (newLauncherContext && newLauncherContext.name) {
+            launchContextName = newLauncherContext.name
+          } else {
+            throw new Error('Error while creating launcher context.')
+          }
         }
       }
     }
@@ -174,7 +193,6 @@ export class ContextManager {
     return context
   }
 
-  // TODO: Check if context already exist, reject with the error if so
   public async createLauncherContext(
     contextName: string,
     description: string,
@@ -183,6 +201,20 @@ export class ContextManager {
   ) {
     if (!contextName) {
       throw new Error('Context name is required.')
+    }
+
+    this.isDefaultContext(
+      contextName,
+      this.defaultLauncherContexts,
+      `Launcher context '${contextName}' already exists.`
+    )
+
+    const existingLauncherContexts = await this.getLauncherContexts(accessToken)
+
+    if (
+      existingLauncherContexts.find((context) => context.name === contextName)
+    ) {
+      throw new Error(`Launcher context '${contextName}' already exists.`)
     }
 
     const headers: any = {
@@ -220,17 +252,14 @@ export class ContextManager {
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
+    this.validateContextName(contextName)
 
-    if (this.defaultComputeContexts.includes(contextName)) {
-      throw new Error(
-        `Editing default SAS compute contexts is not allowed.\nDefault contexts:${this.defaultComputeContexts.map(
-          (context, i) => `\n${i + 1}. ${context}`
-        )}`
-      )
-    }
+    this.isDefaultContext(
+      contextName,
+      this.defaultComputeContexts,
+      'Editing default SAS compute contexts is not allowed.',
+      true
+    )
 
     const headers: any = {
       'Content-Type': 'application/json'
@@ -357,7 +386,7 @@ export class ContextManager {
       `${this.serverUrl}/compute/contexts?limit=10000`,
       { headers }
     ).catch((err) => {
-      throw err // fixme
+      throw prefixMessage(err, 'Error while fetching compute contexts.')
     })
 
     const contextsList = contexts.items || []
@@ -415,20 +444,15 @@ export class ContextManager {
     return executableContexts
   }
 
-  // TODO: Check if trying to delete one of default SAS contexts, reject with the error if so
-  // TODO: rename to deleteComputeContext
-  public async deleteContext(contextName: string, accessToken?: string) {
-    if (!contextName) {
-      throw new Error('Invalid context name.')
-    }
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    this.validateContextName(contextName)
 
-    if (this.defaultComputeContexts.includes(contextName)) {
-      throw new Error(
-        `Deleting default SAS compute contexts is not allowed.\nDefault contexts:${this.defaultComputeContexts.map(
-          (context, i) => `\n${i + 1}. ${context}`
-        )}`
-      )
-    }
+    this.isDefaultContext(
+      contextName,
+      this.defaultComputeContexts,
+      'Deleting default SAS compute contexts is not allowed.',
+      true
+    )
 
     const headers: any = {
       'Content-Type': 'application/json'
@@ -481,5 +505,27 @@ export class ContextManager {
         'Error while making request in Context Manager. '
       )
     })
+  }
+
+  private validateContextName(name: string) {
+    if (!name) throw new Error('Context name is required.')
+  }
+
+  public isDefaultContext(
+    context: string,
+    defaultContexts: string[] = this.defaultComputeContexts,
+    errorMessage = '',
+    listDefaults = false
+  ) {
+    if (defaultContexts.includes(context)) {
+      throw new Error(
+        `${errorMessage}${
+          listDefaults
+            ? '\nDefault contexts:' +
+              defaultContexts.map((context, i) => `\n${i + 1}. ${context}`)
+            : ''
+        }`
+      )
+    }
   }
 }
