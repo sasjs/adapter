@@ -7,7 +7,7 @@
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --write 'src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}'",
     "lint": "npx prettier --check 'src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}'",
-    "test": "jest",
+    "test": "jest --coverage",
     "prepublishOnly": "cp -r ./build/* . && rm -rf ./build",
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",

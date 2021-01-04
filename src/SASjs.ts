@@ -96,12 +96,39 @@ export default class SASjs {
     )
   }
 
-  public async getAllContexts(accessToken: string) {
-    this.isMethodSupported('getAllContexts', ServerType.SASViya)
+  /**
+   * Gets compute contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getComputeContexts(accessToken: string) {
+    this.isMethodSupported('getComputeContexts', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.getAllContexts(accessToken)
+    return await this.sasViyaApiClient!.getComputeContexts(accessToken)
   }
 
+  /**
+   * Gets launcher contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async getLauncherContexts(accessToken: string) {
+    this.isMethodSupported('getLauncherContexts', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
+  }
+
+  /**
+   * Gets default(system) launcher contexts.
+   */
+  public getDefaultComputeContexts() {
+    this.isMethodSupported('getDefaultComputeContexts', ServerType.SASViya)
+
+    return this.sasViyaApiClient!.getDefaultComputeContexts()
+  }
+
+  /**
+   * Gets executable compute contexts.
+   * @param accessToken - an access token for an authorized user.
+   */
   public async getExecutableContexts(accessToken: string) {
     this.isMethodSupported('getExecutableContexts', ServerType.SASViya)
 
@@ -117,7 +144,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    * @param authorizedUsers - an optional list of authorized user IDs.
    */
-  public async createContext(
+  public async createComputeContext(
     contextName: string,
     launchContextName: string,
     sharedAccountId: string,
@@ -125,9 +152,9 @@ export default class SASjs {
     accessToken: string,
     authorizedUsers?: string[]
   ) {
-    this.isMethodSupported('createContext', ServerType.SASViya)
+    this.isMethodSupported('createComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.createContext(
+    return await this.sasViyaApiClient!.createComputeContext(
       contextName,
       launchContextName,
       sharedAccountId,
@@ -138,19 +165,42 @@ export default class SASjs {
   }
 
   /**
+   * Creates a launcher context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param description - the description of the context to be created.
+   * @param launchType - launch type of the context to be created.
+   * @param accessToken - an access token for an authorized user.
+   */
+  public async createLauncherContext(
+    contextName: string,
+    description: string,
+    launchType: string,
+    accessToken: string
+  ) {
+    this.isMethodSupported('createLauncherContext', ServerType.SASViya)
+
+    return await this.sasViyaApiClient!.createLauncherContext(
+      contextName,
+      description,
+      launchType,
+      accessToken
+    )
+  }
+
+  /**
    * Updates a compute context on the given server.
    * @param contextName - the original name of the context to be deleted.
    * @param editedContext - an object with the properties to be updated.
    * @param accessToken - an access token for an authorized user.
    */
-  public async editContext(
+  public async editComputeContext(
     contextName: string,
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    this.isMethodSupported('editContext', ServerType.SASViya)
+    this.isMethodSupported('editComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.editContext(
+    return await this.sasViyaApiClient!.editComputeContext(
       contextName,
       editedContext,
       accessToken
@@ -162,10 +212,13 @@ export default class SASjs {
    * @param contextName - the name of the context to be deleted.
    * @param accessToken - an access token for an authorized user.
    */
-  public async deleteContext(contextName: string, accessToken?: string) {
-    this.isMethodSupported('deleteContext', ServerType.SASViya)
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    this.isMethodSupported('deleteComputeContext', ServerType.SASViya)
 
-    return await this.sasViyaApiClient!.deleteContext(contextName, accessToken)
+    return await this.sasViyaApiClient!.deleteComputeContext(
+      contextName,
+      accessToken
+    )
   }
 
   /**
