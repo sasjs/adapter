@@ -24,6 +24,7 @@ import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
+import { prefixMessage } from '@sasjs/utils/error'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -1308,7 +1309,7 @@ export class SASViyaApiClient {
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
    */
-  public async listFolder(sourceFolder: string, accessToken?: string) {
+  public async listFolder(sourceFolder: string, accessToken?: string, limit: number = 20) {
     // checks if 'sourceFolder' is already a URI
     const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder
@@ -1322,10 +1323,8 @@ export class SASViyaApiClient {
       }
     }
 
-    const url = sourceFolderUri
-
     const { result: members } = await this.request<{ items: any[] }>(
-      `${this.serverUrl}${url}/members`,
+      `${this.serverUrl}${sourceFolderUri}/members?limit=${limit}`,
       requestInfo
     ).catch((err) => {
       if (err.code && err.code === 'ENOTFOUND') {
@@ -1338,7 +1337,7 @@ export class SASViyaApiClient {
         throw notFoundError
       }
 
-      throw err
+      throw prefixMessage(err, 'There was an error while fetching folder children')
     })
 
     return members.items.map((item: any) => item.name)
@@ -1357,6 +1356,11 @@ export class SASViyaApiClient {
     targetFolderName: string,
     accessToken: string
   ) {
+    // If target path is existing folder, than keep source folder name, othervise rename it with given target folder name
+    const sourceFolderName = sourceFolder.split('/').pop() as string
+    let targetFolderDetails = await this.getFolderDetails(targetParentFolder, accessToken)
+    targetFolderName = targetFolderDetails ? sourceFolderName : targetFolderName
+
     // checks if 'sourceFolder' is already a URI
     const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder

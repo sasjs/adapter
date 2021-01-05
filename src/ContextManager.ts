@@ -5,7 +5,6 @@ import {
   ContextAllAttributes
 } from './types'
 import { makeRequest, isUrl } from './utils'
-import { SASViyaApiClient } from './SASViyaApiClient'
 import { prefixMessage } from '@sasjs/utils/error'
 
 export class ContextManager {

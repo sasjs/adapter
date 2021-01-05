@@ -335,10 +335,10 @@ export default class SASjs {
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
    */
-  public async listFolder(sourceFolder: string, accessToken?: string) {
+  public async listFolder(sourceFolder: string, accessToken?: string, limit?: number) {
     this.isMethodSupported('listFolder', ServerType.SASViya)
 
-    return await this.sasViyaApiClient?.listFolder(sourceFolder, accessToken)
+    return await this.sasViyaApiClient?.listFolder(sourceFolder, accessToken, limit)
   }
 
   /**
