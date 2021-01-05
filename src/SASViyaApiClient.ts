@@ -1309,7 +1309,11 @@ export class SASViyaApiClient {
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
    */
-  public async listFolder(sourceFolder: string, accessToken?: string, limit: number = 20) {
+  public async listFolder(
+    sourceFolder: string,
+    accessToken?: string,
+    limit: number = 20
+  ) {
     // checks if 'sourceFolder' is already a URI
     const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder
@@ -1337,7 +1341,10 @@ export class SASViyaApiClient {
         throw notFoundError
       }
 
-      throw prefixMessage(err, 'There was an error while fetching folder children')
+      throw prefixMessage(
+        err,
+        'There was an error while fetching folder children'
+      )
     })
 
     return members.items.map((item: any) => item.name)
@@ -1358,7 +1365,10 @@ export class SASViyaApiClient {
   ) {
     // If target path is existing folder, than keep source folder name, othervise rename it with given target folder name
     const sourceFolderName = sourceFolder.split('/').pop() as string
-    let targetFolderDetails = await this.getFolderDetails(targetParentFolder, accessToken)
+    let targetFolderDetails = await this.getFolderDetails(
+      targetParentFolder,
+      accessToken
+    )
     targetFolderName = targetFolderDetails ? sourceFolderName : targetFolderName
 
     // checks if 'sourceFolder' is already a URI
