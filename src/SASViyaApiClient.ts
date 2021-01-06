@@ -1328,20 +1328,22 @@ export class SASViyaApiClient {
       targetParentFolder,
       accessToken
     )
-    targetFolderName = targetFolderDetails ? sourceFolderName : targetFolderName
+
+    if (!targetFolderDetails) {
+      let targetParentFolderArr = targetParentFolder.split('/')
+      targetParentFolderArr.splice(targetParentFolderArr.length - 1, 1)
+      targetParentFolder = targetParentFolderArr.join('/')
+    } else {
+      targetFolderName = sourceFolderName
+    }
 
     // checks if 'sourceFolder' is already a URI
-    const sourceFolderUri = isUri(sourceFolder)
-      ? sourceFolder
-      : await this.getFolderUri(sourceFolder, accessToken)
+    const sourceFolderUri = await this.getFolderUri(sourceFolder, accessToken)
 
     // checks if 'targetParentFolder' is already a URI
-    const targetParentFolderUri = isUri(targetParentFolder)
-      ? targetParentFolder
-      : await this.getFolderUri(targetParentFolder, accessToken)
+    const targetParentFolderUri = await this.getFolderUri(targetParentFolder, accessToken)
 
     const sourceFolderId = sourceFolderUri?.split('/').pop()
-    const url = sourceFolderUri
 
     const requestInfo = {
       method: 'PATCH',
@@ -1357,7 +1359,7 @@ export class SASViyaApiClient {
     }
 
     const { result: folder } = await this.request<Folder>(
-      `${this.serverUrl}${url}`,
+      `${this.serverUrl}${sourceFolderUri}`,
       requestInfo
     ).catch((err) => {
       if (err.code && err.code === 'ENOTFOUND') {
