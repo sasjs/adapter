@@ -766,10 +766,7 @@ export default class SASjs {
       )
     }
 
-    const members =
-      serviceJson.members[0].name === 'services'
-        ? serviceJson.members[0].members
-        : serviceJson.members
+    const members = serviceJson.members
 
     await this.createFoldersAndServices(
       appLoc,
