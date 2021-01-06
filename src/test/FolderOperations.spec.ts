@@ -19,7 +19,7 @@ describe('FolderOperations', () => {
     'https://sample.server.com',
     '/Public',
     'Context',
-    function() {}
+    function () {}
   )
 
   beforeAll(() => {
@@ -33,7 +33,9 @@ describe('FolderOperations', () => {
         json: () => Promise.resolve(sampleResponse),
         ok: true,
         headers: {
-          get: function() { return '' }
+          get: function () {
+            return ''
+          }
         }
       })
     )
@@ -44,11 +46,14 @@ describe('FolderOperations', () => {
   })
 
   it('should move folder successfully', async (done) => {
-    let res: any = await sasViyaApiClient.moveFolder('/Test/test', '/Test/toFolder', 'toFolder', 'token')
-    
-    expect(JSON.stringify(res)).toEqual(
-      JSON.stringify(sampleResponse)
+    let res: any = await sasViyaApiClient.moveFolder(
+      '/Test/test',
+      '/Test/toFolder',
+      'toFolder',
+      'token'
     )
+
+    expect(JSON.stringify(res)).toEqual(JSON.stringify(sampleResponse))
     done()
   })
 })

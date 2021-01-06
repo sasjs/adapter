@@ -1341,7 +1341,10 @@ export class SASViyaApiClient {
     const sourceFolderUri = await this.getFolderUri(sourceFolder, accessToken)
 
     // checks if 'targetParentFolder' is already a URI
-    const targetParentFolderUri = await this.getFolderUri(targetParentFolder, accessToken)
+    const targetParentFolderUri = await this.getFolderUri(
+      targetParentFolder,
+      accessToken
+    )
 
     const sourceFolderId = sourceFolderUri?.split('/').pop()
 
