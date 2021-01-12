@@ -1126,9 +1126,9 @@ export class SASViyaApiClient {
 
             postedJobState = jobState.trim()
 
-            if (this.debug && postedJobState !== printedState) {
-              console.log('Polling job status... \n')
-              console.log(`Current state: ${postedJobState}\n`)
+            if (this.debug && printedState !== postedJobState) {
+              console.log('Polling job status...')
+              console.log(`Current job state: ${postedJobState}`)
 
               printedState = postedJobState
             }
