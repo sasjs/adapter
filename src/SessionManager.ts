@@ -23,6 +23,10 @@ export class SessionManager {
   private currentContext: Context | null = null
   private csrfToken: CsrfToken | null = null
   private _debug: boolean = false
+  private printedSessionState = {
+    printed: false,
+    state: ''
+  }
 
   public get debug() {
     return this._debug
@@ -175,8 +179,10 @@ export class SessionManager {
         sessionState === ''
       ) {
         if (stateLink) {
-          if (this.debug) {
-            console.log('Polling session status... \n')
+          if (this.debug && !this.printedSessionState.printed) {
+            console.log('Polling session status...')
+
+            this.printedSessionState.printed = true
           }
 
           const { result: state } = await this.requestSessionStatus<string>(
@@ -191,8 +197,11 @@ export class SessionManager {
 
           sessionState = state.trim()
 
-          if (this.debug) {
-            console.log(`Current state is '${sessionState}'\n`)
+          if (this.debug && this.printedSessionState.state !== sessionState) {
+            console.log(`Current session state is '${sessionState}'`)
+
+            this.printedSessionState.state = sessionState
+            this.printedSessionState.printed = false
           }
 
           // There is an internal error present in SAS Viya 3.5

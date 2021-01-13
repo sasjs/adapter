@@ -1107,6 +1107,8 @@ export class SASViyaApiClient {
     }
 
     return new Promise(async (resolve, _) => {
+      let printedState = ''
+
       const interval = setInterval(async () => {
         if (
           postedJobState === 'running' ||
@@ -1114,9 +1116,6 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            if (this.debug) {
-              console.log('Polling job status... \n')
-            }
             const { result: jobState } = await this.request<string>(
               `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
               {
@@ -1126,10 +1125,16 @@ export class SASViyaApiClient {
             )
 
             postedJobState = jobState.trim()
-            if (this.debug) {
-              console.log(`Current state: ${postedJobState}\n`)
+
+            if (this.debug && printedState !== postedJobState) {
+              console.log('Polling job status...')
+              console.log(`Current job state: ${postedJobState}`)
+
+              printedState = postedJobState
             }
+
             pollCount++
+
             if (pollCount >= MAX_POLL_COUNT) {
               resolve(postedJobState)
             }
