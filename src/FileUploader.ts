@@ -2,18 +2,22 @@ import { isLogInRequired, needsRetry, isUrl } from './utils'
 import { CsrfToken } from './types/CsrfToken'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse } from './types'
+import axios, { AxiosInstance } from 'axios'
 
 const requestRetryLimit = 5
 
 export class FileUploader {
+  private httpClient: AxiosInstance
+
   constructor(
     private appLoc: string,
-    private serverUrl: string,
+    serverUrl: string,
     private jobsPath: string,
     private setCsrfTokenWeb: any,
     private csrfToken: CsrfToken | null = null
   ) {
     if (serverUrl) isUrl(serverUrl)
+    this.httpClient = axios.create({ baseURL: serverUrl })
   }
 
   private retryCount = 0
@@ -36,7 +40,7 @@ export class FileUploader {
       const program = this.appLoc
         ? this.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
         : sasJob
-      const uploadUrl = `${this.serverUrl}${this.jobsPath}/?${
+      const uploadUrl = `${this.jobsPath}/?${
         '_program=' + program
       }${paramsString}`
 
@@ -52,14 +56,10 @@ export class FileUploader {
 
       if (this.csrfToken) formData.append('_csrf', this.csrfToken.value)
 
-      fetch(uploadUrl, {
-        method: 'POST',
-        body: formData,
-        referrerPolicy: 'same-origin',
-        headers
-      })
+      this.httpClient
+        .post(uploadUrl, formData, { responseType: 'text', headers })
         .then(async (response) => {
-          if (!response.ok) {
+          if (response.status !== 200) {
             if (response.status === 403) {
               const tokenHeader = response.headers.get('X-CSRF-HEADER')
 
@@ -75,7 +75,7 @@ export class FileUploader {
             }
           }
 
-          return response.text()
+          return response.data
         })
         .then((responseText) => {
           if (isLogInRequired(responseText))

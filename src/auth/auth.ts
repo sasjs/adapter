@@ -83,49 +83,6 @@ export class AuthManager {
       isLoggedIn: !!loggedIn,
       userName: this.userName
     }
-
-    return {
-      isLoggedIn: isLogInSuccess(loginResponse),
-      userName: this.userName
-    }
-
-    return fetch(this.loginUrl, {
-      method: 'POST',
-      credentials: 'include',
-      referrerPolicy: 'same-origin',
-      body: loginParamsStr,
-      headers: new Headers({
-        'Content-Type': 'application/x-www-form-urlencoded'
-      })
-    })
-      .then((response) => response.text())
-      .then(async (responseText) => {
-        let loggedIn
-
-        if (isAuthorizeFormRequired(responseText)) {
-          const authFormResponse = await parseAndSubmitAuthorizeForm(
-            responseText,
-            this.serverUrl
-          )
-        } else {
-          loggedIn = isLogInSuccess(responseText)
-        }
-
-        if (!loggedIn) {
-          const currentSession = await this.checkSession()
-          loggedIn = currentSession.isLoggedIn
-        }
-
-        if (loggedIn) {
-          this.loginCallback()
-        }
-
-        return {
-          isLoggedIn: loggedIn,
-          userName: this.userName
-        }
-      })
-      .catch((e) => Promise.reject(e))
   }
 
   /**
@@ -133,8 +90,10 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const loginResponse = await fetch(this.loginUrl.replace('.do', ''))
-    const responseText = await loginResponse.text()
+    const loginResponse = await axios.get(this.loginUrl.replace('.do', ''), {
+      responseType: 'text'
+    })
+    const responseText = await loginResponse.data
     const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
     let loginForm: any = null
 
@@ -194,12 +153,6 @@ export class AuthManager {
    * Logs out of the configured SAS server.
    */
   public logOut() {
-    return new Promise((resolve, reject) => {
-      fetch(this.logoutUrl)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((err: Error) => reject(err))
-    })
+    return this.httpClient.get(this.logoutUrl).then(() => true)
   }
 }
