@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 export const parseAndSubmitAuthorizeForm = async (
   response: string,
   serverUrl: string
@@ -30,20 +32,11 @@ export const parseAndSubmitAuthorizeForm = async (
     }
   }
 
-  return new Promise((resolve, reject) => {
-    if (authUrl) {
-      fetch(authUrl, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-        referrerPolicy: 'same-origin'
-      })
-        .then((res) => res.text())
-        .then((res) => {
-          resolve(res)
-        })
-    } else {
-      reject('Auth form url is null')
-    }
-  })
+  if (!authUrl) {
+    throw new Error('Auth Form URL is null or undefined.')
+  }
+
+  return await axios
+    .post(authUrl, formData, { withCredentials: true, responseType: 'text' })
+    .then((response) => response.data)
 }
