@@ -11,12 +11,8 @@ require('isomorphic-fetch')
 import {
   convertToCSV,
   compareTimestamps,
-  serialize,
-  isAuthorizeFormRequired,
-  parseAndSubmitAuthorizeForm,
   splitChunks,
   isLogInRequired,
-  isLogInSuccess,
   parseSourceCode,
   parseGeneratedCode,
   parseWeboutResponse,
@@ -38,6 +34,7 @@ import {
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
+import { AuthManager } from './auth/auth'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -59,8 +56,6 @@ const requestRetryLimit = 5
 export default class SASjs {
   private sasjsConfig: SASjsConfig = new SASjsConfig()
   private jobsPath: string = ''
-  private logoutUrl: string = ''
-  private loginUrl: string = ''
   private csrfTokenApi: CsrfToken | null = null
   private csrfTokenWeb: CsrfToken | null = null
   private retryCountWeb: number = 0
@@ -68,10 +63,10 @@ export default class SASjs {
   private retryCountJeseApi: number = 0
   private sasjsRequests: SASjsRequest[] = []
   private sasjsWaitingRequests: SASjsWaitingRequest[] = []
-  private userName: string = ''
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
   private fileUploader: FileUploader | null = null
+  private authManager: AuthManager | null = null
 
   constructor(config?: any) {
     this.sasjsConfig = {
@@ -433,7 +428,7 @@ export default class SASjs {
    *
    */
   public getUserName() {
-    return this.userName
+    return this.authManager!.userName
   }
 
   /**
@@ -475,48 +470,12 @@ export default class SASjs {
     }
   }
 
-  private async getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
-    const matches = pattern.exec(response)
-    const formInputs: any = {}
-
-    if (matches && matches.length) {
-      this.setLoginUrl(matches)
-      const inputs = response.match(/<input.*"hidden"[^>]*>/g)
-
-      if (inputs) {
-        inputs.forEach((inputStr: string) => {
-          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
-
-          if (valueMatch && valueMatch.length) {
-            formInputs[valueMatch[1]] = valueMatch[2]
-          }
-        })
-      }
-    }
-
-    return Object.keys(formInputs).length ? formInputs : null
-  }
-
   /**
    * Checks whether a session is active, or login is required.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const loginResponse = await fetch(this.loginUrl.replace('.do', ''))
-    const responseText = await loginResponse.text()
-    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
-    let loginForm: any = null
-
-    if (!isLoggedIn) {
-      loginForm = await this.getLoginForm(responseText)
-    }
-
-    return Promise.resolve({
-      isLoggedIn,
-      userName: this.userName,
-      loginForm
-    })
+    return this.authManager!.checkSession()
   }
 
   /**
@@ -525,81 +484,14 @@ export default class SASjs {
    * @param password - a string representing the password.
    */
   public async logIn(username: string, password: string) {
-    const loginParams: any = {
-      _service: 'default',
-      username,
-      password
-    }
-
-    this.userName = loginParams.username
-
-    const { isLoggedIn, loginForm } = await this.checkSession()
-    if (isLoggedIn) {
-      this.resendWaitingRequests()
-
-      return Promise.resolve({
-        isLoggedIn,
-        userName: this.userName
-      })
-    }
-
-    for (const key in loginForm) {
-      loginParams[key] = loginForm[key]
-    }
-    const loginParamsStr = serialize(loginParams)
-
-    return fetch(this.loginUrl, {
-      method: 'POST',
-      credentials: 'include',
-      referrerPolicy: 'same-origin',
-      body: loginParamsStr,
-      headers: new Headers({
-        'Content-Type': 'application/x-www-form-urlencoded'
-      })
-    })
-      .then((response) => response.text())
-      .then(async (responseText) => {
-        let authFormRes: any
-        let loggedIn
-
-        if (isAuthorizeFormRequired(responseText)) {
-          authFormRes = await parseAndSubmitAuthorizeForm(
-            responseText,
-            this.sasjsConfig.serverUrl
-          )
-        } else {
-          loggedIn = isLogInSuccess(responseText)
-        }
-
-        if (!loggedIn) {
-          const currentSession = await this.checkSession()
-          loggedIn = currentSession.isLoggedIn
-        }
-
-        if (loggedIn) {
-          this.resendWaitingRequests()
-        }
-
-        return {
-          isLoggedIn: loggedIn,
-          userName: this.userName
-        }
-      })
-      .catch((e) => Promise.reject(e))
+    return this.authManager!.logIn(username, password)
   }
 
   /**
    * Logs out of the configured SAS server.
    */
   public logOut() {
-    return new Promise((resolve, reject) => {
-      const logOutURL = `${this.sasjsConfig.serverUrl}${this.logoutUrl}`
-      fetch(logOutURL)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((err: Error) => reject(err))
-    })
+    return this.authManager!.logOut()
   }
 
   /**
@@ -1174,7 +1066,6 @@ export default class SASjs {
                 this.sasjsWaitingRequests.push(sasjsWaitingRequest)
               } else {
                 if (config.serverType === ServerType.SAS9 && config.debug) {
-                  this.updateUsername(responseText)
                   const jsonResponseText = parseWeboutResponse(responseText)
 
                   if (jsonResponseText !== '') {
@@ -1194,7 +1085,6 @@ export default class SASjs {
                   try {
                     this.parseSASVIYADebugResponse(responseText).then(
                       (resText: any) => {
-                        this.updateUsername(resText)
                         try {
                           resolve(JSON.parse(resText))
                         } catch (e) {
@@ -1224,7 +1114,6 @@ export default class SASjs {
                     )
                   }
                 } else {
-                  this.updateUsername(responseText)
                   if (
                     responseText.includes(
                       'The requested URL /SASStoredProcess/do/ was not found on this server.'
@@ -1302,19 +1191,6 @@ export default class SASjs {
     }
 
     return requestParams
-  }
-
-  private updateUsername(response: any) {
-    try {
-      const responseJson = JSON.parse(response)
-      if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        this.userName = responseJson['_METAUSER']
-      } else {
-        this.userName = responseJson['SYSUSERID']
-      }
-    } catch (e) {
-      this.userName = ''
-    }
   }
 
   private parseSASVIYADebugResponse(response: string) {
@@ -1527,11 +1403,11 @@ export default class SASjs {
       this.sasjsConfig.serverType === ServerType.SASViya
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.pathSAS9
-    this.loginUrl = `${this.sasjsConfig.serverUrl}/SASLogon/login`
-    this.logoutUrl =
-      this.sasjsConfig.serverType === ServerType.SAS9
-        ? '/SASLogon/logout?'
-        : '/SASLogon/logout.do?'
+    this.authManager = new AuthManager(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.resendWaitingRequests
+    )
 
     if (this.sasjsConfig.serverType === ServerType.SASViya) {
       if (this.sasViyaApiClient)
@@ -1561,24 +1437,6 @@ export default class SASjs {
       this.jobsPath,
       this.setCsrfTokenWeb
     )
-  }
-
-  private setLoginUrl = (matches: RegExpExecArray) => {
-    let parsedURL = matches[1].replace(/\?.*/, '')
-    if (parsedURL[0] === '/') {
-      parsedURL = parsedURL.substr(1)
-
-      const tempLoginLink = this.sasjsConfig.serverUrl
-        ? `${this.sasjsConfig.serverUrl}/${parsedURL}`
-        : `${parsedURL}`
-
-      const loginUrl = tempLoginLink
-
-      this.loginUrl =
-        this.sasjsConfig.serverType === ServerType.SASViya
-          ? tempLoginLink
-          : loginUrl.replace('.do', '')
-    }
   }
 
   private async createFoldersAndServices(
