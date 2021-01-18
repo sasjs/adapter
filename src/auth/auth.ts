@@ -54,7 +54,7 @@ export class AuthManager {
     }
     const loginParamsStr = serialize(loginParams)
 
-    const loginResponse = await axios
+    const loginResponse = await this.httpClient
       .post<string>(this.loginUrl, loginParamsStr, {
         withCredentials: true,
         responseType: 'text',
