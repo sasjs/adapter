@@ -59,6 +59,7 @@
   "main": "index.js",
   "dependencies": {
     "@sasjs/utils": "^2.0.2",
+    "axios": "^0.21.1",
     "es6-promise": "^4.2.8",
     "form-data": "^3.0.0",
     "isomorphic-fetch": "^2.2.1"
