@@ -1151,7 +1151,7 @@ export default class SASjs {
     this.csrfTokenApi = csrfToken
   }
 
-  private async resendWaitingRequests() {
+  private resendWaitingRequests = async () => {
     for (const sasjsWaitingRequest of this.sasjsWaitingRequests) {
       this.request(sasjsWaitingRequest.SASjob, sasjsWaitingRequest.data).then(
         (res: any) => {

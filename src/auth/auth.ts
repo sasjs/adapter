@@ -91,7 +91,10 @@ export class AuthManager {
    */
   public async checkSession() {
     const loginResponse = await axios.get(this.loginUrl.replace('.do', ''), {
-      responseType: 'text'
+      responseType: 'text',
+      headers: {
+        Accept: '*/*'
+      }
     })
     const responseText = await loginResponse.data
     const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
