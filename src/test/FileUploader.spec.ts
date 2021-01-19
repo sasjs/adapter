@@ -1,5 +1,8 @@
 import { FileUploader } from '../FileUploader'
 import { UploadFile } from '../types'
+import axios from 'axios'
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 const sampleResponse = `{
   "SYSUSERID": "cas",
@@ -24,7 +27,6 @@ const prepareFilesAndParams = () => {
 }
 
 describe('FileUploader', () => {
-  let originalFetch: any
   const fileUploader = new FileUploader(
     '/sample/apploc',
     'https://sample.server.com',
@@ -33,25 +35,12 @@ describe('FileUploader', () => {
     null
   )
 
-  beforeAll(() => {
-    originalFetch = (global as any).fetch
-  })
-
-  beforeEach(() => {
-    ;(global as any).fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        text: () => Promise.resolve(sampleResponse)
-      })
-    )
-  })
-
-  afterAll(() => {
-    ;(global as any).fetch = originalFetch
-  })
-
   it('should upload successfully', async (done) => {
     const sasJob = 'test/upload'
     const { files, params } = prepareFilesAndParams()
+    mockedAxios.post.mockImplementation(() =>
+      Promise.resolve({ data: sampleResponse })
+    )
 
     fileUploader.uploadFile(sasJob, files, params).then((res: any) => {
       expect(JSON.stringify(res)).toEqual(
@@ -83,10 +72,8 @@ describe('FileUploader', () => {
   })
 
   it('should throw an error when login is required', async (done) => {
-    ;(global as any).fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        text: () => Promise.resolve('<form action="Logon">')
-      })
+    mockedAxios.post.mockImplementation(() =>
+      Promise.resolve({ data: '<form action="Logon">' })
     )
 
     const sasJob = 'test'
@@ -101,10 +88,8 @@ describe('FileUploader', () => {
   })
 
   it('should throw an error when invalid JSON is returned by the server', async (done) => {
-    ;(global as any).fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        text: () => Promise.resolve('{invalid: "json"')
-      })
+    mockedAxios.post.mockImplementation(() =>
+      Promise.resolve({ data: '{invalid: "json"' })
     )
 
     const sasJob = 'test'
@@ -119,10 +104,8 @@ describe('FileUploader', () => {
   })
 
   it('should throw an error when the server request fails', async (done) => {
-    ;(global as any).fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        text: () => Promise.reject('{message: "Server error"}')
-      })
+    mockedAxios.post.mockImplementation(() =>
+      Promise.reject({ data: '{message: "Server error"}' })
     )
 
     const sasJob = 'test'
