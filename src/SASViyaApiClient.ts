@@ -1307,7 +1307,7 @@ export class SASViyaApiClient {
 
       throw prefixMessage(
         err,
-        'There was an error while fetching folder children'
+        'There was an error while fetching folder children.'
       )
     })
 
