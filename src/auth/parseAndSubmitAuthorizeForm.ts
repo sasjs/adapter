@@ -37,6 +37,12 @@ export const parseAndSubmitAuthorizeForm = async (
   }
 
   return await axios
-    .post(authUrl, formData, { withCredentials: true, responseType: 'text' })
-    .then((response) => response.data)
+    .post(authUrl, formData, {
+      withCredentials: true,
+      responseType: 'text',
+      headers: {
+        Accept: '*/*'
+      }
+    })
+    .then((res) => res.data)
 }

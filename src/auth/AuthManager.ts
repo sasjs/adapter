@@ -1,11 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
+import { isAuthorizeFormRequired, parseAndSubmitAuthorizeForm } from '.'
 import { ServerType } from '../types'
-import {
-  serialize,
-  isAuthorizeFormRequired,
-  parseAndSubmitAuthorizeForm,
-  isLogInSuccess
-} from '../utils'
+import { serialize } from '../utils'
 
 export class AuthManager {
   public userName = ''
@@ -15,7 +11,7 @@ export class AuthManager {
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
-    private loginCallback: Function
+    private loginCallback: () => Promise<void>
   ) {
     this.httpClient = axios.create({ baseURL: this.serverUrl })
     this.loginUrl = `/SASLogon/login`
@@ -41,7 +37,7 @@ export class AuthManager {
 
     const { isLoggedIn, loginForm } = await this.checkSession()
     if (isLoggedIn) {
-      this.loginCallback()
+      await this.loginCallback()
 
       return {
         isLoggedIn,
@@ -58,7 +54,10 @@ export class AuthManager {
       .post<string>(this.loginUrl, loginParamsStr, {
         withCredentials: true,
         responseType: 'text',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: '*/*'
+        }
       })
       .then((response) => response.data)
 
@@ -159,3 +158,6 @@ export class AuthManager {
     return this.httpClient.get(this.logoutUrl).then(() => true)
   }
 }
+
+const isLogInSuccess = (response: string): boolean =>
+  /You have signed in/gm.test(response)

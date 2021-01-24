@@ -2,7 +2,6 @@ import {
   convertToCSV,
   compareTimestamps,
   splitChunks,
-  isLogInRequired,
   parseSourceCode,
   parseGeneratedCode,
   parseWeboutResponse,
@@ -24,7 +23,7 @@ import {
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
-import { AuthManager } from './auth/auth'
+import { isLogInRequired, AuthManager } from './auth'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -732,7 +731,11 @@ export default class SASjs {
             let responseJson
 
             try {
-              responseJson = JSON.parse(response!.result)
+              if (typeof response!.result === 'string') {
+                responseJson = JSON.parse(response!.result)
+              } else {
+                responseJson = response!.result
+              }
             } catch {
               responseJson = JSON.parse(parseWeboutResponse(response!.result))
             }
@@ -837,7 +840,11 @@ export default class SASjs {
                 let responseJson
 
                 try {
-                  responseJson = JSON.parse(response!.result)
+                  if (typeof response!.result === 'string') {
+                    responseJson = JSON.parse(response!.result)
+                  } else {
+                    responseJson = response!.result
+                  }
                 } catch {
                   responseJson = JSON.parse(
                     parseWeboutResponse(response!.result)

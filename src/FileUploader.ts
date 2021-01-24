@@ -1,8 +1,9 @@
-import { isLogInRequired, needsRetry, isUrl } from './utils'
+import { needsRetry, isUrl } from './utils'
 import { CsrfToken } from './types/CsrfToken'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse } from './types'
 import axios, { AxiosInstance } from 'axios'
+import { isLogInRequired } from './auth'
 
 const requestRetryLimit = 5
 
