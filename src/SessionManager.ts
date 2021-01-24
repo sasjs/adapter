@@ -1,6 +1,7 @@
 import { Session, Context, CsrfToken, SessionVariable } from './types'
-import { asyncForEach, makeRequest, isUrl } from './utils'
+import { asyncForEach, isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
+import { RequestClient } from './request/client'
 
 const MAX_SESSION_COUNT = 1
 const RETRY_LIMIT: number = 3
@@ -14,7 +15,7 @@ export class SessionManager {
   constructor(
     private serverUrl: string,
     private contextName: string,
-    private setCsrfToken: (csrfToken: CsrfToken) => void
+    private requestClient: RequestClient
   ) {
     if (serverUrl) isUrl(serverUrl)
   }
@@ -63,10 +64,8 @@ export class SessionManager {
       headers: this.getHeaders(accessToken)
     }
 
-    return await this.request<Session>(
-      `${this.serverUrl}/compute/sessions/${id}`,
-      deleteSessionRequest
-    )
+    return await this.requestClient
+      .delete<Session>(`/compute/sessions/${id}`, accessToken)
       .then(() => {
         this.sessions = this.sessions.filter((s) => s.id !== id)
       })
@@ -98,17 +97,20 @@ export class SessionManager {
   }
 
   private async createAndWaitForSession(accessToken?: string) {
-    const createSessionRequest = {
-      method: 'POST',
-      headers: this.getHeaders(accessToken)
-    }
-
-    const { result: createdSession, etag } = await this.request<Session>(
-      `${this.serverUrl}/compute/contexts/${this.currentContext!.id}/sessions`,
-      createSessionRequest
-    ).catch((err) => {
-      throw err
-    })
+    const {
+      result: createdSession,
+      etag
+    } = await this.requestClient
+      .post<Session>(
+        `${this.serverUrl}/compute/contexts/${
+          this.currentContext!.id
+        }/sessions`,
+        {},
+        accessToken
+      )
+      .catch((err) => {
+        throw err
+      })
 
     await this.waitForSession(createdSession, etag, accessToken)
 
@@ -119,13 +121,13 @@ export class SessionManager {
 
   private async setCurrentContext(accessToken?: string) {
     if (!this.currentContext) {
-      const { result: contexts } = await this.request<{
-        items: Context[]
-      }>(`${this.serverUrl}/compute/contexts?limit=10000`, {
-        headers: this.getHeaders(accessToken)
-      }).catch((err) => {
-        throw err
-      })
+      const { result: contexts } = await this.requestClient
+        .get<{
+          items: Context[]
+        }>(`${this.serverUrl}/compute/contexts?limit=10000`, accessToken)
+        .catch((err) => {
+          throw err
+        })
 
       const contextsList =
         contexts && contexts.items && contexts.items.length
@@ -166,10 +168,7 @@ export class SessionManager {
     accessToken?: string
   ) {
     let sessionState = session.state
-    const headers: any = {
-      ...this.getHeaders(accessToken),
-      'If-None-Match': etag
-    }
+
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
     return new Promise(async (resolve, _) => {
@@ -185,12 +184,10 @@ export class SessionManager {
             this.printedSessionState.printed = true
           }
 
-          const { result: state } = await this.requestSessionStatus<string>(
+          const state = await this.getSessionState(
             `${this.serverUrl}${stateLink.href}?wait=30`,
-            {
-              headers
-            },
-            'text'
+            etag!,
+            accessToken
           ).catch((err) => {
             throw err
           })
@@ -223,73 +220,33 @@ export class SessionManager {
     })
   }
 
-  private async request<T>(
+  private async getSessionState(
     url: string,
-    options: RequestInit,
-    contentType: 'text' | 'json' = 'json'
+    etag: string,
+    accessToken?: string
   ) {
-    if (this.csrfToken) {
-      options.headers = {
-        ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value
-      }
-    }
+    return await this.requestClient
+      .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
+      .then((res) => res.result as string)
+      .catch((err) => {
+        if (err.status === INTERNAL_SAS_ERROR.status)
+          return INTERNAL_SAS_ERROR.message
 
-    return await makeRequest<T>(
-      url,
-      options,
-      (token) => {
-        this.csrfToken = token
-        this.setCsrfToken(token)
-      },
-      contentType
-    ).catch((err) => {
-      throw err
-    })
-  }
-
-  private async requestSessionStatus<T>(
-    url: string,
-    options: RequestInit,
-    contentType: 'text' | 'json' = 'json'
-  ) {
-    if (this.csrfToken) {
-      options.headers = {
-        ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value
-      }
-    }
-
-    return await makeRequest<T>(
-      url,
-      options,
-      (token) => {
-        this.csrfToken = token
-        this.setCsrfToken(token)
-      },
-      contentType
-    ).catch((err) => {
-      if (err.status === INTERNAL_SAS_ERROR.status)
-        return { result: INTERNAL_SAS_ERROR.message }
-
-      throw err
-    })
+        throw err
+      })
   }
 
   async getVariable(sessionId: string, variable: string, accessToken?: string) {
-    const getSessionVariable = {
-      method: 'GET',
-      headers: this.getHeaders(accessToken)
-    }
-
-    return await this.request<SessionVariable>(
-      `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
-      getSessionVariable
-    ).catch((err) => {
-      throw prefixMessage(
-        err,
-        `Error while fetching session variable '${variable}'.`
+    return await this.requestClient
+      .get<SessionVariable>(
+        `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
+        accessToken
       )
-    })
+      .catch((err) => {
+        throw prefixMessage(
+          err,
+          `Error while fetching session variable '${variable}'.`
+        )
+      })
   }
 }

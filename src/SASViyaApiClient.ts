@@ -6,7 +6,6 @@ import {
   Context,
   ContextAllAttributes,
   Folder,
-  CsrfToken,
   EditContextInput,
   JobDefinition,
   PollOptions
@@ -16,35 +15,34 @@ import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { parseAndSubmitAuthorizeForm } from './auth'
+import { RequestClient } from './request/client'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
  *
  */
 export class SASViyaApiClient {
-  private httpClient: AxiosInstance
   constructor(
     private serverUrl: string,
     private rootFolderName: string,
     private contextName: string,
-    private setCsrfToken: (csrfToken: CsrfToken) => void
+    private requestClient: RequestClient
   ) {
     if (serverUrl) isUrl(serverUrl)
-    this.httpClient = axios.create({ baseURL: serverUrl })
   }
 
-  private csrfToken: CsrfToken | null = null
-  private fileUploadCsrfToken: CsrfToken | null = null
   private _debug = false
   private sessionManager = new SessionManager(
     this.serverUrl,
     this.contextName,
-    this.setCsrfToken
+    this.requestClient
   )
-  private contextManager = new ContextManager(this.serverUrl, this.setCsrfToken)
+  private contextManager = new ContextManager(
+    this.serverUrl,
+    this.requestClient
+  )
   private folderMap = new Map<string, Job[]>()
 
   public get debug() {
@@ -143,10 +141,9 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const { result: contexts } = await this.get<{ items: Context[] }>(
-      `/compute/contexts?limit=10000`,
-      accessToken
-    )
+    const { result: contexts } = await this.requestClient.get<{
+      items: Context[]
+    }>(`/compute/contexts?limit=10000`, accessToken)
 
     const executionContext =
       contexts.items && contexts.items.length
@@ -163,7 +160,7 @@ export class SASViyaApiClient {
         'Content-Type': 'application/json'
       }
     }
-    const { result: createdSession } = await this.post<Session>(
+    const { result: createdSession } = await this.requestClient.post<Session>(
       `/compute/contexts/${executionContext.id}/sessions`,
       {},
       accessToken
@@ -376,13 +373,15 @@ export class SASViyaApiClient {
         variables: jobVariables,
         arguments: jobArguments
       })
-      const { result: postedJob, etag } = await this.post<Job>(
-        `/compute/sessions/${executionSessionId}/jobs`,
-        jobRequestBody,
-        accessToken
-      ).catch((err: any) => {
-        throw err
-      })
+      const { result: postedJob, etag } = await this.requestClient
+        .post<Job>(
+          `/compute/sessions/${executionSessionId}/jobs`,
+          jobRequestBody,
+          accessToken
+        )
+        .catch((err: any) => {
+          throw err
+        })
 
       if (!waitForResult) {
         return session
@@ -404,12 +403,14 @@ export class SASViyaApiClient {
         pollOptions
       )
 
-      const { result: currentJob } = await this.get<Job>(
-        `/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
-        accessToken
-      ).catch((err) => {
-        throw err
-      })
+      const { result: currentJob } = await this.requestClient
+        .get<Job>(
+          `/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
+          accessToken
+        )
+        .catch((err) => {
+          throw err
+        })
 
       let jobResult
       let log
@@ -417,10 +418,8 @@ export class SASViyaApiClient {
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
       if (debug && logLink) {
-        log = await this.get<any>(
-          `${logLink.href}/content?limit=10000`,
-          accessToken
-        )
+        log = await this.requestClient
+          .get<any>(`${logLink.href}/content?limit=10000`, accessToken)
           .then((res: any) =>
             res.result.items.map((i: any) => i.line).join('\n')
           )
@@ -442,34 +441,30 @@ export class SASViyaApiClient {
       }
 
       if (resultLink) {
-        jobResult = await this.get<any>(
-          resultLink,
-          accessToken,
-          'text/plain'
-        ).catch(async (e) => {
-          if (e && e.status === 404) {
-            if (logLink) {
-              log = await this.get<any>(
-                `${logLink.href}/content?limit=10000`,
-                accessToken
-              )
-                .then((res: any) =>
-                  res.result.items.map((i: any) => i.line).join('\n')
-                )
-                .catch((err) => {
-                  throw err
-                })
+        jobResult = await this.requestClient
+          .get<any>(resultLink, accessToken, 'text/plain')
+          .catch(async (e) => {
+            if (e && e.status === 404) {
+              if (logLink) {
+                log = await this.requestClient
+                  .get<any>(`${logLink.href}/content?limit=10000`, accessToken)
+                  .then((res: any) =>
+                    res.result.items.map((i: any) => i.line).join('\n')
+                  )
+                  .catch((err) => {
+                    throw err
+                  })
 
-              return Promise.reject({
-                status: 500,
-                log
-              })
+                return Promise.reject({
+                  status: 500,
+                  log
+                })
+              }
             }
-          }
-          return {
-            result: JSON.stringify(e)
-          }
-        })
+            return {
+              result: JSON.stringify(e)
+            }
+          })
       }
 
       await this.sessionManager
@@ -559,7 +554,9 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } = await this.post<Folder>(
+    const {
+      result: createFolderResponse
+    } = await this.requestClient.post<Folder>(
       `/folders/folders?parentFolderUri=${parentFolderUri}`,
       JSON.stringify({
         name: folderName,
@@ -599,7 +596,7 @@ export class SASViyaApiClient {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
     }
 
-    return await this.post<Job>(
+    return await this.requestClient.post<Job>(
       `${this.serverUrl}/jobDefinitions/definitions?parentFolderUri=${parentFolderUri}`,
       JSON.stringify({
         name: jobName,
@@ -763,7 +760,7 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const deleteResponse = await this.delete(url, accessToken)
+    const deleteResponse = await this.requestClient.delete(url, accessToken)
 
     return deleteResponse.result
   }
@@ -835,7 +832,9 @@ export class SASViyaApiClient {
         throw new Error(`URI of job definition was not found.`)
       }
 
-      const { result: jobDefinition } = await this.get<JobDefinition>(
+      const {
+        result: jobDefinition
+      } = await this.requestClient.get<JobDefinition>(
         `${this.serverUrl}${jobDefinitionLink.href}`,
         accessToken
       )
@@ -913,7 +912,7 @@ export class SASViyaApiClient {
       (l) => l.rel === 'getResource'
     )?.href
 
-    const { result: jobDefinition } = await this.get<Job>(
+    const { result: jobDefinition } = await this.requestClient.get<Job>(
       `${this.serverUrl}${jobDefinitionLink}`,
       accessToken
     )
@@ -948,12 +947,13 @@ export class SASViyaApiClient {
       jobDefinition,
       arguments: jobArguments
     })
-    const { result: postedJob, etag } = await this.post<Job>(
+    const { result: postedJob, etag } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
-      postJobRequestBody
+      postJobRequestBody,
+      accessToken
     )
     const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
-    const { result: currentJob } = await this.get<Job>(
+    const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       accessToken
     )
@@ -964,17 +964,16 @@ export class SASViyaApiClient {
     const resultLink = currentJob.results['_webout.json']
     const logLink = currentJob.links.find((l) => l.rel === 'log')
     if (resultLink) {
-      jobResult = await this.get<any>(
+      jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
         accessToken,
         'text/plain'
       )
     }
     if (debug && logLink) {
-      log = await this.get<any>(
-        `${this.serverUrl}${logLink.href}/content`,
-        accessToken
-      ).then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
+      log = await this.requestClient
+        .get<any>(`${this.serverUrl}${logLink.href}/content`, accessToken)
+        .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
     if (jobStatus === 'failed') {
       return Promise.reject({ error: currentJob.error, log })
@@ -991,11 +990,14 @@ export class SASViyaApiClient {
     }
 
     const url = '/folders/folders/@item?path=' + path
-    const { result: folder } = await this.get<Folder>(`${url}`, accessToken)
+    const { result: folder } = await this.requestClient.get<Folder>(
+      `${url}`,
+      accessToken
+    )
     if (!folder) {
       throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
-    const { result: members } = await this.get<{ items: any[] }>(
+    const { result: members } = await this.requestClient.get<{ items: any[] }>(
       `/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
       accessToken
     )
@@ -1033,7 +1035,7 @@ export class SASViyaApiClient {
       Promise.reject(`Job state link was not found.`)
     }
 
-    const { result: state } = await this.get<string>(
+    const { result: state } = await this.requestClient.get<string>(
       `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
       accessToken,
       'text/plain'
@@ -1054,7 +1056,7 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            const { result: jobState } = await this.get<string>(
+            const { result: jobState } = await this.requestClient.get<string>(
               `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
               accessToken,
               'text/plain'
@@ -1100,7 +1102,7 @@ export class SASViyaApiClient {
         )
       }
 
-      const uploadResponse = await this.uploadFile(
+      const uploadResponse = await this.requestClient.uploadFile(
         `${this.serverUrl}/files/files#rawUpload`,
         csv,
         accessToken
@@ -1113,12 +1115,11 @@ export class SASViyaApiClient {
 
   private async getFolderUri(folderPath: string, accessToken?: string) {
     const url = '/folders/folders/@item?path=' + folderPath
-    const { result: folder } = await this.get<Folder>(
-      `${this.serverUrl}${url}`,
-      accessToken
-    ).catch(() => {
-      return { result: null }
-    })
+    const { result: folder } = await this.requestClient
+      .get<Folder>(`${this.serverUrl}${url}`, accessToken)
+      .catch(() => {
+        return { result: null }
+      })
 
     if (!folder) return undefined
     return `/folders/folders/${folder.id}`
@@ -1127,12 +1128,11 @@ export class SASViyaApiClient {
   private async getRecycleBinUri(accessToken: string) {
     const url = '/folders/folders/@myRecycleBin'
 
-    const { result: folder } = await this.get<Folder>(
-      `${this.serverUrl}${url}`,
-      accessToken
-    ).catch(() => {
-      return { result: null }
-    })
+    const { result: folder } = await this.requestClient
+      .get<Folder>(`${this.serverUrl}${url}`, accessToken)
+      .catch(() => {
+        return { result: null }
+      })
 
     if (!folder) return undefined
 
@@ -1196,27 +1196,31 @@ export class SASViyaApiClient {
     const sourceFolderId = sourceFolderUri?.split('/').pop()
     const url = sourceFolderUri
 
-    const { result: folder } = await this.patch<Folder>(
-      `${this.serverUrl}${url}`,
-      JSON.stringify({
-        id: sourceFolderId,
-        name: targetFolderName,
-        parentFolderUri: targetParentFolderUri
-      }),
-      accessToken
-    ).catch((err) => {
-      if (err.code && err.code === 'ENOTFOUND') {
-        const notFoundError = {
-          body: JSON.stringify({
-            message: `Folder '${sourceFolder.split('/').pop()}' was not found.`
-          })
+    const { result: folder } = await this.requestClient
+      .patch<Folder>(
+        `${this.serverUrl}${url}`,
+        JSON.stringify({
+          id: sourceFolderId,
+          name: targetFolderName,
+          parentFolderUri: targetParentFolderUri
+        }),
+        accessToken
+      )
+      .catch((err) => {
+        if (err.code && err.code === 'ENOTFOUND') {
+          const notFoundError = {
+            body: JSON.stringify({
+              message: `Folder '${sourceFolder
+                .split('/')
+                .pop()}' was not found.`
+            })
+          }
+
+          throw notFoundError
         }
 
-        throw notFoundError
-      }
-
-      throw err
-    })
+        throw err
+      })
 
     if (!folder) return undefined
 
@@ -1243,176 +1247,5 @@ export class SASViyaApiClient {
     )
 
     return movedFolder
-  }
-
-  setCsrfTokenLocal = (csrfToken: CsrfToken) => {
-    this.csrfToken = csrfToken
-    this.setCsrfToken(csrfToken)
-  }
-
-  setFileUploadCsrfToken = (csrfToken: CsrfToken) => {
-    this.fileUploadCsrfToken = csrfToken
-  }
-
-  private get<T>(
-    url: string,
-    accessToken?: string,
-    contentType = 'application/json'
-  ) {
-    const headers: any = {
-      'Content-Type': contentType
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const requestConfig: AxiosRequestConfig = {
-      headers,
-      responseType: contentType === 'text/plain' ? 'text' : 'json',
-      withCredentials: true
-    }
-    if (contentType === 'text/plain') {
-      requestConfig.headers.Accept = '*/*'
-      requestConfig.transformResponse = undefined
-    }
-
-    return this.httpClient.get<T>(url, requestConfig).then((response) => ({
-      result: response.data,
-      etag: response.headers['etag']
-    }))
-  }
-
-  private post<T>(
-    url: string,
-    data: any = {},
-    accessToken?: string
-  ): Promise<{ result: T; etag: string }> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    if (this.csrfToken?.value) {
-      headers[this.csrfToken.headerName] = this.csrfToken.value
-    }
-
-    return this.httpClient
-      .post<T>(url, data, { headers, withCredentials: true })
-      .then((response) => {
-        return {
-          result: response.data as T,
-          etag: response.headers['etag'] as string
-        }
-      })
-      .catch((e) => {
-        const response = e.response as AxiosResponse
-        if (response.status === 403 || response.status === 449) {
-          const tokenHeader = (response.headers[
-            'x-csrf-header'
-          ] as string)?.toLowerCase()
-
-          if (tokenHeader) {
-            const token = response.headers[tokenHeader]
-            this.setCsrfTokenLocal({
-              headerName: tokenHeader,
-              value: token || ''
-            })
-            return this.post<T>(url, data, accessToken)
-          }
-          throw e
-        }
-        throw e
-      })
-  }
-
-  private delete<T>(url: string, accessToken?: string) {
-    const headers: any = {}
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    if (this.csrfToken?.value) {
-      headers[this.csrfToken.headerName] = this.csrfToken.value
-    }
-
-    const requestConfig: AxiosRequestConfig = {
-      headers
-    }
-
-    return this.httpClient.delete<T>(url, requestConfig).then((response) => ({
-      result: response.data,
-      etag: response.headers['etag']
-    }))
-  }
-
-  private patch<T>(url: string, data: any = {}, accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    if (this.csrfToken?.value) {
-      headers[this.csrfToken.headerName] = this.csrfToken.value
-    }
-
-    return this.httpClient
-      .patch<T>(url, data, { headers, withCredentials: true })
-      .then((response) => {
-        return {
-          result: response.data as T,
-          etag: response.headers['etag'] as string
-        }
-      })
-  }
-
-  private uploadFile(
-    url: string,
-    content: string,
-    accessToken?: string
-  ): Promise<any> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    if (this.fileUploadCsrfToken?.value) {
-      headers[
-        this.fileUploadCsrfToken.headerName
-      ] = this.fileUploadCsrfToken.value
-    }
-
-    return this.httpClient
-      .post(url, content, { headers, withCredentials: true })
-      .then((response) => {
-        return {
-          result: response.data,
-          etag: response.headers['etag'] as string
-        }
-      })
-      .catch((e) => {
-        const response = e.response as AxiosResponse
-        if (response.status === 403 || response.status === 449) {
-          const tokenHeader = (response.headers[
-            'x-csrf-header'
-          ] as string)?.toLowerCase()
-
-          if (tokenHeader) {
-            const token = response.headers[tokenHeader]
-            this.setFileUploadCsrfToken({
-              headerName: tokenHeader,
-              value: token || ''
-            })
-            return this.uploadFile(url, content, accessToken)
-          }
-          throw e
-        }
-        throw e
-      })
   }
 }

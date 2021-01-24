@@ -24,6 +24,7 @@ import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { isLogInRequired, AuthManager } from './auth'
 import { ServerType } from '@sasjs/utils/types'
+import { RequestClient } from './request/client'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -45,7 +46,6 @@ const requestRetryLimit = 5
 export default class SASjs {
   private sasjsConfig: SASjsConfig = new SASjsConfig()
   private jobsPath: string = ''
-  private csrfTokenApi: CsrfToken | null = null
   private csrfTokenWeb: CsrfToken | null = null
   private retryCountWeb: number = 0
   private retryCountComputeApi: number = 0
@@ -56,6 +56,7 @@ export default class SASjs {
   private sas9ApiClient: SAS9ApiClient | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
+  private requestClient: RequestClient | null = null
 
   constructor(config?: any) {
     this.sasjsConfig = {
@@ -421,22 +422,6 @@ export default class SASjs {
   }
 
   /**
-   * Returns the _csrf token of the current session for the API approach.
-   *
-   */
-  public getCsrfApi() {
-    return this.csrfTokenApi?.value
-  }
-
-  /**
-   * Returns the _csrf token of the current session for the WEB approach.
-   *
-   */
-  public getCsrfWeb() {
-    return this.csrfTokenWeb?.value
-  }
-
-  /**
    * Sets the SASjs configuration.
    * @param config - SASjs configuration.
    */
@@ -498,8 +483,7 @@ export default class SASjs {
         this.sasjsConfig.appLoc,
         this.sasjsConfig.serverUrl,
         this.jobsPath,
-        this.setCsrfTokenWeb,
-        this.csrfTokenWeb
+        this.requestClient!
       )
 
     return fileUploader.uploadFile(sasJob, files, params)
@@ -604,7 +588,7 @@ export default class SASjs {
           serverUrl,
           appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfTokenApi
+          this.requestClient!
         )
         sasApiClient.debug = this.sasjsConfig.debug
       } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
@@ -1150,14 +1134,6 @@ export default class SASjs {
     return sasjsWaitingRequest.requestPromise.promise
   }
 
-  private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
-    this.csrfTokenWeb = csrfToken
-  }
-
-  private setCsrfTokenApi = (csrfToken: CsrfToken) => {
-    this.csrfTokenApi = csrfToken
-  }
-
   private resendWaitingRequests = async () => {
     for (const sasjsWaitingRequest of this.sasjsWaitingRequests) {
       this.request(sasjsWaitingRequest.SASjob, sasjsWaitingRequest.data).then(
@@ -1396,10 +1372,13 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
+    this.requestClient = new RequestClient(this.sasjsConfig.serverUrl)
+
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.pathSAS9
+
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
@@ -1417,7 +1396,7 @@ export default class SASjs {
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfTokenApi
+          this.requestClient
         )
 
       this.sasViyaApiClient.debug = this.sasjsConfig.debug
@@ -1432,7 +1411,7 @@ export default class SASjs {
       this.sasjsConfig.appLoc,
       this.sasjsConfig.serverUrl,
       this.jobsPath,
-      this.setCsrfTokenWeb
+      this.requestClient
     )
   }
 

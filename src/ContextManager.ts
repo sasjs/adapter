@@ -1,11 +1,7 @@
-import {
-  Context,
-  CsrfToken,
-  EditContextInput,
-  ContextAllAttributes
-} from './types'
-import { makeRequest, isUrl } from './utils'
+import { Context, EditContextInput, ContextAllAttributes } from './types'
+import { isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
+import { RequestClient } from './request/client'
 
 export class ContextManager {
   private defaultComputeContexts = [
@@ -28,8 +24,6 @@ export class ContextManager {
     'SAS Visual Forecasting launcher context'
   ]
 
-  private csrfToken: CsrfToken | null = null
-
   get getDefaultComputeContexts() {
     return this.defaultComputeContexts
   }
@@ -37,28 +31,19 @@ export class ContextManager {
     return this.defaultLauncherContexts
   }
 
-  constructor(
-    private serverUrl: string,
-    private setCsrfToken: (csrfToken: CsrfToken) => void
-  ) {
+  constructor(private serverUrl: string, private requestClient: RequestClient) {
     if (serverUrl) isUrl(serverUrl)
   }
 
   public async getComputeContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while getting compute contexts. ')
-    })
+    const { result: contexts } = await this.requestClient
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts?limit=10000`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting compute contexts. ')
+      })
 
     const contextsList = contexts && contexts.items ? contexts.items : []
 
@@ -72,20 +57,14 @@ export class ContextManager {
   }
 
   public async getLauncherContexts(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/launcher/contexts?limit=10000`,
-      { headers }
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while getting launcher contexts. ')
-    })
+    const { result: contexts } = await this.requestClient
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/launcher/contexts?limit=10000`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting launcher contexts. ')
+      })
 
     const contextsList = contexts && contexts.items ? contexts.items : []
 
@@ -183,18 +162,15 @@ export class ContextManager {
       requestBody.environment = { autoExecLines }
     }
 
-    const createContextRequest: RequestInit = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    }
-
-    const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts`,
-      createContextRequest
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while creating compute context. ')
-    })
+    const { result: context } = await this.requestClient
+      .post<Context>(
+        `${this.serverUrl}/compute/contexts`,
+        JSON.stringify(requestBody),
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while creating compute context. ')
+      })
 
     return context
   }
@@ -237,18 +213,15 @@ export class ContextManager {
       launchType
     }
 
-    const createContextRequest: RequestInit = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    }
-
-    const { result: context } = await this.request<Context>(
-      `${this.serverUrl}/launcher/contexts`,
-      createContextRequest
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while creating launcher context. ')
-    })
+    const { result: context } = await this.requestClient
+      .post<Context>(
+        `${this.serverUrl}/launcher/contexts`,
+        JSON.stringify(requestBody),
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while creating launcher context. ')
+      })
 
     return context
   }
@@ -267,14 +240,6 @@ export class ContextManager {
       true
     )
 
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
     let originalContext
 
     originalContext = await this.getComputeContextByName(
@@ -290,39 +255,33 @@ export class ContextManager {
       )
     }
 
-    const { result: context, etag } = await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${originalContext.id}`,
-      {
-        headers
-      }
-    ).catch((err) => {
-      if (err && err.status === 404) {
-        throw new Error(
-          `The context '${contextName}' was not found on this server.`
-        )
-      }
+    const { result: context, etag } = await this.requestClient
+      .get<Context>(
+        `${this.serverUrl}/compute/contexts/${originalContext.id}`,
+        accessToken
+      )
+      .catch((err) => {
+        if (err && err.status === 404) {
+          throw new Error(
+            `The context '${contextName}' was not found on this server.`
+          )
+        }
 
-      throw err
-    })
+        throw err
+      })
 
     // An If-Match header with the value of the last ETag for the context
     // is required to be able to update it
     // https://developer.sas.com/apis/rest/Compute/#update-a-context-definition
-    headers['If-Match'] = etag
-
-    const updateContextRequest: RequestInit = {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({
+    return await this.requestClient.put<Context>(
+      `/compute/contexts/${context.id}`,
+      JSON.stringify({
         ...context,
         ...editedContext,
         attributes: { ...context.attributes, ...editedContext.attributes }
-      })
-    }
-
-    return await this.request<Context>(
-      `${this.serverUrl}/compute/contexts/${context.id}`,
-      updateContextRequest
+      }),
+      accessToken,
+      { 'If-Match': etag }
     )
   }
 
@@ -330,20 +289,17 @@ export class ContextManager {
     contextName: string,
     accessToken?: string
   ): Promise<Context> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
-      { headers }
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while getting compute context by name. ')
-    })
+    const { result: contexts } = await this.requestClient
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(
+          err,
+          'Error while getting compute context by name. '
+        )
+      })
 
     if (!contexts || !(contexts.items && contexts.items.length)) {
       throw new Error(
@@ -358,20 +314,16 @@ export class ContextManager {
     contextId: string,
     accessToken?: string
   ): Promise<ContextAllAttributes> {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: context } = await this.request<ContextAllAttributes>(
-      `${this.serverUrl}/compute/contexts/${contextId}`,
-      { headers }
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while getting compute context by id. ')
-    })
+    const {
+      result: context
+    } = await this.requestClient
+      .get<ContextAllAttributes>(
+        `${this.serverUrl}/compute/contexts/${contextId}`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting compute context by id. ')
+      })
 
     return context
   }
@@ -380,20 +332,14 @@ export class ContextManager {
     executeScript: Function,
     accessToken?: string
   ) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const { result: contexts } = await this.request<{ items: Context[] }>(
-      `${this.serverUrl}/compute/contexts?limit=10000`,
-      { headers }
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while fetching compute contexts.')
-    })
+    const { result: contexts } = await this.requestClient
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts?limit=10000`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while fetching compute contexts.')
+      })
 
     const contextsList = contexts.items || []
     const executableContexts: any[] = []
@@ -470,48 +416,15 @@ export class ContextManager {
 
     const context = await this.getComputeContextByName(contextName, accessToken)
 
-    const deleteContextRequest: RequestInit = {
-      method: 'DELETE',
-      headers
-    }
-
-    return await this.request<Context>(
+    return await this.requestClient.delete<Context>(
       `${this.serverUrl}/compute/contexts/${context.id}`,
-      deleteContextRequest
+      accessToken
     )
   }
 
   // TODO: implement editLauncherContext method
 
   // TODO: implement deleteLauncherContext method
-
-  private async request<T>(
-    url: string,
-    options: RequestInit,
-    contentType: 'text' | 'json' = 'json'
-  ) {
-    if (this.csrfToken) {
-      options.headers = {
-        ...options.headers,
-        [this.csrfToken.headerName]: this.csrfToken.value
-      }
-    }
-
-    return await makeRequest<T>(
-      url,
-      options,
-      (token) => {
-        this.csrfToken = token
-        this.setCsrfToken(token)
-      },
-      contentType
-    ).catch((err) => {
-      throw prefixMessage(
-        err,
-        'Error while making request in Context Manager. '
-      )
-    })
-  }
 
   private validateContextName(name: string) {
     if (!name) throw new Error('Context name is required.')
