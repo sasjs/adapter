@@ -1,6 +1,6 @@
+import { ServerType } from '@sasjs/utils/types'
 import axios, { AxiosInstance } from 'axios'
 import { isAuthorizeFormRequired, parseAndSubmitAuthorizeForm } from '.'
-import { ServerType } from '../types'
 import { serialize } from '../utils'
 
 export class AuthManager {
@@ -16,7 +16,7 @@ export class AuthManager {
     this.httpClient = axios.create({ baseURL: this.serverUrl })
     this.loginUrl = `/SASLogon/login`
     this.logoutUrl =
-      this.serverType === ServerType.SAS9
+      this.serverType === ServerType.Sas9
         ? '/SASLogon/logout?'
         : '/SASLogon/logout.do?'
   }
@@ -89,13 +89,16 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const loginResponse = await axios.get(this.loginUrl.replace('.do', ''), {
-      responseType: 'text',
-      headers: {
-        Accept: '*/*'
+    const loginResponse = await this.httpClient.get(
+      this.loginUrl.replace('.do', ''),
+      {
+        responseType: 'text',
+        headers: {
+          Accept: '*/*'
+        }
       }
-    })
-    const responseText = await loginResponse.data
+    )
+    const responseText = loginResponse?.data
     const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
     let loginForm: any = null
 
@@ -110,7 +113,7 @@ export class AuthManager {
     })
   }
 
-  private async getLoginForm(response: any) {
+  private getLoginForm(response: any) {
     const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
@@ -145,7 +148,7 @@ export class AuthManager {
       const loginUrl = tempLoginLink
 
       this.loginUrl =
-        this.serverType === ServerType.SASViya
+        this.serverType === ServerType.SasViya
           ? tempLoginLink
           : loginUrl.replace('.do', '')
     }
