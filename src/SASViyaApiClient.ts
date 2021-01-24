@@ -1,10 +1,4 @@
-import {
-  parseAndSubmitAuthorizeForm,
-  convertToCSV,
-  isRelativePath,
-  isUri,
-  isUrl
-} from './utils'
+import { convertToCSV, isRelativePath, isUri, isUrl } from './utils'
 import * as NodeFormData from 'form-data'
 import {
   Job,
@@ -24,6 +18,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
+import { parseAndSubmitAuthorizeForm } from './auth'
 
 /**
  * A client for interfacing with the SAS Viya REST API.

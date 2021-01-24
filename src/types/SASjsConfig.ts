@@ -1,4 +1,4 @@
-import { ServerType } from './ServerType'
+import { ServerType } from '@sasjs/utils/types'
 
 /**
  * Specifies the configuration for the SASjs instance - eg where and how to

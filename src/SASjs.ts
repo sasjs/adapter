@@ -13,7 +13,6 @@ import {
   SASjsConfig,
   SASjsRequest,
   SASjsWaitingRequest,
-  ServerType,
   CsrfToken,
   UploadFile,
   EditContextInput,
@@ -24,13 +23,14 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { isLogInRequired, AuthManager } from './auth'
+import { ServerType } from '@sasjs/utils/types'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
-  serverType: ServerType.SASViya,
+  serverType: ServerType.SasViya,
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false
@@ -71,7 +71,7 @@ export default class SASjs {
     serverName: string,
     repositoryName: string
   ) {
-    this.isMethodSupported('executeScriptSAS9', ServerType.SAS9)
+    this.isMethodSupported('executeScriptSAS9', ServerType.Sas9)
 
     return await this.sas9ApiClient?.executeScript(
       linesOfCode,
@@ -85,7 +85,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getComputeContexts(accessToken: string) {
-    this.isMethodSupported('getComputeContexts', ServerType.SASViya)
+    this.isMethodSupported('getComputeContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContexts(accessToken)
   }
@@ -95,7 +95,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getLauncherContexts(accessToken: string) {
-    this.isMethodSupported('getLauncherContexts', ServerType.SASViya)
+    this.isMethodSupported('getLauncherContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
   }
@@ -104,7 +104,7 @@ export default class SASjs {
    * Gets default(system) launcher contexts.
    */
   public getDefaultComputeContexts() {
-    this.isMethodSupported('getDefaultComputeContexts', ServerType.SASViya)
+    this.isMethodSupported('getDefaultComputeContexts', ServerType.SasViya)
 
     return this.sasViyaApiClient!.getDefaultComputeContexts()
   }
@@ -114,7 +114,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getExecutableContexts(accessToken: string) {
-    this.isMethodSupported('getExecutableContexts', ServerType.SASViya)
+    this.isMethodSupported('getExecutableContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
@@ -136,7 +136,7 @@ export default class SASjs {
     accessToken: string,
     authorizedUsers?: string[]
   ) {
-    this.isMethodSupported('createComputeContext', ServerType.SASViya)
+    this.isMethodSupported('createComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createComputeContext(
       contextName,
@@ -161,7 +161,7 @@ export default class SASjs {
     launchType: string,
     accessToken: string
   ) {
-    this.isMethodSupported('createLauncherContext', ServerType.SASViya)
+    this.isMethodSupported('createLauncherContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createLauncherContext(
       contextName,
@@ -182,7 +182,7 @@ export default class SASjs {
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    this.isMethodSupported('editComputeContext', ServerType.SASViya)
+    this.isMethodSupported('editComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.editComputeContext(
       contextName,
@@ -197,7 +197,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async deleteComputeContext(contextName: string, accessToken?: string) {
-    this.isMethodSupported('deleteComputeContext', ServerType.SASViya)
+    this.isMethodSupported('deleteComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.deleteComputeContext(
       contextName,
@@ -215,7 +215,7 @@ export default class SASjs {
     contextName: string,
     accessToken?: string
   ) {
-    this.isMethodSupported('getComputeContextByName', ServerType.SASViya)
+    this.isMethodSupported('getComputeContextByName', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContextByName(
       contextName,
@@ -229,7 +229,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getComputeContextById(contextId: string, accessToken?: string) {
-    this.isMethodSupported('getComputeContextById', ServerType.SASViya)
+    this.isMethodSupported('getComputeContextById', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContextById(
       contextId,
@@ -238,7 +238,7 @@ export default class SASjs {
   }
 
   public async createSession(contextName: string, accessToken: string) {
-    this.isMethodSupported('createSession', ServerType.SASViya)
+    this.isMethodSupported('createSession', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
@@ -258,7 +258,7 @@ export default class SASjs {
     accessToken?: string,
     debug?: boolean
   ) {
-    this.isMethodSupported('executeScriptSASViya', ServerType.SASViya)
+    this.isMethodSupported('executeScriptSASViya', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.executeScript(
       fileName,
@@ -309,7 +309,7 @@ export default class SASjs {
    * @param accessToken - an access token for authorizing the request.
    */
   public async deleteFolder(folderPath: string, accessToken: string) {
-    this.isMethodSupported('deleteFolder', ServerType.SASViya)
+    this.isMethodSupported('deleteFolder', ServerType.SasViya)
 
     return await this.sasViyaApiClient?.deleteFolder(folderPath, accessToken)
   }
@@ -327,7 +327,7 @@ export default class SASjs {
     targetFolderName: string,
     accessToken: string
   ) {
-    this.isMethodSupported('moveFolder', ServerType.SASViya)
+    this.isMethodSupported('moveFolder', ServerType.SasViya)
 
     return await this.sasViyaApiClient?.moveFolder(
       sourceFolder,
@@ -345,7 +345,7 @@ export default class SASjs {
     accessToken?: string,
     sasApiClient?: SASViyaApiClient
   ) {
-    this.isMethodSupported('createJobDefinition', ServerType.SASViya)
+    this.isMethodSupported('createJobDefinition', ServerType.SasViya)
 
     if (sasApiClient)
       return await sasApiClient!.createJobDefinition(
@@ -365,7 +365,7 @@ export default class SASjs {
   }
 
   public async getAuthCode(clientId: string) {
-    this.isMethodSupported('getAuthCode', ServerType.SASViya)
+    this.isMethodSupported('getAuthCode', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
@@ -375,7 +375,7 @@ export default class SASjs {
     clientSecret: string,
     authCode: string
   ) {
-    this.isMethodSupported('getAccessToken', ServerType.SASViya)
+    this.isMethodSupported('getAccessToken', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
@@ -389,7 +389,7 @@ export default class SASjs {
     clientSecret: string,
     refreshToken: string
   ) {
-    this.isMethodSupported('refreshTokens', ServerType.SASViya)
+    this.isMethodSupported('refreshTokens', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.refreshTokens(
       clientId,
@@ -399,7 +399,7 @@ export default class SASjs {
   }
 
   public async deleteClient(clientId: string, accessToken: string) {
-    this.isMethodSupported('deleteClient', ServerType.SASViya)
+    this.isMethodSupported('deleteClient', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.deleteClient(clientId, accessToken)
   }
@@ -537,7 +537,7 @@ export default class SASjs {
       ...config
     }
 
-    if (config.serverType === ServerType.SASViya && config.contextName) {
+    if (config.serverType === ServerType.SasViya && config.contextName) {
       if (config.useComputeApi) {
         requestResponse = await this.executeJobViaComputeApi(
           sasJob,
@@ -589,7 +589,7 @@ export default class SASjs {
     accessToken?: string,
     isForced = false
   ) {
-    this.isMethodSupported('deployServicePack', ServerType.SASViya)
+    this.isMethodSupported('deployServicePack', ServerType.SasViya)
 
     let sasApiClient: any = null
     if (serverUrl || appLoc) {
@@ -599,7 +599,7 @@ export default class SASjs {
       if (!appLoc) {
         appLoc = this.sasjsConfig.appLoc
       }
-      if (this.sasjsConfig.serverType === ServerType.SASViya) {
+      if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasApiClient = new SASViyaApiClient(
           serverUrl,
           appLoc,
@@ -607,14 +607,14 @@ export default class SASjs {
           this.setCsrfTokenApi
         )
         sasApiClient.debug = this.sasjsConfig.debug
-      } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
+      } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
         sasApiClient = new SAS9ApiClient(serverUrl)
       }
     } else {
       let sasClientConfig: any = null
-      if (this.sasjsConfig.serverType === ServerType.SASViya) {
+      if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasClientConfig = this.sasViyaApiClient!.getConfig()
-      } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
+      } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
         sasClientConfig = this.sas9ApiClient!.getConfig()
       }
       serverUrl = sasClientConfig.serverUrl
@@ -670,7 +670,7 @@ export default class SASjs {
       ...config
     }
 
-    this.isMethodSupported('startComputeJob', ServerType.SASViya)
+    this.isMethodSupported('startComputeJob', ServerType.SasViya)
     if (!config.contextName) {
       throw new Error(
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
@@ -917,7 +917,7 @@ export default class SASjs {
         : sasJob
       : sasJob
     const jobUri =
-      config.serverType === ServerType.SASViya
+      config.serverType === ServerType.SasViya
         ? await this.getJobUri(sasJob)
         : ''
     const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
@@ -938,7 +938,7 @@ export default class SASjs {
     if (data) {
       const stringifiedData = JSON.stringify(data)
       if (
-        config.serverType === ServerType.SAS9 ||
+        config.serverType === ServerType.Sas9 ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';')
       ) {
@@ -1030,7 +1030,7 @@ export default class SASjs {
               }
             }
 
-            if (response.redirected && config.serverType === ServerType.SAS9) {
+            if (response.redirected && config.serverType === ServerType.Sas9) {
               isRedirected = true
             }
 
@@ -1062,7 +1062,7 @@ export default class SASjs {
                 sasjsWaitingRequest.config = config
                 this.sasjsWaitingRequests.push(sasjsWaitingRequest)
               } else {
-                if (config.serverType === ServerType.SAS9 && config.debug) {
+                if (config.serverType === ServerType.Sas9 && config.debug) {
                   const jsonResponseText = parseWeboutResponse(responseText)
 
                   if (jsonResponseText !== '') {
@@ -1076,7 +1076,7 @@ export default class SASjs {
                     )
                   }
                 } else if (
-                  config.serverType === ServerType.SASViya &&
+                  config.serverType === ServerType.SasViya &&
                   config.debug
                 ) {
                   try {
@@ -1259,7 +1259,7 @@ export default class SASjs {
   }
 
   private parseLogFromResponse(response: any, program: string) {
-    if (this.sasjsConfig.serverType === ServerType.SAS9) {
+    if (this.sasjsConfig.serverType === ServerType.Sas9) {
       this.appendSasjsRequest(response, program, null)
     } else {
       if (!this.sasjsConfig.debug) {
@@ -1339,7 +1339,7 @@ export default class SASjs {
     if (this.sasjsConfig.debug) {
       let jsonResponse
 
-      if (this.sasjsConfig.serverType === ServerType.SAS9) {
+      if (this.sasjsConfig.serverType === ServerType.Sas9) {
         try {
           jsonResponse = JSON.parse(parseWeboutResponse(response))
         } catch (e) {
@@ -1397,7 +1397,7 @@ export default class SASjs {
     }
 
     this.jobsPath =
-      this.sasjsConfig.serverType === ServerType.SASViya
+      this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.pathSAS9
     this.authManager = new AuthManager(
@@ -1406,7 +1406,7 @@ export default class SASjs {
       this.resendWaitingRequests
     )
 
-    if (this.sasjsConfig.serverType === ServerType.SASViya) {
+    if (this.sasjsConfig.serverType === ServerType.SasViya) {
       if (this.sasViyaApiClient)
         this.sasViyaApiClient!.setConfig(
           this.sasjsConfig.serverUrl,
@@ -1422,7 +1422,7 @@ export default class SASjs {
 
       this.sasViyaApiClient.debug = this.sasjsConfig.debug
     }
-    if (this.sasjsConfig.serverType === ServerType.SAS9) {
+    if (this.sasjsConfig.serverType === ServerType.Sas9) {
       if (this.sas9ApiClient)
         this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
       else this.sas9ApiClient = new SAS9ApiClient(this.sasjsConfig.serverUrl)
@@ -1483,7 +1483,7 @@ export default class SASjs {
     if (this.sasjsConfig.serverType !== serverType) {
       throw new Error(
         `Method '${method}' is only supported on ${
-          serverType === ServerType.SAS9 ? 'SAS9' : 'SAS Viya'
+          serverType === ServerType.Sas9 ? 'SAS9' : 'SAS Viya'
         } servers.`
       )
     }
