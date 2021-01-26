@@ -389,14 +389,16 @@ export default class SASjs {
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
-    authCode: string
+    authCode: string,
+    insecure: boolean = false
   ) {
     this.isMethodSupported('getAccessToken', ServerType.SASViya)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
       clientSecret,
-      authCode
+      authCode,
+      insecure
     )
   }
 
