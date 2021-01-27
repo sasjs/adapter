@@ -386,6 +386,13 @@ export default class SASjs {
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
 
+  /**
+   * Exchanges the auth code for an access token for the given client.
+   * @param clientId - the client ID to authenticate with.
+   * @param clientSecret - the client secret to authenticate with.
+   * @param authCode - the auth code received from the server.
+   * @param insecure - this boolean tells adapter to ignore SSL errors. [Not Recommended]
+   */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
