@@ -1,6 +1,6 @@
 import { isUrl } from './utils'
 import { UploadFile } from './types/UploadFile'
-import { ErrorResponse } from './types'
+import { ErrorResponse, LoginRequiredError } from './types'
 import { RequestClient } from './request/RequestClient'
 
 export class FileUploader {
@@ -53,10 +53,17 @@ export class FileUploader {
 
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
-      .then((res) => res.result)
+      .then((res) =>
+        typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+      )
       .catch((err: Error) => {
+        if (err instanceof LoginRequiredError) {
+          return Promise.reject(
+            new ErrorResponse('You must be logged in to upload a file.', err)
+          )
+        }
         return Promise.reject(
-          new ErrorResponse('File upload request failed', err)
+          new ErrorResponse('File upload request failed.', err)
         )
       })
   }

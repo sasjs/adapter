@@ -660,23 +660,13 @@ export default class SASjs {
 
   /**
    * Fetches content of the log file
-   * @param logLink - url of the log file.
+   * @param logUrl - url of the log file.
    * @param accessToken - an access token for an authorized user.
    */
-  public fetchLogFileContent(logLink: string, accessToken?: string) {
-    const headers: any = { 'Content-Type': 'application/json' }
-
-    if (accessToken) headers.Authorization = 'Bearer ' + accessToken
-
-    return new Promise((resolve, reject) => {
-      fetch(logLink, {
-        method: 'GET',
-        headers
-      })
-        .then((response: any) => response.text())
-        .then((response: any) => resolve(response))
-        .catch((err: Error) => reject(err))
-    })
+  public async fetchLogFileContent(logUrl: string, accessToken?: string) {
+    return await this.requestClient!.get(logUrl, accessToken).then((res) =>
+      JSON.stringify(res.result)
+    )
   }
 
   public getSasRequests() {

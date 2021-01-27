@@ -3,7 +3,38 @@ import { CsrfToken, JobExecutionError } from '..'
 import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 
-export class RequestClient {
+export interface HttpClient {
+  get<T>(
+    url: string,
+    accessToken: string | undefined,
+    contentType: string,
+    overrideHeaders: { [key: string]: string | number }
+  ): Promise<{ result: T; etag: string }>
+
+  post<T>(
+    url: string,
+    data: any,
+    accessToken: string | undefined,
+    contentType: string,
+    overrideHeaders: { [key: string]: string | number }
+  ): Promise<{ result: T; etag: string }>
+
+  put<T>(
+    url: string,
+    data: any,
+    accessToken: string | undefined,
+    overrideHeaders: { [key: string]: string | number }
+  ): Promise<{ result: T; etag: string }>
+
+  delete<T>(
+    url: string,
+    accessToken: string | undefined
+  ): Promise<{ result: T; etag: string }>
+
+  getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
+}
+
+export class RequestClient implements HttpClient {
   private csrfToken: CsrfToken | undefined
   private fileUploadCsrfToken: CsrfToken | undefined
   private httpClient: AxiosInstance
@@ -39,14 +70,16 @@ export class RequestClient {
 
     try {
       const response = await this.httpClient.get<T>(url, requestConfig)
+      const etag = response?.headers ? response.headers['etag'] : ''
+
       return {
         result: response.data as T,
-        etag: response.headers['etag']
+        etag
       }
     } catch (e) {
-      const response_1 = e.response as AxiosResponse
-      if (response_1.status === 403 || response_1.status === 449) {
-        this.parseAndSetCsrfToken(response_1)
+      const response = e.response as AxiosResponse
+      if (response?.status === 403 || response?.status === 449) {
+        this.parseAndSetCsrfToken(response)
         if (this.csrfToken) {
           return this.get<T>(url, accessToken, contentType, overrideHeaders)
         }
@@ -72,9 +105,10 @@ export class RequestClient {
       .post<T>(url, data, { headers, withCredentials: true })
       .then((response) => {
         throwIfError(response)
+        const etag = response?.headers ? response.headers['etag'] : ''
         return {
           result: response.data as T,
-          etag: response.headers['etag'] as string
+          etag
         }
       })
       .catch(async (e) => {
@@ -111,9 +145,10 @@ export class RequestClient {
         headers,
         withCredentials: true
       })
+      const etag = response?.headers ? response.headers['etag'] : ''
       return {
         result: response.data as T,
-        etag: response.headers['etag'] as string
+        etag
       }
     } catch (e) {
       const response = e.response as AxiosResponse
@@ -145,9 +180,10 @@ export class RequestClient {
 
     try {
       const response = await this.httpClient.delete<T>(url, requestConfig)
+      const etag = response?.headers ? response.headers['etag'] : ''
       return {
         result: response.data as T,
-        etag: response.headers['etag']
+        etag
       }
     } catch (e) {
       const response = e.response as AxiosResponse
@@ -285,6 +321,12 @@ const throwIfError = (response: AxiosResponse) => {
     throw new LoginRequiredError()
   }
 
+  if (
+    typeof response.data === 'string' &&
+    response.data.includes('<form action="Logon">')
+  ) {
+    throw new LoginRequiredError()
+  }
   if (response.data?.auth_request) {
     throw new AuthorizeError(
       response.data.message,
