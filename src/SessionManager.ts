@@ -1,7 +1,7 @@
 import { Session, Context, CsrfToken, SessionVariable } from './types'
 import { asyncForEach, isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
-import { RequestClient } from './request/client'
+import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
 const RETRY_LIMIT: number = 3

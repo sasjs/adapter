@@ -1,7 +1,7 @@
 import { Context, EditContextInput, ContextAllAttributes } from './types'
 import { isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
-import { RequestClient } from './request/client'
+import { RequestClient } from './request/RequestClient'
 
 export class ContextManager {
   private defaultComputeContexts = [

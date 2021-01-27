@@ -1,7 +1,7 @@
 import { isUrl } from './utils'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse } from './types'
-import { RequestClient } from './request/client'
+import { RequestClient } from './request/RequestClient'
 
 export class FileUploader {
   constructor(
@@ -52,7 +52,7 @@ export class FileUploader {
     }
 
     return this.requestClient
-      .post(uploadUrl, formData, undefined, headers)
+      .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then((res) => res.result)
       .catch((err: Error) => {
         return Promise.reject(

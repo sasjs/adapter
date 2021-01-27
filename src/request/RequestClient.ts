@@ -1,5 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { CsrfToken } from '..'
+import { CsrfToken, JobExecutionError } from '..'
+import { LoginRequiredError } from '../types'
+import { AuthorizeError } from '../types/AuthorizeError'
 
 export class RequestClient {
   private csrfToken: CsrfToken | undefined
@@ -58,24 +60,30 @@ export class RequestClient {
     url: string,
     data: any,
     accessToken: string | undefined,
+    contentType = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
     const headers = {
-      ...this.getHeaders(accessToken, 'application/json'),
+      ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders
     }
 
     return this.httpClient
       .post<T>(url, data, { headers, withCredentials: true })
       .then((response) => {
+        throwIfError(response)
         return {
           result: response.data as T,
           etag: response.headers['etag'] as string
         }
       })
-      .catch((e) => {
+      .catch(async (e) => {
         const response = e.response as AxiosResponse
-        if (response.status === 403 || response.status === 449) {
+        if (e instanceof AuthorizeError) {
+          await this.post(e.confirmUrl, { value: true }, undefined)
+          return this.post<T>(url, data, accessToken)
+        }
+        if (response?.status === 403 || response?.status === 449) {
           this.parseAndSetCsrfToken(response)
 
           if (this.csrfToken) {
@@ -108,14 +116,18 @@ export class RequestClient {
         etag: response.headers['etag'] as string
       }
     } catch (e) {
-      const response_1 = e.response as AxiosResponse
-      if (response_1.status === 403 || response_1.status === 449) {
-        this.parseAndSetCsrfToken(response_1)
+      const response = e.response as AxiosResponse
+      if (response?.status === 403 || response?.status === 449) {
+        this.parseAndSetCsrfToken(response)
 
         if (this.csrfToken) {
           return this.put<T>(url, data, accessToken)
         }
         throw e
+      }
+
+      if (response?.status === 401) {
+        throw new LoginRequiredError()
       }
       throw e
     }
@@ -138,9 +150,9 @@ export class RequestClient {
         etag: response.headers['etag']
       }
     } catch (e) {
-      const response_1 = e.response as AxiosResponse
-      if (response_1.status === 403 || response_1.status === 449) {
-        this.parseAndSetCsrfToken(response_1)
+      const response = e.response as AxiosResponse
+      if (response?.status === 403 || response?.status === 449) {
+        this.parseAndSetCsrfToken(response)
 
         if (this.csrfToken) {
           return this.delete<T>(url, accessToken)
@@ -168,9 +180,9 @@ export class RequestClient {
         etag: response.headers['etag'] as string
       }
     } catch (e) {
-      const response_1 = e.response as AxiosResponse
-      if (response_1.status === 403 || response_1.status === 449) {
-        this.parseAndSetCsrfToken(response_1)
+      const response = e.response as AxiosResponse
+      if (response?.status === 403 || response?.status === 449) {
+        this.parseAndSetCsrfToken(response)
 
         if (this.csrfToken) {
           return this.patch<T>(url, accessToken)
@@ -201,9 +213,9 @@ export class RequestClient {
         etag: response.headers['etag'] as string
       }
     } catch (e) {
-      const response_1 = e.response as AxiosResponse
-      if (response_1.status === 403 || response_1.status === 449) {
-        this.parseAndSetFileUploadCsrfToken(response_1)
+      const response = e.response as AxiosResponse
+      if (response?.status === 403 || response?.status === 449) {
+        this.parseAndSetFileUploadCsrfToken(response)
 
         if (this.fileUploadCsrfToken) {
           return this.uploadFile(url, content, accessToken)
@@ -214,9 +226,16 @@ export class RequestClient {
     }
   }
 
-  private getHeaders(accessToken: string | undefined, contentType: string) {
+  private getHeaders = (
+    accessToken: string | undefined,
+    contentType: string
+  ) => {
     const headers: any = {
       'Content-Type': contentType
+    }
+
+    if (contentType === 'text/plain') {
+      headers.Accept = '*/*'
     }
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
@@ -228,7 +247,7 @@ export class RequestClient {
     return headers
   }
 
-  private parseAndSetFileUploadCsrfToken(response: AxiosResponse) {
+  private parseAndSetFileUploadCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
 
     if (token) {
@@ -236,7 +255,7 @@ export class RequestClient {
     }
   }
 
-  private parseAndSetCsrfToken(response: AxiosResponse) {
+  private parseAndSetCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
 
     if (token) {
@@ -244,7 +263,7 @@ export class RequestClient {
     }
   }
 
-  private parseCsrfToken(response: AxiosResponse): CsrfToken | undefined {
+  private parseCsrfToken = (response: AxiosResponse): CsrfToken | undefined => {
     const tokenHeader = (response.headers[
       'x-csrf-header'
     ] as string)?.toLowerCase()
@@ -257,6 +276,57 @@ export class RequestClient {
       }
 
       return csrfToken
+    }
+  }
+}
+
+const throwIfError = (response: AxiosResponse) => {
+  if (response.data?.entityID?.includes('login')) {
+    throw new LoginRequiredError()
+  }
+
+  if (response.data?.auth_request) {
+    throw new AuthorizeError(
+      response.data.message,
+      response.data.options.confirm.location
+    )
+  }
+
+  const error = parseError(response.data as string)
+  if (error) {
+    throw error
+  }
+}
+
+const parseError = (data: string) => {
+  try {
+    const responseJson = JSON.parse(data?.replace(/[\n\r]/g, ' '))
+    return responseJson.errorCode && responseJson.message
+      ? new JobExecutionError(
+          responseJson.errorCode,
+          responseJson.message,
+          data?.replace(/[\n\r]/g, ' ')
+        )
+      : null
+  } catch (_) {
+    try {
+      const hasError = data?.includes('{"errorCode')
+      if (hasError) {
+        const parts = data.split('{"errorCode')
+        if (parts.length > 1) {
+          const error = '{"errorCode' + parts[1].split('"}')[0] + '"}'
+          const errorJson = JSON.parse(error.replace(/[\n\r]/g, ' '))
+          return new JobExecutionError(
+            errorJson.errorCode,
+            errorJson.message,
+            data?.replace(/[\n\r]/g, '\n')
+          )
+        }
+        return null
+      }
+      return null
+    } catch (_) {
+      return null
     }
   }
 }

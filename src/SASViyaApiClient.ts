@@ -17,7 +17,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { parseAndSubmitAuthorizeForm } from './auth'
-import { RequestClient } from './request/client'
+import { RequestClient } from './request/RequestClient'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
