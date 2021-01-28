@@ -165,7 +165,7 @@ export class ContextManager {
     const { result: context } = await this.requestClient
       .post<Context>(
         `${this.serverUrl}/compute/contexts`,
-        JSON.stringify(requestBody),
+        requestBody,
         accessToken
       )
       .catch((err) => {
@@ -216,7 +216,7 @@ export class ContextManager {
     const { result: context } = await this.requestClient
       .post<Context>(
         `${this.serverUrl}/launcher/contexts`,
-        JSON.stringify(requestBody),
+        requestBody,
         accessToken
       )
       .catch((err) => {
@@ -275,11 +275,11 @@ export class ContextManager {
     // https://developer.sas.com/apis/rest/Compute/#update-a-context-definition
     return await this.requestClient.put<Context>(
       `/compute/contexts/${context.id}`,
-      JSON.stringify({
+      {
         ...context,
         ...editedContext,
         attributes: { ...context.attributes, ...editedContext.attributes }
-      }),
+      },
       accessToken,
       { 'If-Match': etag }
     )

@@ -9,7 +9,8 @@ import {
   EditContextInput,
   JobDefinition,
   PollOptions,
-  ComputeJobExecutionError
+  ComputeJobExecutionError,
+  JobExecutionError
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
@@ -560,10 +561,10 @@ export class SASViyaApiClient {
       result: createFolderResponse
     } = await this.requestClient.post<Folder>(
       `/folders/folders?parentFolderUri=${parentFolderUri}`,
-      JSON.stringify({
+      {
         name: folderName,
         type: 'folder'
-      }),
+      },
       accessToken
     )
 
@@ -943,12 +944,12 @@ export class SASViyaApiClient {
       jobArguments[`_webin_name${index + 1}`] = fileInfo.tableName
     })
 
-    const postJobRequestBody = JSON.stringify({
+    const postJobRequestBody = {
       name: `exec-${jobName}`,
       description: 'Powered by SASjs',
       jobDefinition,
       arguments: jobArguments
-    })
+    }
     const { result: postedJob, etag } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
@@ -978,7 +979,11 @@ export class SASViyaApiClient {
         .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
     if (jobStatus === 'failed') {
-      return Promise.reject({ error: currentJob.error, log })
+      throw new JobExecutionError(
+        currentJob.error?.errorCode,
+        currentJob.error?.message,
+        log
+      )
     }
     return { result: jobResult?.result, log }
   }
@@ -1015,7 +1020,7 @@ export class SASViyaApiClient {
     accessToken?: string,
     pollOptions?: PollOptions
   ) {
-    let POLL_INTERVAL = 100
+    let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
 
     if (pollOptions) {
@@ -1201,21 +1206,21 @@ export class SASViyaApiClient {
     const { result: folder } = await this.requestClient
       .patch<Folder>(
         `${this.serverUrl}${url}`,
-        JSON.stringify({
+        {
           id: sourceFolderId,
           name: targetFolderName,
           parentFolderUri: targetParentFolderUri
-        }),
+        },
         accessToken
       )
       .catch((err) => {
         if (err.code && err.code === 'ENOTFOUND') {
           const notFoundError = {
-            body: JSON.stringify({
+            body: {
               message: `Folder '${sourceFolder
                 .split('/')
                 .pop()}' was not found.`
-            })
+            }
           }
 
           throw notFoundError
