@@ -8,7 +8,8 @@ import {
   Folder,
   EditContextInput,
   JobDefinition,
-  PollOptions
+  PollOptions,
+  ComputeJobExecutionError
 } from './types'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
@@ -429,7 +430,7 @@ export class SASViyaApiClient {
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
-        return Promise.reject({ job: currentJob, log })
+        return Promise.reject(new ComputeJobExecutionError(currentJob, log))
       }
 
       let resultLink
@@ -598,7 +599,7 @@ export class SASViyaApiClient {
 
     return await this.requestClient.post<Job>(
       `${this.serverUrl}/jobDefinitions/definitions?parentFolderUri=${parentFolderUri}`,
-      JSON.stringify({
+      {
         name: jobName,
         parameters: [
           {
@@ -609,7 +610,7 @@ export class SASViyaApiClient {
         ],
         type: 'Compute',
         code
-      }),
+      },
       accessToken
     )
   }

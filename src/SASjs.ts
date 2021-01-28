@@ -9,7 +9,8 @@ import { RequestClient } from './request/RequestClient'
 import {
   JobExecutor,
   WebJobExecutor,
-  ComputeJobExecutor
+  ComputeJobExecutor,
+  JesJobExecutor
 } from './job-execution'
 
 const defaultConfig: SASjsConfig = {
@@ -756,6 +757,11 @@ export default class SASjs {
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasViyaApiClient!
+    )
+
+    this.jesJobExecutor = new JesJobExecutor(
       this.sasjsConfig.serverUrl,
       this.sasViyaApiClient!
     )

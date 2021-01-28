@@ -1,3 +1,4 @@
+export * from './ComputeJobExecutionError'
 export * from './Context'
 export * from './CsrfToken'
 export * from './ErrorResponse'
