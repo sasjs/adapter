@@ -19,6 +19,7 @@ import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { parseAndSubmitAuthorizeForm } from './auth'
 import { RequestClient } from './request/RequestClient'
+import { NotFoundError } from './types/NotFoundError'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -367,13 +368,13 @@ export class SASViyaApiClient {
       }
 
       // Execute job in session
-      const jobRequestBody = JSON.stringify({
+      const jobRequestBody = {
         name: fileName,
         description: 'Powered by SASjs',
         code: linesOfCode,
         variables: jobVariables,
         arguments: jobArguments
-      })
+      }
       const { result: postedJob, etag } = await this.requestClient
         .post<Job>(
           `/compute/sessions/${executionSessionId}/jobs`,
@@ -445,7 +446,7 @@ export class SASViyaApiClient {
         jobResult = await this.requestClient
           .get<any>(resultLink, accessToken, 'text/plain')
           .catch(async (e) => {
-            if (e && e.status === 404) {
+            if (e instanceof NotFoundError) {
               if (logLink) {
                 log = await this.requestClient
                   .get<any>(`${logLink.href}/content?limit=10000`, accessToken)

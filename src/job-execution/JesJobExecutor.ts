@@ -28,7 +28,7 @@ export class JesJobExecutor implements JobExecutor {
     accessToken?: string
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
-    await this.sasViyaApiClient
+    return await this.sasViyaApiClient
       ?.executeJob(sasJob, config.contextName, config.debug, data, accessToken)
       .then((response) => {
         this.appendRequest(response, sasJob, config.debug)

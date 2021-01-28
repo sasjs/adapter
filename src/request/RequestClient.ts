@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { CsrfToken, JobExecutionError } from '..'
 import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
+import { NotFoundError } from '../types/NotFoundError'
 
 export interface HttpClient {
   get<T>(
@@ -64,7 +65,6 @@ export class RequestClient implements HttpClient {
       withCredentials: true
     }
     if (contentType === 'text/plain') {
-      requestConfig.headers.Accept = '*/*'
       requestConfig.transformResponse = undefined
     }
 
@@ -84,6 +84,8 @@ export class RequestClient implements HttpClient {
           return this.get<T>(url, accessToken, contentType, overrideHeaders)
         }
         throw e
+      } else if (response?.status === 404) {
+        throw new NotFoundError(url)
       }
       throw e
     }
@@ -272,6 +274,8 @@ export class RequestClient implements HttpClient {
 
     if (contentType === 'text/plain') {
       headers.Accept = '*/*'
+    } else {
+      headers.Accept = 'application/json'
     }
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`

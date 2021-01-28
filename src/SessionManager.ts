@@ -22,7 +22,6 @@ export class SessionManager {
 
   private sessions: Session[] = []
   private currentContext: Context | null = null
-  private csrfToken: CsrfToken | null = null
   private _debug: boolean = false
   private printedSessionState = {
     printed: false,
@@ -59,11 +58,6 @@ export class SessionManager {
   }
 
   async clearSession(id: string, accessToken?: string) {
-    const deleteSessionRequest = {
-      method: 'DELETE',
-      headers: this.getHeaders(accessToken)
-    }
-
     return await this.requestClient
       .delete<Session>(`/compute/sessions/${id}`, accessToken)
       .then(() => {
