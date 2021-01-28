@@ -1,7 +1,11 @@
 import { ServerType } from '@sasjs/utils/types'
 import { ErrorResponse } from '..'
 import { SASViyaApiClient } from '../SASViyaApiClient'
-import { JobExecutionError, LoginRequiredError, SASjsRequest } from '../types'
+import {
+  ComputeJobExecutionError,
+  LoginRequiredError,
+  SASjsRequest
+} from '../types'
 import {
   asyncForEach,
   parseGeneratedCode,
@@ -30,7 +34,7 @@ export class ComputeJobExecutor implements JobExecutor {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
     const waitForResult = true
     const expectWebout = true
-    this.sasViyaApiClient
+    return this.sasViyaApiClient
       ?.executeComputeJob(
         sasJob,
         config.contextName,
@@ -58,7 +62,7 @@ export class ComputeJobExecutor implements JobExecutor {
         return responseJson
       })
       .catch(async (e: Error) => {
-        if (e instanceof JobExecutionError) {
+        if (e instanceof ComputeJobExecutionError) {
           this.appendRequest(e, sasJob, config.debug)
         }
         if (e instanceof LoginRequiredError) {
