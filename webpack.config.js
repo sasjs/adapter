@@ -26,7 +26,8 @@ const browserConfig = {
     ]
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
+    fallback: { https: false }
   },
   output: {
     filename: 'index.js',
