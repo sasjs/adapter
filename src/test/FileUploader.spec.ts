@@ -85,21 +85,19 @@ describe('FileUploader', () => {
     })
   })
 
-  // it('should throw an error when invalid JSON is returned by the server', async (done) => {
-  //   mockedAxios.post.mockImplementation(() =>
-  //     Promise.resolve({ data: '{invalid: "json"' })
-  //   )
+  it('should throw an error when invalid JSON is returned by the server', async (done) => {
+    mockedAxios.post.mockImplementation(() =>
+      Promise.resolve({ data: '{invalid: "json"' })
+    )
 
-  //   const sasJob = 'test'
-  //   const { files, params } = prepareFilesAndParams()
+    const sasJob = 'test'
+    const { files, params } = prepareFilesAndParams()
 
-  //   fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
-  //     expect(err.error.message).toEqual(
-  //       'Error while parsing json from upload response.'
-  //     )
-  //     done()
-  //   })
-  // })
+    fileUploader.uploadFile(sasJob, files, params).catch((err: any) => {
+      expect(err.error.message).toEqual('File upload request failed.')
+      done()
+    })
+  })
 
   it('should throw an error when the server request fails', async (done) => {
     mockedAxios.post.mockImplementation(() =>

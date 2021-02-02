@@ -106,8 +106,9 @@ export class WebJobExecutor extends BaseJobExecutor {
     let folderPath
     let jobName: string
     if (isRelativePath(sasJob)) {
-      folderPath = sasJob.split('/')[0]
-      jobName = sasJob.split('/')[1]
+      const folderPathParts = sasJob.split('/')
+      folderPath = folderPathParts.length > 1 ? folderPathParts[0] : ''
+      jobName = folderPathParts.length > 1 ? folderPathParts[1] : ''
     } else {
       const folderPathParts = sasJob.split('/')
       jobName = folderPathParts.pop() || ''
