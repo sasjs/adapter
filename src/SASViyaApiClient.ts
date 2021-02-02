@@ -664,11 +664,13 @@ export class SASViyaApiClient {
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
    * @param authCode - the auth code received from the server.
+   * @param insecure - this boolean tells adapter to ignore SSL errors. [Not Recommended]
    */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
-    authCode: string
+    authCode: string,
+    insecure: boolean = false
   ) {
     const url = this.serverUrl + '/SASLogon/oauth/token'
     let token
@@ -692,12 +694,23 @@ export class SASViyaApiClient {
       formData.append('code', authCode)
     }
 
+    let moreOptions = {}
+    if (insecure) {
+      const https = require('https')
+      moreOptions = {
+        agent: new https.Agent({
+          rejectUnauthorized: false
+        })
+      }
+    }
+
     const authResponse = await fetch(url, {
       method: 'POST',
       credentials: 'include',
       headers,
       body: formData as any,
-      referrerPolicy: 'same-origin'
+      referrerPolicy: 'same-origin',
+      ...moreOptions
     }).then((res) => res.json())
 
     return authResponse
