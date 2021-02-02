@@ -716,6 +716,7 @@ export default class SASjs {
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
+      this.requestClient,
       this.resendWaitingRequests
     )
 

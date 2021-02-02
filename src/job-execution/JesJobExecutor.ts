@@ -1,24 +1,14 @@
 import { ServerType } from '@sasjs/utils/types'
 import { ErrorResponse } from '..'
 import { SASViyaApiClient } from '../SASViyaApiClient'
-import { JobExecutionError, LoginRequiredError, SASjsRequest } from '../types'
-import {
-  asyncForEach,
-  parseGeneratedCode,
-  parseSourceCode,
-  parseWeboutResponse
-} from '../utils'
-import { ExecuteFunction, JobExecutor } from './JobExecutor'
-import { parseSasWork } from './parseSasWork'
+import { JobExecutionError, LoginRequiredError } from '../types'
+import { parseWeboutResponse } from '../utils'
+import { BaseJobExecutor } from './JobExecutor'
 
-export class JesJobExecutor implements JobExecutor {
-  waitingRequests: ExecuteFunction[] = []
-  requests: SASjsRequest[] = []
-
-  constructor(
-    private serverUrl: string,
-    private sasViyaApiClient: SASViyaApiClient
-  ) {}
+export class JesJobExecutor extends BaseJobExecutor {
+  constructor(serverUrl: string, private sasViyaApiClient: SASViyaApiClient) {
+    super(serverUrl, ServerType.SasViya)
+  }
 
   async execute(
     sasJob: string,
@@ -53,70 +43,11 @@ export class JesJobExecutor implements JobExecutor {
         }
         if (e instanceof LoginRequiredError) {
           await loginCallback()
-          this.waitingRequests.push(() =>
+          this.appendWaitingRequest(() =>
             this.execute(sasJob, data, config, loginRequiredCallback)
           )
         }
         return Promise.reject(new ErrorResponse(e?.message, e))
       })
-  }
-
-  resendWaitingRequests = async () => {
-    await asyncForEach(
-      this.waitingRequests,
-      async (waitingRequest: ExecuteFunction) => {
-        await waitingRequest()
-      }
-    )
-
-    this.waitingRequests = []
-    return
-  }
-
-  getRequests = () => this.requests
-
-  clearRequests = () => {
-    this.requests = []
-  }
-
-  private async appendRequest(response: any, program: string, debug: boolean) {
-    let sourceCode = ''
-    let generatedCode = ''
-    let sasWork = null
-
-    if (debug) {
-      if (response?.result && response?.log) {
-        sourceCode = parseSourceCode(response.log)
-        generatedCode = parseGeneratedCode(response.log)
-
-        if (response.log) {
-          sasWork = response.log
-        } else {
-          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK
-        }
-      } else if (response?.result) {
-        sourceCode = parseSourceCode(response.result)
-        generatedCode = parseGeneratedCode(response.result)
-        sasWork = await parseSasWork(
-          response.result,
-          debug,
-          this.serverUrl,
-          ServerType.SasViya
-        )
-      }
-    }
-
-    this.requests.push({
-      logFile: response?.log || response?.result || response,
-      serviceLink: program,
-      timestamp: new Date(),
-      sourceCode,
-      generatedCode,
-      SASWORK: sasWork
-    })
-
-    if (this.requests.length > 20) {
-      this.requests.splice(0, 1)
-    }
   }
 }

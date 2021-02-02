@@ -1,19 +1,18 @@
 import { ServerType } from '@sasjs/utils/types'
-import axios, { AxiosInstance } from 'axios'
-import { isAuthorizeFormRequired, parseAndSubmitAuthorizeForm } from '.'
+import { isAuthorizeFormRequired } from '.'
+import { RequestClient } from '../request/RequestClient'
 import { serialize } from '../utils'
 
 export class AuthManager {
   public userName = ''
   private loginUrl: string
   private logoutUrl: string
-  private httpClient: AxiosInstance
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
+    private requestClient: RequestClient,
     private loginCallback: () => Promise<void>
   ) {
-    this.httpClient = axios.create({ baseURL: this.serverUrl })
     this.loginUrl = `/SASLogon/login`
     this.logoutUrl =
       this.serverType === ServerType.Sas9
@@ -50,21 +49,21 @@ export class AuthManager {
     }
     const loginParamsStr = serialize(loginParams)
 
-    const loginResponse = await this.httpClient
-      .post<string>(this.loginUrl, loginParamsStr, {
-        withCredentials: true,
-        responseType: 'text',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: '*/*'
-        }
-      })
-      .then((response) => response.data)
+    const { result: loginResponse } = await this.requestClient.post<string>(
+      this.loginUrl,
+      loginParamsStr,
+      undefined,
+      'text/plain',
+      {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: '*/*'
+      }
+    )
 
     let loggedIn
 
     if (isAuthorizeFormRequired(loginResponse)) {
-      await parseAndSubmitAuthorizeForm(loginResponse, this.serverUrl)
+      await this.requestClient.authorize(loginResponse)
     } else {
       loggedIn = isLogInSuccess(loginResponse)
     }
@@ -89,16 +88,12 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const loginResponse = await this.httpClient.get(
+    const { result: loginResponse } = await this.requestClient.get<string>(
       this.loginUrl.replace('.do', ''),
-      {
-        responseType: 'text',
-        headers: {
-          Accept: '*/*'
-        }
-      }
+      undefined,
+      'text/plain'
     )
-    const responseText = loginResponse?.data
+    const responseText = loginResponse
     const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
     let loginForm: any = null
 
@@ -158,7 +153,8 @@ export class AuthManager {
    * Logs out of the configured SAS server.
    */
   public logOut() {
-    return this.httpClient.get(this.logoutUrl).then(() => true)
+    this.requestClient.clearCsrfTokens()
+    return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }
 }
 

@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { CsrfToken, JobExecutionError } from '..'
+import { isAuthorizeFormRequired } from '../auth'
 import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 import { NotFoundError } from '../types/NotFoundError'
@@ -33,10 +34,11 @@ export interface HttpClient {
   ): Promise<{ result: T; etag: string }>
 
   getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
+  clearCsrfTokens(): void
 }
 
 export class RequestClient implements HttpClient {
-  private csrfToken: CsrfToken | undefined
+  private csrfToken: CsrfToken = { headerName: '', value: '' }
   private fileUploadCsrfToken: CsrfToken | undefined
   private httpClient: AxiosInstance
 
@@ -46,6 +48,11 @@ export class RequestClient implements HttpClient {
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
     return type === 'file' ? this.fileUploadCsrfToken : this.csrfToken
+  }
+
+  public clearCsrfTokens() {
+    this.csrfToken = { headerName: '', value: '' }
+    this.fileUploadCsrfToken = { headerName: '', value: '' }
   }
 
   public async get<T>(
@@ -68,27 +75,37 @@ export class RequestClient implements HttpClient {
       requestConfig.transformResponse = undefined
     }
 
-    try {
-      const response = await this.httpClient.get<T>(url, requestConfig)
-      const etag = response?.headers ? response.headers['etag'] : ''
+    return this.httpClient
+      .get<T>(url, requestConfig)
+      .then((response) => {
+        throwIfError(response)
+        const etag = response?.headers ? response.headers['etag'] : ''
 
-      return {
-        result: response.data as T,
-        etag
-      }
-    } catch (e) {
-      const response = e.response as AxiosResponse
-      if (response?.status === 403 || response?.status === 449) {
-        this.parseAndSetCsrfToken(response)
-        if (this.csrfToken) {
+        return {
+          result: response.data as T,
+          etag
+        }
+      })
+      .catch(async (e) => {
+        const response = e.response as AxiosResponse
+        if (e instanceof AuthorizeError) {
+          const res = await this.get(e.confirmUrl, undefined, 'text/plain')
+          if (isAuthorizeFormRequired(res.result as string)) {
+            await this.authorize(res.result as string)
+          }
           return this.get<T>(url, accessToken, contentType, overrideHeaders)
         }
+        if (response?.status === 403 || response?.status === 449) {
+          this.parseAndSetCsrfToken(response)
+          if (this.csrfToken.headerName && this.csrfToken.value) {
+            return this.get<T>(url, accessToken, contentType, overrideHeaders)
+          }
+          throw e
+        } else if (response?.status === 404) {
+          throw new NotFoundError(url)
+        }
         throw e
-      } else if (response?.status === 404) {
-        throw new NotFoundError(url)
-      }
-      throw e
-    }
+      })
   }
 
   public post<T>(
@@ -99,7 +116,7 @@ export class RequestClient implements HttpClient {
     overrideHeaders: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
     const headers = {
-      ...this.getHeaders(accessToken, contentType),
+      ...this.getHeaders(accessToken, contentType, url.endsWith('login.do')),
       ...overrideHeaders
     }
 
@@ -116,13 +133,25 @@ export class RequestClient implements HttpClient {
       .catch(async (e) => {
         const response = e.response as AxiosResponse
         if (e instanceof AuthorizeError) {
-          await this.post(e.confirmUrl, { value: true }, undefined)
-          return this.post<T>(url, data, accessToken)
+          const res = await this.get(e.confirmUrl, undefined, 'text/plain')
+          if (isAuthorizeFormRequired(res.result as string)) {
+            await this.authorize(res.result as string)
+          }
+          return this.post<T>(
+            url,
+            data,
+            accessToken,
+            contentType,
+            overrideHeaders
+          )
+        }
+        if (e instanceof LoginRequiredError && this.csrfToken) {
+          this.csrfToken.value = ''
         }
         if (response?.status === 403 || response?.status === 449) {
           this.parseAndSetCsrfToken(response)
 
-          if (this.csrfToken) {
+          if (this.csrfToken.headerName && this.csrfToken.value) {
             return this.post<T>(url, data, accessToken)
           }
           throw e
@@ -157,7 +186,7 @@ export class RequestClient implements HttpClient {
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
-        if (this.csrfToken) {
+        if (this.csrfToken.headerName && this.csrfToken.value) {
           return this.put<T>(url, data, accessToken)
         }
         throw e
@@ -192,7 +221,7 @@ export class RequestClient implements HttpClient {
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
-        if (this.csrfToken) {
+        if (this.csrfToken.headerName && this.csrfToken.value) {
           return this.delete<T>(url, accessToken)
         }
         throw e
@@ -222,7 +251,7 @@ export class RequestClient implements HttpClient {
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
-        if (this.csrfToken) {
+        if (this.csrfToken.headerName && this.csrfToken.value) {
           return this.patch<T>(url, accessToken)
         }
         throw e
@@ -264,9 +293,64 @@ export class RequestClient implements HttpClient {
     }
   }
 
+  public authorize = async (response: string) => {
+    let authUrl: string | null = null
+    const params: any = {}
+
+    const responseBody = response.split('<body>')[1].split('</body>')[0]
+    const bodyElement = document.createElement('div')
+    bodyElement.innerHTML = responseBody
+
+    const form = bodyElement.querySelector('#application_authorization')
+    authUrl = form
+      ? this.httpClient.defaults.baseURL! + form.getAttribute('action')
+      : null
+
+    const inputs: any = form?.querySelectorAll('input')
+
+    for (const input of inputs) {
+      if (input.name === 'user_oauth_approval') {
+        input.value = 'true'
+      }
+
+      params[input.name] = input.value
+    }
+
+    const csrfTokenKey = Object.keys(params).find((k) =>
+      k?.toLowerCase().includes('csrf')
+    )
+    if (csrfTokenKey) {
+      this.csrfToken.value = params[csrfTokenKey]
+      this.csrfToken.headerName = this.csrfToken.headerName || 'x-csrf-token'
+    }
+
+    const formData = new FormData()
+
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        formData.append(key, params[key])
+      }
+    }
+
+    if (!authUrl) {
+      throw new Error('Auth Form URL is null or undefined.')
+    }
+
+    return await this.httpClient
+      .post(authUrl, formData, {
+        responseType: 'text',
+        headers: { Accept: '*/*', 'Content-Type': 'text/plain' }
+      })
+      .then((res) => res.data)
+      .catch((error) => {
+        console.log(error)
+      })
+  }
+
   private getHeaders = (
     accessToken: string | undefined,
-    contentType: string
+    contentType: string,
+    appendCsrfToken = true
   ) => {
     const headers: any = {
       'Content-Type': contentType
@@ -280,7 +364,7 @@ export class RequestClient implements HttpClient {
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
     }
-    if (this.csrfToken?.value) {
+    if (this.csrfToken.headerName && this.csrfToken.value) {
       headers[this.csrfToken.headerName] = this.csrfToken.value
     }
 
@@ -332,10 +416,8 @@ const throwIfError = (response: AxiosResponse) => {
     throw new LoginRequiredError()
   }
   if (response.data?.auth_request) {
-    throw new AuthorizeError(
-      response.data.message,
-      response.data.options.confirm.location
-    )
+    const authorizeRequestUrl = response.request.responseURL
+    throw new AuthorizeError(response.data.message, authorizeRequestUrl)
   }
 
   const error = parseError(response.data as string)

@@ -18,7 +18,6 @@ import { ContextManager } from './ContextManager'
 import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
-import { parseAndSubmitAuthorizeForm } from './auth'
 import { RequestClient } from './request/RequestClient'
 import { NotFoundError } from './types/NotFoundError'
 
@@ -632,10 +631,7 @@ export class SASViyaApiClient {
       .then(async (response) => {
         let code = ''
         if (isAuthorizeFormRequired(response)) {
-          const formResponse: any = await parseAndSubmitAuthorizeForm(
-            response,
-            this.serverUrl
-          )
+          const formResponse: any = await this.requestClient.authorize(response)
 
           const responseBody = formResponse
             .split('<body>')[1]
