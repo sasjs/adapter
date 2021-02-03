@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { CsrfToken, JobExecutionError } from '..'
-import { isAuthorizeFormRequired } from '../auth'
+import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
 import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 import { NotFoundError } from '../types/NotFoundError'
@@ -95,6 +95,9 @@ export class RequestClient implements HttpClient {
           }
           return this.get<T>(url, accessToken, contentType, overrideHeaders)
         }
+        if (e instanceof LoginRequiredError) {
+          this.clearCsrfTokens()
+        }
         if (response?.status === 403 || response?.status === 449) {
           this.parseAndSetCsrfToken(response)
           if (this.csrfToken.headerName && this.csrfToken.value) {
@@ -145,8 +148,8 @@ export class RequestClient implements HttpClient {
             overrideHeaders
           )
         }
-        if (e instanceof LoginRequiredError && this.csrfToken) {
-          this.csrfToken.value = ''
+        if (e instanceof LoginRequiredError) {
+          this.clearCsrfTokens()
         }
         if (response?.status === 403 || response?.status === 449) {
           this.parseAndSetCsrfToken(response)
@@ -183,6 +186,10 @@ export class RequestClient implements HttpClient {
       }
     } catch (e) {
       const response = e.response as AxiosResponse
+      if (e instanceof LoginRequiredError) {
+        this.clearCsrfTokens()
+      }
+
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
@@ -218,6 +225,10 @@ export class RequestClient implements HttpClient {
       }
     } catch (e) {
       const response = e.response as AxiosResponse
+      if (e instanceof LoginRequiredError) {
+        this.clearCsrfTokens()
+      }
+
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
@@ -248,6 +259,10 @@ export class RequestClient implements HttpClient {
       }
     } catch (e) {
       const response = e.response as AxiosResponse
+      if (e instanceof LoginRequiredError) {
+        this.clearCsrfTokens()
+      }
+
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetCsrfToken(response)
 
@@ -411,7 +426,8 @@ const throwIfError = (response: AxiosResponse) => {
 
   if (
     typeof response.data === 'string' &&
-    response.data.includes('<form action="Logon">')
+    isLogInRequired(response.data) &&
+    !response.config.url?.includes('/SASLogon/login')
   ) {
     throw new LoginRequiredError()
   }
@@ -452,7 +468,19 @@ const parseError = (data: string) => {
         }
         return null
       }
-      return null
+      try {
+        const hasError = !!data?.match(/stored process not found: /i)
+        if (hasError) {
+          const parts = data.split(/stored process not found: /i)
+          if (parts.length > 1) {
+            const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
+            const message = `Stored process not found: ${storedProcessPath}`
+            return new JobExecutionError(404, message, '')
+          }
+        }
+      } catch (_) {
+        return null
+      }
     } catch (_) {
       return null
     }
