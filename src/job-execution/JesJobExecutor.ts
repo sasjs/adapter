@@ -2,7 +2,6 @@ import { ServerType } from '@sasjs/utils/types'
 import { ErrorResponse } from '..'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import { JobExecutionError, LoginRequiredError } from '../types'
-import { parseWeboutResponse } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class JesJobExecutor extends BaseJobExecutor {
@@ -23,19 +22,7 @@ export class JesJobExecutor extends BaseJobExecutor {
       .then((response) => {
         this.appendRequest(response, sasJob, config.debug)
 
-        let responseJson
-
-        try {
-          if (typeof response!.result === 'string') {
-            responseJson = JSON.parse(response!.result)
-          } else {
-            responseJson = response!.result
-          }
-        } catch {
-          responseJson = JSON.parse(parseWeboutResponse(response!.result))
-        }
-
-        return responseJson
+        return response.result
       })
       .catch(async (e: Error) => {
         if (e instanceof JobExecutionError) {

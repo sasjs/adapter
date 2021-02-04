@@ -90,8 +90,13 @@ export abstract class BaseJobExecutor implements JobExecutor {
       }
     }
 
+    const stringifiedResult =
+      typeof response?.result === 'string'
+        ? response?.result
+        : JSON.stringify(response?.result, null, 2)
+
     this.requests.push({
-      logFile: response?.log || response?.result || response,
+      logFile: response?.log || stringifiedResult || response,
       serviceLink: program,
       timestamp: new Date(),
       sourceCode,

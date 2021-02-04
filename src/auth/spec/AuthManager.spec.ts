@@ -142,7 +142,10 @@ describe('AuthManager', () => {
       })
     )
     mockedAxios.post.mockImplementation(() =>
-      Promise.resolve({ data: mockLoginAuthoriseRequiredResponse })
+      Promise.resolve({
+        data: mockLoginAuthoriseRequiredResponse,
+        config: { url: 'https://test.com/SASLogon/login' }
+      })
     )
 
     await authManager.logIn(userName, password)

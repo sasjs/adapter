@@ -82,6 +82,13 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     return this.requestClient!.post(apiUrl, formData, undefined)
       .then(async (res) => {
+        if (this.serverType === ServerType.SasViya && config.debug) {
+          const jsonResponse = await this.parseSasViyaDebugResponse(
+            res.result as string
+          )
+          this.appendRequest(res, sasJob, config.debug)
+          return jsonResponse
+        }
         this.appendRequest(res, sasJob, config.debug)
         return res.result
       })
@@ -97,6 +104,20 @@ export class WebJobExecutor extends BaseJobExecutor {
         }
         return Promise.reject(new ErrorResponse(e?.message, e))
       })
+  }
+
+  private parseSasViyaDebugResponse = async (response: string) => {
+    const iframeStart = response.split(
+      '<iframe style="width: 99%; height: 500px" src="'
+    )[1]
+    const jsonUrl = iframeStart ? iframeStart.split('"></iframe>')[0] : null
+    if (!jsonUrl) {
+      throw new Error('Unable to find webout file URL.')
+    }
+
+    return this.requestClient
+      .get(this.serverUrl + jsonUrl, undefined)
+      .then((res) => res.result)
   }
 
   private async getJobUri(sasJob: string) {
