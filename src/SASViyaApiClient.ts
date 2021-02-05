@@ -623,11 +623,9 @@ export class SASViyaApiClient {
   public async getAuthCode(clientId: string) {
     const authUrl = `${this.serverUrl}/SASLogon/oauth/authorize?client_id=${clientId}&response_type=code`
 
-    const authCode = await fetch(authUrl, {
-      referrerPolicy: 'same-origin',
-      credentials: 'include'
-    })
-      .then((response) => response.text())
+    const authCode = await this.requestClient
+      .get<string>(authUrl, undefined, 'text/plain')
+      .then((response) => response.result)
       .then(async (response) => {
         let code = ''
         if (isAuthorizeFormRequired(response)) {
@@ -694,24 +692,9 @@ export class SASViyaApiClient {
       formData.append('code', authCode)
     }
 
-    let moreOptions = {}
-    if (insecure) {
-      const https = require('https')
-      moreOptions = {
-        agent: new https.Agent({
-          rejectUnauthorized: false
-        })
-      }
-    }
-
-    const authResponse = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      headers,
-      body: formData as any,
-      referrerPolicy: 'same-origin',
-      ...moreOptions
-    }).then((res) => res.json())
+    const authResponse = await this.requestClient
+      .post(url, formData, undefined, 'application/json', headers)
+      .then((res) => res.result)
 
     return authResponse
   }
@@ -749,13 +732,9 @@ export class SASViyaApiClient {
       formData.append('refresh_token', refreshToken)
     }
 
-    const authResponse = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      headers,
-      body: formData as any,
-      referrerPolicy: 'same-origin'
-    }).then((res) => res.json())
+    const authResponse = await this.requestClient
+      .post(url, formData, undefined, 'application/json', headers)
+      .then((res) => res.result)
 
     return authResponse
   }

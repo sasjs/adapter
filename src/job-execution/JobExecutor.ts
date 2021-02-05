@@ -1,12 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
-import { parseSasWork } from '.'
 import { SASjsRequest } from '../types'
-import {
-  asyncForEach,
-  parseGeneratedCode,
-  parseSourceCode,
-  parseWeboutResponse
-} from '../utils'
+import { asyncForEach, parseGeneratedCode, parseSourceCode } from '../utils'
 
 export type ExecuteFunction = () => Promise<any>
 
@@ -59,11 +53,7 @@ export abstract class BaseJobExecutor implements JobExecutor {
     this.waitingRequests.push(request)
   }
 
-  protected async appendRequest(
-    response: any,
-    program: string,
-    debug: boolean
-  ) {
+  protected appendRequest(response: any, program: string, debug: boolean) {
     let sourceCode = ''
     let generatedCode = ''
     let sasWork = null
@@ -76,17 +66,12 @@ export abstract class BaseJobExecutor implements JobExecutor {
         if (response.log) {
           sasWork = response.log
         } else {
-          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK
+          sasWork = response.result.WORK
         }
       } else if (response?.result) {
         sourceCode = parseSourceCode(response.result)
         generatedCode = parseGeneratedCode(response.result)
-        sasWork = await parseSasWork(
-          response.result,
-          debug,
-          this.serverUrl,
-          this.serverType
-        )
+        sasWork = response.result.WORK
       }
     }
 

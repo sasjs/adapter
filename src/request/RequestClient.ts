@@ -5,6 +5,7 @@ import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 import { NotFoundError } from '../types/NotFoundError'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import * as https from 'https'
 
 export interface HttpClient {
   get<T>(
@@ -43,8 +44,13 @@ export class RequestClient implements HttpClient {
   private fileUploadCsrfToken: CsrfToken | undefined
   private httpClient: AxiosInstance
 
-  constructor(private baseUrl: string) {
-    this.httpClient = axios.create({ baseURL: baseUrl })
+  constructor(private baseUrl: string, allowInsecure = false) {
+    this.httpClient = axios.create({
+      baseURL: baseUrl,
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: !allowInsecure
+      })
+    })
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -97,7 +103,7 @@ export class RequestClient implements HttpClient {
     overrideHeaders: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
     const headers = {
-      ...this.getHeaders(accessToken, contentType, url.endsWith('login.do')),
+      ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders
     }
 
@@ -262,8 +268,7 @@ export class RequestClient implements HttpClient {
 
   private getHeaders = (
     accessToken: string | undefined,
-    contentType: string,
-    appendCsrfToken = true
+    contentType: string
   ) => {
     const headers: any = {
       'Content-Type': contentType
