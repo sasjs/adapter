@@ -57,4 +57,10 @@ export class SASjsConfig {
    * triggered using the APIs instead of the Job Execution Web Service broker.
    */
   useComputeApi = false
+  /**
+   * Defaults to `false`.
+   * When set to `true`, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
+   * Changing this setting is not recommended.
+   */
+  allowInsecureRequests = false
 }

@@ -21,7 +21,8 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SasViya,
   debug: false,
   contextName: 'SAS Job Execution compute context',
-  useComputeApi: false
+  useComputeApi: false,
+  allowInsecureRequests: false
 }
 
 /**
@@ -715,7 +716,10 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
-    this.requestClient = new RequestClient(this.sasjsConfig.serverUrl)
+    this.requestClient = new RequestClient(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.allowInsecureRequests
+    )
 
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
