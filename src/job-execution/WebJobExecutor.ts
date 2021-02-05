@@ -136,6 +136,10 @@ export class WebJobExecutor extends BaseJobExecutor {
       folderPath = folderPathParts.join('/')
     }
 
+    if (!jobName) {
+      throw new Error('Job name is empty, null or undefined.')
+    }
+
     const locJobs = await this.sasViyaApiClient.getJobsInFolder(folderPath)
     if (locJobs) {
       const job = locJobs.find(
