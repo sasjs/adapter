@@ -670,7 +670,7 @@ export class SASViyaApiClient {
     clientSecret: string,
     authCode: string,
     insecure: boolean = false
-  ) {
+  ): Promise<SasAuthResponse> {
     const url = this.serverUrl + '/SASLogon/oauth/token'
     let token
     if (typeof Buffer === 'undefined') {
@@ -694,14 +694,14 @@ export class SASViyaApiClient {
     }
 
     const authResponse = await this.requestClient
-      .post<SasAuthResponse>(
+      .post(
         url,
         formData,
         undefined,
         'multipart/form-data; boundary=' + (formData as any)._boundary,
         headers
       )
-      .then((res) => res.result)
+      .then((res) => res.result as SasAuthResponse)
 
     return authResponse
   }
