@@ -20,6 +20,7 @@ import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { NotFoundError } from './types/NotFoundError'
+import { SasAuthResponse } from '@sasjs/utils/types'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -693,7 +694,13 @@ export class SASViyaApiClient {
     }
 
     const authResponse = await this.requestClient
-      .post(url, formData, undefined, 'application/json', headers)
+      .post<SasAuthResponse>(
+        url,
+        formData,
+        undefined,
+        'multipart/form-data; boundary=' + (formData as any)._boundary,
+        headers
+      )
       .then((res) => res.result)
 
     return authResponse
@@ -733,7 +740,13 @@ export class SASViyaApiClient {
     }
 
     const authResponse = await this.requestClient
-      .post(url, formData, undefined, 'application/json', headers)
+      .post<SasAuthResponse>(
+        url,
+        formData,
+        undefined,
+        'multipart/form-data; boundary=' + (formData as any)._boundary,
+        headers
+      )
       .then((res) => res.result)
 
     return authResponse

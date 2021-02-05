@@ -270,14 +270,16 @@ export class RequestClient implements HttpClient {
     accessToken: string | undefined,
     contentType: string
   ) => {
-    const headers: any = {
-      'Content-Type': contentType
+    const headers: any = {}
+
+    if (contentType !== 'application/x-www-form-urlencoded') {
+      headers['Content-Type'] = contentType
     }
 
-    if (contentType === 'text/plain') {
-      headers.Accept = '*/*'
-    } else {
+    if (contentType === 'application/json') {
       headers.Accept = 'application/json'
+    } else {
+      headers.Accept = '*/*'
     }
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
