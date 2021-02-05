@@ -5,7 +5,6 @@ import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 import { NotFoundError } from '../types/NotFoundError'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
-import * as https from 'https'
 
 export interface HttpClient {
   get<T>(
@@ -45,6 +44,7 @@ export class RequestClient implements HttpClient {
   private httpClient: AxiosInstance
 
   constructor(private baseUrl: string, allowInsecure = false) {
+    const https = require('https')
     this.httpClient = axios.create({
       baseURL: baseUrl,
       httpsAgent: new https.Agent({
