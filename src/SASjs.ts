@@ -386,17 +386,26 @@ export default class SASjs {
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
 
+  /**
+   * Exchanges the auth code for an access token for the given client.
+   * @param clientId - the client ID to authenticate with.
+   * @param clientSecret - the client secret to authenticate with.
+   * @param authCode - the auth code received from the server.
+   * @param insecure - this boolean tells adapter to ignore SSL errors. [Not Recommended]
+   */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
-    authCode: string
+    authCode: string,
+    insecure: boolean = false
   ) {
     this.isMethodSupported('getAccessToken', ServerType.SASViya)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
       clientSecret,
-      authCode
+      authCode,
+      insecure
     )
   }
 
@@ -747,10 +756,7 @@ export default class SASjs {
       )
     }
 
-    const members =
-      serviceJson.members[0].name === 'services'
-        ? serviceJson.members[0].members
-        : serviceJson.members
+    const members = serviceJson.members
 
     await this.createFoldersAndServices(
       appLoc,

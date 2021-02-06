@@ -701,11 +701,13 @@ export class SASViyaApiClient {
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
    * @param authCode - the auth code received from the server.
+   * @param insecure - this boolean tells adapter to ignore SSL errors. [Not Recommended]
    */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
-    authCode: string
+    authCode: string,
+    insecure: boolean = false
   ) {
     const url = this.serverUrl + '/SASLogon/oauth/token'
     let token
@@ -729,12 +731,23 @@ export class SASViyaApiClient {
       formData.append('code', authCode)
     }
 
+    let moreOptions = {}
+    if (insecure) {
+      const https = require('https')
+      moreOptions = {
+        agent: new https.Agent({
+          rejectUnauthorized: false
+        })
+      }
+    }
+
     const authResponse = await fetch(url, {
       method: 'POST',
       credentials: 'include',
       headers,
       body: formData as any,
-      referrerPolicy: 'same-origin'
+      referrerPolicy: 'same-origin',
+      ...moreOptions
     }).then((res) => res.json())
 
     return authResponse
@@ -833,23 +846,20 @@ export class SASViyaApiClient {
       )
     }
 
-    if (isRelativePath(sasJob)) {
-      const folderName = sasJob.split('/')[0]
-      await this.populateFolderMap(
-        `${this.rootFolderName}/${folderName}`,
-        accessToken
-      )
+    const folderPathParts = sasJob.split('/')
+    const jobName = folderPathParts.pop()
+    const folderPath = folderPathParts.join('/')
+    const fullFolderPath = isRelativePath(sasJob)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
 
-      if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
-        throw new Error(
-          `The folder '${folderName}' was not found at '${this.serverUrl}/${this.rootFolderName}'`
-        )
-      }
-    } else {
-      const folderPathParts = sasJob.split('/')
-      folderPathParts.pop()
-      const folderPath = folderPathParts.join('/')
-      await this.populateFolderMap(folderPath, accessToken)
+    await this.populateFolderMap(fullFolderPath, accessToken)
+
+    const jobFolder = this.folderMap.get(fullFolderPath)
+    if (!jobFolder) {
+      throw new Error(
+        `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'`
+      )
     }
 
     const headers: any = { 'Content-Type': 'application/json' }
@@ -857,21 +867,7 @@ export class SASViyaApiClient {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    let jobToExecute
-    if (isRelativePath(sasJob)) {
-      const folderName = sasJob.split('/')[0]
-      const jobName = sasJob.split('/')[1]
-      const jobFolder = this.folderMap.get(
-        `${this.rootFolderName}/${folderName}`
-      )
-      jobToExecute = jobFolder?.find((item) => item.name === jobName)
-    } else {
-      const folderPathParts = sasJob.split('/')
-      const jobName = folderPathParts.pop()
-      const folderPath = folderPathParts.join('/')
-      const jobFolder = this.folderMap.get(folderPath)
-      jobToExecute = jobFolder?.find((item) => item.name === jobName)
-    }
+    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
 
     if (!jobToExecute) {
       throw new Error(`Job was not found.`)
@@ -937,50 +933,26 @@ export class SASViyaApiClient {
       )
     }
 
-    if (isRelativePath(sasJob)) {
-      const folderName = sasJob.split('/')[0]
-      await this.populateFolderMap(
-        `${this.rootFolderName}/${folderName}`,
-        accessToken
-      )
+    const folderPathParts = sasJob.split('/')
+    const jobName = folderPathParts.pop()
+    const folderPath = folderPathParts.join('/')
+    const fullFolderPath = isRelativePath(sasJob)
+      ? `${this.rootFolderName}/${folderPath}`
+      : folderPath
+    await this.populateFolderMap(fullFolderPath, accessToken)
 
-      if (!this.folderMap.get(`${this.rootFolderName}/${folderName}`)) {
-        throw new Error(
-          `The folder '${folderName}' was not found at '${this.serverUrl}/${this.rootFolderName}'.`
-        )
-      }
-    } else {
-      const folderPathParts = sasJob.split('/')
-      folderPathParts.pop()
-      const folderPath = folderPathParts.join('/')
-      await this.populateFolderMap(folderPath, accessToken)
-      if (!this.folderMap.get(folderPath)) {
-        throw new Error(
-          `The folder '${folderPath}' was not found at '${this.serverUrl}'.`
-        )
-      }
+    const jobFolder = this.folderMap.get(fullFolderPath)
+    if (!jobFolder) {
+      throw new Error(
+        `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'.`
+      )
     }
+
+    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
 
     let files: any[] = []
     if (data && Object.keys(data).length) {
       files = await this.uploadTables(data, accessToken)
-    }
-
-    let jobToExecute: Job | undefined
-    let jobName: string | undefined
-    let jobPath: string | undefined
-    if (isRelativePath(sasJob)) {
-      const folderName = sasJob.split('/')[0]
-      jobName = sasJob.split('/')[1]
-      jobPath = `${this.rootFolderName}/${folderName}`
-      const jobFolder = this.folderMap.get(jobPath)
-      jobToExecute = jobFolder?.find((item) => item.name === jobName)
-    } else {
-      const folderPathParts = sasJob.split('/')
-      jobName = folderPathParts.pop()
-      jobPath = folderPathParts.join('/')
-      const jobFolder = this.folderMap.get(jobPath)
-      jobToExecute = jobFolder?.find((item) => item.name === jobName)
     }
 
     if (!jobToExecute) {
@@ -1007,7 +979,7 @@ export class SASViyaApiClient {
 
     const jobArguments: { [key: string]: any } = {
       _contextName: contextName,
-      _program: `${jobPath}/${jobName}`,
+      _program: `${fullFolderPath}/${jobName}`,
       _webin_file_count: files.length,
       _OMITJSONLISTING: true,
       _OMITJSONLOG: true,
@@ -1148,6 +1120,8 @@ export class SASViyaApiClient {
     }
 
     return new Promise(async (resolve, _) => {
+      let printedState = ''
+
       const interval = setInterval(async () => {
         if (
           postedJobState === 'running' ||
@@ -1155,9 +1129,6 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            if (this.debug) {
-              console.log('Polling job status... \n')
-            }
             const { result: jobState } = await this.request<string>(
               `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
               {
@@ -1167,10 +1138,16 @@ export class SASViyaApiClient {
             )
 
             postedJobState = jobState.trim()
-            if (this.debug) {
-              console.log(`Current state: ${postedJobState}\n`)
+
+            if (this.debug && printedState !== postedJobState) {
+              console.log('Polling job status...')
+              console.log(`Current job state: ${postedJobState}`)
+
+              printedState = postedJobState
             }
+
             pollCount++
+
             if (pollCount >= MAX_POLL_COUNT) {
               resolve(postedJobState)
             }
