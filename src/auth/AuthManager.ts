@@ -101,11 +101,13 @@ export class AuthManager {
       loginForm = await this.getLoginForm(responseText)
     } else {
       //Send request to /folders/folders to trigger Assumable Groups form
-      const foldersResponse = await fetch(`${this.serverUrl}/folders/folders`)
-      const foldersResponseText = await foldersResponse.text()
+      const { result: foldersResponse } = await this.requestClient.get<string>(
+        `${this.serverUrl}/folders/folders`,
+        undefined
+      )
 
-      if (isAuthorizeFormRequired(foldersResponseText)) {
-        await this.requestClient.authorize(foldersResponseText)
+      if (isAuthorizeFormRequired(foldersResponse)) {
+        await this.requestClient.authorize(foldersResponse)
       }
     }
 
