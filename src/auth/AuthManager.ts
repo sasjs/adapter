@@ -101,9 +101,7 @@ export class AuthManager {
       loginForm = await this.getLoginForm(responseText)
     } else {
       //Send request to /folders/folders to trigger Assumable Gropups form
-      const foldersResponse = await fetch(
-        `${this.serverUrl}/folders/folders`
-      )
+      const foldersResponse = await fetch(`${this.serverUrl}/folders/folders`)
       const foldersResponseText = await foldersResponse.text()
 
       if (isAuthorizeFormRequired(foldersResponseText)) {
