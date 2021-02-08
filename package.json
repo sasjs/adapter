@@ -58,7 +58,7 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@sasjs/utils": "^2.0.2",
+    "@sasjs/utils": "^2.3.0",
     "es6-promise": "^4.2.8",
     "form-data": "^3.0.0",
     "https": "^1.0.0",
