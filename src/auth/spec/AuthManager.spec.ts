@@ -141,10 +141,17 @@ describe('AuthManager', () => {
         loginForm: { name: 'test' }
       })
     )
-    mockedAxios.post.mockImplementation(() =>
+    mockedAxios.post.mockImplementationOnce(() =>
       Promise.resolve({
         data: mockLoginAuthoriseRequiredResponse,
-        config: { url: 'https://test.com/SASLogon/login' }
+        config: { url: 'https://test.com/SASLogon/login' },
+        request: { responseURL: 'https://test.com/OAuth/authorize' }
+      })
+    )
+
+    mockedAxios.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        data: mockLoginAuthoriseRequiredResponse
       })
     )
 

@@ -332,9 +332,13 @@ export class RequestClient implements HttpClient {
   private handleError = async (e: any, callback: any) => {
     const response = e.response as AxiosResponse
     if (e instanceof AuthorizeError) {
-      const res = await this.get(e.confirmUrl, undefined, 'text/plain')
-      if (isAuthorizeFormRequired(res.result as string)) {
-        await this.authorize(res.result as string)
+      const res = await this.httpClient.get(e.confirmUrl, {
+        responseType: 'text',
+        headers: { 'Content-Type': 'text/plain', Accept: '*/*' }
+      })
+
+      if (isAuthorizeFormRequired(res?.data as string)) {
+        await this.authorize(res.data as string)
       }
       return await callback()
     }
@@ -384,6 +388,16 @@ const throwIfError = (response: AxiosResponse) => {
 
   if (response.data?.entityID?.includes('login')) {
     throw new LoginRequiredError()
+  }
+
+  if (
+    typeof response.data === 'string' &&
+    isAuthorizeFormRequired(response.data)
+  ) {
+    throw new AuthorizeError(
+      'Authorization required',
+      response.request.responseURL
+    )
   }
 
   if (
