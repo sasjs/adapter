@@ -364,21 +364,18 @@ export default class SASjs {
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
    * @param authCode - the auth code received from the server.
-   * @param insecure - this boolean tells adapter to ignore SSL errors. [Not Recommended]
    */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
-    authCode: string,
-    insecure: boolean = false
+    authCode: string
   ) {
     this.isMethodSupported('getAccessToken', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
       clientSecret,
-      authCode,
-      insecure
+      authCode
     )
   }
 
