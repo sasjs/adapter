@@ -50,6 +50,10 @@ export default class SASjs {
     this.setupConfiguration()
   }
 
+  public getCsrfToken(type: 'general' | 'file' = 'general') {
+    return this.requestClient?.getCsrfToken(type)
+  }
+
   public async executeScriptSAS9(
     linesOfCode: string[],
     serverName: string,
@@ -290,6 +294,16 @@ export default class SASjs {
       accessToken,
       isForced
     )
+  }
+
+  /**
+   * Fetches a folder from the SAS file system.
+   * @param folderPath - path of the folder to be fetched.
+   * @param accessToken - the access token to authorize the request.
+   */
+  public async getFolder(folderPath: string, accessToken?: string) {
+    this.isMethodSupported('getFolder', ServerType.SasViya)
+    return await this.sasViyaApiClient!.getFolder(folderPath, accessToken)
   }
 
   /**

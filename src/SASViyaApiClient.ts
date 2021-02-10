@@ -496,6 +496,17 @@ export class SASViyaApiClient {
   }
 
   /**
+   * Fetches a folder. Path to the folder is required.
+   * @param folderPath - the absolute path to the folder.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async getFolder(folderPath: string, accessToken?: string) {
+    return await this.requestClient
+      .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
+      .then((res) => res.result)
+  }
+
+  /**
    * Creates a folder. Path to or URI of the parent folder is required.
    * @param folderName - the name of the new folder.
    * @param parentFolderPath - the full path to the parent folder.  If not

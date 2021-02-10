@@ -60,13 +60,7 @@ export class AuthManager {
       }
     )
 
-    let loggedIn
-
-    if (isAuthorizeFormRequired(loginResponse)) {
-      await this.requestClient.authorize(loginResponse)
-    } else {
-      loggedIn = isLogInSuccess(loginResponse)
-    }
+    let loggedIn = isLogInSuccess(loginResponse)
 
     if (!loggedIn) {
       const currentSession = await this.checkSession()
