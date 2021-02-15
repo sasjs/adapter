@@ -1,34 +1,16 @@
 import { ContextManager } from '../ContextManager'
+import { RequestClient } from '../request/RequestClient'
+import * as dotenv from 'dotenv'
+import axios from 'axios'
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('ContextManager', () => {
-  let originalFetch: any
-  let fetchCallNumber = 0
-
-  const fakeGlobalFetch = (fakeResponses: object[]) => {
-    ;(global as any).fetch = jest.fn().mockImplementation(() => {
-      const fakeResponse = fakeResponses[fetchCallNumber]
-
-      if (
-        fetchCallNumber !== fakeResponses.length &&
-        fakeResponses.length > 1
-      ) {
-        if (fetchCallNumber + 1 === fakeResponses.length) fetchCallNumber = 0
-        else fetchCallNumber += 1
-      } else {
-        fetchCallNumber = 0
-      }
-
-      return Promise.resolve({
-        ok: true,
-        headers: { get: () => '' },
-        json: () => Promise.resolve(fakeResponse)
-      })
-    })
-  }
+  dotenv.config()
 
   const contextManager = new ContextManager(
     process.env.SERVER_URL as string,
-    () => {}
+    new RequestClient(process.env.SERVER_URL as string)
   )
 
   const defaultComputeContexts = contextManager.getDefaultComputeContexts
@@ -42,14 +24,6 @@ describe('ContextManager', () => {
     defaultLauncherContexts[
       Math.floor(Math.random() * defaultLauncherContexts.length)
     ]
-
-  beforeAll(() => {
-    originalFetch = (global as any).fetch
-  })
-
-  afterEach(() => {
-    ;(global as any).fetch = originalFetch
-  })
 
   describe('getComputeContexts', () => {
     it('should fetch compute contexts', async () => {
@@ -65,7 +39,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       await expect(contextManager.getComputeContexts()).resolves.toEqual([
         sampleComputeContext
@@ -87,7 +63,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       await expect(contextManager.getLauncherContexts()).resolves.toEqual([
         sampleComputeContext
@@ -137,7 +115,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       await expect(
         contextManager.createComputeContext(
@@ -176,10 +156,13 @@ describe('ContextManager', () => {
         items: [sampleNewComputeContext]
       }
 
-      fakeGlobalFetch([
-        sampleResponseExistingComputeContexts,
-        sampleResponseCreatedComputeContext
-      ])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseExistingComputeContexts })
+      )
+
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseCreatedComputeContext })
+      )
 
       await expect(
         contextManager.createComputeContext(
@@ -226,10 +209,13 @@ describe('ContextManager', () => {
         items: [sampleNewComputeContext]
       }
 
-      fakeGlobalFetch([
-        sampleResponseExistingComputeContexts,
-        sampleResponseCreatedComputeContext
-      ])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseExistingComputeContexts })
+      )
+
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseCreatedComputeContext })
+      )
 
       await expect(
         contextManager.createComputeContext(
@@ -287,11 +273,16 @@ describe('ContextManager', () => {
         items: [sampleNewComputeContext]
       }
 
-      fakeGlobalFetch([
-        sampleResponseExistingComputeContexts,
-        sampleResponseCreatedLauncherContext,
-        sampleResponseCreatedComputeContext
-      ])
+      mockedAxios.get
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: sampleResponseExistingComputeContexts })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({ data: sampleResponseCreatedLauncherContext })
+        )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseCreatedComputeContext })
+      )
 
       await expect(
         contextManager.createComputeContext(
@@ -346,7 +337,9 @@ describe('ContextManager', () => {
         items: [sampleLauncherContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       await expect(
         contextManager.createLauncherContext(contextName, 'Test Description')
@@ -380,10 +373,13 @@ describe('ContextManager', () => {
         items: [sampleNewLauncherContext]
       }
 
-      fakeGlobalFetch([
-        sampleResponseExistingLauncherContext,
-        sampleResponseCreatedLauncherContext
-      ])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseExistingLauncherContext })
+      )
+
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseCreatedLauncherContext })
+      )
 
       await expect(
         contextManager.createLauncherContext(contextName, 'Test Description')
@@ -448,7 +444,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponseGetComputeContextByName])
+      mockedAxios.put.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseGetComputeContextByName })
+      )
 
       const expectedResponse = {
         etag: '',
@@ -475,7 +473,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       const user = 'testUser'
 
@@ -508,7 +508,9 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([sampleResponse])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
+      )
 
       const fakedExecuteScript = async () => {
         return Promise.resolve({ log: '' })
@@ -567,10 +569,13 @@ describe('ContextManager', () => {
         items: [sampleComputeContext]
       }
 
-      fakeGlobalFetch([
-        sampleResponseGetComputeContextByName,
-        sampleResponseDeletedContext
-      ])
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseGetComputeContextByName })
+      )
+
+      mockedAxios.delete.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponseDeletedContext })
+      )
 
       const expectedResponse = {
         etag: '',
