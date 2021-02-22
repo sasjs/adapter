@@ -1,4 +1,8 @@
+import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
+import axios from 'axios'
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('FolderOperations', () => {
   let originalFetch: any
@@ -7,18 +11,10 @@ describe('FolderOperations', () => {
     'https://sample.server.com',
     '/Public',
     'Context',
-    function () {}
+    new RequestClient('https://sample.server.com')
   )
 
-  beforeAll(() => {
-    originalFetch = (global as any).fetch
-  })
-
   beforeEach(() => {})
-
-  afterAll(() => {
-    ;(global as any).fetch = originalFetch
-  })
 
   it('should move and rename folder', async (done) => {
     mockFetchResponse(false)
@@ -30,10 +26,10 @@ describe('FolderOperations', () => {
       'token'
     )
 
-    let jsonResponse = JSON.parse(res)
+    console.log(`[res]`, res)
 
-    expect(jsonResponse.name).toEqual('newName')
-    expect(jsonResponse.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
+    expect(res.folder.name).toEqual('newName')
+    expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
 
     done()
   })
@@ -48,10 +44,8 @@ describe('FolderOperations', () => {
       'token'
     )
 
-    let jsonResponse = JSON.parse(res)
-
-    expect(jsonResponse.name).toEqual('oldName')
-    expect(jsonResponse.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
+    expect(res.folder.name).toEqual('oldName')
+    expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
 
     done()
   })
@@ -66,61 +60,29 @@ describe('FolderOperations', () => {
       'token'
     )
 
-    let jsonResponse = JSON.parse(res)
-
-    expect(jsonResponse.name).toEqual('newName')
-    expect(jsonResponse.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
+    expect(res.folder.name).toEqual('newName')
+    expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
 
     done()
   })
 })
 
 const mockFetchResponse = (targetFolderExists: boolean) => {
-  ;(global as any).fetch = jest
-    .fn()
-    .mockImplementation((url: any, request: any) => {
-      console.log(`[url]`, url)
-      console.log(`[request]`, request)
+  mockedAxios.patch.mockImplementation((url: any, request: any) => { 
+    return Promise.resolve({status: 200, data: {folder: request}})
+  })
 
-      if (
-        request.method === 'GET' &&
-        !targetFolderExists &&
-        url.includes('newName')
-      ) {
-        return Promise.resolve({
-          text: () => Promise.resolve(undefined),
-          json: () => Promise.resolve(undefined),
-          ok: true,
-          headers: {
-            get: function () {
-              return ''
-            }
-          }
-        })
+  mockedAxios.get.mockImplementation((url: any, request: any) => {
+    if (!targetFolderExists &&
+        url.includes('newName')) {
+          return Promise.resolve(undefined)
+    }
+
+    return Promise.resolve({
+      status: 200,
+      data: {
+        id: url
       }
-
-      if (request.method === 'GET' && url.includes('/Test/toFolder')) {
-        return Promise.resolve({
-          text: () => Promise.resolve({ id: url }),
-          json: () => Promise.resolve({ id: url }),
-          ok: true,
-          headers: {
-            get: function () {
-              return ''
-            }
-          }
-        })
-      }
-
-      return Promise.resolve({
-        text: () => Promise.resolve(request.body),
-        json: () => Promise.resolve(request.body),
-        ok: true,
-        headers: {
-          get: function () {
-            return ''
-          }
-        }
-      })
     })
+  })
 }
