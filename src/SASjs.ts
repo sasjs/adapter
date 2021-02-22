@@ -318,6 +318,25 @@ export default class SASjs {
   }
 
   /**
+   * Lists children folders for given Viya folder.
+   * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async listFolder(
+    sourceFolder: string,
+    accessToken?: string,
+    limit?: number
+  ) {
+    this.isMethodSupported('listFolder', ServerType.SasViya)
+
+    return await this.sasViyaApiClient?.listFolder(
+      sourceFolder,
+      accessToken,
+      limit
+    )
+  }
+
+  /**
    * Moves folder to a new location.  The folder may be renamed at the same time.
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.
    * @param targetParentFolder - the full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.

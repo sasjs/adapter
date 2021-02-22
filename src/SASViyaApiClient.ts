@@ -1130,8 +1130,14 @@ export class SASViyaApiClient {
     return uploadedFiles
   }
 
-  private async getFolderUri(folderPath: string, accessToken?: string) {
-    const url = '/folders/folders/@item?path=' + folderPath
+  private async getFolderDetails(
+    folderPath: string,
+    accessToken?: string
+  ): Promise<Folder | undefined> {
+    const url = isUri(folderPath)
+      ? folderPath
+      : `/folders/folders/@item?path=${folderPath}`
+
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
       .catch(() => {
@@ -1139,7 +1145,15 @@ export class SASViyaApiClient {
       })
 
     if (!folder) return undefined
-    return `/folders/folders/${folder.id}`
+    return folder
+  }
+
+  private async getFolderUri(folderPath: string, accessToken?: string) {
+    const folderDetails = await this.getFolderDetails(folderPath, accessToken)
+
+    if (!folderDetails) return undefined
+
+    return `/folders/folders/${folderDetails.id}`
   }
 
   private async getRecycleBinUri(accessToken: string) {
@@ -1188,9 +1202,44 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Moves a Viya folder to a new location.  The folder may be renamed at the same time.
+   * Lists children folders for given Viya folder.
+   * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async listFolder(
+    sourceFolder: string,
+    accessToken?: string,
+    limit: number = 20
+  ) {
+    // checks if 'sourceFolder' is already a URI
+    const sourceFolderUri = isUri(sourceFolder)
+      ? sourceFolder
+      : await this.getFolderUri(sourceFolder, accessToken)
+
+    const requestInfo = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken
+      }
+    }
+
+    const { result: members } = await this.requestClient.get<{ items: any[] }>(
+      `${this.serverUrl}${sourceFolderUri}/members?limit=${limit}`,
+      accessToken
+    )
+
+    if (members && members.items) {
+      return members.items.map((item: any) => item.name)
+    } else {
+      return []
+    }
+  }
+
+  /**
+   * Moves Viya folder to a new location.  The folder may be renamed at the same time.
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder to be moved. Providing URI instead of path will save one extra request.
-   * @param targetParentFolder - the full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of path will save one extra request.
+   * @param targetParentFolder - the full path or URI of the _parent_ folder to which the `sourceFolder` will be moved (eg `/Public/newDestination`). To move a folder, a user has to have write permissions in targetParentFolder. Providing URI instead of the path will save one extra request.
    * @param targetFolderName - the name of the "moved" folder.  If left blank, the original folder name will be used (eg `myFolder` in `/Public/newDestination/myFolder` for the example above).  Optional field.
    * @param accessToken - an access token for authorizing the request.
    */
@@ -1200,22 +1249,35 @@ export class SASViyaApiClient {
     targetFolderName: string,
     accessToken: string
   ) {
-    // checks if 'sourceFolder' is already a URI
-    const sourceFolderUri = isUri(sourceFolder)
-      ? sourceFolder
-      : await this.getFolderUri(sourceFolder, accessToken)
+    // If target path is an existing folder, than keep source folder name, othervise rename it with given target folder name
+    const sourceFolderName = sourceFolder.split('/').pop() as string
+    const targetFolderDetails = await this.getFolderDetails(
+      targetParentFolder,
+      accessToken
+    )
+
+    if (!targetFolderDetails) {
+      let targetParentFolderArr = targetParentFolder.split('/')
+      targetParentFolderArr.splice(targetParentFolderArr.length - 1, 1)
+      targetParentFolder = targetParentFolderArr.join('/')
+    } else {
+      targetFolderName = sourceFolderName
+    }
+
+    // checks if 'sourceFolder' is already an URI
+    const sourceFolderUri = await this.getFolderUri(sourceFolder, accessToken)
 
     // checks if 'targetParentFolder' is already a URI
-    const targetParentFolderUri = isUri(targetParentFolder)
-      ? targetParentFolder
-      : await this.getFolderUri(targetParentFolder, accessToken)
+    const targetParentFolderUri = await this.getFolderUri(
+      targetParentFolder,
+      accessToken
+    )
 
     const sourceFolderId = sourceFolderUri?.split('/').pop()
-    const url = sourceFolderUri
 
     const { result: folder } = await this.requestClient
       .patch<Folder>(
-        `${this.serverUrl}${url}`,
+        `${this.serverUrl}${sourceFolderUri}`,
         {
           id: sourceFolderId,
           name: targetFolderName,
