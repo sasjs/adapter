@@ -1249,7 +1249,7 @@ export class SASViyaApiClient {
     targetFolderName: string,
     accessToken: string
   ) {
-    // If target path is existing folder, than keep source folder name, othervise rename it with given target folder name
+    // If target path is an existing folder, than keep source folder name, othervise rename it with given target folder name
     const sourceFolderName = sourceFolder.split('/').pop() as string
     const targetFolderDetails = await this.getFolderDetails(
       targetParentFolder,
