@@ -327,7 +327,7 @@ export default class SASjs {
     accessToken?: string,
     limit?: number
   ) {
-    this.isMethodSupported('listFolder', ServerType.SASViya)
+    this.isMethodSupported('listFolder', ServerType.SasViya)
 
     return await this.sasViyaApiClient?.listFolder(
       sourceFolder,
