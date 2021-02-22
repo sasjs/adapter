@@ -5,8 +5,6 @@ jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('FolderOperations', () => {
-  let originalFetch: any
-
   const sasViyaApiClient = new SASViyaApiClient(
     'https://sample.server.com',
     '/Public',
@@ -25,8 +23,6 @@ describe('FolderOperations', () => {
       'newName',
       'token'
     )
-
-    console.log(`[res]`, res)
 
     expect(res.folder.name).toEqual('newName')
     expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
