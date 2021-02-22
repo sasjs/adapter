@@ -68,14 +68,13 @@ describe('FolderOperations', () => {
 })
 
 const mockFetchResponse = (targetFolderExists: boolean) => {
-  mockedAxios.patch.mockImplementation((url: any, request: any) => { 
-    return Promise.resolve({status: 200, data: {folder: request}})
+  mockedAxios.patch.mockImplementation((url: any, request: any) => {
+    return Promise.resolve({ status: 200, data: { folder: request } })
   })
 
   mockedAxios.get.mockImplementation((url: any, request: any) => {
-    if (!targetFolderExists &&
-        url.includes('newName')) {
-          return Promise.resolve(undefined)
+    if (!targetFolderExists && url.includes('newName')) {
+      return Promise.resolve(undefined)
     }
 
     return Promise.resolve({
