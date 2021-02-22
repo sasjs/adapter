@@ -1137,12 +1137,12 @@ export class SASViyaApiClient {
     const url = isUri(folderPath)
       ? folderPath
       : `/folders/folders/@item?path=${folderPath}`
-    
+
     const { result: folder } = await this.requestClient
-    .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-    .catch(() => {
-      return { result: null }
-    })
+      .get<Folder>(`${this.serverUrl}${url}`, accessToken)
+      .catch(() => {
+        return { result: null }
+      })
 
     if (!folder) return undefined
     return folder
