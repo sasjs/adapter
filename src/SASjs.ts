@@ -318,7 +318,7 @@ export default class SASjs {
   }
 
   /**
-   * Lists a children folders for given Viya folder.
+   * Lists children folders for given Viya folder.
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
    */
