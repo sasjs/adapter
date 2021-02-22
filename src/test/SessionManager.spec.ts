@@ -1,24 +1,18 @@
 import { SessionManager } from '../SessionManager'
 import * as dotenv from 'dotenv'
+import { RequestClient } from '../request/RequestClient'
+import axios from 'axios'
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('SessionManager', () => {
   dotenv.config()
 
-  let originalFetch: any
-
   const sessionManager = new SessionManager(
     process.env.SERVER_URL as string,
     process.env.DEFAULT_COMPUTE_CONTEXT as string,
-    () => {}
+    new RequestClient('https://sample.server.com')
   )
-
-  beforeAll(() => {
-    originalFetch = (global as any).fetch
-  })
-
-  afterEach(() => {
-    ;(global as any).fetch = originalFetch
-  })
 
   describe('getVariable', () => {
     it('should fetch session variable', async () => {
@@ -31,12 +25,8 @@ describe('SessionManager', () => {
         version: 1
       }
 
-      ;(global as any).fetch = jest.fn().mockImplementation(() =>
-        Promise.resolve({
-          ok: true,
-          headers: { get: () => '' },
-          json: () => Promise.resolve(sampleResponse)
-        })
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: sampleResponse })
       )
 
       const expectedResponse = { etag: '', result: sampleResponse }

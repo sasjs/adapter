@@ -96,6 +96,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#allowinsecurerequests" class="tsd-kind-icon">allowInsecureRequests</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">appLoc</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">contextName</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a></li>
@@ -112,14 +113,35 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="allowinsecurerequests" class="tsd-anchor"></a>
+					<h3>allow<wbr>Insecure<wbr>Requests</h3>
+					<div class="tsd-signature tsd-kind-icon">allow<wbr>Insecure<wbr>Requests<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L65">
+									src/types/SASjsConfig.ts:65
+								</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>Defaults to <code>false</code>.
+								When set to <code>true</code>, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
+							Changing this setting is not recommended.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="apploc" class="tsd-anchor"></a>
 					<h3>app<wbr>Loc</h3>
 					<div class="tsd-signature tsd-kind-icon">app<wbr>Loc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L33">
-									types/SASjsConfig.ts:33
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L33">
+									src/types/SASjsConfig.ts:33
 								</a>
 							</li>
 						</ul>
@@ -143,8 +165,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L49">
-									types/SASjsConfig.ts:49
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L49">
+									src/types/SASjsConfig.ts:49
 								</a>
 							</li>
 						</ul>
@@ -166,8 +188,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L41">
-									types/SASjsConfig.ts:41
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L41">
+									src/types/SASjsConfig.ts:41
 								</a>
 							</li>
 						</ul>
@@ -185,8 +207,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L18">
-									types/SASjsConfig.ts:18
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L18">
+									src/types/SASjsConfig.ts:18
 								</a>
 							</li>
 						</ul>
@@ -205,8 +227,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L23">
-									types/SASjsConfig.ts:23
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L23">
+									src/types/SASjsConfig.ts:23
 								</a>
 							</li>
 						</ul>
@@ -221,12 +243,12 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="servertype" class="tsd-anchor"></a>
 					<h3>server<wbr>Type</h3>
-					<div class="tsd-signature tsd-kind-icon">server<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../enums/types.servertype.html" class="tsd-signature-type">ServerType</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
+					<div class="tsd-signature tsd-kind-icon">server<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ServerType</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L37">
-									types/SASjsConfig.ts:37
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L37">
+									src/types/SASjsConfig.ts:37
 								</a>
 							</li>
 						</ul>
@@ -244,8 +266,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L13">
-									types/SASjsConfig.ts:13
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L13">
+									src/types/SASjsConfig.ts:13
 								</a>
 							</li>
 						</ul>
@@ -265,8 +287,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts#L59">
-									types/SASjsConfig.ts:59
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L59">
+									src/types/SASjsConfig.ts:59
 								</a>
 							</li>
 						</ul>
@@ -284,22 +306,37 @@
 					</div>
 				</section>
 			</section>
-			<!--{&quot;options&quot;:&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SASjs.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Context.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/ErrorResponse.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Job.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Link.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/SASjsWaitingRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/ServerType.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Session.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isAuthorizeFormRequired.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isLoginRequired.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isLoginSuccess.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/makeRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseAndSubmitAuthorizeForm.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
+			<!--{&quot;options&quot;:&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SASjs.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/auth/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/AuthorizeError.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/ComputeJobExecutionError.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Context.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/ErrorResponse.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Job.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/JobExecutionError.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Link.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/LoginRequiredError.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/NotFoundError.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/Session.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/types/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/index.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/home/mihajlo/shared-projects/macro-people/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
 		</div>
 		<div class="col-2 col-menu secondary-menu">
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-module root">
-						<a href="../enums/types.servertype.html" class="tsd-kind-icon">Server<wbr>Type</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="types.authorizeerror.html" class="tsd-kind-icon">Authorize<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="types.computejobexecutionerror.html" class="tsd-kind-icon">Compute<wbr>Job<wbr>Execution<wbr>Error</a>
 					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-module root">
 						<a href="types.errorresponse.html" class="tsd-kind-icon">Error<wbr>Response</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="types.jobexecutionerror.html" class="tsd-kind-icon">Job<wbr>Execution<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="types.loginrequirederror.html" class="tsd-kind-icon">Login<wbr>Required<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module root">
+						<a href="types.notfounderror.html" class="tsd-kind-icon">Not<wbr>Found<wbr>Error</a>
 					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class tsd-parent-kind-module root">
 						<a href="types.sasjsconfig.html" class="tsd-kind-icon">SASjs<wbr>Config</a>
 						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="types.sasjsconfig.html#allowinsecurerequests" class="tsd-kind-icon">allow<wbr>Insecure<wbr>Requests</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">app<wbr>Loc</a>
 							</li>
@@ -360,9 +397,6 @@
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.sasjsrequest.html" class="tsd-kind-icon">SASjs<wbr>Request</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module root">
-						<a href="../interfaces/types.sasjswaitingrequest.html" class="tsd-kind-icon">SASjs<wbr>Waiting<wbr>Request</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.session.html" class="tsd-kind-icon">Session</a>

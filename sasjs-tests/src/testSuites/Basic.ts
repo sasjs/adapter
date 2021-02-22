@@ -1,15 +1,17 @@
-import SASjs, { ServerType, SASjsConfig } from "@sasjs/adapter";
+import SASjs, { SASjsConfig } from "@sasjs/adapter";
 import { TestSuite } from "@sasjs/test-framework";
+import { ServerType } from "@sasjs/utils/types";
 
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,
-  pathSAS9: '/SASStoredProcess/do',
-  pathSASViya: '/SASJobExecution',
-  appLoc: '/Public/seedapp',
-  serverType: ServerType.SASViya,
+  pathSAS9: "/SASStoredProcess/do",
+  pathSASViya: "/SASJobExecution",
+  appLoc: "/Public/seedapp",
+  serverType: ServerType.SasViya,
   debug: false,
-  contextName: 'SAS Job Execution compute context',
-  useComputeApi: false
+  contextName: "SAS Job Execution compute context",
+  useComputeApi: false,
+  allowInsecureRequests: false
 };
 
 const customConfig = {
@@ -17,7 +19,7 @@ const customConfig = {
   pathSAS9: "sas9",
   pathSASViya: "viya",
   appLoc: "/Public/seedapp",
-  serverType: ServerType.SAS9,
+  serverType: ServerType.Sas9,
   debug: false
 };
 
@@ -39,11 +41,12 @@ export const basicTests = (
     },
     {
       title: "Multiple Log in attempts",
-      description: "Should fail on first attempt and should log the user in on second attempt",
+      description:
+        "Should fail on first attempt and should log the user in on second attempt",
       test: async () => {
-        await adapter.logOut()
-        await adapter.logIn('invalid', 'invalid')
-        return adapter.logIn(userName, password)
+        await adapter.logOut();
+        await adapter.logIn("invalid", "invalid");
+        return adapter.logIn(userName, password);
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName

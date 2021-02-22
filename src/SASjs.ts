@@ -1,56 +1,29 @@
-import { isIEorEdgeOrOldFirefox } from './utils/isIeOrEdge'
-import * as e6p from 'es6-promise'
-;(e6p as any).polyfill()
-if (isIEorEdgeOrOldFirefox()) {
-  if (window) {
-    window.fetch = undefined as any // ensure the polyfill runs
-  }
-}
-// tslint:disable-next-line
-require('isomorphic-fetch')
-import {
-  convertToCSV,
-  compareTimestamps,
-  serialize,
-  isAuthorizeFormRequired,
-  parseAndSubmitAuthorizeForm,
-  splitChunks,
-  isLogInRequired,
-  isLogInSuccess,
-  parseSourceCode,
-  parseGeneratedCode,
-  parseWeboutResponse,
-  needsRetry,
-  asyncForEach,
-  isRelativePath
-} from './utils'
-import {
-  SASjsConfig,
-  SASjsRequest,
-  SASjsWaitingRequest,
-  ServerType,
-  CsrfToken,
-  UploadFile,
-  EditContextInput,
-  ErrorResponse,
-  PollOptions
-} from './types'
+import { compareTimestamps, asyncForEach } from './utils'
+import { SASjsConfig, UploadFile, EditContextInput, PollOptions } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
+import { AuthManager } from './auth'
+import { ServerType } from '@sasjs/utils/types'
+import { RequestClient } from './request/RequestClient'
+import {
+  JobExecutor,
+  WebJobExecutor,
+  ComputeJobExecutor,
+  JesJobExecutor
+} from './job-execution'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
-  serverType: ServerType.SASViya,
+  serverType: ServerType.SasViya,
   debug: false,
   contextName: 'SAS Job Execution compute context',
-  useComputeApi: false
+  useComputeApi: false,
+  allowInsecureRequests: false
 }
-
-const requestRetryLimit = 5
 
 /**
  * SASjs is a JavaScript adapter for SAS.
@@ -59,19 +32,14 @@ const requestRetryLimit = 5
 export default class SASjs {
   private sasjsConfig: SASjsConfig = new SASjsConfig()
   private jobsPath: string = ''
-  private logoutUrl: string = ''
-  private loginUrl: string = ''
-  private csrfTokenApi: CsrfToken | null = null
-  private csrfTokenWeb: CsrfToken | null = null
-  private retryCountWeb: number = 0
-  private retryCountComputeApi: number = 0
-  private retryCountJeseApi: number = 0
-  private sasjsRequests: SASjsRequest[] = []
-  private sasjsWaitingRequests: SASjsWaitingRequest[] = []
-  private userName: string = ''
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
   private fileUploader: FileUploader | null = null
+  private authManager: AuthManager | null = null
+  private requestClient: RequestClient | null = null
+  private webJobExecutor: JobExecutor | null = null
+  private computeJobExecutor: JobExecutor | null = null
+  private jesJobExecutor: JobExecutor | null = null
 
   constructor(config?: any) {
     this.sasjsConfig = {
@@ -82,12 +50,16 @@ export default class SASjs {
     this.setupConfiguration()
   }
 
+  public getCsrfToken(type: 'general' | 'file' = 'general') {
+    return this.requestClient?.getCsrfToken(type)
+  }
+
   public async executeScriptSAS9(
     linesOfCode: string[],
     serverName: string,
     repositoryName: string
   ) {
-    this.isMethodSupported('executeScriptSAS9', ServerType.SAS9)
+    this.isMethodSupported('executeScriptSAS9', ServerType.Sas9)
 
     return await this.sas9ApiClient?.executeScript(
       linesOfCode,
@@ -101,7 +73,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getComputeContexts(accessToken: string) {
-    this.isMethodSupported('getComputeContexts', ServerType.SASViya)
+    this.isMethodSupported('getComputeContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContexts(accessToken)
   }
@@ -111,7 +83,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getLauncherContexts(accessToken: string) {
-    this.isMethodSupported('getLauncherContexts', ServerType.SASViya)
+    this.isMethodSupported('getLauncherContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
   }
@@ -120,7 +92,7 @@ export default class SASjs {
    * Gets default(system) launcher contexts.
    */
   public getDefaultComputeContexts() {
-    this.isMethodSupported('getDefaultComputeContexts', ServerType.SASViya)
+    this.isMethodSupported('getDefaultComputeContexts', ServerType.SasViya)
 
     return this.sasViyaApiClient!.getDefaultComputeContexts()
   }
@@ -130,7 +102,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getExecutableContexts(accessToken: string) {
-    this.isMethodSupported('getExecutableContexts', ServerType.SASViya)
+    this.isMethodSupported('getExecutableContexts', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
   }
@@ -152,7 +124,7 @@ export default class SASjs {
     accessToken: string,
     authorizedUsers?: string[]
   ) {
-    this.isMethodSupported('createComputeContext', ServerType.SASViya)
+    this.isMethodSupported('createComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createComputeContext(
       contextName,
@@ -177,7 +149,7 @@ export default class SASjs {
     launchType: string,
     accessToken: string
   ) {
-    this.isMethodSupported('createLauncherContext', ServerType.SASViya)
+    this.isMethodSupported('createLauncherContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createLauncherContext(
       contextName,
@@ -198,7 +170,7 @@ export default class SASjs {
     editedContext: EditContextInput,
     accessToken?: string
   ) {
-    this.isMethodSupported('editComputeContext', ServerType.SASViya)
+    this.isMethodSupported('editComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.editComputeContext(
       contextName,
@@ -213,7 +185,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async deleteComputeContext(contextName: string, accessToken?: string) {
-    this.isMethodSupported('deleteComputeContext', ServerType.SASViya)
+    this.isMethodSupported('deleteComputeContext', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.deleteComputeContext(
       contextName,
@@ -231,7 +203,7 @@ export default class SASjs {
     contextName: string,
     accessToken?: string
   ) {
-    this.isMethodSupported('getComputeContextByName', ServerType.SASViya)
+    this.isMethodSupported('getComputeContextByName', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContextByName(
       contextName,
@@ -245,7 +217,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async getComputeContextById(contextId: string, accessToken?: string) {
-    this.isMethodSupported('getComputeContextById', ServerType.SASViya)
+    this.isMethodSupported('getComputeContextById', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getComputeContextById(
       contextId,
@@ -254,7 +226,7 @@ export default class SASjs {
   }
 
   public async createSession(contextName: string, accessToken: string) {
-    this.isMethodSupported('createSession', ServerType.SASViya)
+    this.isMethodSupported('createSession', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
@@ -274,7 +246,12 @@ export default class SASjs {
     accessToken?: string,
     debug?: boolean
   ) {
-    this.isMethodSupported('executeScriptSASViya', ServerType.SASViya)
+    this.isMethodSupported('executeScriptSASViya', ServerType.SasViya)
+    if (!contextName) {
+      throw new Error(
+        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+      )
+    }
 
     return await this.sasViyaApiClient!.executeScript(
       fileName,
@@ -320,12 +297,22 @@ export default class SASjs {
   }
 
   /**
+   * Fetches a folder from the SAS file system.
+   * @param folderPath - path of the folder to be fetched.
+   * @param accessToken - the access token to authorize the request.
+   */
+  public async getFolder(folderPath: string, accessToken?: string) {
+    this.isMethodSupported('getFolder', ServerType.SasViya)
+    return await this.sasViyaApiClient!.getFolder(folderPath, accessToken)
+  }
+
+  /**
    * For performance (and in case of accidental error) the `deleteFolder` function does not actually delete the folder (and all its content and subfolder content). Instead the folder is simply moved to the recycle bin. Deletion time will be added to the folder name.
    * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
    * @param accessToken - an access token for authorizing the request.
    */
   public async deleteFolder(folderPath: string, accessToken: string) {
-    this.isMethodSupported('deleteFolder', ServerType.SASViya)
+    this.isMethodSupported('deleteFolder', ServerType.SasViya)
 
     return await this.sasViyaApiClient?.deleteFolder(folderPath, accessToken)
   }
@@ -362,7 +349,7 @@ export default class SASjs {
     targetFolderName: string,
     accessToken: string
   ) {
-    this.isMethodSupported('moveFolder', ServerType.SASViya)
+    this.isMethodSupported('moveFolder', ServerType.SasViya)
 
     return await this.sasViyaApiClient?.moveFolder(
       sourceFolder,
@@ -380,7 +367,7 @@ export default class SASjs {
     accessToken?: string,
     sasApiClient?: SASViyaApiClient
   ) {
-    this.isMethodSupported('createJobDefinition', ServerType.SASViya)
+    this.isMethodSupported('createJobDefinition', ServerType.SasViya)
 
     if (sasApiClient)
       return await sasApiClient!.createJobDefinition(
@@ -400,17 +387,23 @@ export default class SASjs {
   }
 
   public async getAuthCode(clientId: string) {
-    this.isMethodSupported('getAuthCode', ServerType.SASViya)
+    this.isMethodSupported('getAuthCode', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
 
+  /**
+   * Exchanges the auth code for an access token for the given client.
+   * @param clientId - the client ID to authenticate with.
+   * @param clientSecret - the client secret to authenticate with.
+   * @param authCode - the auth code received from the server.
+   */
   public async getAccessToken(
     clientId: string,
     clientSecret: string,
     authCode: string
   ) {
-    this.isMethodSupported('getAccessToken', ServerType.SASViya)
+    this.isMethodSupported('getAccessToken', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
@@ -424,7 +417,7 @@ export default class SASjs {
     clientSecret: string,
     refreshToken: string
   ) {
-    this.isMethodSupported('refreshTokens', ServerType.SASViya)
+    this.isMethodSupported('refreshTokens', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.refreshTokens(
       clientId,
@@ -434,7 +427,7 @@ export default class SASjs {
   }
 
   public async deleteClient(clientId: string, accessToken: string) {
-    this.isMethodSupported('deleteClient', ServerType.SASViya)
+    this.isMethodSupported('deleteClient', ServerType.SasViya)
 
     return await this.sasViyaApiClient!.deleteClient(clientId, accessToken)
   }
@@ -452,23 +445,7 @@ export default class SASjs {
    *
    */
   public getUserName() {
-    return this.userName
-  }
-
-  /**
-   * Returns the _csrf token of the current session for the API approach.
-   *
-   */
-  public getCsrfApi() {
-    return this.csrfTokenApi?.value
-  }
-
-  /**
-   * Returns the _csrf token of the current session for the WEB approach.
-   *
-   */
-  public getCsrfWeb() {
-    return this.csrfTokenWeb?.value
+    return this.authManager!.userName
   }
 
   /**
@@ -494,48 +471,12 @@ export default class SASjs {
     }
   }
 
-  private async getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
-    const matches = pattern.exec(response)
-    const formInputs: any = {}
-
-    if (matches && matches.length) {
-      this.setLoginUrl(matches)
-      const inputs = response.match(/<input.*"hidden"[^>]*>/g)
-
-      if (inputs) {
-        inputs.forEach((inputStr: string) => {
-          const valueMatch = inputStr.match(/name="([^"]*)"\svalue="([^"]*)/)
-
-          if (valueMatch && valueMatch.length) {
-            formInputs[valueMatch[1]] = valueMatch[2]
-          }
-        })
-      }
-    }
-
-    return Object.keys(formInputs).length ? formInputs : null
-  }
-
   /**
    * Checks whether a session is active, or login is required.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const loginResponse = await fetch(this.loginUrl.replace('.do', ''))
-    const responseText = await loginResponse.text()
-    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
-    let loginForm: any = null
-
-    if (!isLoggedIn) {
-      loginForm = await this.getLoginForm(responseText)
-    }
-
-    return Promise.resolve({
-      isLoggedIn,
-      userName: this.userName,
-      loginForm
-    })
+    return this.authManager!.checkSession()
   }
 
   /**
@@ -544,81 +485,14 @@ export default class SASjs {
    * @param password - a string representing the password.
    */
   public async logIn(username: string, password: string) {
-    const loginParams: any = {
-      _service: 'default',
-      username,
-      password
-    }
-
-    this.userName = loginParams.username
-
-    const { isLoggedIn, loginForm } = await this.checkSession()
-    if (isLoggedIn) {
-      this.resendWaitingRequests()
-
-      return Promise.resolve({
-        isLoggedIn,
-        userName: this.userName
-      })
-    }
-
-    for (const key in loginForm) {
-      loginParams[key] = loginForm[key]
-    }
-    const loginParamsStr = serialize(loginParams)
-
-    return fetch(this.loginUrl, {
-      method: 'POST',
-      credentials: 'include',
-      referrerPolicy: 'same-origin',
-      body: loginParamsStr,
-      headers: new Headers({
-        'Content-Type': 'application/x-www-form-urlencoded'
-      })
-    })
-      .then((response) => response.text())
-      .then(async (responseText) => {
-        let authFormRes: any
-        let loggedIn
-
-        if (isAuthorizeFormRequired(responseText)) {
-          authFormRes = await parseAndSubmitAuthorizeForm(
-            responseText,
-            this.sasjsConfig.serverUrl
-          )
-        } else {
-          loggedIn = isLogInSuccess(responseText)
-        }
-
-        if (!loggedIn) {
-          const currentSession = await this.checkSession()
-          loggedIn = currentSession.isLoggedIn
-        }
-
-        if (loggedIn) {
-          this.resendWaitingRequests()
-        }
-
-        return {
-          isLoggedIn: loggedIn,
-          userName: this.userName
-        }
-      })
-      .catch((e) => Promise.reject(e))
+    return this.authManager!.logIn(username, password)
   }
 
   /**
    * Logs out of the configured SAS server.
    */
   public logOut() {
-    return new Promise((resolve, reject) => {
-      const logOutURL = `${this.sasjsConfig.serverUrl}${this.logoutUrl}`
-      fetch(logOutURL)
-        .then(() => {
-          resolve(true)
-        })
-        .catch((err: Error) => reject(err))
-    })
+    return this.authManager!.logOut()
   }
 
   /**
@@ -636,8 +510,7 @@ export default class SASjs {
         this.sasjsConfig.appLoc,
         this.sasjsConfig.serverUrl,
         this.jobsPath,
-        this.setCsrfTokenWeb,
-        this.csrfTokenWeb
+        this.requestClient!
       )
 
     return fileUploader.uploadFile(sasJob, files, params)
@@ -668,45 +541,37 @@ export default class SASjs {
     loginRequiredCallback?: any,
     accessToken?: string
   ) {
-    let requestResponse
-
     config = {
       ...this.sasjsConfig,
       ...config
     }
 
-    if (config.serverType === ServerType.SASViya && config.contextName) {
+    if (config.serverType === ServerType.SasViya && config.contextName) {
       if (config.useComputeApi) {
-        requestResponse = await this.executeJobViaComputeApi(
+        return await this.computeJobExecutor!.execute(
           sasJob,
           data,
           config,
           loginRequiredCallback,
           accessToken
         )
-
-        this.retryCountComputeApi = 0
       } else {
-        requestResponse = await this.executeJobViaJesApi(
+        return await this.jesJobExecutor!.execute(
           sasJob,
           data,
           config,
           loginRequiredCallback,
           accessToken
         )
-
-        this.retryCountJeseApi = 0
       }
     } else {
-      requestResponse = await this.executeJobViaWeb(
+      return await this.webJobExecutor!.execute(
         sasJob,
         data,
         config,
         loginRequiredCallback
       )
     }
-
-    return requestResponse
   }
 
   /**
@@ -727,7 +592,7 @@ export default class SASjs {
     accessToken?: string,
     isForced = false
   ) {
-    this.isMethodSupported('deployServicePack', ServerType.SASViya)
+    this.isMethodSupported('deployServicePack', ServerType.SasViya)
 
     let sasApiClient: any = null
     if (serverUrl || appLoc) {
@@ -737,22 +602,22 @@ export default class SASjs {
       if (!appLoc) {
         appLoc = this.sasjsConfig.appLoc
       }
-      if (this.sasjsConfig.serverType === ServerType.SASViya) {
+      if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasApiClient = new SASViyaApiClient(
           serverUrl,
           appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfTokenApi
+          this.requestClient!
         )
         sasApiClient.debug = this.sasjsConfig.debug
-      } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
+      } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
         sasApiClient = new SAS9ApiClient(serverUrl)
       }
     } else {
       let sasClientConfig: any = null
-      if (this.sasjsConfig.serverType === ServerType.SASViya) {
+      if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasClientConfig = this.sasViyaApiClient!.getConfig()
-      } else if (this.sasjsConfig.serverType === ServerType.SAS9) {
+      } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
         sasClientConfig = this.sas9ApiClient!.getConfig()
       }
       serverUrl = sasClientConfig.serverUrl
@@ -808,7 +673,7 @@ export default class SASjs {
       ...config
     }
 
-    this.isMethodSupported('startComputeJob', ServerType.SASViya)
+    this.isMethodSupported('startComputeJob', ServerType.SasViya)
     if (!config.contextName) {
       throw new Error(
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
@@ -828,698 +693,37 @@ export default class SASjs {
     )
   }
 
-  private async executeJobViaComputeApi(
-    sasJob: string,
-    data: any,
-    config: any,
-    loginRequiredCallback?: any,
-    accessToken?: string
-  ) {
-    const sasjsWaitingRequest: SASjsWaitingRequest = {
-      requestPromise: {
-        promise: null,
-        resolve: null,
-        reject: null
-      },
-      SASjob: sasJob,
-      data
-    }
-
-    sasjsWaitingRequest.requestPromise.promise = new Promise(
-      async (resolve, reject) => {
-        const waitForResult = true
-        const expectWebout = true
-        this.sasViyaApiClient
-          ?.executeComputeJob(
-            sasJob,
-            config.contextName,
-            config.debug,
-            data,
-            accessToken,
-            waitForResult,
-            expectWebout
-          )
-          .then((response) => {
-            if (!config.debug) {
-              this.appendSasjsRequest(null, sasJob, null)
-            } else {
-              this.appendSasjsRequest(response, sasJob, null)
-            }
-
-            let responseJson
-
-            try {
-              responseJson = JSON.parse(response!.result)
-            } catch {
-              responseJson = JSON.parse(parseWeboutResponse(response!.result))
-            }
-
-            resolve(responseJson)
-          })
-          .catch(async (response) => {
-            let error = response.error || response
-
-            if (needsRetry(JSON.stringify(error))) {
-              if (this.retryCountComputeApi < requestRetryLimit) {
-                let retryResponse = await this.executeJobViaComputeApi(
-                  sasJob,
-                  data,
-                  config,
-                  loginRequiredCallback,
-                  accessToken
-                )
-
-                this.retryCountComputeApi++
-
-                resolve(retryResponse)
-              } else {
-                this.retryCountComputeApi = 0
-                reject(
-                  new ErrorResponse('Compute API retry requests limit reached.')
-                )
-              }
-            }
-
-            if (response?.log) {
-              this.appendSasjsRequest(response.log, sasJob, null)
-            }
-
-            if (error.toString().includes('Job was not found')) {
-              reject(
-                new ErrorResponse('Service not found on the server.', {
-                  sasJob: sasJob
-                })
-              )
-            }
-
-            if (error && error.status === 401) {
-              if (loginRequiredCallback) loginRequiredCallback(true)
-              sasjsWaitingRequest.requestPromise.resolve = resolve
-              sasjsWaitingRequest.requestPromise.reject = reject
-              sasjsWaitingRequest.config = config
-              this.sasjsWaitingRequests.push(sasjsWaitingRequest)
-            } else {
-              reject(new ErrorResponse('Job execution failed.', error))
-            }
-          })
-      }
-    )
-    return sasjsWaitingRequest.requestPromise.promise
-  }
-
-  private async executeJobViaJesApi(
-    sasJob: string,
-    data: any,
-    config: any,
-    loginRequiredCallback?: any,
-    accessToken?: string
-  ) {
-    const sasjsWaitingRequest: SASjsWaitingRequest = {
-      requestPromise: {
-        promise: null,
-        resolve: null,
-        reject: null
-      },
-      SASjob: sasJob,
-      data
-    }
-
-    sasjsWaitingRequest.requestPromise.promise = new Promise(
-      async (resolve, reject) => {
-        const session = await this.checkSession()
-
-        if (!session.isLoggedIn && !accessToken) {
-          if (loginRequiredCallback) loginRequiredCallback(true)
-          sasjsWaitingRequest.requestPromise.resolve = resolve
-          sasjsWaitingRequest.requestPromise.reject = reject
-          sasjsWaitingRequest.config = config
-          this.sasjsWaitingRequests.push(sasjsWaitingRequest)
-        } else {
-          resolve(
-            await this.sasViyaApiClient
-              ?.executeJob(
-                sasJob,
-                config.contextName,
-                config.debug,
-                data,
-                accessToken
-              )
-              .then((response) => {
-                if (!config.debug) {
-                  this.appendSasjsRequest(null, sasJob, null)
-                } else {
-                  this.appendSasjsRequest(response, sasJob, null)
-                }
-
-                let responseJson
-
-                try {
-                  responseJson = JSON.parse(response!.result)
-                } catch {
-                  responseJson = JSON.parse(
-                    parseWeboutResponse(response!.result)
-                  )
-                }
-
-                return responseJson
-              })
-              .catch(async (response) => {
-                if (needsRetry(JSON.stringify(response))) {
-                  if (this.retryCountJeseApi < requestRetryLimit) {
-                    let retryResponse = await this.executeJobViaJesApi(
-                      sasJob,
-                      data,
-                      config,
-                      loginRequiredCallback,
-                      accessToken
-                    )
-
-                    this.retryCountJeseApi++
-
-                    resolve(retryResponse)
-                  } else {
-                    this.retryCountJeseApi = 0
-                    reject(
-                      new ErrorResponse('Jes API retry requests limit reached.')
-                    )
-                  }
-                }
-
-                if (response?.log) {
-                  this.appendSasjsRequest(response.log, sasJob, null)
-                }
-
-                if (response.toString().includes('Job was not found')) {
-                  reject(
-                    new ErrorResponse('Service not found on the server.', {
-                      sasJob: sasJob
-                    })
-                  )
-                }
-
-                reject(new ErrorResponse('Job execution failed.', response))
-              })
-          )
-        }
-      }
-    )
-    return sasjsWaitingRequest.requestPromise.promise
-  }
-
-  private async executeJobViaWeb(
-    sasJob: string,
-    data: any,
-    config: any,
-    loginRequiredCallback?: any
-  ) {
-    const sasjsWaitingRequest: SASjsWaitingRequest = {
-      requestPromise: {
-        promise: null,
-        resolve: null,
-        reject: null
-      },
-      SASjob: sasJob,
-      data
-    }
-    const program = isRelativePath(sasJob)
-      ? config.appLoc
-        ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
-        : sasJob
-      : sasJob
-    const jobUri =
-      config.serverType === ServerType.SASViya
-        ? await this.getJobUri(sasJob)
-        : ''
-    const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
-      jobUri.length > 0
-        ? '__program=' + program + '&_job=' + jobUri
-        : '_program=' + program
-    }`
-
-    const requestParams = {
-      ...this.getRequestParamsWeb(config)
-    }
-
-    const formData = new FormData()
-
-    let isError = false
-    let errorMsg = ''
-
-    if (data) {
-      const stringifiedData = JSON.stringify(data)
-      if (
-        config.serverType === ServerType.SAS9 ||
-        stringifiedData.length > 500000 ||
-        stringifiedData.includes(';')
-      ) {
-        // file upload approach
-        for (const tableName in data) {
-          if (isError) {
-            return
-          }
-          const name = tableName
-          const csv = convertToCSV(data[tableName])
-          if (csv === 'ERROR: LARGE STRING LENGTH') {
-            isError = true
-            errorMsg =
-              'The max length of a string value in SASjs is 32765 characters.'
-          }
-
-          const file = new Blob([csv], {
-            type: 'application/csv'
-          })
-
-          formData.append(name, file, `${name}.csv`)
-        }
-      } else {
-        // param based approach
-        const sasjsTables = []
-        let tableCounter = 0
-        for (const tableName in data) {
-          if (isError) {
-            return
-          }
-          tableCounter++
-          sasjsTables.push(tableName)
-          const csv = convertToCSV(data[tableName])
-          if (csv === 'ERROR: LARGE STRING LENGTH') {
-            isError = true
-            errorMsg =
-              'The max length of a string value in SASjs is 32765 characters.'
-          }
-          // if csv has length more then 16k, send in chunks
-          if (csv.length > 16000) {
-            const csvChunks = splitChunks(csv)
-            // append chunks to form data with same key
-            csvChunks.map((chunk) => {
-              formData.append(`sasjs${tableCounter}data`, chunk)
-            })
-          } else {
-            requestParams[`sasjs${tableCounter}data`] = csv
-          }
-        }
-        requestParams['sasjs_tables'] = sasjsTables.join(' ')
-      }
-    }
-
-    for (const key in requestParams) {
-      if (requestParams.hasOwnProperty(key)) {
-        formData.append(key, requestParams[key])
-      }
-    }
-
-    let isRedirected = false
-
-    sasjsWaitingRequest.requestPromise.promise = new Promise(
-      (resolve, reject) => {
-        if (isError) {
-          reject(new ErrorResponse(errorMsg))
-        }
-        const headers: any = {}
-        if (this.csrfTokenWeb) {
-          headers[this.csrfTokenWeb.headerName] = this.csrfTokenWeb.value
-        }
-        fetch(apiUrl, {
-          method: 'POST',
-          body: formData,
-          referrerPolicy: 'same-origin',
-          headers
-        })
-          .then(async (response) => {
-            if (!response.ok) {
-              if (response.status === 403) {
-                const tokenHeader = response.headers.get('X-CSRF-HEADER')
-
-                if (tokenHeader) {
-                  const token = response.headers.get(tokenHeader)
-                  this.csrfTokenWeb = {
-                    headerName: tokenHeader,
-                    value: token || ''
-                  }
-                }
-              }
-            }
-
-            if (response.redirected && config.serverType === ServerType.SAS9) {
-              isRedirected = true
-            }
-
-            return response.text()
-          })
-          .then((responseText) => {
-            if (
-              (needsRetry(responseText) || isRedirected) &&
-              !isLogInRequired(responseText)
-            ) {
-              if (this.retryCountWeb < requestRetryLimit) {
-                this.retryCountWeb++
-                this.request(sasJob, data, config, loginRequiredCallback).then(
-                  (res: any) => resolve(res),
-                  (err: any) => reject(err)
-                )
-              } else {
-                this.retryCountWeb = 0
-                reject(responseText)
-              }
-            } else {
-              this.retryCountWeb = 0
-              this.parseLogFromResponse(responseText, program)
-
-              if (isLogInRequired(responseText)) {
-                if (loginRequiredCallback) loginRequiredCallback(true)
-                sasjsWaitingRequest.requestPromise.resolve = resolve
-                sasjsWaitingRequest.requestPromise.reject = reject
-                sasjsWaitingRequest.config = config
-                this.sasjsWaitingRequests.push(sasjsWaitingRequest)
-              } else {
-                if (config.serverType === ServerType.SAS9 && config.debug) {
-                  this.updateUsername(responseText)
-                  const jsonResponseText = parseWeboutResponse(responseText)
-
-                  if (jsonResponseText !== '') {
-                    resolve(JSON.parse(jsonResponseText))
-                  } else {
-                    reject(
-                      new ErrorResponse(
-                        'Job WEB execution failed.',
-                        this.parseSAS9ErrorResponse(responseText)
-                      )
-                    )
-                  }
-                } else if (
-                  config.serverType === ServerType.SASViya &&
-                  config.debug
-                ) {
-                  try {
-                    this.parseSASVIYADebugResponse(responseText).then(
-                      (resText: any) => {
-                        this.updateUsername(resText)
-                        try {
-                          resolve(JSON.parse(resText))
-                        } catch (e) {
-                          reject(
-                            new ErrorResponse(
-                              'Job WEB debug response parsing failed.',
-                              { response: resText, exception: e }
-                            )
-                          )
-                        }
-                      },
-                      (err: any) => {
-                        reject(
-                          new ErrorResponse(
-                            'Job WEB debug response parsing failed.',
-                            err
-                          )
-                        )
-                      }
-                    )
-                  } catch (e) {
-                    reject(
-                      new ErrorResponse(
-                        'Job WEB debug response parsing failed.',
-                        { response: responseText, exception: e }
-                      )
-                    )
-                  }
-                } else {
-                  this.updateUsername(responseText)
-                  if (
-                    responseText.includes(
-                      'The requested URL /SASStoredProcess/do/ was not found on this server.'
-                    ) ||
-                    responseText.includes('Stored process not found')
-                  ) {
-                    reject(
-                      new ErrorResponse(
-                        'Service not found on the server.',
-                        { service: sasJob },
-                        responseText
-                      )
-                    )
-                  }
-
-                  try {
-                    const parsedJson = JSON.parse(responseText)
-                    resolve(parsedJson)
-                  } catch (e) {
-                    reject(
-                      new ErrorResponse('Job WEB response parsing failed.', {
-                        response: responseText,
-                        exception: e
-                      })
-                    )
-                  }
-                }
-              }
-            }
-          })
-          .catch((e: Error) => {
-            reject(new ErrorResponse('Job WEB request failed.', e))
-          })
-      }
-    )
-
-    return sasjsWaitingRequest.requestPromise.promise
-  }
-
-  private setCsrfTokenWeb = (csrfToken: CsrfToken) => {
-    this.csrfTokenWeb = csrfToken
-  }
-
-  private setCsrfTokenApi = (csrfToken: CsrfToken) => {
-    this.csrfTokenApi = csrfToken
-  }
-
-  private async resendWaitingRequests() {
-    for (const sasjsWaitingRequest of this.sasjsWaitingRequests) {
-      this.request(sasjsWaitingRequest.SASjob, sasjsWaitingRequest.data).then(
-        (res: any) => {
-          sasjsWaitingRequest.requestPromise.resolve(res)
-        },
-        (err: any) => {
-          sasjsWaitingRequest.requestPromise.reject(err)
-        }
-      )
-    }
-
-    this.sasjsWaitingRequests = []
-  }
-
-  private getRequestParamsWeb(config: any): any {
-    const requestParams: any = {}
-
-    if (this.csrfTokenWeb) {
-      requestParams['_csrf'] = this.csrfTokenWeb.value
-    }
-
-    if (config.debug) {
-      requestParams['_omittextlog'] = 'false'
-      requestParams['_omitsessionresults'] = 'false'
-
-      requestParams['_debug'] = 131
-    }
-
-    return requestParams
-  }
-
-  private updateUsername(response: any) {
-    try {
-      const responseJson = JSON.parse(response)
-      if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        this.userName = responseJson['_METAUSER']
-      } else {
-        this.userName = responseJson['SYSUSERID']
-      }
-    } catch (e) {
-      this.userName = ''
-    }
-  }
-
-  private parseSASVIYADebugResponse(response: string) {
-    return new Promise((resolve, reject) => {
-      const iframeStart = response.split(
-        '<iframe style="width: 99%; height: 500px" src="'
-      )[1]
-      const jsonUrl = iframeStart ? iframeStart.split('"></iframe>')[0] : null
-
-      if (jsonUrl) {
-        fetch(this.sasjsConfig.serverUrl + jsonUrl)
-          .then((res) => res.text())
-          .then((resText) => {
-            resolve(resText)
-          })
-      } else {
-        reject('No debug info found in response.')
-      }
-    })
-  }
-
-  private async getJobUri(sasJob: string) {
-    if (!this.sasViyaApiClient) return ''
-    let uri = ''
-
-    let folderPath
-    let jobName: string
-    if (isRelativePath(sasJob)) {
-      folderPath = sasJob.split('/')[0]
-      jobName = sasJob.split('/')[1]
-    } else {
-      const folderPathParts = sasJob.split('/')
-      jobName = folderPathParts.pop() || ''
-      folderPath = folderPathParts.join('/')
-    }
-
-    const locJobs = await this.sasViyaApiClient.getJobsInFolder(folderPath)
-    if (locJobs) {
-      const job = locJobs.find(
-        (el: any) => el.name === jobName && el.contentType === 'jobDefinition'
-      )
-      if (job) {
-        uri = job.uri
-      }
-    }
-    return uri
-  }
-
-  private parseSAS9ErrorResponse(response: string) {
-    const logLines = response.split('\n')
-    const parsedLines: string[] = []
-    let firstErrorLineIndex: number = -1
-
-    logLines.map((line: string, index: number) => {
-      if (
-        line.toLowerCase().includes('error') &&
-        !line.toLowerCase().includes('this request completed with errors.') &&
-        firstErrorLineIndex === -1
-      ) {
-        firstErrorLineIndex = index
-      }
-    })
-
-    for (let i = firstErrorLineIndex - 10; i <= firstErrorLineIndex + 10; i++) {
-      parsedLines.push(logLines[i])
-    }
-
-    return parsedLines.join(', ')
-  }
-
-  private parseLogFromResponse(response: any, program: string) {
-    if (this.sasjsConfig.serverType === ServerType.SAS9) {
-      this.appendSasjsRequest(response, program, null)
-    } else {
-      if (!this.sasjsConfig.debug) {
-        this.appendSasjsRequest(null, program, null)
-      } else {
-        this.appendSasjsRequest(response, program, null)
-      }
-    }
+  private resendWaitingRequests = async () => {
+    await this.webJobExecutor?.resendWaitingRequests()
+    await this.computeJobExecutor?.resendWaitingRequests()
+    await this.jesJobExecutor?.resendWaitingRequests()
   }
 
   /**
    * Fetches content of the log file
-   * @param logLink - url of the log file.
+   * @param logUrl - url of the log file.
    * @param accessToken - an access token for an authorized user.
    */
-  public fetchLogFileContent(logLink: string, accessToken?: string) {
-    const headers: any = { 'Content-Type': 'application/json' }
-
-    if (accessToken) headers.Authorization = 'Bearer ' + accessToken
-
-    return new Promise((resolve, reject) => {
-      fetch(logLink, {
-        method: 'GET',
-        headers
-      })
-        .then((response: any) => response.text())
-        .then((response: any) => resolve(response))
-        .catch((err: Error) => reject(err))
-    })
-  }
-
-  private async appendSasjsRequest(
-    response: any,
-    program: string,
-    pgmData: any
-  ) {
-    let sourceCode = ''
-    let generatedCode = ''
-    let sasWork = null
-
-    if (response && response.result && response.log) {
-      sourceCode = parseSourceCode(response.log)
-      generatedCode = parseGeneratedCode(response.log)
-
-      if (this.sasjsConfig.debug) {
-        if (response.log) {
-          sasWork = response.log
-        } else {
-          sasWork = JSON.parse(parseWeboutResponse(response.result)).WORK
-        }
-      } else {
-        sasWork = JSON.parse(response.result).WORK
-      }
-    } else {
-      if (response) {
-        sourceCode = parseSourceCode(response)
-        generatedCode = parseGeneratedCode(response)
-        sasWork = await this.parseSasWork(response)
-      }
-    }
-
-    this.sasjsRequests.push({
-      logFile: (response && response.log) || response,
-      serviceLink: program,
-      timestamp: new Date(),
-      sourceCode,
-      generatedCode,
-      SASWORK: sasWork
-    })
-
-    if (this.sasjsRequests.length > 20) {
-      this.sasjsRequests.splice(0, 1)
-    }
-  }
-
-  private async parseSasWork(response: any) {
-    if (this.sasjsConfig.debug) {
-      let jsonResponse
-
-      if (this.sasjsConfig.serverType === ServerType.SAS9) {
-        try {
-          jsonResponse = JSON.parse(parseWeboutResponse(response))
-        } catch (e) {
-          console.error(e)
-        }
-      } else {
-        await this.parseSASVIYADebugResponse(response).then(
-          (resText: any) => {
-            try {
-              jsonResponse = JSON.parse(resText)
-            } catch (e) {
-              console.error(e)
-            }
-          },
-          (err: any) => {
-            console.error(err)
-          }
-        )
-      }
-
-      if (jsonResponse) {
-        return jsonResponse.WORK
-      }
-    }
-    return null
+  public async fetchLogFileContent(logUrl: string, accessToken?: string) {
+    return await this.requestClient!.get(logUrl, accessToken).then((res) =>
+      JSON.stringify(res.result)
+    )
   }
 
   public getSasRequests() {
-    const sortedRequests = this.sasjsRequests.sort(compareTimestamps)
+    const requests = [
+      ...this.webJobExecutor!.getRequests(),
+      ...this.computeJobExecutor!.getRequests(),
+      ...this.jesJobExecutor!.getRequests()
+    ]
+    const sortedRequests = requests.sort(compareTimestamps)
     return sortedRequests
   }
 
   public clearSasRequests() {
-    this.sasjsRequests = []
+    this.webJobExecutor!.clearRequests()
+    this.computeJobExecutor!.clearRequests()
+    this.jesJobExecutor!.clearRequests()
   }
 
   private setupConfiguration() {
@@ -1542,17 +746,24 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
+    this.requestClient = new RequestClient(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.allowInsecureRequests
+    )
+
     this.jobsPath =
-      this.sasjsConfig.serverType === ServerType.SASViya
+      this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.pathSAS9
-    this.loginUrl = `${this.sasjsConfig.serverUrl}/SASLogon/login`
-    this.logoutUrl =
-      this.sasjsConfig.serverType === ServerType.SAS9
-        ? '/SASLogon/logout?'
-        : '/SASLogon/logout.do?'
 
-    if (this.sasjsConfig.serverType === ServerType.SASViya) {
+    this.authManager = new AuthManager(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.requestClient,
+      this.resendWaitingRequests
+    )
+
+    if (this.sasjsConfig.serverType === ServerType.SasViya) {
       if (this.sasViyaApiClient)
         this.sasViyaApiClient!.setConfig(
           this.sasjsConfig.serverUrl,
@@ -1563,12 +774,12 @@ export default class SASjs {
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
-          this.setCsrfTokenApi
+          this.requestClient
         )
 
       this.sasViyaApiClient.debug = this.sasjsConfig.debug
     }
-    if (this.sasjsConfig.serverType === ServerType.SAS9) {
+    if (this.sasjsConfig.serverType === ServerType.Sas9) {
       if (this.sas9ApiClient)
         this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
       else this.sas9ApiClient = new SAS9ApiClient(this.sasjsConfig.serverUrl)
@@ -1578,26 +789,26 @@ export default class SASjs {
       this.sasjsConfig.appLoc,
       this.sasjsConfig.serverUrl,
       this.jobsPath,
-      this.setCsrfTokenWeb
+      this.requestClient
     )
-  }
 
-  private setLoginUrl = (matches: RegExpExecArray) => {
-    let parsedURL = matches[1].replace(/\?.*/, '')
-    if (parsedURL[0] === '/') {
-      parsedURL = parsedURL.substr(1)
+    this.webJobExecutor = new WebJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.jobsPath,
+      this.requestClient,
+      this.sasViyaApiClient!
+    )
 
-      const tempLoginLink = this.sasjsConfig.serverUrl
-        ? `${this.sasjsConfig.serverUrl}/${parsedURL}`
-        : `${parsedURL}`
+    this.computeJobExecutor = new ComputeJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasViyaApiClient!
+    )
 
-      const loginUrl = tempLoginLink
-
-      this.loginUrl =
-        this.sasjsConfig.serverType === ServerType.SASViya
-          ? tempLoginLink
-          : loginUrl.replace('.do', '')
-    }
+    this.jesJobExecutor = new JesJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasViyaApiClient!
+    )
   }
 
   private async createFoldersAndServices(
@@ -1647,7 +858,7 @@ export default class SASjs {
     if (this.sasjsConfig.serverType !== serverType) {
       throw new Error(
         `Method '${method}' is only supported on ${
-          serverType === ServerType.SAS9 ? 'SAS9' : 'SAS Viya'
+          serverType === ServerType.Sas9 ? 'SAS9' : 'SAS Viya'
         } servers.`
       )
     }

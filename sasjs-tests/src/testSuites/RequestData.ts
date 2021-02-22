@@ -185,7 +185,8 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         };
         return adapter.request("common/sendObj", invalidData).catch((e) => e);
       },
-      assertion: (error: any) => !!error && !!error.error && !!error.error.message
+      assertion: (error: any) =>
+        !!error && !!error.error && !!error.error.message
     },
     {
       title: "Single string value",

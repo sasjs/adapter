@@ -1,3 +1,4 @@
+import axios, { AxiosInstance } from 'axios'
 import { isUrl } from './utils'
 
 /**
@@ -5,8 +6,11 @@ import { isUrl } from './utils'
  *
  */
 export class SAS9ApiClient {
+  private httpClient: AxiosInstance
+
   constructor(private serverUrl: string) {
     if (serverUrl) isUrl(serverUrl)
+    this.httpClient = axios.create({ baseURL: this.serverUrl })
   }
 
   /**
@@ -38,18 +42,18 @@ export class SAS9ApiClient {
     repositoryName: string
   ) {
     const requestPayload = linesOfCode.join('\n')
-    const executeScriptRequest = {
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json'
-      },
-      body: `command=${requestPayload}`
-    }
-    const executeScriptResponse = await fetch(
-      `${this.serverUrl}/sas/servers/${serverName}/cmd?repositoryName=${repositoryName}`,
-      executeScriptRequest
-    ).then((res) => res.text())
 
-    return executeScriptResponse
+    const executeScriptResponse = await this.httpClient.put(
+      `/sas/servers/${serverName}/cmd?repositoryName=${repositoryName}`,
+      `command=${requestPayload}`,
+      {
+        headers: {
+          Accept: 'application/json'
+        },
+        responseType: 'text'
+      }
+    )
+
+    return executeScriptResponse.data
   }
 }
