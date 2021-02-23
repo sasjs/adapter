@@ -378,7 +378,7 @@ export class RequestClient implements HttpClient {
       includeSAS9Log = true
     }
 
-    let responseToReturn: {result: T, etag: any, log?: string} = {
+    let responseToReturn: { result: T; etag: any; log?: string } = {
       result: parsedResponse as T,
       etag
     }
