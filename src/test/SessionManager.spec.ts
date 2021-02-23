@@ -25,15 +25,6 @@ describe('SessionManager', () => {
         version: 1
       }
 
-      const sampleLogResponse = {
-        links: [],
-        name: 'SYSJOBID',
-        ok: true,
-        scope: 'GLOBAL',
-        value: '25218',
-        version: 1
-      }
-
       mockedAxios.get.mockImplementation(() =>
         Promise.resolve({ data: sampleResponse })
       )
@@ -41,7 +32,7 @@ describe('SessionManager', () => {
       const expectedResponse = {
         etag: '',
         result: sampleResponse,
-        log: sampleLogResponse
+        log: sampleResponse
       }
 
       await expect(
