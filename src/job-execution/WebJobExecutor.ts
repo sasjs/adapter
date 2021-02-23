@@ -7,6 +7,11 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import { isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
+export interface WaitingRequstPromise {
+  promise: Promise<any> | null
+  resolve: any
+  reject: any
+}
 export class WebJobExecutor extends BaseJobExecutor {
   constructor(
     serverUrl: string,
@@ -80,30 +85,49 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
-    return this.requestClient!.post(apiUrl, formData, undefined)
-      .then(async (res) => {
-        if (this.serverType === ServerType.SasViya && config.debug) {
-          const jsonResponse = await this.parseSasViyaDebugResponse(
-            res.result as string
-          )
+    const requestPromise = new Promise((resolve, reject) => {
+      this.requestClient!.post(apiUrl, formData, undefined)
+        .then(async (res) => {
+          if (this.serverType === ServerType.SasViya && config.debug) {
+            const jsonResponse = await this.parseSasViyaDebugResponse(
+              res.result as string
+            )
+            this.appendRequest(res, sasJob, config.debug)
+            resolve(jsonResponse)
+          }
           this.appendRequest(res, sasJob, config.debug)
-          return jsonResponse
-        }
-        this.appendRequest(res, sasJob, config.debug)
-        return res.result
-      })
-      .catch(async (e: Error) => {
-        if (e instanceof JobExecutionError) {
-          this.appendRequest(e, sasJob, config.debug)
-        }
-        if (e instanceof LoginRequiredError) {
-          await loginCallback()
-          this.appendWaitingRequest(() =>
-            this.execute(sasJob, data, config, loginRequiredCallback)
-          )
-        }
-        return Promise.reject(new ErrorResponse(e?.message, e))
-      })
+          resolve(res.result)
+        })
+        .catch(async (e: Error) => {
+          if (e instanceof JobExecutionError) {
+            this.appendRequest(e, sasJob, config.debug)
+
+            reject(new ErrorResponse(e?.message, e))
+          }
+
+          if (e instanceof LoginRequiredError) {
+            await loginCallback()
+
+            this.appendWaitingRequest(() => {
+              return this.execute(
+                sasJob,
+                data,
+                config,
+                loginRequiredCallback
+              ).then(
+                (res: any) => {
+                  resolve(res)
+                },
+                (err: any) => {
+                  reject(err)
+                }
+              )
+            })
+          }
+        })
+    })
+
+    return requestPromise
   }
 
   private parseSasViyaDebugResponse = async (response: string) => {

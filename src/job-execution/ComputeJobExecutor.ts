@@ -20,35 +20,50 @@ export class ComputeJobExecutor extends BaseJobExecutor {
     const waitForResult = true
     const expectWebout = true
 
-    return this.sasViyaApiClient
-      ?.executeComputeJob(
-        sasJob,
-        config.contextName,
-        config.debug,
-        data,
-        accessToken,
-        waitForResult,
-        expectWebout
-      )
-      .then((response) => {
-        this.appendRequest(response, sasJob, config.debug)
-        let responseJson
+    const requestPromise = new Promise((resolve, reject) => {
+      this.sasViyaApiClient
+        ?.executeComputeJob(
+          sasJob,
+          config.contextName,
+          config.debug,
+          data,
+          accessToken,
+          waitForResult,
+          expectWebout
+        )
+        .then((response) => {
+          this.appendRequest(response, sasJob, config.debug)
 
-        return response.result
+          resolve(response.result)
+        })
+        .catch(async (e: Error) => {
+          if (e instanceof ComputeJobExecutionError) {
+            this.appendRequest(e, sasJob, config.debug)
 
-        return responseJson
-      })
-      .catch(async (e: Error) => {
-        if (e instanceof ComputeJobExecutionError) {
-          this.appendRequest(e, sasJob, config.debug)
-        }
-        if (e instanceof LoginRequiredError) {
-          await loginCallback()
-          this.appendWaitingRequest(() =>
-            this.execute(sasJob, data, config, loginRequiredCallback)
-          )
-        }
-        return Promise.reject(new ErrorResponse(e?.message, e))
-      })
+            reject(new ErrorResponse(e?.message, e))
+          }
+
+          if (e instanceof LoginRequiredError) {
+            await loginCallback()
+            this.appendWaitingRequest(() => {
+              return this.execute(
+                sasJob,
+                data,
+                config,
+                loginRequiredCallback
+              ).then(
+                (res: any) => {
+                  resolve(res)
+                },
+                (err: any) => {
+                  reject(err)
+                }
+              )
+            })
+          }
+        })
+    })
+
+    return requestPromise
   }
 }

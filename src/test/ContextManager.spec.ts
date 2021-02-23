@@ -8,6 +8,16 @@ const mockedAxios = axios as jest.Mocked<typeof axios>
 describe('ContextManager', () => {
   dotenv.config()
 
+  const sampleLogResponse = {
+    "items": [{
+      "attributes": {},
+      "createdBy": "fake creator",
+      "id": "fakeId",
+      "name": "Compute Context To Delete",
+      "version": 2,
+    }]
+  }
+
   const contextManager = new ContextManager(
     process.env.SERVER_URL as string,
     new RequestClient(process.env.SERVER_URL as string)
@@ -448,9 +458,12 @@ describe('ContextManager', () => {
         Promise.resolve({ data: sampleResponseGetComputeContextByName })
       )
 
+      sampleLogResponse.items[0].name = 'updated name'
+
       const expectedResponse = {
         etag: '',
-        result: sampleResponseGetComputeContextByName
+        result: sampleResponseGetComputeContextByName,
+        log: sampleLogResponse
       }
 
       await expect(
@@ -577,9 +590,12 @@ describe('ContextManager', () => {
         Promise.resolve({ data: sampleResponseDeletedContext })
       )
 
+      sampleLogResponse.items[0].name = 'Compute Context To Delete'
+
       const expectedResponse = {
         etag: '',
-        result: sampleResponseDeletedContext
+        result: sampleResponseDeletedContext,
+        log: sampleLogResponse
       }
 
       await expect(

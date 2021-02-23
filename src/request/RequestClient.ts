@@ -376,6 +376,7 @@ export class RequestClient implements HttpClient {
     }
     return {
       result: parsedResponse as T,
+      log: response.data,
       etag
     }
   }
