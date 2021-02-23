@@ -9,13 +9,15 @@ describe('ContextManager', () => {
   dotenv.config()
 
   const sampleLogResponse = {
-    "items": [{
-      "attributes": {},
-      "createdBy": "fake creator",
-      "id": "fakeId",
-      "name": "Compute Context To Delete",
-      "version": 2,
-    }]
+    items: [
+      {
+        attributes: {},
+        createdBy: 'fake creator',
+        id: 'fakeId',
+        name: 'Compute Context To Delete',
+        version: 2
+      }
+    ]
   }
 
   const contextManager = new ContextManager(

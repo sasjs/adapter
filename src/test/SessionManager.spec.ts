@@ -26,19 +26,23 @@ describe('SessionManager', () => {
       }
 
       const sampleLogResponse = {
-        "links": [],
-        "name": "SYSJOBID",
-        "ok": true,
-        "scope": "GLOBAL",
-        "value": "25218",
-        "version": 1,
+        links: [],
+        name: 'SYSJOBID',
+        ok: true,
+        scope: 'GLOBAL',
+        value: '25218',
+        version: 1
       }
 
       mockedAxios.get.mockImplementation(() =>
         Promise.resolve({ data: sampleResponse })
       )
 
-      const expectedResponse = { etag: '', result: sampleResponse, log: sampleLogResponse}
+      const expectedResponse = {
+        etag: '',
+        result: sampleResponse,
+        log: sampleLogResponse
+      }
 
       await expect(
         sessionManager.getVariable(
