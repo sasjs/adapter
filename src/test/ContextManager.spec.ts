@@ -450,8 +450,7 @@ describe('ContextManager', () => {
 
       const expectedResponse = {
         etag: '',
-        result: sampleResponseGetComputeContextByName,
-        log: sampleResponseGetComputeContextByName
+        result: sampleResponseGetComputeContextByName
       }
 
       await expect(
@@ -580,8 +579,7 @@ describe('ContextManager', () => {
 
       const expectedResponse = {
         etag: '',
-        result: sampleResponseDeletedContext,
-        log: sampleResponseDeletedContext
+        result: sampleResponseDeletedContext
       }
 
       await expect(

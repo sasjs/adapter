@@ -31,8 +31,7 @@ describe('SessionManager', () => {
 
       const expectedResponse = {
         etag: '',
-        result: sampleResponse,
-        log: sampleResponse
+        result: sampleResponse
       }
 
       await expect(
