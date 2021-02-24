@@ -21,6 +21,7 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { NotFoundError } from './types/NotFoundError'
 import { SasAuthResponse } from '@sasjs/utils/types'
+import { prefixMessage } from '@sasjs/utils/error'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -280,25 +281,24 @@ export class SASViyaApiClient {
         'Content-Type': 'application/json'
       }
 
-      if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`
-      }
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`
 
       let executionSessionId: string
+
       const session = await this.sessionManager
         .getSession(accessToken)
         .catch((err) => {
-          throw err
+          throw prefixMessage(err, 'Error while getting session. ')
         })
 
       executionSessionId = session!.id
 
       if (printPid) {
-        const { result: jobIdVariable } = await this.sessionManager.getVariable(
-          executionSessionId,
-          'SYSJOBID',
-          accessToken
-        )
+        const { result: jobIdVariable } = await this.sessionManager
+          .getVariable(executionSessionId, 'SYSJOBID', accessToken)
+          .catch((err) => {
+            throw prefixMessage(err, 'Error while getting session variable. ')
+          })
 
         if (jobIdVariable && jobIdVariable.value) {
           const relativeJobPath = this.rootFolderName
@@ -331,6 +331,7 @@ export class SASViyaApiClient {
       }
 
       let fileName
+
       if (isRelativePath(jobPath)) {
         fileName = `exec-${
           jobPath.includes('/') ? jobPath.split('/')[1] : jobPath
@@ -352,7 +353,7 @@ export class SASViyaApiClient {
       if (data) {
         if (JSON.stringify(data).includes(';')) {
           files = await this.uploadTables(data, accessToken).catch((err) => {
-            throw err
+            throw prefixMessage(err, 'Error while uploading tables. ')
           })
 
           jobVariables['_webin_file_count'] = files.length
@@ -376,19 +377,18 @@ export class SASViyaApiClient {
         variables: jobVariables,
         arguments: jobArguments
       }
+
       const { result: postedJob, etag } = await this.requestClient
         .post<Job>(
           `/compute/sessions/${executionSessionId}/jobs`,
           jobRequestBody,
           accessToken
         )
-        .catch((err: any) => {
-          throw err
+        .catch((err) => {
+          throw prefixMessage(err, 'Error while posting job. ')
         })
 
-      if (!waitForResult) {
-        return session
-      }
+      if (!waitForResult) return session
 
       if (debug) {
         console.log(`Job has been submitted for '${fileName}'.`)
@@ -404,7 +404,9 @@ export class SASViyaApiClient {
         etag,
         accessToken,
         pollOptions
-      )
+      ).catch((err) => {
+        throw prefixMessage(err, 'Error while polling job status. ')
+      })
 
       const { result: currentJob } = await this.requestClient
         .get<Job>(
@@ -412,7 +414,7 @@ export class SASViyaApiClient {
           accessToken
         )
         .catch((err) => {
-          throw err
+          throw prefixMessage(err, 'Error while getting job. ')
         })
 
       let jobResult
@@ -427,7 +429,7 @@ export class SASViyaApiClient {
             res.result.items.map((i: any) => i.line).join('\n')
           )
           .catch((err) => {
-            throw err
+            throw prefixMessage(err, 'Error while getting log. ')
           })
       }
 
@@ -455,7 +457,7 @@ export class SASViyaApiClient {
                     res.result.items.map((i: any) => i.line).join('\n')
                   )
                   .catch((err) => {
-                    throw err
+                    throw prefixMessage(err, 'Error while getting log. ')
                   })
 
                 return Promise.reject({
@@ -464,6 +466,7 @@ export class SASViyaApiClient {
                 })
               }
             }
+
             return {
               result: JSON.stringify(e)
             }
@@ -473,7 +476,7 @@ export class SASViyaApiClient {
       await this.sessionManager
         .clearSession(executionSessionId, accessToken)
         .catch((err) => {
-          throw err
+          throw prefixMessage(err, 'Error while clearing session. ')
         })
 
       return { result: jobResult?.result, log }
@@ -490,7 +493,7 @@ export class SASViyaApiClient {
           true
         )
       } else {
-        throw e
+        throw prefixMessage(e, 'Error while executing script. ')
       }
     }
   }
@@ -814,9 +817,12 @@ export class SASViyaApiClient {
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
 
-    await this.populateFolderMap(fullFolderPath, accessToken)
+    await this.populateFolderMap(fullFolderPath, accessToken).catch((err) => {
+      throw prefixMessage(err, 'Error while populating folder map. ')
+    })
 
     const jobFolder = this.folderMap.get(fullFolderPath)
+
     if (!jobFolder) {
       throw new Error(
         `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'`
@@ -824,6 +830,7 @@ export class SASViyaApiClient {
     }
 
     const headers: any = { 'Content-Type': 'application/json' }
+
     if (!!accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
     }
@@ -847,10 +854,14 @@ export class SASViyaApiClient {
 
       const {
         result: jobDefinition
-      } = await this.requestClient.get<JobDefinition>(
-        `${this.serverUrl}${jobDefinitionLink.href}`,
-        accessToken
-      )
+      } = await this.requestClient
+        .get<JobDefinition>(
+          `${this.serverUrl}${jobDefinitionLink.href}`,
+          accessToken
+        )
+        .catch((err) => {
+          throw prefixMessage(err, 'Error while getting job definition. ')
+        })
 
       code = jobDefinition.code
 
@@ -861,6 +872,7 @@ export class SASViyaApiClient {
     if (!code) code = ''
 
     const linesToExecute = code.replace(/\r\n/g, '\n').split('\n')
+
     return await this.executeScript(
       sasJob,
       linesToExecute,
@@ -872,7 +884,9 @@ export class SASViyaApiClient {
       waitForResult,
       pollOptions,
       printPid
-    )
+    ).catch((err) => {
+      throw prefixMessage(err, 'Error while executing script. ')
+    })
   }
 
   /**
@@ -1007,19 +1021,27 @@ export class SASViyaApiClient {
     }
 
     const url = '/folders/folders/@item?path=' + path
-    const { result: folder } = await this.requestClient.get<Folder>(
-      `${url}`,
-      accessToken
-    )
+    const { result: folder } = await this.requestClient
+      .get<Folder>(`${url}`, accessToken)
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting folder. ')
+      })
+
     if (!folder) {
       throw new Error(`The path ${path} does not exist on ${this.serverUrl}`)
     }
-    const { result: members } = await this.requestClient.get<{ items: any[] }>(
-      `/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
-      accessToken
-    )
+
+    const { result: members } = await this.requestClient
+      .get<{ items: any[] }>(
+        `/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
+        accessToken
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting members. ')
+      })
 
     const itemsAtRoot = members.items
+
     this.folderMap.set(path, itemsAtRoot)
   }
 
@@ -1052,11 +1074,15 @@ export class SASViyaApiClient {
       Promise.reject(`Job state link was not found.`)
     }
 
-    const { result: state } = await this.requestClient.get<string>(
-      `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
-      accessToken,
-      'text/plain'
-    )
+    const { result: state } = await this.requestClient
+      .get<string>(
+        `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+        accessToken,
+        'text/plain'
+      )
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while getting job state. ')
+      })
 
     const currentState = state.trim()
     if (currentState === 'completed') {
@@ -1073,11 +1099,15 @@ export class SASViyaApiClient {
           postedJobState === 'pending'
         ) {
           if (stateLink) {
-            const { result: jobState } = await this.requestClient.get<string>(
-              `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
-              accessToken,
-              'text/plain'
-            )
+            const { result: jobState } = await this.requestClient
+              .get<string>(
+                `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+                accessToken,
+                'text/plain'
+              )
+              .catch((err) => {
+                throw prefixMessage(err, 'Error while getting job state. ')
+              })
 
             postedJobState = jobState.trim()
 
@@ -1119,11 +1149,11 @@ export class SASViyaApiClient {
         )
       }
 
-      const uploadResponse = await this.requestClient.uploadFile(
-        `${this.serverUrl}/files/files#rawUpload`,
-        csv,
-        accessToken
-      )
+      const uploadResponse = await this.requestClient
+        .uploadFile(`${this.serverUrl}/files/files#rawUpload`, csv, accessToken)
+        .catch((err) => {
+          throw prefixMessage(err, 'Error while uploading file. ')
+        })
 
       uploadedFiles.push({ tableName, file: uploadResponse.result })
     }
