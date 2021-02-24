@@ -64,7 +64,7 @@ export class SessionManager {
         this.sessions = this.sessions.filter((s) => s.id !== id)
       })
       .catch((err) => {
-        throw err
+        throw prefixMessage(err, 'Error while deleting session. ')
       })
   }
 
