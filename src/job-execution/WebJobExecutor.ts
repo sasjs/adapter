@@ -123,6 +123,8 @@ export class WebJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+          } else {
+            reject(new ErrorResponse(e?.message, e))
           }
         })
     })

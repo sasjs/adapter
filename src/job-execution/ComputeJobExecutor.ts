@@ -60,6 +60,8 @@ export class ComputeJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+          } else {
+            reject(new ErrorResponse(e?.message, e))
           }
         })
     })
