@@ -4,3 +4,5 @@ build
 .env
 
 /coverage
+
+.DS_Store
