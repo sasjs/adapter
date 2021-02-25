@@ -29,7 +29,10 @@ describe('SessionManager', () => {
         Promise.resolve({ data: sampleResponse })
       )
 
-      const expectedResponse = { etag: '', result: sampleResponse }
+      const expectedResponse = {
+        etag: '',
+        result: sampleResponse
+      }
 
       await expect(
         sessionManager.getVariable(

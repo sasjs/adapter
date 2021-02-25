@@ -386,6 +386,7 @@ export class RequestClient implements HttpClient {
   private parseResponse<T>(response: AxiosResponse<any>) {
     const etag = response?.headers ? response.headers['etag'] : ''
     let parsedResponse
+    let includeSAS9Log: boolean = false
 
     try {
       if (typeof response.data === 'string') {
@@ -399,11 +400,20 @@ export class RequestClient implements HttpClient {
       } catch {
         parsedResponse = response.data
       }
+
+      includeSAS9Log = true
     }
-    return {
+
+    let responseToReturn: { result: T; etag: any; log?: string } = {
       result: parsedResponse as T,
       etag
     }
+
+    if (includeSAS9Log) {
+      responseToReturn.log = response.data
+    }
+
+    return responseToReturn
   }
 }
 
