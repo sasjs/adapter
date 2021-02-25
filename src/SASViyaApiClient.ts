@@ -884,9 +884,7 @@ export class SASViyaApiClient {
       waitForResult,
       pollOptions,
       printPid
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while executing script. ')
-    })
+    )
   }
 
   /**
