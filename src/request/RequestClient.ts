@@ -5,6 +5,7 @@ import { LoginRequiredError } from '../types'
 import { AuthorizeError } from '../types/AuthorizeError'
 import { NotFoundError } from '../types/NotFoundError'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import { prefixMessage } from '@sasjs/utils/error'
 
 export interface HttpClient {
   get<T>(
@@ -97,7 +98,9 @@ export class RequestClient implements HttpClient {
       .catch(async (e) => {
         return await this.handleError(e, () =>
           this.get<T>(url, accessToken, contentType, overrideHeaders)
-        )
+        ).catch((err) => {
+          throw prefixMessage(err, 'Error while handling error. ')
+        })
       })
   }
 
@@ -331,29 +334,50 @@ export class RequestClient implements HttpClient {
 
   private handleError = async (e: any, callback: any) => {
     const response = e.response as AxiosResponse
+
     if (e instanceof AuthorizeError) {
-      const res = await this.httpClient.get(e.confirmUrl, {
-        responseType: 'text',
-        headers: { 'Content-Type': 'text/plain', Accept: '*/*' }
-      })
+      const res = await this.httpClient
+        .get(e.confirmUrl, {
+          responseType: 'text',
+          headers: { 'Content-Type': 'text/plain', Accept: '*/*' }
+        })
+        .catch((err) => {
+          throw prefixMessage(err, 'Error while getting error confirmUrl. ')
+        })
 
       if (isAuthorizeFormRequired(res?.data as string)) {
         await this.authorize(res.data as string)
       }
-      return await callback()
+
+      return await callback().catch((err: any) => {
+        throw prefixMessage(
+          err,
+          'Error while executing callback in handleError. '
+        )
+      })
     }
+
     if (e instanceof LoginRequiredError) {
       this.clearCsrfTokens()
     }
+
     if (response?.status === 403 || response?.status === 449) {
       this.parseAndSetCsrfToken(response)
+
       if (this.csrfToken.headerName && this.csrfToken.value) {
-        return await callback()
+        return await callback().catch((err: any) => {
+          throw prefixMessage(
+            err,
+            'Error while executing callback in handleError. '
+          )
+        })
       }
+
       throw e
     } else if (response?.status === 404) {
       throw new NotFoundError(response.config.url!)
     }
+
     throw e
   }
 
