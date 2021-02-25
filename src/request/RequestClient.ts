@@ -346,7 +346,9 @@ export class RequestClient implements HttpClient {
         })
 
       if (isAuthorizeFormRequired(res?.data as string)) {
-        await this.authorize(res.data as string)
+        await this.authorize(res.data as string).catch((err) => {
+          throw prefixMessage(err, 'Error while authorizing request. ')
+        })
       }
 
       return await callback().catch((err: any) => {
