@@ -381,7 +381,7 @@ export class RequestClient implements HttpClient {
     throw e
   }
 
-  private async parseResponse<T>(response: AxiosResponse<any>) {
+  private parseResponse<T>(response: AxiosResponse<any>) {
     const etag = response?.headers ? response.headers['etag'] : ''
     let parsedResponse
 
