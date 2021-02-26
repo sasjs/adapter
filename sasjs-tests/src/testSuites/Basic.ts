@@ -2,6 +2,8 @@ import SASjs, { SASjsConfig } from "@sasjs/adapter";
 import { TestSuite } from "@sasjs/test-framework";
 import { ServerType } from "@sasjs/utils/types";
 
+const stringData: any = { table1: [{ col1: "first col value" }] };
+
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,
   pathSAS9: "/SASStoredProcess/do",
@@ -50,6 +52,36 @@ export const basicTests = (
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
+    },
+    {
+      title: "Trigger login callback",
+      description:
+        "Should trigger required login callback and after successful login, it should finish the request",
+      test: async () => {
+        await adapter.logOut();
+        
+        return await adapter.request("/Public/app/common/sendArr", stringData, null, () => {
+          adapter.logIn(userName, password);
+        });
+      },
+      assertion: (response: any) => {
+        return response.table1[0][0] === stringData.table1[0].col1;
+      }
+    },
+    {
+      title: "Request with debug on",
+      description:
+        "Should complete successful request with debugging switched on",
+      test: async () => {
+        const config = {
+          debug: true
+        }
+
+        return await adapter.request("/Public/app/common/sendArr", stringData, config)
+      },
+      assertion: (response: any) => {
+        return response.table1[0][0] === stringData.table1[0].col1;
+      }
     },
     {
       title: "Default config",

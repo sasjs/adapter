@@ -6,7 +6,7 @@
     "appLoc": "/Public/app",
     "serverType": "SASVIYA",
     "debug": false,
-    "contextName": "SharedCompute",
+    "contextName": "SAS Job Execution compute context",
     "useComputeApi": true
   }
 }
