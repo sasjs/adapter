@@ -60,7 +60,7 @@ export const basicTests = (
       test: async () => {
         await adapter.logOut();
         
-        return await adapter.request("/Public/app/common/sendArr", stringData, null, () => {
+        return await adapter.request("common/sendArr", stringData, null, () => {
           adapter.logIn(userName, password);
         });
       },
@@ -77,7 +77,7 @@ export const basicTests = (
           debug: true
         }
 
-        return await adapter.request("/Public/app/common/sendArr", stringData, config)
+        return await adapter.request("common/sendArr", stringData, config)
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1;
