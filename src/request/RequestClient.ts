@@ -106,6 +106,7 @@ export class RequestClient implements HttpClient {
             }
           )
         ).catch((err) => {
+          console.log(`[err]`, err)
           throw prefixMessage(err, 'Error while handling error. ')
         })
       })

@@ -1110,7 +1110,10 @@ export class SASViyaApiClient {
                 'text/plain'
               )
               .catch((err) => {
-                throw prefixMessage(err, 'Error while getting job state. ')
+                throw prefixMessage(
+                  err,
+                  'Error while getting job state after interval. '
+                )
               })
 
             postedJobState = jobState.trim()
