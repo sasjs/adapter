@@ -93,6 +93,7 @@ export class RequestClient implements HttpClient {
       .get<T>(url, requestConfig)
       .then((response) => {
         throwIfError(response)
+
         return this.parseResponse<T>(response)
       })
       .catch(async (e) => {
@@ -387,6 +388,8 @@ export class RequestClient implements HttpClient {
       throw new NotFoundError(response.config.url!)
     }
 
+    console.log(`[e]`, e)
+
     throw e
   }
 
@@ -456,6 +459,7 @@ const throwIfError = (response: AxiosResponse) => {
   }
 
   const error = parseError(response.data as string)
+
   if (error) {
     throw error
   }
