@@ -977,7 +977,13 @@ export class SASViyaApiClient {
       postJobRequestBody,
       accessToken
     )
-    const jobStatus = await this.pollJobState(postedJob, etag, accessToken)
+    const jobStatus = await this.pollJobState(
+      postedJob,
+      etag,
+      accessToken
+    ).catch((err) => {
+      throw prefixMessage(err, 'Error while polling job status. ')
+    })
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       accessToken
