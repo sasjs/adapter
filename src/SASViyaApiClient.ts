@@ -571,9 +571,9 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } = await this.requestClient.post<
-      Folder
-    >(
+    const {
+      result: createFolderResponse
+    } = await this.requestClient.post<Folder>(
       `/folders/folders?parentFolderUri=${parentFolderUri}`,
       {
         name: folderName,
@@ -852,7 +852,9 @@ export class SASViyaApiClient {
         throw new Error(`URI of job definition was not found.`)
       }
 
-      const { result: jobDefinition } = await this.requestClient
+      const {
+        result: jobDefinition
+      } = await this.requestClient
         .get<JobDefinition>(
           `${this.serverUrl}${jobDefinitionLink.href}`,
           accessToken
