@@ -97,9 +97,14 @@ export class RequestClient implements HttpClient {
       })
       .catch(async (e) => {
         return await this.handleError(e, () =>
-          this.get<T>(url, accessToken, contentType, overrideHeaders).catch((err) => {
-            throw prefixMessage(err, 'Error while executing handle error callback. ')
-          })
+          this.get<T>(url, accessToken, contentType, overrideHeaders).catch(
+            (err) => {
+              throw prefixMessage(
+                err,
+                'Error while executing handle error callback. '
+              )
+            }
+          )
         ).catch((err) => {
           throw prefixMessage(err, 'Error while handling error. ')
         })
