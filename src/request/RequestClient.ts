@@ -458,8 +458,6 @@ const throwIfError = (response: AxiosResponse) => {
     throw new AuthorizeError(response.data.message, authorizeRequestUrl)
   }
 
-  console.log(`[response]`, response)
-
   const error = parseError(response.data as string)
 
   if (error) {
