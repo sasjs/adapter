@@ -1,9 +1,13 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { CsrfToken, JobExecutionError } from '..'
+import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
-import { LoginRequiredError } from '../types'
-import { AuthorizeError } from '../types/AuthorizeError'
-import { NotFoundError } from '../types/NotFoundError'
+import {
+  AuthorizeError,
+  LoginRequiredError,
+  NotFoundError,
+  InternalServerError,
+  JobExecutionError
+} from '../types/errors'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 
@@ -73,7 +77,8 @@ export class RequestClient implements HttpClient {
     url: string,
     accessToken: string | undefined,
     contentType: string = 'application/json',
-    overrideHeaders: { [key: string]: string | number } = {}
+    overrideHeaders: { [key: string]: string | number } = {},
+    debug: boolean = false
   ): Promise<{ result: T; etag: string }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
@@ -97,15 +102,18 @@ export class RequestClient implements HttpClient {
         return this.parseResponse<T>(response)
       })
       .catch(async (e) => {
-        return await this.handleError(e, () =>
-          this.get<T>(url, accessToken, contentType, overrideHeaders).catch(
-            (err) => {
-              throw prefixMessage(
-                err,
-                'Error while executing handle error callback. '
-              )
-            }
-          )
+        return await this.handleError(
+          e,
+          () =>
+            this.get<T>(url, accessToken, contentType, overrideHeaders).catch(
+              (err) => {
+                throw prefixMessage(
+                  err,
+                  'Error while executing handle error callback. '
+                )
+              }
+            ),
+          debug
         ).catch((err) => {
           throw prefixMessage(err, 'Error while handling error. ')
         })
@@ -340,7 +348,11 @@ export class RequestClient implements HttpClient {
     }
   }
 
-  private handleError = async (e: any, callback: any) => {
+  private handleError = async (
+    e: any,
+    callback: any,
+    debug: boolean = false
+  ) => {
     const response = e.response as AxiosResponse
 
     if (e instanceof AuthorizeError) {
@@ -386,9 +398,10 @@ export class RequestClient implements HttpClient {
       throw e
     } else if (response?.status === 404) {
       throw new NotFoundError(response.config.url!)
+    } else if (response?.status === 502) {
+      if (debug) throw new InternalServerError()
+      else return
     }
-
-    console.log(`[e]`, e)
 
     throw e
   }

@@ -1,6 +1,6 @@
 import { isUrl } from './utils'
 import { UploadFile } from './types/UploadFile'
-import { ErrorResponse, LoginRequiredError } from './types'
+import { ErrorResponse, LoginRequiredError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
 
 export class FileUploader {

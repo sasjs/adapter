@@ -1,5 +1,9 @@
 import { ServerType } from '@sasjs/utils/types'
-import { ErrorResponse, JobExecutionError, LoginRequiredError } from '..'
+import {
+  ErrorResponse,
+  JobExecutionError,
+  LoginRequiredError
+} from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
 import { RequestClient } from '../request/RequestClient'
