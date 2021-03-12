@@ -1,4 +1,4 @@
-import { Job } from './Job'
+import { Job } from '../Job'
 
 export class ComputeJobExecutionError extends Error {
   constructor(public job: Job, public log: string) {
