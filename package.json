@@ -58,7 +58,7 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@sasjs/utils": "^2.6.3",
+    "@sasjs/utils": "^2.7.0",
     "axios": "^0.21.1",
     "form-data": "^3.0.0",
     "https": "^1.0.0"
