@@ -1,7 +1,10 @@
 import { ServerType } from '@sasjs/utils/types'
-import { ErrorResponse } from '..'
 import { SASViyaApiClient } from '../SASViyaApiClient'
-import { JobExecutionError, LoginRequiredError } from '../types'
+import {
+  ErrorResponse,
+  JobExecutionError,
+  LoginRequiredError
+} from '../types/errors'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class JesJobExecutor extends BaseJobExecutor {

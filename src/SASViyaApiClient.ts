@@ -8,10 +8,13 @@ import {
   Folder,
   EditContextInput,
   JobDefinition,
-  PollOptions,
-  ComputeJobExecutionError,
-  JobExecutionError
+  PollOptions
 } from './types'
+import {
+  ComputeJobExecutionError,
+  JobExecutionError,
+  NotFoundError
+} from './types/errors'
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
@@ -19,7 +22,6 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { NotFoundError } from './types/NotFoundError'
 import { SasAuthResponse } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 
@@ -1082,7 +1084,9 @@ export class SASViyaApiClient {
       .get<string>(
         `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
         accessToken,
-        'text/plain'
+        'text/plain',
+        {},
+        this.debug
       )
       .catch((err) => {
         throw prefixMessage(err, 'Error while getting job state. ')
@@ -1107,7 +1111,9 @@ export class SASViyaApiClient {
               .get<string>(
                 `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
                 accessToken,
-                'text/plain'
+                'text/plain',
+                {},
+                this.debug
               )
               .catch((err) => {
                 throw prefixMessage(
