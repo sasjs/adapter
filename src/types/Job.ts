@@ -1,5 +1,6 @@
 import { Link } from './Link'
 import { JobResult } from './JobResult'
+import { LogStatistics } from './LogStatistics'
 
 export interface Job {
   id: string
@@ -10,4 +11,5 @@ export interface Job {
   links: Link[]
   results: JobResult
   error?: any
+  logStatistics: LogStatistics
 }
