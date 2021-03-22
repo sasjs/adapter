@@ -3,7 +3,7 @@ import {
   isRelativePath,
   isUri,
   isUrl,
-  fetchLogFileContentByChunks
+  fetchLogByChunks
 } from './utils'
 import * as NodeFormData from 'form-data'
 import {
@@ -433,7 +433,7 @@ export class SASViyaApiClient {
       if (debug && logLink) {
         const logUrl = `${logLink.href}/content`
         const logCount = currentJob.logStatistics?.lineCount ?? 1000000
-        log = await fetchLogFileContentByChunks(
+        log = await fetchLogByChunks(
           this.requestClient,
           accessToken!,
           logUrl,
@@ -461,7 +461,7 @@ export class SASViyaApiClient {
               if (logLink) {
                 const logUrl = `${logLink.href}/content`
                 const logCount = currentJob.logStatistics?.lineCount ?? 1000000
-                log = await fetchLogFileContentByChunks(
+                log = await fetchLogByChunks(
                   this.requestClient,
                   accessToken!,
                   logUrl,

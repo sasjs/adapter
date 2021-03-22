@@ -9,7 +9,7 @@ import { prefixMessage } from '@sasjs/utils/error'
  * @param {number} logCount- total number of log lines in file.
  * @returns an string containing log lines.
  */
-export const fetchLogFileContentByChunks = async (
+export const fetchLogByChunks = async (
   requestClient: RequestClient,
   accessToken: string,
   logUrl: string,
