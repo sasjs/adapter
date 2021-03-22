@@ -6,7 +6,7 @@ SASjs is a open-source framework for building Web Apps on SAS® platforms. You c
 
 1 - `npm install @sasjs/adapter` - for use in a node project
 
-2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@1/index.js) and use a copy of the latest JS file
+2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@2/index.js) and use a copy of the latest JS file
 
 3 - Reference directly from the CDN - in which case click [here](https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection) and select "SRI" to get the script tag with the integrity hash.
 
@@ -53,7 +53,7 @@ There are three parts to consider:
 
 ### JS Request / Response
 
-To install the library you can simply run `npm install sasjs` or include a `<script>` tag with a reference to our [CDN](https://www.jsdelivr.com/package/npm/sasjs).
+To install the library you can simply run `npm i @sasjs/adapter` or include a `<script>` tag with a reference to our [CDN](https://www.jsdelivr.com/package/npm/@sasjs/adapter).
 
 Full technical documentation is available [here](https://adapter.sasjs.io).  The main parts are:
 
@@ -68,6 +68,15 @@ let sasJs = new SASjs.default(
   }
 );
 ```
+If you've installed it via NPM, you can import it as a default import like so:
+```
+  import SASjs from '@sasjs/adapter';
+```
+You can then instantiate it with:
+```
+const sasJs = new SASjs({your config})
+```
+
 More on the config later.
 
 ### SAS Logon
@@ -189,6 +198,8 @@ This approach is by far the fastest, as a result of the optimisations we have bu
 
 # More resources
 
-For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation.
+For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation. 
 
 For more information on building web apps in general, check out these [resources](https://sasjs.io/training/resources/) or contact the [author](https://www.linkedin.com/in/allanbowe/) directly.
+
+If you are a SAS 9 or SAS Viya customer you can also request a copy of [Data Controller](https://datacontroller.io) - free for up to 5 users, this tool makes use of all parts of the SASjs framework.
