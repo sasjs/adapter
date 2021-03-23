@@ -1,4 +1,10 @@
-import { convertToCSV, isRelativePath, isUri, isUrl } from './utils'
+import {
+  convertToCSV,
+  isRelativePath,
+  isUri,
+  isUrl,
+  fetchLogByChunks
+} from './utils'
 import * as NodeFormData from 'form-data'
 import {
   Job,
@@ -420,19 +426,19 @@ export class SASViyaApiClient {
         })
 
       let jobResult
-      let log
+      let log = ''
 
       const logLink = currentJob.links.find((l) => l.rel === 'log')
 
       if (debug && logLink) {
-        log = await this.requestClient
-          .get<any>(`${logLink.href}/content?limit=10000`, accessToken)
-          .then((res: any) =>
-            res.result.items.map((i: any) => i.line).join('\n')
-          )
-          .catch((err) => {
-            throw prefixMessage(err, 'Error while getting log. ')
-          })
+        const logUrl = `${logLink.href}/content`
+        const logCount = currentJob.logStatistics?.lineCount ?? 1000000
+        log = await fetchLogByChunks(
+          this.requestClient,
+          accessToken!,
+          logUrl,
+          logCount
+        )
       }
 
       if (jobStatus === 'failed' || jobStatus === 'error') {
@@ -453,14 +459,14 @@ export class SASViyaApiClient {
           .catch(async (e) => {
             if (e instanceof NotFoundError) {
               if (logLink) {
-                log = await this.requestClient
-                  .get<any>(`${logLink.href}/content?limit=10000`, accessToken)
-                  .then((res: any) =>
-                    res.result.items.map((i: any) => i.line).join('\n')
-                  )
-                  .catch((err) => {
-                    throw prefixMessage(err, 'Error while getting log. ')
-                  })
+                const logUrl = `${logLink.href}/content`
+                const logCount = currentJob.logStatistics?.lineCount ?? 1000000
+                log = await fetchLogByChunks(
+                  this.requestClient,
+                  accessToken!,
+                  logUrl,
+                  logCount
+                )
 
                 return Promise.reject({
                   status: 500,
