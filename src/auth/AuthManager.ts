@@ -102,7 +102,7 @@ export class AuthManager {
       this.logOut()
 
       const { result: formResponse } = await this.requestClient.get<string>(
-        this.loginUrl.replace('do', ''),
+        this.loginUrl.replace('.do', ''),
         undefined,
         'text/plain'
       )

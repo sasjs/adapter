@@ -176,15 +176,19 @@ describe('AuthManager', () => {
 
     const response = await authManager.checkSession()
     expect(response.isLoggedIn).toBeTruthy()
-    expect(mockedAxios.get).toHaveBeenNthCalledWith(1, `http://test-server.com/SASJobExecution`, {
-      withCredentials: true,
-      responseType: 'text',
-      transformResponse: undefined,
-      headers: {
-        Accept: '*/*',
-        'Content-Type': 'text/plain'
+    expect(mockedAxios.get).toHaveBeenNthCalledWith(
+      1,
+      `http://test-server.com/SASJobExecution`,
+      {
+        withCredentials: true,
+        responseType: 'text',
+        transformResponse: undefined,
+        headers: {
+          Accept: '*/*',
+          'Content-Type': 'text/plain'
+        }
       }
-    })
+    )
 
     done()
   })
