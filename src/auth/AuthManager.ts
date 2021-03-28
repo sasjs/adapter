@@ -82,14 +82,15 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
+    //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
+    //For SAS9 we will send request on SASStoredProcess
+    const url =
+      this.serverType === 'SASVIYA'
+        ? `${this.serverUrl}/identities`
+        : `${this.serverUrl}/SASStoredProcess`
+
     const { result: loginResponse } = await this.requestClient
-      .get<string>(
-        `${this.serverUrl}/${
-          this.serverType === 'SASVIYA' ? 'SASJobExecution' : 'SASStoredProcess'
-        }`,
-        undefined,
-        'text/plain'
-      )
+      .get<string>(url, undefined, 'text/plain')
       .catch((err: any) => {
         return { result: 'authErr' }
       })
