@@ -82,13 +82,17 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const { result: loginResponse } = await this.requestClient.get<string>(
-      `${this.serverUrl}/${this.serverType === 'SASVIYA' ? 'SASJobExecution' : 'SASStoredProcess'}`,
-      undefined,
-      'text/plain'
-    ).catch((err: any) => {
-      return {result: 'authErr'}
-    })
+    const { result: loginResponse } = await this.requestClient
+      .get<string>(
+        `${this.serverUrl}/${
+          this.serverType === 'SASVIYA' ? 'SASJobExecution' : 'SASStoredProcess'
+        }`,
+        undefined,
+        'text/plain'
+      )
+      .catch((err: any) => {
+        return { result: 'authErr' }
+      })
 
     const isLoggedIn = loginResponse !== 'authErr'
     let loginForm = null
@@ -96,13 +100,13 @@ export class AuthManager {
     if (!isLoggedIn) {
       //We will logout to make sure cookies are removed and login form is presented
       this.logOut()
-      
+
       const { result: formResponse } = await this.requestClient.get<string>(
         this.loginUrl.replace('do', ''),
         undefined,
         'text/plain'
       )
-      
+
       loginForm = await this.getLoginForm(formResponse)
     }
 
