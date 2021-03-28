@@ -176,33 +176,7 @@ describe('AuthManager', () => {
 
     const response = await authManager.checkSession()
     expect(response.isLoggedIn).toBeTruthy()
-    expect(mockedAxios.get).toHaveBeenNthCalledWith(1, `/SASLogon/login`, {
-      withCredentials: true,
-      responseType: 'text',
-      transformResponse: undefined,
-      headers: {
-        Accept: '*/*',
-        'Content-Type': 'text/plain'
-      }
-    })
-
-    done()
-  })
-
-  it('should check and return session information if logged in', async (done) => {
-    const authManager = new AuthManager(
-      serverUrl,
-      serverType,
-      requestClient,
-      authCallback
-    )
-    mockedAxios.get.mockImplementation(() =>
-      Promise.resolve({ data: '<button onClick="logout">' })
-    )
-
-    const response = await authManager.checkSession()
-    expect(response.isLoggedIn).toBeTruthy()
-    expect(mockedAxios.get).toHaveBeenNthCalledWith(1, `/SASLogon/login`, {
+    expect(mockedAxios.get).toHaveBeenNthCalledWith(1, `http://test-server.com/SASJobExecution`, {
       withCredentials: true,
       responseType: 'text',
       transformResponse: undefined,
