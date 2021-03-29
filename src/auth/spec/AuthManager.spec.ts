@@ -178,7 +178,7 @@ describe('AuthManager', () => {
     expect(response.isLoggedIn).toBeTruthy()
     expect(mockedAxios.get).toHaveBeenNthCalledWith(
       1,
-      `http://test-server.com/SASJobExecution`,
+      `http://test-server.com/identities`,
       {
         withCredentials: true,
         responseType: 'text',
