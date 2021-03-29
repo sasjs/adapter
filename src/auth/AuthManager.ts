@@ -82,17 +82,33 @@ export class AuthManager {
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession() {
-    const { result: loginResponse } = await this.requestClient.get<string>(
-      this.loginUrl.replace('.do', ''),
-      undefined,
-      'text/plain'
-    )
-    const responseText = loginResponse
-    const isLoggedIn = /<button.+onClick.+logout/gm.test(responseText)
-    let loginForm: any = null
+    //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
+    //For SAS9 we will send request on SASStoredProcess
+    const url =
+      this.serverType === 'SASVIYA'
+        ? `${this.serverUrl}/identities`
+        : `${this.serverUrl}/SASStoredProcess`
+
+    const { result: loginResponse } = await this.requestClient
+      .get<string>(url, undefined, 'text/plain')
+      .catch((err: any) => {
+        return { result: 'authErr' }
+      })
+
+    const isLoggedIn = loginResponse !== 'authErr'
+    let loginForm = null
 
     if (!isLoggedIn) {
-      loginForm = await this.getLoginForm(responseText)
+      //We will logout to make sure cookies are removed and login form is presented
+      this.logOut()
+
+      const { result: formResponse } = await this.requestClient.get<string>(
+        this.loginUrl.replace('.do', ''),
+        undefined,
+        'text/plain'
+      )
+
+      loginForm = await this.getLoginForm(formResponse)
     }
 
     return Promise.resolve({
