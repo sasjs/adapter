@@ -530,15 +530,19 @@ export default class SASjs {
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
-   * @param loginRequiredCallback - provide a function here to be called if the
+   * @param loginRequiredCallback - a function that is called if the
    * user is not logged in (eg to display a login form). The request will be
-   * resubmitted after logon.
+   * resubmitted after successful login.
+   * When using a `loginRequiredCallback`, the call to the request will look, for example, like so:
+   * `await request(sasJobPath, data, config, () => setIsLoggedIn(false))`
+   * If you are not passing in any data and configuration, it will look like so:
+   * `await request(sasJobPath, {}, {}, () => setIsLoggedIn(false))`
    */
   public async request(
     sasJob: string,
-    data: any,
-    config: any = {},
-    loginRequiredCallback?: any,
+    data: { [key: string]: any },
+    config: { [key: string]: any } = {},
+    loginRequiredCallback?: () => any,
     accessToken?: string
   ) {
     config = {
