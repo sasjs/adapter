@@ -12,6 +12,7 @@ import {
   ComputeJobExecutor,
   JesJobExecutor
 } from './job-execution'
+import { ErrorResponse } from './types/errors'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -709,9 +710,27 @@ export default class SASjs {
    * @param accessToken - an access token for an authorized user.
    */
   public async fetchLogFileContent(logUrl: string, accessToken?: string) {
-    return await this.requestClient!.get(logUrl, accessToken).then((res) =>
-      JSON.stringify(res.result)
-    )
+    return await this.requestClient!.get(logUrl, accessToken).then((res) => {
+      if (!res)
+        return Promise.reject(
+          new ErrorResponse(
+            'Error while fetching log. Response was not provided.'
+          )
+        )
+
+      try {
+        const result = JSON.stringify(res.result)
+
+        return result
+      } catch (err) {
+        return Promise.reject(
+          new ErrorResponse(
+            'Error while fetching log. The result is not valid.',
+            err
+          )
+        )
+      }
+    })
   }
 
   public getSasRequests() {
