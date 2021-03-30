@@ -77,7 +77,7 @@
 				</a>
 				<p>SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:</p>
 				<p>1 - <code>npm install @sasjs/adapter</code> - for use in a node project</p>
-				<p>2 - <a href="https://cdn.jsdelivr.net/npm/@sasjs/adapter@1/index.js">Download</a> and use a copy of the latest JS file</p>
+				<p>2 - <a href="https://cdn.jsdelivr.net/npm/@sasjs/adapter@2/index.js">Download</a> and use a copy of the latest JS file</p>
 				<p>3 - Reference directly from the CDN - in which case click <a href="https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection">here</a> and select &quot;SRI&quot; to get the script tag with the integrity hash.</p>
 				<p>If you are short on time and just need to build an app quickly, then check out <a href="https://vimeo.com/393161794">this video</a> and the <a href="https://github.com/sasjs/react-seed-app">react-seed-app</a> which provides some boilerplate.</p>
 				<p>For more information on building web apps with SAS, check out <a href="https://sasjs.io">sasjs.io</a></p>
@@ -103,13 +103,140 @@ parmcards4;
 ;;;;
 %mp_createwebservice(<span class="hljs-type">path</span>=&amp;appLoc/common,<span class="hljs-type">name</span>=getdata)</code></pre>
 				<p>You now have a simple web app with a backend service!</p>
+				<a href="#detailed-overview" id="detailed-overview" style="color: inherit; text-decoration: none;">
+					<h2>Detailed Overview</h2>
+				</a>
+				<p>The SASjs adapter is a JS library and a set of SAS Macros that handle the communication between the frontend app and backend SAS services.</p>
+				<p>There are three parts to consider:</p>
+				<ol>
+					<li>JS request / response</li>
+					<li>SAS inputs / outputs</li>
+					<li>Configuration</li>
+				</ol>
+				<a href="#js-request--response" id="js-request--response" style="color: inherit; text-decoration: none;">
+					<h3>JS Request / Response</h3>
+				</a>
+				<p>To install the library you can simply run <code>npm i @sasjs/adapter</code> or include a <code>&lt;script&gt;</code> tag with a reference to our <a href="https://www.jsdelivr.com/package/npm/@sasjs/adapter">CDN</a>.</p>
+				<p>Full technical documentation is available <a href="https://adapter.sasjs.io">here</a>.  The main parts are:</p>
+				<a href="#instantiation" id="instantiation" style="color: inherit; text-decoration: none;">
+					<h3>Instantiation</h3>
+				</a>
+				<p>The following code will instantiate an instance of the adapter:</p>
+				<pre><code class="language-javascript"><span class="hljs-keyword">let</span> sasJs = <span class="hljs-keyword">new</span> SASjs.default(
+  {
+    <span class="hljs-attr">appLoc</span>: <span class="hljs-string">&quot;/Your/SAS/Folder&quot;</span>,
+    <span class="hljs-attr">serverType</span>:<span class="hljs-string">&quot;SAS9&quot;</span>
+  }
+);</code></pre>
+				<p>If you&#39;ve installed it via NPM, you can import it as a default import like so:</p>
+				<pre><code>  <span class="hljs-keyword">import</span> SASjs <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@sasjs/adapter&#x27;</span>;</code></pre>
+				<p>You can then instantiate it with:</p>
+				<pre><code>const sasJs = <span class="hljs-keyword">new</span> <span class="hljs-constructor">SASjs({<span class="hljs-params">your</span> <span class="hljs-params">config</span>})</span></code></pre>
+				<p>More on the config later.</p>
+				<a href="#sas-logon" id="sas-logon" style="color: inherit; text-decoration: none;">
+					<h3>SAS Logon</h3>
+				</a>
+				<p>The login process can be handled directly, as below, or as a callback function to a SAS request.</p>
+				<pre><code class="language-javascript">sasJs.logIn(<span class="hljs-string">&#x27;USERNAME&#x27;</span>,<span class="hljs-string">&#x27;PASSWORD&#x27;</span>
+  ).then(<span class="hljs-function">(<span class="hljs-params">response</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (response.isLoggedIn === <span class="hljs-literal">true</span>) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;do stuff&#x27;</span>)
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;do other stuff&#x27;</span>)
+  }
+}</code></pre>
+				<a href="#request--response" id="request--response" style="color: inherit; text-decoration: none;">
+					<h3>Request / Response</h3>
+				</a>
+				<p>A simple request can be sent to SAS in the following fashion:</p>
+				<pre><code class="language-javascript">sasJs.request(<span class="hljs-string">&quot;/path/to/my/service&quot;</span>, dataObject)
+  .then(<span class="hljs-function">(<span class="hljs-params">response</span>) =&gt;</span> {
+    <span class="hljs-comment">// all tables are in the response object, eg:</span>
+    <span class="hljs-built_in">console</span>.log(response.tablewith2cols1row[<span class="hljs-number">0</span>].COL1.value)
+  })</code></pre>
+				<p>We supply the path to the SAS service, and a data object.  The data object can be null (for services with no input), or can contain one or more tables in the following format:</p>
+				<pre><code class="language-javascript"><span class="hljs-keyword">let</span> dataObject={
+    <span class="hljs-string">&quot;tablewith2cols1row&quot;</span>: [{
+        <span class="hljs-string">&quot;col1&quot;</span>: <span class="hljs-string">&quot;val1&quot;</span>,
+        <span class="hljs-string">&quot;col2&quot;</span>: <span class="hljs-number">42</span>
+    }],
+    <span class="hljs-string">&quot;tablewith1col2rows&quot;</span>: [{
+        <span class="hljs-string">&quot;col&quot;</span>: <span class="hljs-string">&quot;row1&quot;</span>
+    }, {
+        <span class="hljs-string">&quot;col&quot;</span>: <span class="hljs-string">&quot;row2&quot;</span>
+    }]
+};</code></pre>
+				<p>There are optional parameters such as a config object and a callback login function.</p>
+				<p>The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.</p>
+				<p>The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.</p>
+				<a href="#sas-inputs--outputs" id="sas-inputs--outputs" style="color: inherit; text-decoration: none;">
+					<h2>SAS Inputs / Outputs</h2>
+				</a>
+				<p>The SAS side is handled by a number of macros in the <a href="https://github.com/sasjs/core">macro core</a> library.</p>
+				<p>The following snippet shows the process of SAS tables arriving / leaving:</p>
+				<pre><code class="language-sas"><span class="hljs-comment">/* fetch all input tables sent from frontend - they arrive as work tables */</span>
+<span class="hljs-name">%webout</span>(FETCH)
+
+<span class="hljs-comment">/* some sas code */</span>
+<span class="hljs-keyword">data </span>some sas tables;
+  <span class="hljs-meta">set</span> <span class="hljs-meta">from</span> js;
+<span class="hljs-keyword">run;</span>
+
+<span class="hljs-name">%webout</span>(OPEN)  <span class="hljs-comment">/* open the JSON to be returned */</span>
+<span class="hljs-name">%webout</span>(OBJ,some) <span class="hljs-comment">/* `some` table is sent in object format */</span>
+<span class="hljs-name">%webout</span>(ARR,sas) <span class="hljs-comment">/* `sas` table is sent in array format, smaller filesize */</span>
+<span class="hljs-name">%webout</span>(OBJ,tables,fmt=N) <span class="hljs-comment">/* unformatted (raw) data */</span>
+<span class="hljs-name">%webout</span>(OBJ,tables,<span class="hljs-meta">label</span>=newtable) <span class="hljs-comment">/* rename tables on export */</span>
+<span class="hljs-name">%webout</span>(CLOSE) <span class="hljs-comment">/* close the JSON and send some extra useful variables too */</span>
+</code></pre>
+				<a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
+					<h2>Configuration</h2>
+				</a>
+				<p>Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available <a href="https://adapter.sasjs.io/classes/types.sasjsconfig.html">here</a>.  The main config items are:</p>
+				<ul>
+					<li><code>appLoc</code> - this is the folder under which the SAS services will be created.</li>
+					<li><code>serverType</code> - either <code>SAS9</code> or <code>SASVIYA</code>.</li>
+					<li><code>serverUrl</code> - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.</li>
+					<li><code>debug</code> - if <code>true</code> then SAS Logs and extra debug information is returned.</li>
+					<li><code>useComputeApi</code> - if <code>true</code> and the serverType is <code>SASVIYA</code> then the REST APIs will be called directly (rather than using the JES web service).</li>
+					<li><code>contextName</code> - if missing or blank, and <code>useComputeApi</code> is <code>true</code> and <code>serverType</code> is <code>SASVIYA</code> then the JES API will be used.</li>
+				</ul>
+				<p>The adapter supports a number of approaches for interfacing with Viya (<code>serverType</code> is <code>SASVIYA</code>).  For maximum performance, be sure to <a href="https://sasjs.io/guide-viya/#shared-account-and-server-re-use">configure your compute context</a> with <code>reuseServerProcesses</code> as <code>true</code> and a system account in <code>runServerAs</code>.  This functionality is available since Viya 3.5.  This configuration is supported when <a href="https://sasjs.io/sasjs-cli-context/#sasjs-context-create">creating contexts using the CLI</a>.</p>
+				<a href="#using-jes-web-app" id="using-jes-web-app" style="color: inherit; text-decoration: none;">
+					<h3>Using JES Web App</h3>
+				</a>
+				<p>In this setup, all requests are routed through the JES web app, at <code>YOURSERVER/SASJobExecution</code>.  This is the most reliable method, and also the slowest.  One request is made to the JES app, and remaining requests (getting job uri, session spawning, passing parameters, running the program, fetching the log) are made on the SAS server by the JES app.</p>
+				<pre><code>{
+  <span class="hljs-attribute">appLoc</span>:<span class="hljs-string">&quot;/Your/Path&quot;</span>,
+  serverType:<span class="hljs-string">&quot;SASVIYA&quot;</span>
+}</code></pre>
+				<a href="#using-the-jes-api" id="using-the-jes-api" style="color: inherit; text-decoration: none;">
+					<h3>Using the JES API</h3>
+				</a>
+				<p>Here we are running Jobs using the Job Execution Service except this time we are making the requests directly using the REST API instead of through the JES Web App.  This is helpful when we need to call web services outside of a browser (eg with the SASjs CLI or other commandline tools).  To save one network request, the adapter prefetches the JOB URIs and passes them in the <code>__job</code> parameter.</p>
+				<pre><code>{
+  <span class="hljs-attribute">appLoc</span>:<span class="hljs-string">&quot;/Your/Path&quot;</span>,
+  serverType:<span class="hljs-string">&quot;SASVIYA&quot;</span>,
+  useComputeApi: true
+}</code></pre>
+				<a href="#using-the-compute-api" id="using-the-compute-api" style="color: inherit; text-decoration: none;">
+					<h3>Using the Compute API</h3>
+				</a>
+				<p>This approach is by far the fastest, as a result of the optimisations we have built into the adapter.  With this configuration, in the first sasjs request, we take a URI map of the services in the target folder, and create a session manager - which spawns an extra session.  The next time a request is made, the adapter will use the &#39;hot&#39; session.  Sessions are deleted after every use, which actually makes this <em>less</em> resource intensive than a typical JES web app, in which all sessions are kept alive by default for 15 minutes.</p>
+				<pre><code>{
+  <span class="hljs-attribute">appLoc</span>:<span class="hljs-string">&quot;/Your/Path&quot;</span>,
+  serverType:<span class="hljs-string">&quot;SASVIYA&quot;</span>,
+  useComputeApi: true,
+  contextName: <span class="hljs-string">&#x27;yourComputeContext&#x27;</span>
+}</code></pre>
 				<a href="#more-resources" id="more-resources" style="color: inherit; text-decoration: none;">
 					<h1>More resources</h1>
 				</a>
-				<p>For more information and examples specific to this adapter you can check out the <a href="https://sasjs.io/sasjs-adapter/">user guide</a> or the <a href="http://adapter.sasjs.io/">technical</a> documentation.</p>
+				<p>For more information and examples specific to this adapter you can check out the <a href="https://sasjs.io/sasjs-adapter/">user guide</a> or the <a href="http://adapter.sasjs.io/">technical</a> documentation. </p>
 				<p>For more information on building web apps in general, check out these <a href="https://sasjs.io/training/resources/">resources</a> or contact the <a href="https://www.linkedin.com/in/allanbowe/">author</a> directly.</p>
+				<p>If you are a SAS 9 or SAS Viya customer you can also request a copy of <a href="https://datacontroller.io">Data Controller</a> - free for up to 5 users, this tool makes use of all parts of the SASjs framework.</p>
 			</div>
-			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/adapter/src/ContextManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/auth/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/job-execution/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/AuthorizeError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ComputeJobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/ErrorResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/LoginRequiredError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/NotFoundError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
+			<!--{&quot;options&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/LogStatistics.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/AuthorizeError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ComputeJobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ErrorResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/InternalServerError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/JobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/LoginRequiredError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/NotFoundError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/fetchLogByChunks.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
 		</div>
 		<div class="col-2 col-menu secondary-menu">
 			<nav class="tsd-navigation secondary menu-sticky">
