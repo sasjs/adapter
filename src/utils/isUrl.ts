@@ -1,10 +1,14 @@
 /**
  * Checks if string is in URL format.
- * @param url - string to check.
+ * @param str - string to check.
  */
-export const isUrl = (url: string): boolean => {
+export const isUrl = (str: string): boolean => {
+  const supportedProtocols = ['http:', 'https:']
+
   try {
-    const validUrl = new URL(url)
+    const url = new URL(str)
+
+    if (!supportedProtocols.includes(url.protocol)) return false
   } catch (_) {
     return false
   }
