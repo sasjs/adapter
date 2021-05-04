@@ -412,7 +412,22 @@ export class SASViyaApiClient {
         etag,
         accessToken,
         pollOptions
-      ).catch((err) => {
+      ).catch(async (err) => {
+        const error = err?.response?.data
+        const result = /err=[0-9]*,/.exec(error)
+
+        const errorCode = '5113'
+        if (result?.[0]?.slice(4, -1) === errorCode) {
+          const sessionLogUrl =
+            postedJob.links.find((l: any) => l.rel === 'up')!.href + '/log'
+          const logCount = 1000000
+          err.log = await fetchLogByChunks(
+            this.requestClient,
+            accessToken!,
+            sessionLogUrl,
+            logCount
+          )
+        }
         throw prefixMessage(err, 'Error while polling job status. ')
       })
 
