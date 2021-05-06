@@ -1,6 +1,6 @@
 /**
- * Converts the given JSON object to a CSV string.
- * @param data - the JSON object to convert.
+ * Converts the given JSON object array to a CSV string.
+ * @param data - the array of JSON objects to convert.
  */
 export const convertToCSV = (data: any) => {
   const replacer = (key: any, value: any) => (value === null ? '' : value)
@@ -37,15 +37,7 @@ export const convertToCSV = (data: any) => {
           let byteSize
 
           if (typeof row[field] === 'string') {
-            let doubleQuotesFound = row[field]
-              .split('')
-              .filter((char: any) => char === '"')
-
             byteSize = getByteSize(row[field])
-
-            if (doubleQuotesFound.length > 0) {
-              byteSize += doubleQuotesFound.length
-            }
           }
 
           return byteSize
@@ -73,6 +65,7 @@ export const convertToCSV = (data: any) => {
   if (invalidString) {
     return 'ERROR: LARGE STRING LENGTH'
   }
+
   csvTest = data.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
       let value
@@ -80,11 +73,10 @@ export const convertToCSV = (data: any) => {
       const currentCell = row[fieldName]
 
       if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
-        value = currentCell.toString()
         containsSpecialChar = true
-      } else {
-        value = JSON.stringify(currentCell, replacer)
       }
+
+      value = JSON.stringify(currentCell, replacer)
 
       value = value.replace(/\\\\/gm, '\\')
 
@@ -99,6 +91,10 @@ export const convertToCSV = (data: any) => {
           !value.includes('\\"')
         ) {
           value = value.substring(1, value.length - 1)
+        }
+
+        if (value.includes("'")) {
+          value = '"' + value + '"'
         }
 
         value = value.replace(/\\"/gm, '""')
