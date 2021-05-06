@@ -40,4 +40,36 @@ describe('convertToCsv', () => {
 
     expect(convertToCSV(data)).toEqual(expectedOutput)
   })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `',''`, bar: `","` }]
+
+    const expectedOutput = `foo:$4. bar:$3.\r\n"',''",""","""`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `','`, bar: `,"` }]
+
+    const expectedOutput = `foo:$3. bar:$2.\r\n"','",","""`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `"`, bar: `'` }]
+
+    const expectedOutput = `foo:$1. bar:$1.\r\n"""","'"`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `,`, bar: `',` }]
+
+    const expectedOutput = `foo:$1. bar:$2.\r\n",","',"`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
 })

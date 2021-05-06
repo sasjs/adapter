@@ -69,35 +69,20 @@ export const convertToCSV = (data: any) => {
   csvTest = data.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
       let value
-      let containsSpecialChar = false
       const currentCell = row[fieldName]
 
-      if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
-        containsSpecialChar = true
-      }
-
-      value = JSON.stringify(currentCell, replacer)
+      // stringify with replacer converts null values to empty strings
+      // also wraps the value in double quotes
+      value = JSON.stringify(currentCell, replacer).replace(/\\\"/g, `""`)
 
       value = value.replace(/\\\\/gm, '\\')
 
-      if (containsSpecialChar) {
-        if (value.includes(',') || value.includes('"')) {
-          value = '"' + value + '"'
-        }
-      } else {
-        if (
-          !value.includes(',') &&
-          value.includes('"') &&
-          !value.includes('\\"')
-        ) {
-          value = value.substring(1, value.length - 1)
-        }
-
-        if (value.includes("'")) {
-          value = '"' + value + '"'
-        }
-
-        value = value.replace(/\\"/gm, '""')
+      if (
+        value.substring(1, value.length - 1).search(/(\\t|\\n|\\r|,|\'|\")/gm) <
+        0
+      ) {
+        // Remove wrapping quotes for values that don't contain special characters
+        value = value.substring(1, value.length - 1)
       }
 
       value = value.replace(/\r\n/gm, '\n')
