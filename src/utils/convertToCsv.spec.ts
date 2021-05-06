@@ -24,4 +24,20 @@ describe('convertToCsv', () => {
 
     expect(convertToCSV(data)).toEqual(expectedOutput)
   })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `'blah'`, bar: `"blah"` }]
+
+    const expectedOutput = `foo:$6. bar:$6.\r\n"'blah'","""blah"""`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
+
+  it('should convert values with mixed quotes', () => {
+    const data = [{ foo: `'blah,"'`, bar: `"blah,blah" "` }]
+
+    const expectedOutput = `foo:$8. bar:$13.\r\n"'blah,""'","""blah,blah"" """`
+
+    expect(convertToCSV(data)).toEqual(expectedOutput)
+  })
 })
