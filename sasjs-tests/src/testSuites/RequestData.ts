@@ -15,6 +15,7 @@ const multipleRowsWithNulls: any = {
     { col1: 42, col2: 1.62, col3: "x", col4: "x" }
   ]
 };
+
 const multipleColumnsWithNulls: any = {
   table1: [
     { col1: 42, col2: null, col3: "x", col4: null },
@@ -136,7 +137,8 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
             res.table1[index][2] === multipleRowsWithNulls.table1[index].col3;
           result =
             result &&
-            res.table1[index][3] === multipleRowsWithNulls.table1[index].col4;
+            res.table1[index][3] ===
+              (multipleRowsWithNulls.table1[index].col4 || " ");
         });
         return result;
       }
@@ -165,7 +167,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index][3] ===
-              (multipleColumnsWithNulls.table1[index].col4 || "");
+              (multipleColumnsWithNulls.table1[index].col4 || " ");
         });
         return result;
       }
@@ -280,7 +282,8 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
             res.table1[index].COL3 === multipleRowsWithNulls.table1[index].col3;
           result =
             result &&
-            res.table1[index].COL4 === multipleRowsWithNulls.table1[index].col4;
+            res.table1[index].COL4 ===
+              (multipleRowsWithNulls.table1[index].col4 || " ");
         });
         return result;
       }
@@ -309,7 +312,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index].COL4 ===
-              (multipleColumnsWithNulls.table1[index].col4 || "");
+              (multipleColumnsWithNulls.table1[index].col4 || " ");
         });
         return result;
       }

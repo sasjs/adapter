@@ -59,10 +59,15 @@ export const basicTests = (
         "Should trigger required login callback and after successful login, it should finish the request",
       test: async () => {
         await adapter.logOut();
-        
-        return await adapter.request("common/sendArr", stringData, null, () => {
-          adapter.logIn(userName, password);
-        });
+
+        return await adapter.request(
+          "common/sendArr",
+          stringData,
+          undefined,
+          () => {
+            adapter.logIn(userName, password);
+          }
+        );
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1;
@@ -75,9 +80,9 @@ export const basicTests = (
       test: async () => {
         const config = {
           debug: true
-        }
+        };
 
-        return await adapter.request("common/sendArr", stringData, config)
+        return await adapter.request("common/sendArr", stringData, config);
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1;
