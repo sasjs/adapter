@@ -71,15 +71,19 @@ export const convertToCSV = (data: any) => {
       let value
       const currentCell = row[fieldName]
 
-      // stringify with replacer converts null values to empty strings
-      // also wraps the value in double quotes
-      value = JSON.stringify(currentCell, replacer).replace(/\\\"/g, `""`)
+      if (typeof currentCell === 'number') return currentCell
 
-      value = value.replace(/\\\\/gm, '\\')
+      // stringify with replacer converts null values to empty strings
+      value = currentCell === null ? '' : currentCell
+
+      // if there any present, it should have preceding (") for escaping
+      value = value.replace(/"/g, `""`)
+
+      // also wraps the value in double quotes
+      value = `"${value}"`
 
       if (
-        value.substring(1, value.length - 1).search(/(\\t|\\n|\\r|,|\'|\")/gm) <
-        0
+        value.substring(1, value.length - 1).search(/(\t|\n|\r|,|\'|\")/gm) < 0
       ) {
         // Remove wrapping quotes for values that don't contain special characters
         value = value.substring(1, value.length - 1)
