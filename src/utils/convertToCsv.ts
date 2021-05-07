@@ -53,7 +53,7 @@ export const convertToCSV = (data: any) => {
       )
     }
 
-    return `${field}:${firstFoundType === 'chars' ? '$' : ''}${
+    return `${field}:${firstFoundType === 'chars' ? '$char' : ''}${
       longestValueForField
         ? longestValueForField
         : firstFoundType === 'chars'

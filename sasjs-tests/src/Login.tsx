@@ -1,22 +1,22 @@
-import React, { ReactElement, useState, useCallback, useContext } from "react";
-import "./Login.scss";
-import { AppContext } from "@sasjs/test-framework";
-import { Redirect } from "react-router-dom";
+import React, { ReactElement, useState, useCallback, useContext } from 'react'
+import './Login.scss'
+import { AppContext } from '@sasjs/test-framework'
+import { Redirect } from 'react-router-dom'
 
 const Login = (): ReactElement<{}> => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const appContext = useContext(AppContext);
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const appContext = useContext(AppContext)
 
   const handleSubmit = useCallback(
     (e) => {
-      e.preventDefault();
+      e.preventDefault()
       appContext.adapter.logIn(username, password).then((res) => {
-        appContext.setIsLoggedIn(res.isLoggedIn);
-      });
+        appContext.setIsLoggedIn(res.isLoggedIn)
+      })
     },
     [username, password, appContext]
-  );
+  )
 
   return !appContext.isLoggedIn ? (
     <div className="login-container">
@@ -48,7 +48,7 @@ const Login = (): ReactElement<{}> => {
     </div>
   ) : (
     <Redirect to="/" />
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
