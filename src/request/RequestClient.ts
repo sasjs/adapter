@@ -214,9 +214,8 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     if (this.fileUploadCsrfToken?.value) {
-      headers[
-        this.fileUploadCsrfToken.headerName
-      ] = this.fileUploadCsrfToken.value
+      headers[this.fileUploadCsrfToken.headerName] =
+        this.fileUploadCsrfToken.value
     }
 
     try {
@@ -333,9 +332,9 @@ export class RequestClient implements HttpClient {
   }
 
   private parseCsrfToken = (response: AxiosResponse): CsrfToken | undefined => {
-    const tokenHeader = (response.headers[
-      'x-csrf-header'
-    ] as string)?.toLowerCase()
+    const tokenHeader = (
+      response.headers['x-csrf-header'] as string
+    )?.toLowerCase()
 
     if (tokenHeader) {
       const token = response.headers[tokenHeader]

@@ -594,16 +594,15 @@ export class SASViyaApiClient {
       }
     }
 
-    const {
-      result: createFolderResponse
-    } = await this.requestClient.post<Folder>(
-      `/folders/folders?parentFolderUri=${parentFolderUri}`,
-      {
-        name: folderName,
-        type: 'folder'
-      },
-      accessToken
-    )
+    const { result: createFolderResponse } =
+      await this.requestClient.post<Folder>(
+        `/folders/folders?parentFolderUri=${parentFolderUri}`,
+        {
+          name: folderName,
+          type: 'folder'
+        },
+        accessToken
+      )
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
@@ -875,9 +874,7 @@ export class SASViyaApiClient {
         throw new Error(`URI of job definition was not found.`)
       }
 
-      const {
-        result: jobDefinition
-      } = await this.requestClient
+      const { result: jobDefinition } = await this.requestClient
         .get<JobDefinition>(
           `${this.serverUrl}${jobDefinitionLink.href}`,
           accessToken
@@ -1103,7 +1100,7 @@ export class SASViyaApiClient {
 
     const { result: state } = await this.requestClient
       .get<string>(
-        `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+        `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
         accessToken,
         'text/plain',
         {},
@@ -1130,7 +1127,7 @@ export class SASViyaApiClient {
           if (stateLink) {
             const { result: jobState } = await this.requestClient
               .get<string>(
-                `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+                `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
                 accessToken,
                 'text/plain',
                 {},
