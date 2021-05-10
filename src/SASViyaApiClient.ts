@@ -1103,7 +1103,7 @@ export class SASViyaApiClient {
 
     const { result: state } = await this.requestClient
       .get<string>(
-        `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+        `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
         accessToken,
         'text/plain',
         {},
@@ -1130,7 +1130,7 @@ export class SASViyaApiClient {
           if (stateLink) {
             const { result: jobState } = await this.requestClient
               .get<string>(
-                `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+                `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
                 accessToken,
                 'text/plain',
                 {},
