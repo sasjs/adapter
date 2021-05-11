@@ -1101,6 +1101,9 @@ export class SASViyaApiClient {
       Promise.reject(`Job state link was not found.`)
     }
 
+    console.log(
+      `Attempting to poll job state from ${this.serverUrl}${stateLink.href}`
+    )
     const { result: state } = await this.requestClient
       .get<string>(
         `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
