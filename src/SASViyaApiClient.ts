@@ -1141,6 +1141,7 @@ export class SASViyaApiClient {
                 this.debug
               )
               .catch((err) => {
+                errorCount++
                 if (
                   pollCount >= MAX_POLL_COUNT ||
                   errorCount >= MAX_ERROR_COUNT
