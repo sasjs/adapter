@@ -1078,6 +1078,7 @@ export class SASViyaApiClient {
   ) {
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
+    let MAX_ERROR_COUNT = 10
 
     if (pollOptions) {
       POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
@@ -1086,6 +1087,7 @@ export class SASViyaApiClient {
 
     let postedJobState = ''
     let pollCount = 0
+    let errorCount = 0
     const headers: any = {
       'Content-Type': 'application/json',
       'If-None-Match': etag
@@ -1111,7 +1113,7 @@ export class SASViyaApiClient {
           `Error fetching job state from ${this.serverUrl}${stateLink.href}. Starting poll, assuming job to be running.`,
           err
         )
-        return { result: 'running' }
+        return { result: 'unavailable' }
       })
 
     const currentState = state.trim()
@@ -1126,7 +1128,8 @@ export class SASViyaApiClient {
         if (
           postedJobState === 'running' ||
           postedJobState === '' ||
-          postedJobState === 'pending'
+          postedJobState === 'pending' ||
+          postedJobState === 'unavailable'
         ) {
           if (stateLink) {
             const { result: jobState } = await this.requestClient
@@ -1138,7 +1141,10 @@ export class SASViyaApiClient {
                 this.debug
               )
               .catch((err) => {
-                if (pollCount >= MAX_POLL_COUNT) {
+                if (
+                  pollCount >= MAX_POLL_COUNT ||
+                  errorCount >= MAX_ERROR_COUNT
+                ) {
                   throw prefixMessage(
                     err,
                     'Error while getting job state after interval. '
@@ -1148,10 +1154,13 @@ export class SASViyaApiClient {
                   `Error fetching job state from ${this.serverUrl}${stateLink.href}. Resuming poll, assuming job to be running.`,
                   err
                 )
-                return { result: 'running' }
+                return { result: 'unavailable' }
               })
 
             postedJobState = jobState.trim()
+            if (postedJobState != 'unavailable' && errorCount > 0) {
+              errorCount = 0
+            }
 
             if (this.debug && printedState !== postedJobState) {
               console.log('Polling job status...')
