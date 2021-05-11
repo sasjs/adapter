@@ -1101,9 +1101,6 @@ export class SASViyaApiClient {
       Promise.reject(`Job state link was not found.`)
     }
 
-    console.log(
-      `Attempting to poll job state from ${this.serverUrl}${stateLink.href}`
-    )
     const { result: state } = await this.requestClient
       .get<string>(
         `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
@@ -1114,7 +1111,7 @@ export class SASViyaApiClient {
       )
       .catch((err) => {
         console.error(
-          'Error fetching job state. Starting poll, assuming job to be running.',
+          `Error fetching job state from ${this.serverUrl}${stateLink.href}. Starting poll, assuming job to be running.`,
           err
         )
         return { result: 'running' }
@@ -1151,7 +1148,7 @@ export class SASViyaApiClient {
                   )
                 }
                 console.error(
-                  'Error fetching job state. Resuming poll, assuming job to be running.',
+                  `Error fetching job state from ${this.serverUrl}${stateLink.href}. Resuming poll, assuming job to be running.`,
                   err
                 )
                 return { result: 'running' }
