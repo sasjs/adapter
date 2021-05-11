@@ -1078,7 +1078,7 @@ export class SASViyaApiClient {
   ) {
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
-    let MAX_ERROR_COUNT = 10
+    let MAX_ERROR_COUNT = 5
 
     if (pollOptions) {
       POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
