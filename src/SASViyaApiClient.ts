@@ -594,15 +594,16 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } =
-      await this.requestClient.post<Folder>(
-        `/folders/folders?parentFolderUri=${parentFolderUri}`,
-        {
-          name: folderName,
-          type: 'folder'
-        },
-        accessToken
-      )
+    const {
+      result: createFolderResponse
+    } = await this.requestClient.post<Folder>(
+      `/folders/folders?parentFolderUri=${parentFolderUri}`,
+      {
+        name: folderName,
+        type: 'folder'
+      },
+      accessToken
+    )
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
@@ -874,7 +875,9 @@ export class SASViyaApiClient {
         throw new Error(`URI of job definition was not found.`)
       }
 
-      const { result: jobDefinition } = await this.requestClient
+      const {
+        result: jobDefinition
+      } = await this.requestClient
         .get<JobDefinition>(
           `${this.serverUrl}${jobDefinitionLink.href}`,
           accessToken
@@ -1107,7 +1110,11 @@ export class SASViyaApiClient {
         this.debug
       )
       .catch((err) => {
-        throw prefixMessage(err, 'Error while getting job state. ')
+        console.error(
+          'Error fetching job state. Starting poll, assuming job to be running.',
+          err
+        )
+        return { result: 'running' }
       })
 
     const currentState = state.trim()
@@ -1134,10 +1141,17 @@ export class SASViyaApiClient {
                 this.debug
               )
               .catch((err) => {
-                throw prefixMessage(
-                  err,
-                  'Error while getting job state after interval. '
+                if (pollCount >= MAX_POLL_COUNT) {
+                  throw prefixMessage(
+                    err,
+                    'Error while getting job state after interval. '
+                  )
+                }
+                console.error(
+                  'Error fetching job state. Resuming poll, assuming job to be running.',
+                  err
                 )
+                return { result: 'running' }
               })
 
             postedJobState = jobState.trim()
