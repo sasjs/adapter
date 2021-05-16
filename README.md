@@ -7,7 +7,7 @@
 ![Snyk Vulnerabilities for npm package](https://img.shields.io/snyk/vulnerabilities/npm/@sasjs/adapter)
 [![License](https://img.shields.io/apm/l/atomic-design-ui.svg)](/LICENSE)
 ![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter)
-![total lines](https://tokei.rs/b1/github/sasjs/adapter)
+![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter)
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
 
 
