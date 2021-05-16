@@ -1,5 +1,3 @@
-[![](https://data.jsdelivr.com/v1/package/npm/@sasjs/adapter/badge)](https://www.jsdelivr.com/package/npm/@sasjs/adapter)
-
 # @sasjs/adapter
 
 [![npm package][npm-image]][npm-url]
