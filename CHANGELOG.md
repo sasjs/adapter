@@ -1,5 +1,9 @@
 # Change Log
 
+Since March 2020 the changelog is managed by github releases - see [https://github.com/sasjs/adapter/releases](https://github.com/sasjs/adapter/releases).
+
+## Changes up to 5th March 2020
+
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 <a name="1.9.0"></a>

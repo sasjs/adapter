@@ -198,8 +198,15 @@ This approach is by far the fastest, as a result of the optimisations we have bu
 
 # More resources
 
-For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation. 
+For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation.
 
 For more information on building web apps in general, check out these [resources](https://sasjs.io/training/resources/) or contact the [author](https://www.linkedin.com/in/allanbowe/) directly.
 
 If you are a SAS 9 or SAS Viya customer you can also request a copy of [Data Controller](https://datacontroller.io) - free for up to 5 users, this tool makes use of all parts of the SASjs framework.
+
+
+## Star Gazing
+
+If you find this library useful, help us grow our star graph!
+
+![](https://starchart.cc/sasjs/core.svg)

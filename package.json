@@ -32,7 +32,7 @@
   "author": "Allan Bowe <support@macropeople.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sasjs/adapter"
+    "url": "https://adapter.sasjs.io"
   },
   "license": "ISC",
   "devDependencies": {
