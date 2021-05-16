@@ -1,6 +1,7 @@
 {
   "name": "@sasjs/adapter",
   "description": "JavaScript adapter for SAS",
+  "homepage": "https://adapter.sasjs.io",
   "scripts": {
     "build": "rimraf build && rimraf node && mkdir node && cp -r src/* node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && cp ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
@@ -32,7 +33,7 @@
   "author": "Allan Bowe <support@macropeople.com>",
   "repository": {
     "type": "git",
-    "url": "https://adapter.sasjs.io"
+    "url": "https://github.com/sasjs/adapter"
   },
   "license": "ISC",
   "devDependencies": {
