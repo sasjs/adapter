@@ -12,7 +12,8 @@
     "prepublishOnly": "cp -r ./build/* . && rm -rf ./build",
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",
-    "typedoc": "typedoc"
+    "typedoc": "typedoc",
+    "postinstall": "[ -d .git ] && git config core.hooksPath ./.git-hooks || true"
   },
   "publishConfig": {
     "access": "public"
