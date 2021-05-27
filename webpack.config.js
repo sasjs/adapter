@@ -22,10 +22,6 @@ const browserConfig = {
         test: /\.ts?$/,
         use: 'ts-loader',
         exclude: /node_modules/
-      },
-      {
-        test: /\.node$/,
-        loader: 'node-loader'
       }
     ]
   },
