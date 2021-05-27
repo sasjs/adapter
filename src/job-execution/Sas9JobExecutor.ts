@@ -5,6 +5,12 @@ import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { Sas9RequestClient } from '../request/Sas9RequestClient'
 
+/**
+ * Job executor for SAS9 servers for use in Node.js environments.
+ * Initiates login with the provided username and password from the config
+ * The cookies are stored in the request client and used in subsequent
+ * job execution requests.
+ */
 export class Sas9JobExecutor extends BaseJobExecutor {
   private requestClient: Sas9RequestClient
   constructor(

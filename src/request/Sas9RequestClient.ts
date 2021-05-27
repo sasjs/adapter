@@ -4,6 +4,10 @@ import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
 
+/**
+ * Specific request client for SAS9 in Node.js environments.
+ * Handles redirects and cookie management.
+ */
 export class Sas9RequestClient extends RequestClient {
   constructor(baseUrl: string, allowInsecure = false) {
     super(baseUrl, allowInsecure)
