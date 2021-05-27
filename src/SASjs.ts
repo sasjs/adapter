@@ -576,12 +576,7 @@ export default class SASjs {
       config.username &&
       config.password
     ) {
-      return await this.sas9JobExecutor!.execute(
-        sasJob,
-        data,
-        config,
-        loginRequiredCallback
-      )
+      return await this.sas9JobExecutor!.execute(sasJob, data, config)
     } else {
       return await this.webJobExecutor!.execute(
         sasJob,

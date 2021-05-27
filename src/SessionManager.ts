@@ -91,10 +91,7 @@ export class SessionManager {
   }
 
   private async createAndWaitForSession(accessToken?: string) {
-    const {
-      result: createdSession,
-      etag
-    } = await this.requestClient
+    const { result: createdSession, etag } = await this.requestClient
       .post<Session>(
         `${this.serverUrl}/compute/contexts/${
           this.currentContext!.id
