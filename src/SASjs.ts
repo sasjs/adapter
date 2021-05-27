@@ -550,31 +550,41 @@ export default class SASjs {
       ...this.sasjsConfig,
       ...config
     }
-
-    if (config.serverType === ServerType.SasViya && config.contextName) {
-      if (config.useComputeApi) {
-        return await this.computeJobExecutor!.execute(
-          sasJob,
-          data,
-          config,
-          loginRequiredCallback,
-          accessToken
-        )
+    if (
+      typeof loginRequiredCallback === 'function' ||
+      typeof loginRequiredCallback === 'undefined'
+    ) {
+      if (config.serverType === ServerType.SasViya && config.contextName) {
+        if (config.useComputeApi) {
+          return await this.computeJobExecutor!.execute(
+            sasJob,
+            data,
+            config,
+            loginRequiredCallback,
+            accessToken
+          )
+        } else {
+          return await this.jesJobExecutor!.execute(
+            sasJob,
+            data,
+            config,
+            loginRequiredCallback,
+            accessToken
+          )
+        }
       } else {
-        return await this.jesJobExecutor!.execute(
+        return await this.webJobExecutor!.execute(
           sasJob,
           data,
           config,
-          loginRequiredCallback,
-          accessToken
+          loginRequiredCallback
         )
       }
     } else {
-      return await this.webJobExecutor!.execute(
-        sasJob,
-        data,
-        config,
-        loginRequiredCallback
+      return Promise.reject(
+        new ErrorResponse(
+          `Invalid loginRequiredCallback parameter was provided. Expected Callback function but found ${typeof loginRequiredCallback}`
+        )
       )
     }
   }
