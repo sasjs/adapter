@@ -1,6 +1,7 @@
 {
   "name": "@sasjs/adapter",
   "description": "JavaScript adapter for SAS",
+  "homepage": "https://adapter.sasjs.io",
   "scripts": {
     "build": "rimraf build && rimraf node && mkdir node && cp -r src/* node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && cp ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
@@ -11,7 +12,8 @@
     "prepublishOnly": "cp -r ./build/* . && rm -rf ./build",
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",
-    "typedoc": "typedoc"
+    "typedoc": "typedoc",
+    "postinstall": "[ -d .git ] && git config core.hooksPath ./.git-hooks || true"
   },
   "publishConfig": {
     "access": "public"
