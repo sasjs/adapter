@@ -21,12 +21,12 @@ export class Sas9RequestClient extends RequestClient {
     }
   }
 
-  public async login(username: string, password: string) {
+  public async login(username: string, password: string, jobsPath: string) {
     const codeInjectorPath = `/User Folders/${username}/My Folder/sasjs/runner`
     if (this.httpClient.defaults.jar) {
       ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookies()
       await this.get(
-        `/SASStoredProcess/do?_program=${codeInjectorPath}&_username=${username}&_password=${password}`,
+        `${jobsPath}?_program=${codeInjectorPath}&_username=${username}&_password=${password}`,
         undefined,
         'text/plain'
       )

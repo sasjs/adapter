@@ -28,12 +28,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
         : sasJob
       : sasJob
-    const jobUri = ''
-    let apiUrl = `${config.serverUrl}${this.jobsPath}?${
-      jobUri.length > 0
-        ? '__program=' + program + '&_job=' + jobUri
-        : '_program=' + program
-    }`
+    let apiUrl = `${config.serverUrl}${this.jobsPath}?${'_program=' + program}`
     apiUrl = `${apiUrl}${
       config.username && config.password
         ? '&_username=' + config.username + '&_password=' + config.password
@@ -60,7 +55,11 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     }
 
-    await this.requestClient.login(config.username, config.password)
+    await this.requestClient.login(
+      config.username,
+      config.password,
+      this.jobsPath
+    )
     const contentType =
       data && Object.keys(data).length
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
@@ -81,9 +80,6 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     const requestParams: any = {}
 
     if (config.debug) {
-      requestParams['_omittextlog'] = 'false'
-      requestParams['_omitsessionresults'] = 'false'
-
       requestParams['_debug'] = 131
     }
 
