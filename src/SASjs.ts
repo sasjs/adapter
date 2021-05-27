@@ -839,8 +839,7 @@ export default class SASjs {
     this.sas9JobExecutor = new Sas9JobExecutor(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
-      this.jobsPath,
-      this.requestClient
+      this.jobsPath
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(
