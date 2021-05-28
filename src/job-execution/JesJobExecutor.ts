@@ -33,7 +33,7 @@ export class JesJobExecutor extends BaseJobExecutor {
         .then((response) => {
           this.appendRequest(response, sasJob, config.debug)
 
-          resolve(response.result)
+          resolve(response)
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {

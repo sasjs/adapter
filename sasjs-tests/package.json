@@ -4,7 +4,7 @@
   "homepage": ".",
   "private": true,
   "dependencies": {
-    "@sasjs/adapter": "^2.2.4",
+    "@sasjs/adapter": "file:../build/sasjs-adapter-5.0.0.tgz",
     "@sasjs/test-framework": "^1.4.0",
     "@types/jest": "^26.0.20",
     "@types/node": "^14.14.25",
@@ -23,8 +23,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
-    "deploy:tests": "npm run build && rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH",
-    "deploy": "npm run update:adapter && npm run deploy:tests"
+    "deploy:tests": "rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH",
+    "deploy": "npm run update:adapter && npm run build && npm run deploy:tests"
   },
   "eslintConfig": {
     "extends": "react-app"

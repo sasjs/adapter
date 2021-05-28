@@ -1,22 +1,22 @@
 export const assert = (
   expression: boolean | (() => boolean),
-  message = "Assertion failed"
+  message = 'Assertion failed'
 ) => {
-  let result;
+  let result
   try {
-    if (typeof expression === "boolean") {
-      result = expression;
+    if (typeof expression === 'boolean') {
+      result = expression
     } else {
-      result = expression();
+      result = expression()
     }
   } catch (e) {
-    console.error(message);
-    throw new Error(message);
+    console.error(message)
+    throw new Error(message)
   }
   if (!!result) {
-    return;
+    return
   } else {
-    console.error(message);
-    throw new Error(message);
+    console.error(message)
+    throw new Error(message)
   }
-};
+}

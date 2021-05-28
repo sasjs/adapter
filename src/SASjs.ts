@@ -10,7 +10,8 @@ import {
   JobExecutor,
   WebJobExecutor,
   ComputeJobExecutor,
-  JesJobExecutor
+  JesJobExecutor,
+  Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
 
@@ -41,6 +42,7 @@ export default class SASjs {
   private webJobExecutor: JobExecutor | null = null
   private computeJobExecutor: JobExecutor | null = null
   private jesJobExecutor: JobExecutor | null = null
+  private sas9JobExecutor: JobExecutor | null = null
 
   constructor(config?: any) {
     this.sasjsConfig = {
@@ -569,6 +571,12 @@ export default class SASjs {
           accessToken
         )
       }
+    } else if (
+      config.serverType === ServerType.Sas9 &&
+      config.username &&
+      config.password
+    ) {
+      return await this.sas9JobExecutor!.execute(sasJob, data, config)
     } else {
       return await this.webJobExecutor!.execute(
         sasJob,
@@ -821,6 +829,12 @@ export default class SASjs {
       this.jobsPath,
       this.requestClient,
       this.sasViyaApiClient!
+    )
+
+    this.sas9JobExecutor = new Sas9JobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.jobsPath
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(

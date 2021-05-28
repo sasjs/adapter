@@ -412,7 +412,22 @@ export class SASViyaApiClient {
         etag,
         accessToken,
         pollOptions
-      ).catch((err) => {
+      ).catch(async (err) => {
+        const error = err?.response?.data
+        const result = /err=[0-9]*,/.exec(error)
+
+        const errorCode = '5113'
+        if (result?.[0]?.slice(4, -1) === errorCode) {
+          const sessionLogUrl =
+            postedJob.links.find((l: any) => l.rel === 'up')!.href + '/log'
+          const logCount = 1000000
+          err.log = await fetchLogByChunks(
+            this.requestClient,
+            accessToken!,
+            sessionLogUrl,
+            logCount
+          )
+        }
         throw prefixMessage(err, 'Error while polling job status. ')
       })
 
@@ -1063,6 +1078,7 @@ export class SASViyaApiClient {
   ) {
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
+    let MAX_ERROR_COUNT = 5
 
     if (pollOptions) {
       POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
@@ -1071,6 +1087,7 @@ export class SASViyaApiClient {
 
     let postedJobState = ''
     let pollCount = 0
+    let errorCount = 0
     const headers: any = {
       'Content-Type': 'application/json',
       'If-None-Match': etag
@@ -1085,14 +1102,18 @@ export class SASViyaApiClient {
 
     const { result: state } = await this.requestClient
       .get<string>(
-        `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+        `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
         accessToken,
         'text/plain',
         {},
         this.debug
       )
       .catch((err) => {
-        throw prefixMessage(err, 'Error while getting job state. ')
+        console.error(
+          `Error fetching job state from ${this.serverUrl}${stateLink.href}. Starting poll, assuming job to be running.`,
+          err
+        )
+        return { result: 'unavailable' }
       })
 
     const currentState = state.trim()
@@ -1107,25 +1128,40 @@ export class SASViyaApiClient {
         if (
           postedJobState === 'running' ||
           postedJobState === '' ||
-          postedJobState === 'pending'
+          postedJobState === 'pending' ||
+          postedJobState === 'unavailable'
         ) {
           if (stateLink) {
             const { result: jobState } = await this.requestClient
               .get<string>(
-                `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+                `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
                 accessToken,
                 'text/plain',
                 {},
                 this.debug
               )
               .catch((err) => {
-                throw prefixMessage(
-                  err,
-                  'Error while getting job state after interval. '
+                errorCount++
+                if (
+                  pollCount >= MAX_POLL_COUNT ||
+                  errorCount >= MAX_ERROR_COUNT
+                ) {
+                  throw prefixMessage(
+                    err,
+                    'Error while getting job state after interval. '
+                  )
+                }
+                console.error(
+                  `Error fetching job state from ${this.serverUrl}${stateLink.href}. Resuming poll, assuming job to be running.`,
+                  err
                 )
+                return { result: 'unavailable' }
               })
 
             postedJobState = jobState.trim()
+            if (postedJobState != 'unavailable' && errorCount > 0) {
+              errorCount = 0
+            }
 
             if (this.debug && printedState !== postedJobState) {
               console.log('Polling job status...')
