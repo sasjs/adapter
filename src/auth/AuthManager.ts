@@ -44,21 +44,13 @@ export class AuthManager {
       }
     }
 
-    for (const key in loginForm) {
-      loginParams[key] = loginForm[key]
-    }
-    const loginParamsStr = serialize(loginParams)
+    let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    const { result: loginResponse } = await this.requestClient.post<string>(
-      this.loginUrl,
-      loginParamsStr,
-      undefined,
-      'text/plain',
-      {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: '*/*'
-      }
-    )
+    if (isCredentialsVerifyError(loginResponse)) {
+      let newLoginForm = await this.getLoginForm(loginResponse)
+
+      loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
+    }
 
     let loggedIn = isLogInSuccess(loginResponse)
 
@@ -75,6 +67,26 @@ export class AuthManager {
       isLoggedIn: !!loggedIn,
       userName: this.userName
     }
+  }
+
+  private async sendLoginRequest(loginForm: any, loginParams: any) {
+    for (const key in loginForm) {
+      loginParams[key] = loginForm[key]
+    }
+    const loginParamsStr = serialize(loginParams)
+
+    const { result: loginResponse } = await this.requestClient.post<string>(
+      this.loginUrl,
+      loginParamsStr,
+      undefined,
+      'text/plain',
+      {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: '*/*'
+      }
+    )
+
+    return loginResponse
   }
 
   /**
@@ -167,6 +179,11 @@ export class AuthManager {
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }
 }
+
+const isCredentialsVerifyError = (response: string): boolean =>
+  /An error occurred while the system was verifying your credentials. Please enter your credentials again./gm.test(
+    response
+  )
 
 const isLogInSuccess = (response: string): boolean =>
   /You have signed in/gm.test(response)
