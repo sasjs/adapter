@@ -60,7 +60,7 @@ export const basicTests = (
       test: async () => {
         await adapter.logOut();
         
-        return await adapter.request("common/sendArr", stringData, null, () => {
+        return await adapter.request("common/sendArr", stringData, undefined, () => {
           adapter.logIn(userName, password);
         });
       },
