@@ -6,7 +6,7 @@ GREEN="\033[1;32m"
 # temporary file which holds the message).
 commit_message=$(cat "$1")
 
-if (echo "$commit_message" | grep -Eq "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z \-]+\))?!?: .+$") then
+if (echo "$commit_message" | grep -Eq "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 \-]+\))?!?: .+$") then
    echo "${GREEN} ✔ Commit message meets Conventional Commit standards"
    exit 0
 fi
