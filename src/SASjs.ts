@@ -300,6 +300,41 @@ export default class SASjs {
   }
 
   /**
+   * Creates a file at SAS file system.
+   * @param fileName - name of the file to be created.
+   * @param content - content of the file to be created.
+   * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
+   * @param parentFolderUri - the URI of the parent folder.
+   * @param accessToken - the access token to authorizing the request.
+   * @param sasApiClient - a client for interfacing with SAS API.
+   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted. Applicable for SAS VIYA only.
+   */
+  public async createFile(
+    fileName: string,
+    content: string,
+    parentFolderPath: string,
+    parentFolderUri?: string,
+    accessToken?: string,
+    sasApiClient?: SASViyaApiClient
+  ) {
+    if (sasApiClient)
+      return await sasApiClient.createFile(
+        fileName,
+        content,
+        parentFolderPath,
+        parentFolderUri,
+        accessToken
+      )
+    return await this.sasViyaApiClient!.createFile(
+      fileName,
+      content,
+      parentFolderPath,
+      parentFolderUri,
+      accessToken
+    )
+  }
+
+  /**
    * Fetches a folder from the SAS file system.
    * @param folderPath - path of the folder to be fetched.
    * @param accessToken - the access token to authorize the request.
@@ -865,6 +900,16 @@ export default class SASjs {
             accessToken,
             sasApiClient,
             isForced
+          )
+          break
+        case 'file':
+          await this.createFile(
+            member.name,
+            member.code,
+            parentFolder,
+            undefined,
+            accessToken,
+            sasApiClient
           )
           break
         case 'service':

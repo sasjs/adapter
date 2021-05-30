@@ -12,6 +12,7 @@ import {
   Context,
   ContextAllAttributes,
   Folder,
+  File,
   EditContextInput,
   JobDefinition,
   PollOptions
@@ -530,6 +531,55 @@ export class SASViyaApiClient {
     return await this.requestClient
       .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
       .then((res) => res.result)
+  }
+
+  /**
+   * Creates a file. Path to or URI of the parent folder is required.
+   * @param fileName - the name of the new file.
+   * @param content - the content of the new file.
+   * @param parentFolderPath - the full path to the parent folder.  If not
+   *  provided, the parentFolderUri must be provided.
+   * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
+   *  folder. If not provided, the parentFolderPath must be provided.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async createFile(
+    fileName: string,
+    content: string = '',
+    parentFolderPath?: string,
+    parentFolderUri?: string,
+    accessToken?: string
+  ): Promise<File> {
+    if (!parentFolderPath && !parentFolderUri) {
+      throw new Error('Path or URI of the parent folder is required.')
+    }
+
+    if (!parentFolderUri && parentFolderPath) {
+      parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
+    }
+
+    const headers = {
+      Accept: 'application/vnd.sas.file+json',
+      'Content-Disposition': `filename="${fileName}";`
+    }
+
+    const mimeType = /.html$/.test(fileName)
+      ? 'text/html'
+      : /.css$/.test(fileName)
+      ? 'text/css'
+      : /.js/.test(fileName)
+      ? 'text/javascript'
+      : 'text/plain'
+
+    return (
+      await this.requestClient.post<File>(
+        `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=file#rawUpload`,
+        content,
+        accessToken,
+        mimeType,
+        headers
+      )
+    ).result
   }
 
   /**
