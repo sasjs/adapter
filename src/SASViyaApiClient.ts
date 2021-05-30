@@ -31,6 +31,7 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { SasAuthResponse } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
+import * as mime from 'mime'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -563,13 +564,8 @@ export class SASViyaApiClient {
       'Content-Disposition': `filename="${fileName}";`
     }
 
-    const mimeType = /.html$/.test(fileName)
-      ? 'text/html'
-      : /.css$/.test(fileName)
-      ? 'text/css'
-      : /.js/.test(fileName)
-      ? 'text/javascript'
-      : 'text/plain'
+    const mimeType =
+      mime.getType(fileName.match(/\.[0-9a-z]+$/i)?.[0] || '') ?? 'text/plain'
 
     return (
       await this.requestClient.post<File>(
