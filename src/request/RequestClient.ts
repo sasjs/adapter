@@ -10,6 +10,7 @@ import {
 } from '../types/errors'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
+import { SAS9AuthError } from '../types/errors/SAS9AuthError'
 
 export interface HttpClient {
   get<T>(
@@ -468,6 +469,10 @@ export const throwIfError = (response: AxiosResponse) => {
   if (response.data?.auth_request) {
     const authorizeRequestUrl = response.request.responseURL
     throw new AuthorizeError(response.data.message, authorizeRequestUrl)
+  }
+
+  if (response.config?.url?.includes('sasAuthError')) {
+    throw new SAS9AuthError()
   }
 
   const error = parseError(response.data as string)
