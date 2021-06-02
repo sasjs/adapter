@@ -72,6 +72,10 @@ parmcards4;
   %webout(CLOSE)
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=sendArr)
+parmcards4;
+let he who hath understanding, reckon the number of the beast
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=makeErr)
 ```
 
 ### SAS Viya
