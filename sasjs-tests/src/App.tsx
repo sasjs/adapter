@@ -13,14 +13,19 @@ const App = (): ReactElement<{}> => {
 
   useEffect(() => {
     if (adapter) {
-      setTestSuites([
+      let testSuites = [
         basicTests(adapter, config.userName, config.password),
         sendArrTests(adapter),
         sendObjTests(adapter),
         specialCaseTests(adapter),
         sasjsRequestTests(adapter),
-        computeTests(adapter)
-      ])
+      ]
+
+      if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
+        testSuites.push(computeTests(adapter))
+      }
+
+      setTestSuites(testSuites)
     }
   }, [adapter, config])
 

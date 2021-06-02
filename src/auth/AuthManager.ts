@@ -34,7 +34,8 @@ export class AuthManager {
 
     this.userName = loginParams.username
 
-    const { isLoggedIn, loginForm } = await this.checkSession()
+    let { isLoggedIn, loginForm } = await this.checkSession()
+
     if (isLoggedIn) {
       await this.loginCallback()
 
@@ -46,15 +47,15 @@ export class AuthManager {
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    if (isCredentialsVerifyError(loginResponse)) {
-      let newLoginForm = await this.getLoginForm(loginResponse)
-
-      loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
-    }
-
     let loggedIn = isLogInSuccess(loginResponse)
 
     if (!loggedIn) {
+      if (isCredentialsVerifyError(loginResponse)) {
+        let newLoginForm = await this.getLoginForm(loginResponse)
+  
+        loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
+      }
+
       const currentSession = await this.checkSession()
       loggedIn = currentSession.isLoggedIn
     }
