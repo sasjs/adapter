@@ -18,7 +18,7 @@ const App = (): ReactElement<{}> => {
         sendArrTests(adapter),
         sendObjTests(adapter),
         specialCaseTests(adapter),
-        sasjsRequestTests(adapter),
+        sasjsRequestTests(adapter)
       ]
 
       if (adapter.getSasjsConfig().serverType === 'SASVIYA') {

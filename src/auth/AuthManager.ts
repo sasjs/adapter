@@ -52,7 +52,7 @@ export class AuthManager {
     if (!loggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
         let newLoginForm = await this.getLoginForm(loginResponse)
-  
+
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
