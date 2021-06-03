@@ -553,37 +553,106 @@ export default class SASjs {
       ...config
     }
 
-    if (config.serverType === ServerType.SasViya && config.contextName) {
-      if (config.useComputeApi) {
-        return await this.computeJobExecutor!.execute(
-          sasJob,
-          data,
-          config,
-          loginRequiredCallback,
-          accessToken
-        )
+    const validationResult = this.validateInput(data)
+
+    if (validationResult.status) {
+      if (config.serverType === ServerType.SasViya && config.contextName) {
+        if (config.useComputeApi) {
+          return await this.computeJobExecutor!.execute(
+            sasJob,
+            data,
+            config,
+            loginRequiredCallback,
+            accessToken
+          )
+        } else {
+          return await this.jesJobExecutor!.execute(
+            sasJob,
+            data,
+            config,
+            loginRequiredCallback,
+            accessToken
+          )
+        }
+      } else if (
+        config.serverType === ServerType.Sas9 &&
+        config.username &&
+        config.password
+      ) {
+        return await this.sas9JobExecutor!.execute(sasJob, data, config)
       } else {
-        return await this.jesJobExecutor!.execute(
+        return await this.webJobExecutor!.execute(
           sasJob,
           data,
           config,
-          loginRequiredCallback,
-          accessToken
+          loginRequiredCallback
         )
       }
-    } else if (
-      config.serverType === ServerType.Sas9 &&
-      config.username &&
-      config.password
-    ) {
-      return await this.sas9JobExecutor!.execute(sasJob, data, config)
     } else {
-      return await this.webJobExecutor!.execute(
-        sasJob,
-        data,
-        config,
-        loginRequiredCallback
-      )
+      return Promise.reject(new ErrorResponse(validationResult.msg))
+    }
+  }
+
+  /**
+   * this function validates the structure of input data and verify that proper rules are being followed for table name
+   *
+   * @param data a json object contains one or more table, it can also be null
+   * @returns a object which contains two attributes: 1) status: boolean, 2) msg: string
+   */
+  private validateInput(data: { [key: string]: any }): {
+    status: boolean
+    msg: string
+  } {
+    if (data === null) return { status: true, msg: '' }
+    for (const key in data) {
+      if (key.match(/^[a-zA-Z_]/)) {
+        if (key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+          if (key.length <= 32) {
+            if (this.getType(data[key]) === 'Array') {
+              for (let i = 0; i < data[key].length; i++) {
+                if (this.getType(data[key][i]) !== 'object') {
+                  return {
+                    status: false,
+                    msg: `Table ${key} contains invalid structure.`
+                  }
+                }
+              }
+            } else {
+              return {
+                status: false,
+                msg: 'Parameter data contains invalid table structure.'
+              }
+            }
+          } else {
+            return {
+              status: false,
+              msg: 'Maximum length for table name could be 32 characters.'
+            }
+          }
+        } else {
+          return { status: false, msg: 'Table name should be alphanumeric.' }
+        }
+      } else {
+        return {
+          status: false,
+          msg: 'First letter of table should be alphabet or underscore.'
+        }
+      }
+    }
+    return { status: true, msg: '' }
+  }
+
+  /**
+   * this function returns the type of variable
+   *
+   * @param data it could be anything, like string, array, object etc.
+   * @returns a string which tells the type of input parameter
+   */
+  private getType(data: any): string {
+    if (Array.isArray(data)) {
+      return 'Array'
+    } else {
+      return typeof data
     }
   }
 
