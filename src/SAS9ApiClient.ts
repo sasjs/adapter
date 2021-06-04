@@ -1,4 +1,4 @@
-import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
+import { generateTimestamp } from '@sasjs/utils/time'
 import * as NodeFormData from 'form-data'
 import { Sas9RequestClient } from './request/Sas9RequestClient'
 import { isUrl } from './utils'
@@ -76,18 +76,11 @@ export class SAS9ApiClient {
 
 const generateFileUploadForm = (data: any): NodeFormData => {
   const formData = new NodeFormData()
-  const fileName = `sasjs-execute-sas9-${getTimestamp()}.sas`
+  const fileName = `sasjs-execute-sas9-${generateTimestamp('')}.sas`
   formData.append(fileName, data, {
     filename: `${fileName}.csv`,
     contentType: 'text/plain'
   })
 
   return formData
-}
-
-const getTimestamp = () => {
-  return timestampToYYYYMMDDHHMMSS()
-    .replace(/:/g, '')
-    .replace(/\//g, '')
-    .replace(/ /g, '')
 }
