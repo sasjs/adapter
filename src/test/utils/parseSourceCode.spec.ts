@@ -1,6 +1,6 @@
 import { parseSourceCode } from '../../utils/index'
 
-it('should parse SAS9 source code', async (done) => {
+it('should parse SAS9 source code', async () => {
   expect(sampleResponse).toBeTruthy()
 
   const parsedSourceCode = parseSourceCode(sampleResponse)
@@ -15,8 +15,6 @@ it('should parse SAS9 source code', async (done) => {
   expect(sourceCodeLines[2].startsWith('8')).toBeTruthy()
   expect(sourceCodeLines[3].startsWith('9')).toBeTruthy()
   expect(sourceCodeLines[4].startsWith('10')).toBeTruthy()
-
-  done()
 })
 
 /* tslint:disable */
