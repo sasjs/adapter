@@ -76,9 +76,9 @@ export class SAS9ApiClient {
 
 const generateFileUploadForm = (data: any): NodeFormData => {
   const formData = new NodeFormData()
-  const fileName = `sasjs-execute-sas9-${generateTimestamp('')}.sas`
-  formData.append(fileName, data, {
-    filename: `${fileName}.csv`,
+  const filename = `sasjs-execute-sas9-${generateTimestamp('')}.sas`
+  formData.append(filename, data, {
+    filename,
     contentType: 'text/plain'
   })
 
