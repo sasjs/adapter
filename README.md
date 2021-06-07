@@ -1,6 +1,22 @@
-[![](https://data.jsdelivr.com/v1/package/npm/@sasjs/adapter/badge)](https://www.jsdelivr.com/package/npm/@sasjs/adapter)
-
 # @sasjs/adapter
+
+[![npm package][npm-image]][npm-url]
+[![Github Workflow][githubworkflow-image]][githubworkflow-url]
+[![Dependency Status][dependency-image]][dependency-url]
+[![npm](https://img.shields.io/npm/dt/@sasjs/adapter)]()
+![Snyk Vulnerabilities for npm package](https://img.shields.io/snyk/vulnerabilities/npm/@sasjs/adapter)
+[![License](https://img.shields.io/apm/l/atomic-design-ui.svg)](/LICENSE)
+![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter)
+![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter)
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
+
+
+[npm-image]:https://img.shields.io/npm/v/@sasjs/adapter.svg
+[npm-url]:http://npmjs.org/package/@sasjs/adapter
+[githubworkflow-image]:https://github.com/sasjs/adapter/actions/workflows/build.yml/badge.svg
+[githubworkflow-url]:https://github.com/sasjs/adapter/blob/main/.github/workflows/build.yml
+[dependency-image]:https://david-dm.org/sasjs/adapter.svg
+[dependency-url]:https://github.com/sasjs/adapter/blob/main/package.json
 
 SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:
 
@@ -198,8 +214,15 @@ This approach is by far the fastest, as a result of the optimisations we have bu
 
 # More resources
 
-For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation. 
+For more information and examples specific to this adapter you can check out the [user guide](https://sasjs.io/sasjs-adapter/) or the [technical](http://adapter.sasjs.io/) documentation.
 
 For more information on building web apps in general, check out these [resources](https://sasjs.io/training/resources/) or contact the [author](https://www.linkedin.com/in/allanbowe/) directly.
 
 If you are a SAS 9 or SAS Viya customer you can also request a copy of [Data Controller](https://datacontroller.io) - free for up to 5 users, this tool makes use of all parts of the SASjs framework.
+
+
+## Star Gazing
+
+If you find this library useful, help us grow our star graph!
+
+![](https://starchart.cc/sasjs/adapter.svg)

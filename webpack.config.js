@@ -7,11 +7,10 @@ const browserConfig = {
   devtool: 'inline-source-map',
   mode: 'production',
   optimization: {
+    minimize: true,
     minimizer: [
       new terserPlugin({
-        cache: true,
         parallel: true,
-        sourceMap: true,
         terserOptions: {}
       })
     ]

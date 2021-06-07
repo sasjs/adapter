@@ -10,6 +10,7 @@ import {
 } from '../types/errors'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
+import { SAS9AuthError } from '../types/errors/SAS9AuthError'
 
 export interface HttpClient {
   get<T>(
@@ -44,11 +45,11 @@ export interface HttpClient {
 }
 
 export class RequestClient implements HttpClient {
-  private csrfToken: CsrfToken = { headerName: '', value: '' }
-  private fileUploadCsrfToken: CsrfToken | undefined
-  private httpClient: AxiosInstance
+  protected csrfToken: CsrfToken = { headerName: '', value: '' }
+  protected fileUploadCsrfToken: CsrfToken | undefined
+  protected httpClient: AxiosInstance
 
-  constructor(private baseUrl: string, allowInsecure = false) {
+  constructor(protected baseUrl: string, allowInsecure = false) {
     const https = require('https')
     if (allowInsecure && https.Agent) {
       this.httpClient = axios.create({
@@ -290,7 +291,7 @@ export class RequestClient implements HttpClient {
       })
   }
 
-  private getHeaders = (
+  protected getHeaders = (
     accessToken: string | undefined,
     contentType: string
   ) => {
@@ -315,7 +316,7 @@ export class RequestClient implements HttpClient {
     return headers
   }
 
-  private parseAndSetFileUploadCsrfToken = (response: AxiosResponse) => {
+  protected parseAndSetFileUploadCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
 
     if (token) {
@@ -323,7 +324,7 @@ export class RequestClient implements HttpClient {
     }
   }
 
-  private parseAndSetCsrfToken = (response: AxiosResponse) => {
+  protected parseAndSetCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
 
     if (token) {
@@ -347,7 +348,7 @@ export class RequestClient implements HttpClient {
     }
   }
 
-  private handleError = async (
+  protected handleError = async (
     e: any,
     callback: any,
     debug: boolean = false
@@ -405,7 +406,7 @@ export class RequestClient implements HttpClient {
     throw e
   }
 
-  private parseResponse<T>(response: AxiosResponse<any>) {
+  protected parseResponse<T>(response: AxiosResponse<any>) {
     const etag = response?.headers ? response.headers['etag'] : ''
     let parsedResponse
     let includeSAS9Log: boolean = false
@@ -439,7 +440,7 @@ export class RequestClient implements HttpClient {
   }
 }
 
-const throwIfError = (response: AxiosResponse) => {
+export const throwIfError = (response: AxiosResponse) => {
   if (response.status === 401) {
     throw new LoginRequiredError()
   }
@@ -468,6 +469,10 @@ const throwIfError = (response: AxiosResponse) => {
   if (response.data?.auth_request) {
     const authorizeRequestUrl = response.request.responseURL
     throw new AuthorizeError(response.data.message, authorizeRequestUrl)
+  }
+
+  if (response.config?.url?.includes('sasAuthError')) {
+    throw new SAS9AuthError()
   }
 
   const error = parseError(response.data as string)
