@@ -7,11 +7,10 @@ const browserConfig = {
   devtool: 'inline-source-map',
   mode: 'production',
   optimization: {
+    minimize: true,
     minimizer: [
       new terserPlugin({
-        cache: true,
         parallel: true,
-        sourceMap: true,
         terserOptions: {}
       })
     ]
@@ -41,6 +40,9 @@ const browserConfig = {
       filename: null,
       exclude: [/node_modules/],
       test: /\.ts($|\?)/i
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser'
     })
   ]
 }
