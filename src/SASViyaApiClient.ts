@@ -390,8 +390,6 @@ export class SASViyaApiClient {
         arguments: jobArguments
       }
 
-      console.log(`[jobRequestBody]`, jobRequestBody)
-
       const { result: postedJob, etag } = await this.requestClient
         .post<Job>(
           `/compute/sessions/${executionSessionId}/jobs`,
