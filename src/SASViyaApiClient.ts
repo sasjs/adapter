@@ -28,7 +28,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { SasAuthResponse } from '@sasjs/utils/types'
+import { SasAuthResponse, MacroVar } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 
 /**
@@ -271,6 +271,7 @@ export class SASViyaApiClient {
    * @param waitForResult - when set to true, function will return the session
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeScript(
     jobPath: string,
@@ -282,7 +283,8 @@ export class SASViyaApiClient {
     expectWebout = false,
     waitForResult = true,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ): Promise<any> {
     try {
       const headers: any = {
@@ -356,6 +358,8 @@ export class SASViyaApiClient {
           : jobPath
       }
 
+      if (variables) jobVariables = { ...jobVariables, ...variables }
+
       let files: any[] = []
 
       if (data) {
@@ -385,6 +389,8 @@ export class SASViyaApiClient {
         variables: jobVariables,
         arguments: jobArguments
       }
+
+      console.log(`[jobRequestBody]`, jobRequestBody)
 
       const { result: postedJob, etag } = await this.requestClient
         .post<Job>(
@@ -814,6 +820,7 @@ export class SASViyaApiClient {
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -824,7 +831,8 @@ export class SASViyaApiClient {
     waitForResult = true,
     expectWebout = false,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -903,7 +911,8 @@ export class SASViyaApiClient {
       expectWebout,
       waitForResult,
       pollOptions,
-      printPid
+      printPid,
+      variables
     )
   }
 
