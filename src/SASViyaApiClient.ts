@@ -725,13 +725,11 @@ export class SASViyaApiClient {
     let formData
     if (typeof FormData === 'undefined') {
       formData = new NodeFormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     } else {
       formData = new FormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     }
+    formData.append('grant_type', 'authorization_code')
+    formData.append('code', authCode)
 
     const authResponse = await this.requestClient
       .post(

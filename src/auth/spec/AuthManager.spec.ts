@@ -57,7 +57,7 @@ describe('AuthManager', () => {
     expect((authManager as any).logoutUrl).toEqual('/SASLogon/logout?')
   })
 
-  it('should call the auth callback and return when already logged in', async (done) => {
+  it('should call the auth callback and return when already logged in', async () => {
     const authManager = new AuthManager(
       serverUrl,
       serverType,
@@ -77,10 +77,9 @@ describe('AuthManager', () => {
     expect(loginResponse.isLoggedIn).toBeTruthy()
     expect(loginResponse.userName).toEqual(userName)
     expect(authCallback).toHaveBeenCalledTimes(1)
-    done()
   })
 
-  it('should post a login request to the server if not logged in', async (done) => {
+  it('should post a login request to the server if not logged in', async () => {
     const authManager = new AuthManager(
       serverUrl,
       serverType,
@@ -121,10 +120,9 @@ describe('AuthManager', () => {
       }
     )
     expect(authCallback).toHaveBeenCalledTimes(1)
-    done()
   })
 
-  it('should parse and submit the authorisation form when necessary', async (done) => {
+  it('should parse and submit the authorisation form when necessary', async () => {
     const authManager = new AuthManager(
       serverUrl,
       serverType,
@@ -160,10 +158,9 @@ describe('AuthManager', () => {
     expect(requestClient.authorize).toHaveBeenCalledWith(
       mockLoginAuthoriseRequiredResponse
     )
-    done()
   })
 
-  it('should check and return session information if logged in', async (done) => {
+  it('should check and return session information if logged in', async () => {
     const authManager = new AuthManager(
       serverUrl,
       serverType,
@@ -189,7 +186,5 @@ describe('AuthManager', () => {
         }
       }
     )
-
-    done()
   })
 })

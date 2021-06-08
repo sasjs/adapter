@@ -1,6 +1,6 @@
 import { parseGeneratedCode } from '../../utils/index'
 
-it('should parse generated code', async (done) => {
+it('should parse generated code', () => {
   expect(sampleResponse).toBeTruthy()
 
   const parsedGeneratedCode = parseGeneratedCode(sampleResponse)
@@ -15,8 +15,6 @@ it('should parse generated code', async (done) => {
   expect(generatedCodeLines[2].startsWith('MPRINT(MM_WEBOUT)')).toBeTruthy()
   expect(generatedCodeLines[3].startsWith('MPRINT(MM_WEBRIGHT)')).toBeTruthy()
   expect(generatedCodeLines[4].startsWith('MPRINT(MM_WEBOUT)')).toBeTruthy()
-
-  done()
 })
 
 /* tslint:disable */

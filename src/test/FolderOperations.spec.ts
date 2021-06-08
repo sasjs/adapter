@@ -14,7 +14,7 @@ describe('FolderOperations', () => {
 
   beforeEach(() => {})
 
-  it('should move and rename folder', async (done) => {
+  it('should move and rename folder', async () => {
     mockFetchResponse(false)
 
     let res: any = await sasViyaApiClient.moveFolder(
@@ -26,11 +26,9 @@ describe('FolderOperations', () => {
 
     expect(res.folder.name).toEqual('newName')
     expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
-
-    done()
   })
 
-  it('should move and keep the name of folder', async (done) => {
+  it('should move and keep the name of folder', async () => {
     mockFetchResponse(true)
 
     let res: any = await sasViyaApiClient.moveFolder(
@@ -42,11 +40,9 @@ describe('FolderOperations', () => {
 
     expect(res.folder.name).toEqual('oldName')
     expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
-
-    done()
   })
 
-  it('should only rename folder', async (done) => {
+  it('should only rename folder', async () => {
     mockFetchResponse(false)
 
     let res: any = await sasViyaApiClient.moveFolder(
@@ -58,8 +54,6 @@ describe('FolderOperations', () => {
 
     expect(res.folder.name).toEqual('newName')
     expect(res.folder.parentFolderUri.split('=')[1]).toEqual('/Test/toFolder')
-
-    done()
   })
 })
 
