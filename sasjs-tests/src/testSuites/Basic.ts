@@ -155,11 +155,22 @@ export const basicTests = (
           useComputeApi: false
         }
 
-        return await adapter.request('common/sendArr', stringData, config, undefined, undefined, ['output', 'file', 'data'])
+        return await adapter.request(
+          'common/sendArr',
+          stringData,
+          config,
+          undefined,
+          undefined,
+          ['output', 'file', 'data']
+        )
       },
       assertion: (response: any) => {
         const responseKeys: any = Object.keys(response)
-        return responseKeys.includes('file') && responseKeys.includes('output') && responseKeys.includes('data')
+        return (
+          responseKeys.includes('file') &&
+          responseKeys.includes('output') &&
+          responseKeys.includes('data')
+        )
       }
     }
   ]
