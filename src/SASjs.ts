@@ -4,7 +4,7 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
-import { ServerType } from '@sasjs/utils/types'
+import { ServerType, MacroVar } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import {
   JobExecutor,
@@ -677,6 +677,7 @@ export default class SASjs {
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async startComputeJob(
     sasJob: string,
@@ -685,7 +686,8 @@ export default class SASjs {
     accessToken?: string,
     waitForResult?: boolean,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ) {
     config = {
       ...this.sasjsConfig,
@@ -708,7 +710,8 @@ export default class SASjs {
       !!waitForResult,
       false,
       pollOptions,
-      printPid
+      printPid,
+      variables
     )
   }
 
