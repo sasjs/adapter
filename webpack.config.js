@@ -40,6 +40,9 @@ const browserConfig = {
       filename: null,
       exclude: [/node_modules/],
       test: /\.ts($|\?)/i
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser'
     })
   ]
 }
