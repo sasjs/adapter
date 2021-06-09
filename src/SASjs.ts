@@ -599,9 +599,7 @@ export default class SASjs {
    * @param data a json object contains one or more table, it can also be null
    * @returns a object which contains two attributes: 1) status: boolean, 2) msg: string
    */
-  private validateInput(data: {
-    [key: string]: any
-  }): {
+  private validateInput(data: { [key: string]: any }): {
     status: boolean
     msg: string
   } {
