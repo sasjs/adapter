@@ -1,15 +1,15 @@
-import React, { ReactElement, useState, useContext, useEffect } from "react";
-import { TestSuiteRunner, TestSuite, AppContext } from "@sasjs/test-framework";
-import { basicTests } from "./testSuites/Basic";
-import { sendArrTests, sendObjTests } from "./testSuites/RequestData";
-import { specialCaseTests } from "./testSuites/SpecialCases";
-import { sasjsRequestTests } from "./testSuites/SasjsRequests";
-import "@sasjs/test-framework/dist/index.css";
-import { computeTests } from "./testSuites/Compute";
+import React, { ReactElement, useState, useContext, useEffect } from 'react'
+import { TestSuiteRunner, TestSuite, AppContext } from '@sasjs/test-framework'
+import { basicTests } from './testSuites/Basic'
+import { sendArrTests, sendObjTests } from './testSuites/RequestData'
+import { specialCaseTests } from './testSuites/SpecialCases'
+import { sasjsRequestTests } from './testSuites/SasjsRequests'
+import '@sasjs/test-framework/dist/index.css'
+import { computeTests } from './testSuites/Compute'
 
 const App = (): ReactElement<{}> => {
-  const { adapter, config } = useContext(AppContext);
-  const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+  const { adapter, config } = useContext(AppContext)
+  const [testSuites, setTestSuites] = useState<TestSuite[]>([])
 
   useEffect(() => {
     if (adapter) {
@@ -20,15 +20,15 @@ const App = (): ReactElement<{}> => {
         specialCaseTests(adapter),
         sasjsRequestTests(adapter),
         computeTests(adapter)
-      ]);
+      ])
     }
-  }, [adapter, config]);
+  }, [adapter, config])
 
   return (
     <div className="app">
       {adapter && testSuites && <TestSuiteRunner testSuites={testSuites} />}
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

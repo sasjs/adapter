@@ -1,6 +1,6 @@
 /**
- * Converts the given JSON object to a CSV string.
- * @param data - the JSON object to convert.
+ * Converts the given JSON object array to a CSV string.
+ * @param data - the array of JSON objects to convert.
  */
 export const convertToCSV = (data: any) => {
   const replacer = (key: any, value: any) => (value === null ? '' : value)
@@ -37,15 +37,7 @@ export const convertToCSV = (data: any) => {
           let byteSize
 
           if (typeof row[field] === 'string') {
-            let doubleQuotesFound = row[field]
-              .split('')
-              .filter((char: any) => char === '"')
-
             byteSize = getByteSize(row[field])
-
-            if (doubleQuotesFound.length > 0) {
-              byteSize += doubleQuotesFound.length
-            }
           }
 
           return byteSize
@@ -61,7 +53,7 @@ export const convertToCSV = (data: any) => {
       )
     }
 
-    return `${field}:${firstFoundType === 'chars' ? '$' : ''}${
+    return `${field}:${firstFoundType === 'chars' ? '$char' : ''}${
       longestValueForField
         ? longestValueForField
         : firstFoundType === 'chars'
@@ -73,35 +65,28 @@ export const convertToCSV = (data: any) => {
   if (invalidString) {
     return 'ERROR: LARGE STRING LENGTH'
   }
+
   csvTest = data.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
       let value
-      let containsSpecialChar = false
       const currentCell = row[fieldName]
 
-      if (JSON.stringify(currentCell).search(/(\\t|\\n|\\r)/gm) > -1) {
-        value = currentCell.toString()
-        containsSpecialChar = true
-      } else {
-        value = JSON.stringify(currentCell, replacer)
-      }
+      if (typeof currentCell === 'number') return currentCell
 
-      value = value.replace(/\\\\/gm, '\\')
+      // stringify with replacer converts null values to empty strings
+      value = currentCell === null ? '' : currentCell
 
-      if (containsSpecialChar) {
-        if (value.includes(',') || value.includes('"')) {
-          value = '"' + value + '"'
-        }
-      } else {
-        if (
-          !value.includes(',') &&
-          value.includes('"') &&
-          !value.includes('\\"')
-        ) {
-          value = value.substring(1, value.length - 1)
-        }
+      // if there any present, it should have preceding (") for escaping
+      value = value.replace(/"/g, `""`)
 
-        value = value.replace(/\\"/gm, '""')
+      // also wraps the value in double quotes
+      value = `"${value}"`
+
+      if (
+        value.substring(1, value.length - 1).search(/(\t|\n|\r|,|\'|\")/gm) < 0
+      ) {
+        // Remove wrapping quotes for values that don't contain special characters
+        value = value.substring(1, value.length - 1)
       }
 
       value = value.replace(/\r\n/gm, '\n')

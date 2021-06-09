@@ -314,9 +314,7 @@ export class ContextManager {
     contextId: string,
     accessToken?: string
   ): Promise<ContextAllAttributes> {
-    const {
-      result: context
-    } = await this.requestClient
+    const { result: context } = await this.requestClient
       .get<ContextAllAttributes>(
         `${this.serverUrl}/compute/contexts/${contextId}`,
         accessToken

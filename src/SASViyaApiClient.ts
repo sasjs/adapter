@@ -28,7 +28,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { SasAuthResponse } from '@sasjs/utils/types'
+import { SasAuthResponse, MacroVar } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 
 /**
@@ -271,6 +271,7 @@ export class SASViyaApiClient {
    * @param waitForResult - when set to true, function will return the session
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeScript(
     jobPath: string,
@@ -282,7 +283,8 @@ export class SASViyaApiClient {
     expectWebout = false,
     waitForResult = true,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ): Promise<any> {
     try {
       const headers: any = {
@@ -356,6 +358,8 @@ export class SASViyaApiClient {
           : jobPath
       }
 
+      if (variables) jobVariables = { ...jobVariables, ...variables }
+
       let files: any[] = []
 
       if (data) {
@@ -412,7 +416,22 @@ export class SASViyaApiClient {
         etag,
         accessToken,
         pollOptions
-      ).catch((err) => {
+      ).catch(async (err) => {
+        const error = err?.response?.data
+        const result = /err=[0-9]*,/.exec(error)
+
+        const errorCode = '5113'
+        if (result?.[0]?.slice(4, -1) === errorCode) {
+          const sessionLogUrl =
+            postedJob.links.find((l: any) => l.rel === 'up')!.href + '/log'
+          const logCount = 1000000
+          err.log = await fetchLogByChunks(
+            this.requestClient,
+            accessToken!,
+            sessionLogUrl,
+            logCount
+          )
+        }
         throw prefixMessage(err, 'Error while polling job status. ')
       })
 
@@ -579,16 +598,15 @@ export class SASViyaApiClient {
       }
     }
 
-    const {
-      result: createFolderResponse
-    } = await this.requestClient.post<Folder>(
-      `/folders/folders?parentFolderUri=${parentFolderUri}`,
-      {
-        name: folderName,
-        type: 'folder'
-      },
-      accessToken
-    )
+    const { result: createFolderResponse } =
+      await this.requestClient.post<Folder>(
+        `/folders/folders?parentFolderUri=${parentFolderUri}`,
+        {
+          name: folderName,
+          type: 'folder'
+        },
+        accessToken
+      )
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
@@ -705,13 +723,11 @@ export class SASViyaApiClient {
     let formData
     if (typeof FormData === 'undefined') {
       formData = new NodeFormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     } else {
       formData = new FormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     }
+    formData.append('grant_type', 'authorization_code')
+    formData.append('code', authCode)
 
     const authResponse = await this.requestClient
       .post(
@@ -800,6 +816,7 @@ export class SASViyaApiClient {
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -810,7 +827,8 @@ export class SASViyaApiClient {
     waitForResult = true,
     expectWebout = false,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -860,9 +878,7 @@ export class SASViyaApiClient {
         throw new Error(`URI of job definition was not found.`)
       }
 
-      const {
-        result: jobDefinition
-      } = await this.requestClient
+      const { result: jobDefinition } = await this.requestClient
         .get<JobDefinition>(
           `${this.serverUrl}${jobDefinitionLink.href}`,
           accessToken
@@ -891,7 +907,8 @@ export class SASViyaApiClient {
       expectWebout,
       waitForResult,
       pollOptions,
-      printPid
+      printPid,
+      variables
     )
   }
 
@@ -1066,6 +1083,7 @@ export class SASViyaApiClient {
   ) {
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
+    let MAX_ERROR_COUNT = 5
 
     if (pollOptions) {
       POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
@@ -1074,6 +1092,7 @@ export class SASViyaApiClient {
 
     let postedJobState = ''
     let pollCount = 0
+    let errorCount = 0
     const headers: any = {
       'Content-Type': 'application/json',
       'If-None-Match': etag
@@ -1088,14 +1107,18 @@ export class SASViyaApiClient {
 
     const { result: state } = await this.requestClient
       .get<string>(
-        `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+        `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
         accessToken,
         'text/plain',
         {},
         this.debug
       )
       .catch((err) => {
-        throw prefixMessage(err, 'Error while getting job state. ')
+        console.error(
+          `Error fetching job state from ${this.serverUrl}${stateLink.href}. Starting poll, assuming job to be running.`,
+          err
+        )
+        return { result: 'unavailable' }
       })
 
     const currentState = state.trim()
@@ -1110,25 +1133,40 @@ export class SASViyaApiClient {
         if (
           postedJobState === 'running' ||
           postedJobState === '' ||
-          postedJobState === 'pending'
+          postedJobState === 'pending' ||
+          postedJobState === 'unavailable'
         ) {
           if (stateLink) {
             const { result: jobState } = await this.requestClient
               .get<string>(
-                `${this.serverUrl}${stateLink.href}?_action=wait&wait=30`,
+                `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
                 accessToken,
                 'text/plain',
                 {},
                 this.debug
               )
               .catch((err) => {
-                throw prefixMessage(
-                  err,
-                  'Error while getting job state after interval. '
+                errorCount++
+                if (
+                  pollCount >= MAX_POLL_COUNT ||
+                  errorCount >= MAX_ERROR_COUNT
+                ) {
+                  throw prefixMessage(
+                    err,
+                    'Error while getting job state after interval. '
+                  )
+                }
+                console.error(
+                  `Error fetching job state from ${this.serverUrl}${stateLink.href}. Resuming poll, assuming job to be running.`,
+                  err
                 )
+                return { result: 'unavailable' }
               })
 
             postedJobState = jobState.trim()
+            if (postedJobState != 'unavailable' && errorCount > 0) {
+              errorCount = 0
+            }
 
             if (this.debug && printedState !== postedJobState) {
               console.log('Polling job status...')

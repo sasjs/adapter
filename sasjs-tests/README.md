@@ -55,6 +55,7 @@ filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
 filename ft15f001 temp;
 parmcards4;
+  %webout(FETCH)
   %webout(OPEN)
   %macro x();
   %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i) %end;
@@ -63,6 +64,7 @@ parmcards4;
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=sendObj)
 parmcards4;
+  %webout(FETCH)
   %webout(OPEN)
   %macro x();
   %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i) %end;
@@ -70,6 +72,10 @@ parmcards4;
   %webout(CLOSE)
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=sendArr)
+parmcards4;
+let he who hath understanding, reckon the number of the beast
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=makeErr)
 ```
 
 ### SAS Viya

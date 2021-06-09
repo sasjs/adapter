@@ -28,12 +28,12 @@ describe('urlValidator', () => {
   it('should return false when the URL is null', () => {
     const url = null
 
-    expect(isUrl((url as unknown) as string)).toEqual(false)
+    expect(isUrl(url as unknown as string)).toEqual(false)
   })
 
   it('should return false when the URL is undefined', () => {
     const url = undefined
 
-    expect(isUrl((url as unknown) as string)).toEqual(false)
+    expect(isUrl(url as unknown as string)).toEqual(false)
   })
 })
