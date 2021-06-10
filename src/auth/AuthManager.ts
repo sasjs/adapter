@@ -35,6 +35,7 @@ export class AuthManager {
     this.userName = loginParams.username
 
     const { isLoggedIn, loginForm } = await this.checkSession()
+
     if (isLoggedIn) {
       await this.loginCallback()
 
@@ -44,6 +45,35 @@ export class AuthManager {
       }
     }
 
+    let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
+
+    let loggedIn = isLogInSuccess(loginResponse)
+
+    if (!loggedIn) {
+      if (isCredentialsVerifyError(loginResponse)) {
+        const newLoginForm = await this.getLoginForm(loginResponse)
+
+        loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
+      }
+
+      const currentSession = await this.checkSession()
+      loggedIn = currentSession.isLoggedIn
+    }
+
+    if (loggedIn) {
+      this.loginCallback()
+    }
+
+    return {
+      isLoggedIn: !!loggedIn,
+      userName: this.userName
+    }
+  }
+
+  private async sendLoginRequest(
+    loginForm: { [key: string]: any },
+    loginParams: { [key: string]: any }
+  ) {
     for (const key in loginForm) {
       loginParams[key] = loginForm[key]
     }
@@ -60,21 +90,7 @@ export class AuthManager {
       }
     )
 
-    let loggedIn = isLogInSuccess(loginResponse)
-
-    if (!loggedIn) {
-      const currentSession = await this.checkSession()
-      loggedIn = currentSession.isLoggedIn
-    }
-
-    if (loggedIn) {
-      this.loginCallback()
-    }
-
-    return {
-      isLoggedIn: !!loggedIn,
-      userName: this.userName
-    }
+    return loginResponse
   }
 
   /**
@@ -167,6 +183,11 @@ export class AuthManager {
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }
 }
+
+const isCredentialsVerifyError = (response: string): boolean =>
+  /An error occurred while the system was verifying your credentials. Please enter your credentials again./gm.test(
+    response
+  )
 
 const isLogInSuccess = (response: string): boolean =>
   /You have signed in/gm.test(response)
