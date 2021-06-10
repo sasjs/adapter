@@ -2,20 +2,30 @@ const path = require('path')
 const webpack = require('webpack')
 const terserPlugin = require('terser-webpack-plugin')
 
+const defaultPlugins = [
+  new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
+  new webpack.SourceMapDevToolPlugin({
+    filename: null,
+    exclude: [/node_modules/],
+    test: /\.ts($|\?)/i
+  })
+]
+
+const optimization = {
+  minimize: true,
+  minimizer: [
+    new terserPlugin({
+      parallel: true,
+      terserOptions: {}
+    })
+  ]
+}
+
 const browserConfig = {
   entry: './src/index.ts',
   devtool: 'inline-source-map',
   mode: 'production',
-  optimization: {
-    minimizer: [
-      new terserPlugin({
-        cache: true,
-        parallel: true,
-        sourceMap: true,
-        terserOptions: {}
-      })
-    ]
-  },
+  optimization: optimization,
   module: {
     rules: [
       {
@@ -36,17 +46,26 @@ const browserConfig = {
     library: 'SASjs'
   },
   plugins: [
-    new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
-    new webpack.SourceMapDevToolPlugin({
-      filename: null,
-      exclude: [/node_modules/],
-      test: /\.ts($|\?)/i
+    ...defaultPlugins,
+    new webpack.ProvidePlugin({
+      process: 'process/browser'
     })
   ]
 }
 
+const browserConfigWithoutProcessPlugin = {
+  entry: browserConfig.entry,
+  devtool: browserConfig.devtool,
+  mode: browserConfig.mode,
+  optimization: optimization,
+  module: browserConfig.module,
+  resolve: browserConfig.resolve,
+  output: browserConfig.output,
+  plugins: defaultPlugins
+}
+
 const nodeConfig = {
-  ...browserConfig,
+  ...browserConfigWithoutProcessPlugin,
   target: 'node',
   entry: './node/index.ts',
   output: {

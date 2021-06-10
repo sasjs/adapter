@@ -29,7 +29,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { SasAuthResponse } from '@sasjs/utils/types'
+import { SasAuthResponse, MacroVar } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as mime from 'mime'
 
@@ -273,6 +273,7 @@ export class SASViyaApiClient {
    * @param waitForResult - when set to true, function will return the session
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeScript(
     jobPath: string,
@@ -284,7 +285,8 @@ export class SASViyaApiClient {
     expectWebout = false,
     waitForResult = true,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ): Promise<any> {
     try {
       const headers: any = {
@@ -357,6 +359,8 @@ export class SASViyaApiClient {
           ? this.rootFolderName + '/' + jobPath
           : jobPath
       }
+
+      if (variables) jobVariables = { ...jobVariables, ...variables }
 
       let files: any[] = []
 
@@ -768,13 +772,11 @@ export class SASViyaApiClient {
     let formData
     if (typeof FormData === 'undefined') {
       formData = new NodeFormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     } else {
       formData = new FormData()
-      formData.append('grant_type', 'authorization_code')
-      formData.append('code', authCode)
     }
+    formData.append('grant_type', 'authorization_code')
+    formData.append('code', authCode)
 
     const authResponse = await this.requestClient
       .post(
@@ -863,6 +865,7 @@ export class SASViyaApiClient {
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
+   * @param variables - an object that represents macro variables.
    */
   public async executeComputeJob(
     sasJob: string,
@@ -873,7 +876,8 @@ export class SASViyaApiClient {
     waitForResult = true,
     expectWebout = false,
     pollOptions?: PollOptions,
-    printPid = false
+    printPid = false,
+    variables?: MacroVar
   ) {
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -952,7 +956,8 @@ export class SASViyaApiClient {
       expectWebout,
       waitForResult,
       pollOptions,
-      printPid
+      printPid,
+      variables
     )
   }
 
