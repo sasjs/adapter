@@ -5,7 +5,7 @@ import {
   JobExecutionError,
   LoginRequiredError
 } from '../types/errors'
-import { ExtraResponseAttributes } from '../types/ExtraResponseAttributes'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class JesJobExecutor extends BaseJobExecutor {

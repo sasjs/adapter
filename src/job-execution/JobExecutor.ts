@@ -1,6 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { SASjsRequest } from '../types'
-import { ExtraResponseAttributes } from '../types/ExtraResponseAttributes'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { asyncForEach, parseGeneratedCode, parseSourceCode } from '../utils'
 
 export type ExecuteFunction = () => Promise<any>

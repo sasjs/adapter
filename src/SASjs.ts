@@ -14,7 +14,7 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
-import { ExtraResponseAttributes } from './types/ExtraResponseAttributes'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
