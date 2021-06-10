@@ -14,6 +14,7 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -540,13 +541,17 @@ export default class SASjs {
    * `await request(sasJobPath, data, config, () => setIsLoggedIn(false))`
    * If you are not passing in any data and configuration, it will look like so:
    * `await request(sasJobPath, {}, {}, () => setIsLoggedIn(false))`
+   * @param extraResponseAttributes - a array of predefined values that are used
+   * to provide extra attributes (same names as those values) to be added in response
+   * Supported values are declared in ExtraResponseAttributes type.
    */
   public async request(
     sasJob: string,
     data: { [key: string]: any },
     config: { [key: string]: any } = {},
     loginRequiredCallback?: () => any,
-    accessToken?: string
+    accessToken?: string,
+    extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     config = {
       ...this.sasjsConfig,
@@ -585,7 +590,9 @@ export default class SASjs {
           sasJob,
           data,
           config,
-          loginRequiredCallback
+          loginRequiredCallback,
+          accessToken,
+          extraResponseAttributes
         )
       }
     } else {
