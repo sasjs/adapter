@@ -70,7 +70,10 @@ export class AuthManager {
     }
   }
 
-  private async sendLoginRequest(loginForm: {[key: string]: any}, loginParams: {[key: string]: any}) {
+  private async sendLoginRequest(
+    loginForm: { [key: string]: any },
+    loginParams: { [key: string]: any }
+  ) {
     for (const key in loginForm) {
       loginParams[key] = loginForm[key]
     }
