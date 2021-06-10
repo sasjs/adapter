@@ -5,6 +5,7 @@ import {
   JobExecutionError,
   LoginRequiredError
 } from '../types/errors'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class JesJobExecutor extends BaseJobExecutor {
@@ -17,7 +18,8 @@ export class JesJobExecutor extends BaseJobExecutor {
     data: any,
     config: any,
     loginRequiredCallback?: any,
-    accessToken?: string
+    accessToken?: string,
+    extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
 
@@ -30,10 +32,26 @@ export class JesJobExecutor extends BaseJobExecutor {
           data,
           accessToken
         )
-        .then((response) => {
+        .then((response: any) => {
           this.appendRequest(response, sasJob, config.debug)
 
-          resolve(response)
+          let responseObject = {}
+
+          if (extraResponseAttributes && extraResponseAttributes.length > 0) {
+            const extraAttributes = extraResponseAttributes.reduce(
+              (map: any, obj: any) => ((map[obj] = response[obj]), map),
+              {}
+            )
+
+            responseObject = {
+              result: response.result,
+              ...extraAttributes
+            }
+          } else {
+            responseObject = response.result
+          }
+
+          resolve(responseObject)
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
@@ -50,7 +68,9 @@ export class JesJobExecutor extends BaseJobExecutor {
                 sasJob,
                 data,
                 config,
-                loginRequiredCallback
+                loginRequiredCallback,
+                accessToken,
+                extraResponseAttributes
               ).then(
                 (res: any) => {
                   resolve(res)

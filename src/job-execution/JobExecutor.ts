@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { SASjsRequest } from '../types'
+import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { asyncForEach, parseGeneratedCode, parseSourceCode } from '../utils'
 
 export type ExecuteFunction = () => Promise<any>
@@ -10,7 +11,8 @@ export interface JobExecutor {
     data: any,
     config: any,
     loginRequiredCallback?: any,
-    accessToken?: string
+    accessToken?: string,
+    extraResponseAttributes?: ExtraResponseAttributes[]
   ) => Promise<any>
   resendWaitingRequests: () => Promise<void>
   getRequests: () => SASjsRequest[]
@@ -28,7 +30,8 @@ export abstract class BaseJobExecutor implements JobExecutor {
     data: any,
     config: any,
     loginRequiredCallback?: any,
-    accessToken?: string | undefined
+    accessToken?: string | undefined,
+    extraResponseAttributes?: ExtraResponseAttributes[]
   ): Promise<any>
 
   resendWaitingRequests = async () => {
