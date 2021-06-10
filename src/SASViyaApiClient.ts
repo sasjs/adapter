@@ -546,7 +546,7 @@ export class SASViyaApiClient {
    */
   public async createFile(
     fileName: string,
-    content: string = '',
+    contentBuffer: Buffer,
     parentFolderPath?: string,
     parentFolderUri?: string,
     accessToken?: string
@@ -564,15 +564,18 @@ export class SASViyaApiClient {
       'Content-Disposition': `filename="${fileName}";`
     }
 
+    const formData = new NodeFormData()
+    formData.append('file', contentBuffer, fileName)
+
     const mimeType =
       mime.getType(fileName.match(/\.[0-9a-z]+$/i)?.[0] || '') ?? 'text/plain'
 
     return (
       await this.requestClient.post<File>(
         `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=file#rawUpload`,
-        content,
+        formData,
         accessToken,
-        mimeType,
+        'multipart/form-data; boundary=' + (formData as any)._boundary,
         headers
       )
     ).result

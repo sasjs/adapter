@@ -311,7 +311,7 @@ export default class SASjs {
    */
   public async createFile(
     fileName: string,
-    content: string,
+    content: Buffer,
     parentFolderPath: string,
     parentFolderUri?: string,
     accessToken?: string,
