@@ -543,7 +543,7 @@ export default class SASjs {
    * `await request(sasJobPath, {}, {}, () => setIsLoggedIn(false))`
    * @param extraResponseAttributes - a array of predefined values that are used
    * to provide extra attributes (same names as those values) to be added in response
-   * Supported values: 'file' | 'output' | 'data'
+   * Supported values are declared in ExtraResponseAttributes type.
    */
   public async request(
     sasJob: string,
