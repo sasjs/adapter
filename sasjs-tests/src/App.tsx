@@ -13,7 +13,7 @@ const App = (): ReactElement<{}> => {
 
   useEffect(() => {
     if (adapter) {
-      let testSuites = [
+      const testSuites = [
         basicTests(adapter, config.userName, config.password),
         sendArrTests(adapter),
         sendObjTests(adapter),
