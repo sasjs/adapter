@@ -547,7 +547,7 @@ export default class SASjs {
    */
   public async request(
     sasJob: string,
-    data: { [key: string]: any },
+    data: { [key: string]: any } | null,
     config: { [key: string]: any } = {},
     loginRequiredCallback?: () => any,
     accessToken?: string,
@@ -576,7 +576,8 @@ export default class SASjs {
             data,
             config,
             loginRequiredCallback,
-            accessToken
+            accessToken,
+            extraResponseAttributes
           )
         }
       } else if (
@@ -606,43 +607,43 @@ export default class SASjs {
    * @param data a json object contains one or more table, it can also be null
    * @returns a object which contains two attributes: 1) status: boolean, 2) msg: string
    */
-  private validateInput(data: { [key: string]: any }): {
+  private validateInput(data: { [key: string]: any } | null): {
     status: boolean
     msg: string
   } {
     if (data === null) return { status: true, msg: '' }
     for (const key in data) {
-      if (key.match(/^[a-zA-Z_]/)) {
-        if (key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
-          if (key.length <= 32) {
-            if (this.getType(data[key]) === 'Array') {
-              for (let i = 0; i < data[key].length; i++) {
-                if (this.getType(data[key][i]) !== 'object') {
-                  return {
-                    status: false,
-                    msg: `Table ${key} contains invalid structure.`
-                  }
-                }
-              }
-            } else {
-              return {
-                status: false,
-                msg: 'Parameter data contains invalid table structure.'
-              }
-            }
-          } else {
-            return {
-              status: false,
-              msg: 'Maximum length for table name could be 32 characters.'
-            }
-          }
-        } else {
-          return { status: false, msg: 'Table name should be alphanumeric.' }
-        }
-      } else {
+      if (!key.match(/^[a-zA-Z_]/)) {
         return {
           status: false,
           msg: 'First letter of table should be alphabet or underscore.'
+        }
+      }
+
+      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+        return { status: false, msg: 'Table name should be alphanumeric.' }
+      }
+
+      if (key.length > 32) {
+        return {
+          status: false,
+          msg: 'Maximum length for table name could be 32 characters.'
+        }
+      }
+
+      if (this.getType(data[key]) !== 'Array') {
+        return {
+          status: false,
+          msg: 'Parameter data contains invalid table structure.'
+        }
+      }
+
+      for (let i = 0; i < data[key].length; i++) {
+        if (this.getType(data[key][i]) !== 'object') {
+          return {
+            status: false,
+            msg: `Table ${key} contains invalid structure.`
+          }
         }
       }
     }
