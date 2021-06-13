@@ -541,7 +541,7 @@ export class SASViyaApiClient {
   /**
    * Creates a file. Path to or URI of the parent folder is required.
    * @param fileName - the name of the new file.
-   * @param content - the content of the new file.
+   * @param contentBuffer - the content of the new file in Buffer.
    * @param parentFolderPath - the full path to the parent folder.  If not
    *  provided, the parentFolderUri must be provided.
    * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent

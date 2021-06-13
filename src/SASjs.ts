@@ -267,7 +267,7 @@ export default class SASjs {
   }
 
   /**
-   * Creates a folder at SAS file system.
+   * Creates a folder in the logical SAS folder tree
    * @param folderName - name of the folder to be created.
    * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
    * @param parentFolderUri - the URI of the parent folder.
@@ -300,14 +300,13 @@ export default class SASjs {
   }
 
   /**
-   * Creates a file at SAS file system.
+   * Creates a file in the logical SAS folder tree
    * @param fileName - name of the file to be created.
    * @param content - content of the file to be created.
    * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
    * @param parentFolderUri - the URI of the parent folder.
    * @param accessToken - the access token to authorizing the request.
    * @param sasApiClient - a client for interfacing with SAS API.
-   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted. Applicable for SAS VIYA only.
    */
   public async createFile(
     fileName: string,
