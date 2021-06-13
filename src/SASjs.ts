@@ -602,10 +602,10 @@ export default class SASjs {
   }
 
   /**
-   * this function validates the structure of input data and verify that proper rules are being followed for table name
+   * This function validates the input data structure and table naming convention
    *
-   * @param data a json object contains one or more table, it can also be null
-   * @returns a object which contains two attributes: 1) status: boolean, 2) msg: string
+   * @param data A json object that contains one or more tables, it can also be null
+   * @returns An object which contains two attributes: 1) status: boolean, 2) msg: string
    */
   private validateInput(data: { [key: string]: any } | null): {
     status: boolean
