@@ -176,11 +176,59 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
   name: 'sendObj',
   tests: [
     {
-      title: 'Invalid column name',
+      title: 'Table name starts with numeric',
       description: 'Should throw an error',
       test: async () => {
         const invalidData: any = {
-          '1 invalid table': [{ col1: 42 }]
+          '1InvalidTable': [{ col1: 42 }]
+        }
+        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+      },
+      assertion: (error: any) =>
+        !!error && !!error.error && !!error.error.message
+    },
+    {
+      title: 'Table name contains a space',
+      description: 'Should throw an error',
+      test: async () => {
+        const invalidData: any = {
+          'an invalidTable': [{ col1: 42 }]
+        }
+        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+      },
+      assertion: (error: any) =>
+        !!error && !!error.error && !!error.error.message
+    },
+    {
+      title: 'Table name contains a special character',
+      description: 'Should throw an error',
+      test: async () => {
+        const invalidData: any = {
+          'anInvalidTable#': [{ col1: 42 }]
+        }
+        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+      },
+      assertion: (error: any) =>
+        !!error && !!error.error && !!error.error.message
+    },
+    {
+      title: 'Table name exceeds max length of 32 characters',
+      description: 'Should throw an error',
+      test: async () => {
+        const invalidData: any = {
+          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: [{ col1: 42 }]
+        }
+        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+      },
+      assertion: (error: any) =>
+        !!error && !!error.error && !!error.error.message
+    },
+    {
+      title: "Invalid data object's structure",
+      description: 'Should throw an error',
+      test: async () => {
+        const invalidData: any = {
+          inData: [[{ data: 'value' }]]
         }
         return adapter.request('common/sendObj', invalidData).catch((e) => e)
       },
