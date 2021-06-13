@@ -12,6 +12,7 @@ import {
   Context,
   ContextAllAttributes,
   Folder,
+  File,
   EditContextInput,
   JobDefinition,
   PollOptions
@@ -30,6 +31,7 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { SasAuthResponse, MacroVar } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
+import * as mime from 'mime'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -534,6 +536,53 @@ export class SASViyaApiClient {
     return await this.requestClient
       .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
       .then((res) => res.result)
+  }
+
+  /**
+   * Creates a file. Path to or URI of the parent folder is required.
+   * @param fileName - the name of the new file.
+   * @param contentBuffer - the content of the new file in Buffer.
+   * @param parentFolderPath - the full path to the parent folder.  If not
+   *  provided, the parentFolderUri must be provided.
+   * @param parentFolderUri - the URI (eg /folders/folders/UUID) of the parent
+   *  folder. If not provided, the parentFolderPath must be provided.
+   * @param accessToken - an access token for authorizing the request.
+   */
+  public async createFile(
+    fileName: string,
+    contentBuffer: Buffer,
+    parentFolderPath?: string,
+    parentFolderUri?: string,
+    accessToken?: string
+  ): Promise<File> {
+    if (!parentFolderPath && !parentFolderUri) {
+      throw new Error('Path or URI of the parent folder is required.')
+    }
+
+    if (!parentFolderUri && parentFolderPath) {
+      parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
+    }
+
+    const headers = {
+      Accept: 'application/vnd.sas.file+json',
+      'Content-Disposition': `filename="${fileName}";`
+    }
+
+    const formData = new NodeFormData()
+    formData.append('file', contentBuffer, fileName)
+
+    const mimeType =
+      mime.getType(fileName.match(/\.[0-9a-z]+$/i)?.[0] || '') ?? 'text/plain'
+
+    return (
+      await this.requestClient.post<File>(
+        `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=file#rawUpload`,
+        formData,
+        accessToken,
+        'multipart/form-data; boundary=' + (formData as any)._boundary,
+        headers
+      )
+    ).result
   }
 
   /**

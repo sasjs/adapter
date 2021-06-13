@@ -268,7 +268,7 @@ export default class SASjs {
   }
 
   /**
-   * Creates a folder at SAS file system.
+   * Creates a folder in the logical SAS folder tree
    * @param folderName - name of the folder to be created.
    * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
    * @param parentFolderUri - the URI of the parent folder.
@@ -297,6 +297,40 @@ export default class SASjs {
       parentFolderUri,
       accessToken,
       isForced
+    )
+  }
+
+  /**
+   * Creates a file in the logical SAS folder tree
+   * @param fileName - name of the file to be created.
+   * @param content - content of the file to be created.
+   * @param parentFolderPath - the full path (eg `/Public/example/myFolder`) of the parent folder.
+   * @param parentFolderUri - the URI of the parent folder.
+   * @param accessToken - the access token to authorizing the request.
+   * @param sasApiClient - a client for interfacing with SAS API.
+   */
+  public async createFile(
+    fileName: string,
+    content: Buffer,
+    parentFolderPath: string,
+    parentFolderUri?: string,
+    accessToken?: string,
+    sasApiClient?: SASViyaApiClient
+  ) {
+    if (sasApiClient)
+      return await sasApiClient.createFile(
+        fileName,
+        content,
+        parentFolderPath,
+        parentFolderUri,
+        accessToken
+      )
+    return await this.sasViyaApiClient!.createFile(
+      fileName,
+      content,
+      parentFolderPath,
+      parentFolderUri,
+      accessToken
     )
   }
 
@@ -878,6 +912,16 @@ export default class SASjs {
             accessToken,
             sasApiClient,
             isForced
+          )
+          break
+        case 'file':
+          await this.createFile(
+            member.name,
+            member.code,
+            parentFolder,
+            undefined,
+            accessToken,
+            sasApiClient
           )
           break
         case 'service':
