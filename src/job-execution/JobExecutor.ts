@@ -62,14 +62,14 @@ export abstract class BaseJobExecutor implements JobExecutor {
     let sasWork = null
 
     if (debug) {
-      if (response?.result && response?.log) {
+      if (response?.log) {
         sourceCode = parseSourceCode(response.log)
         generatedCode = parseGeneratedCode(response.log)
 
-        if (response.log) {
-          sasWork = response.log
-        } else {
+        if (response?.result) {
           sasWork = response.result.WORK
+        } else {
+          sasWork = response.log
         }
       } else if (response?.result) {
         sourceCode = parseSourceCode(response.result)
