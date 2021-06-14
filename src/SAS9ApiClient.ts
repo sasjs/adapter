@@ -45,7 +45,9 @@ export class SAS9ApiClient {
   ) {
     await this.requestClient.login(userName, password, this.jobsPath)
 
-    const formData = generateFileUploadForm(linesOfCode.join('\n'))
+    // This piece of code forces a webout to prevent Stored Process Errors.
+    const forceOutputCode = ['data _null_;', 'file _webout;', `put 'Executed sasjs run';`, 'run;']
+    const formData = generateFileUploadForm([...linesOfCode, ...forceOutputCode].join('\n'))
 
     const codeInjectorPath = `/User Folders/${userName}/My Folder/sasjs/runner`
     const contentType =
