@@ -6,7 +6,7 @@ When developing on `@sasjs/adapter`, it's good practice to run the test suite ag
 
 You can use the provided `update:adapter` NPM script for this.
 
-```
+```bash
     npm run update:adapter
 ```
 
@@ -37,7 +37,7 @@ To be able to run the `deploy` script, two environment variables need to be set:
 
 So you can run the script like so:
 
-```
+```bash
 SSH_ACCOUNT=me@my-sas-server.com DEPLOY_PATH=/var/www/html/my-folder/sasjs-tests npm run deploy
 ```
 
@@ -49,8 +49,7 @@ The below services need to be created on your SAS server, at the location specif
 
 ### SAS 9
 
-```
-
+```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
 filename ft15f001 temp;
@@ -76,11 +75,20 @@ parmcards4;
 let he who hath understanding, reckon the number of the beast
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=makeErr)
+parmcards4;
+%webout(OPEN)
+data _null_;
+  file _webout;
+  put ' the discovery channel ';
+ run;
+%webout(CLOSE)
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=invalidJSON)
 ```
 
 ### SAS Viya
 
-```
+```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
 filename ft15f001 temp;
@@ -119,6 +127,15 @@ If you can trust yourself when all men doubt you,
     But make allowance for their doubting too;
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=makeErr)
+parmcards4;
+%webout(OPEN)
+data _null_;
+  file _webout;
+  put ' the discovery channel ';
+ run;
+%webout(CLOSE)
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=invalidJSON)
 ```
 
 You should now be able to access the tests in your browser at the deployed path on your server.
