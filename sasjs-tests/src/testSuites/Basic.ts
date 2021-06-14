@@ -161,16 +161,12 @@ export const basicTests = (
           config,
           undefined,
           undefined,
-          ['output', 'file', 'data']
+          ['file', 'data']
         )
       },
       assertion: (response: any) => {
         const responseKeys: any = Object.keys(response)
-        return (
-          responseKeys.includes('file') &&
-          responseKeys.includes('output') &&
-          responseKeys.includes('data')
-        )
+        return responseKeys.includes('file') && responseKeys.includes('output')
       }
     }
   ]
