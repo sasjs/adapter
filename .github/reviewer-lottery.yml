@@ -7,3 +7,8 @@ groups:
       - saadjutt01
       - medjedovicm
       - allanbowe
+      - sabhas
+  - name: SASjs QA
+    reviewers: 1
+    usernames:
+      - VladislavParhomchik
