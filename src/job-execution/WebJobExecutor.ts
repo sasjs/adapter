@@ -110,11 +110,6 @@ export class WebJobExecutor extends BaseJobExecutor {
           if (e instanceof LoginRequiredError) {
             await loginCallback()
 
-            if (config.serverType === ServerType.Sas9 && data)
-              this.appendWaitingRequest(() =>
-                this.execute(sasJob, data, config)
-              )
-
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
