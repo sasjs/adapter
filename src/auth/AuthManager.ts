@@ -61,6 +61,15 @@ export class AuthManager {
     }
 
     if (loggedIn) {
+      if (this.serverType === ServerType.Sas9) {
+        const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
+
+        await this.requestClient.get<string>(
+          `/SASLogon/login?service=${casAuthenticationUrl}`,
+          undefined
+        )
+      }
+
       this.loginCallback()
     }
 
