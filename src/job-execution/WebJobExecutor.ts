@@ -8,8 +8,9 @@ import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
 import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
-import { isRelativePath } from '../utils'
+import { isRelativePath, isValidJson } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
+import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -97,6 +98,19 @@ export class WebJobExecutor extends BaseJobExecutor {
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
+          if (this.serverType === ServerType.Sas9 && config.debug) {
+            const jsonResponse = parseWeboutResponse(res.result as string)
+            if (jsonResponse === '') {
+              throw new Error(
+                'Valid JSON could not be extracted from response.'
+              )
+            }
+            console.log('WebJobExecutor')
+            isValidJson(jsonResponse)
+            this.appendRequest(res, sasJob, config.debug)
+            resolve(res.result)
+          }
+          isValidJson(res.result as string)
           this.appendRequest(res, sasJob, config.debug)
           resolve(res.result)
         })
