@@ -1,4 +1,5 @@
 export * from './asyncForEach'
+export * from './auth'
 export * from './compareTimestamps'
 export * from './convertToCsv'
 export * from './isRelativePath'

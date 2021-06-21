@@ -4,7 +4,7 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
-import { ServerType, MacroVar } from '@sasjs/utils/types'
+import { ServerType, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import {
   JobExecutor,
@@ -240,14 +240,14 @@ export default class SASjs {
    * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
    * @param linesOfCode - lines of sas code from the file to run.
    * @param contextName - context name on which code will be run on the server.
-   * @param accessToken - (optional) the access token for authorizing the request.
+   * @param authConfig - (optional) the access token, refresh token, client and secret for authorizing the request.
    * @param debug - (optional) if true, global debug config will be overriden
    */
   public async executeScriptSASViya(
     fileName: string,
     linesOfCode: string[],
     contextName: string,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     debug?: boolean
   ) {
     this.isMethodSupported('executeScriptSASViya', ServerType.SasViya)
@@ -261,7 +261,7 @@ export default class SASjs {
       fileName,
       linesOfCode,
       contextName,
-      accessToken,
+      authConfig,
       null,
       debug ? debug : this.sasjsConfig.debug
     )
@@ -777,7 +777,7 @@ export default class SASjs {
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
-   * @param accessToken - a valid access token that is authorised to execute compute jobs.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
@@ -788,7 +788,7 @@ export default class SASjs {
     sasJob: string,
     data: any,
     config: any = {},
-    accessToken?: string,
+    authConfig?: AuthConfig,
     waitForResult?: boolean,
     pollOptions?: PollOptions,
     printPid = false,
@@ -811,7 +811,7 @@ export default class SASjs {
       config.contextName,
       config.debug,
       data,
-      accessToken,
+      authConfig,
       !!waitForResult,
       false,
       pollOptions,
