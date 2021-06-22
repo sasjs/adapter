@@ -49,7 +49,11 @@ export class FileUploader {
     const csrfToken = this.requestClient.getCsrfToken('file')
     if (csrfToken) formData.append('_csrf', csrfToken.value)
     if (this.sasjsConfig.debug) formData.append('_debug', '131')
-    if (this.sasjsConfig.serverType === ServerType.SasViya && this.sasjsConfig.contextName) formData.append('_contextname', this.sasjsConfig.contextName)
+    if (
+      this.sasjsConfig.serverType === ServerType.SasViya &&
+      this.sasjsConfig.contextName
+    )
+      formData.append('_contextname', this.sasjsConfig.contextName)
 
     const headers = {
       'cache-control': 'no-cache',
@@ -62,10 +66,10 @@ export class FileUploader {
       .then((res) => {
         let result
 
-        result = typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+        result =
+          typeof res.result === 'string' ? JSON.parse(res.result) : res.result
         //TODO: append to SASjs requests
-      }
-      )
+      })
       .catch((err: Error) => {
         if (err instanceof LoginRequiredError) {
           return Promise.reject(
