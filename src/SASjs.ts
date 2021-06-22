@@ -584,7 +584,7 @@ export default class SASjs {
     data: { [key: string]: any } | null,
     config: { [key: string]: any } = {},
     loginRequiredCallback?: () => any,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     config = {
@@ -602,7 +602,7 @@ export default class SASjs {
             data,
             config,
             loginRequiredCallback,
-            accessToken
+            authConfig
           )
         } else {
           return await this.jesJobExecutor!.execute(
@@ -610,7 +610,7 @@ export default class SASjs {
             data,
             config,
             loginRequiredCallback,
-            accessToken,
+            authConfig,
             extraResponseAttributes
           )
         }
@@ -626,7 +626,7 @@ export default class SASjs {
           data,
           config,
           loginRequiredCallback,
-          accessToken,
+          authConfig,
           extraResponseAttributes
         )
       }

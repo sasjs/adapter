@@ -1,4 +1,4 @@
-import { ServerType } from '@sasjs/utils/types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   ErrorResponse,
@@ -18,20 +18,14 @@ export class JesJobExecutor extends BaseJobExecutor {
     data: any,
     config: any,
     loginRequiredCallback?: any,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
 
     const requestPromise = new Promise((resolve, reject) => {
       this.sasViyaApiClient
-        ?.executeJob(
-          sasJob,
-          config.contextName,
-          config.debug,
-          data,
-          accessToken
-        )
+        ?.executeJob(sasJob, config.contextName, config.debug, data, authConfig)
         .then((response: any) => {
           this.appendRequest(response, sasJob, config.debug)
 
@@ -69,7 +63,7 @@ export class JesJobExecutor extends BaseJobExecutor {
                 data,
                 config,
                 loginRequiredCallback,
-                accessToken,
+                authConfig,
                 extraResponseAttributes
               ).then(
                 (res: any) => {
