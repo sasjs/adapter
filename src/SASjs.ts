@@ -934,8 +934,7 @@ export default class SASjs {
     }
 
     this.fileUploader = new FileUploader(
-      this.sasjsConfig.appLoc,
-      this.sasjsConfig.serverUrl,
+      this.sasjsConfig,
       this.jobsPath,
       this.requestClient
     )
