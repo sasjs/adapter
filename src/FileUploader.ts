@@ -2,15 +2,19 @@ import { isUrl } from './utils'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse, LoginRequiredError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
+import { ServerType } from '@sasjs/utils/types'
+import SASjs from './SASjs'
+import { Server } from 'https'
+import { SASjsConfig } from './types'
+import { config } from 'process'
 
 export class FileUploader {
   constructor(
-    private appLoc: string,
-    serverUrl: string,
+    private sasjsConfig: SASjsConfig,
     private jobsPath: string,
     private requestClient: RequestClient
   ) {
-    if (serverUrl) isUrl(serverUrl)
+    if (this.sasjsConfig.serverUrl) isUrl(this.sasjsConfig.serverUrl)
   }
 
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
@@ -29,12 +33,17 @@ export class FileUploader {
       }
     }
 
-    const program = this.appLoc
-      ? this.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
+    const program = this.sasjsConfig.appLoc
+      ? this.sasjsConfig.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
       : sasJob
     const uploadUrl = `${this.jobsPath}/?${
       '_program=' + program
-    }${paramsString}`
+    }${paramsString}${
+      this.sasjsConfig.serverType === ServerType.SasViya &&
+      this.sasjsConfig.contextName
+        ? '&_contextname=' + this.sasjsConfig.contextName
+        : ''
+    }`
 
     const formData = new FormData()
 
@@ -44,6 +53,7 @@ export class FileUploader {
 
     const csrfToken = this.requestClient.getCsrfToken('file')
     if (csrfToken) formData.append('_csrf', csrfToken.value)
+    if (this.sasjsConfig.debug) formData.append('_debug', '131')
 
     const headers = {
       'cache-control': 'no-cache',

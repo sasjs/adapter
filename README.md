@@ -172,8 +172,8 @@ Configuration on the client side involves passing an object on startup, which ca
 * `serverType` - either `SAS9` or `SASVIYA`.
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
-* `useComputeApi` - if `true` and the serverType is `SASVIYA` then the REST APIs will be called directly (rather than using the JES web service).
-* `contextName` - if missing or blank, and `useComputeApi` is `true` and `serverType` is `SASVIYA` then the JES API will be used.
+* `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](https://github.com/sasjs/adapter#using-the-compute-api) is used.  If `false` the [JES API](https://github.com/sasjs/adapter#using-the-jes-api) is used.  If `null` or `undefined` the [Web](https://github.com/sasjs/adapter#using-jes-web-app) approach is used.  
+* `contextName` - Context on which the reqeusts will be called.
 
 The adapter supports a number of approaches for interfacing with Viya (`serverType` is `SASVIYA`).  For maximum performance, be sure to [configure your compute context](https://sasjs.io/guide-viya/#shared-account-and-server-re-use) with `reuseServerProcesses` as `true` and a system account in `runServerAs`.  This functionality is available since Viya 3.5.  This configuration is supported when [creating contexts using the CLI](https://sasjs.io/sasjs-cli-context/#sasjs-context-create).
 
@@ -184,7 +184,8 @@ In this setup, all requests are routed through the JES web app, at `YOURSERVER/S
 ```
 {
   appLoc:"/Your/Path",
-  serverType:"SASVIYA"
+  serverType:"SASVIYA",
+  contextName: 'yourComputeContext'
 }
 ```
 
@@ -195,7 +196,8 @@ Here we are running Jobs using the Job Execution Service except this time we are
 {
   appLoc:"/Your/Path",
   serverType:"SASVIYA",
-  useComputeApi: true
+  useComputeApi: false,
+  contextName: 'yourComputeContext'
 }
 ```
 
