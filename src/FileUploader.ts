@@ -68,6 +68,8 @@ export class FileUploader {
 
         result =
           typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+
+        return result
         //TODO: append to SASjs requests
       })
       .catch((err: Error) => {
