@@ -24,7 +24,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SasViya,
   debug: false,
   contextName: 'SAS Job Execution compute context',
-  useComputeApi: false,
+  useComputeApi: null,
   allowInsecureRequests: false
 }
 

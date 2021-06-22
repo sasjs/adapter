@@ -38,12 +38,7 @@ export class FileUploader {
       : sasJob
     const uploadUrl = `${this.jobsPath}/?${
       '_program=' + program
-    }${paramsString}${
-      this.sasjsConfig.serverType === ServerType.SasViya &&
-      this.sasjsConfig.contextName
-        ? '&_contextname=' + this.sasjsConfig.contextName
-        : ''
-    }`
+    }${paramsString}`
 
     const formData = new FormData()
 
@@ -54,6 +49,7 @@ export class FileUploader {
     const csrfToken = this.requestClient.getCsrfToken('file')
     if (csrfToken) formData.append('_csrf', csrfToken.value)
     if (this.sasjsConfig.debug) formData.append('_debug', '131')
+    if (this.sasjsConfig.serverType === ServerType.SasViya && this.sasjsConfig.contextName) formData.append('_contextname', this.sasjsConfig.contextName)
 
     const headers = {
       'cache-control': 'no-cache',
@@ -63,8 +59,12 @@ export class FileUploader {
 
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
-      .then((res) =>
-        typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+      .then((res) => {
+        let result
+
+        result = typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+        //TODO: append to SASjs requests
+      }
       )
       .catch((err: Error) => {
         if (err instanceof LoginRequiredError) {
