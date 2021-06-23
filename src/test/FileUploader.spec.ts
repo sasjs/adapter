@@ -36,7 +36,7 @@ describe('FileUploader', () => {
     ...new SASjsConfig(),
     appLoc: '/sample/apploc'
   }
-  
+
   const fileUploader = new FileUploader(
     config,
     '/jobs/path',
