@@ -40,15 +40,18 @@ export class WebJobExecutor extends BaseJobExecutor {
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
         : sasJob
       : sasJob
-    const jobUri =
-      config.serverType === ServerType.SasViya
-        ? await this.getJobUri(sasJob)
-        : ''
-    const apiUrl = `${config.serverUrl}${this.jobsPath}/?${
-      jobUri.length > 0
-        ? '__program=' + program + '&_job=' + jobUri
-        : '_program=' + program
-    }`
+    let apiUrl = `${config.serverUrl}${this.jobsPath}/?${'_program=' + program}`
+
+    if (config.serverType === ServerType.SasViya) {
+      const jobUri =
+        config.serverType === ServerType.SasViya
+          ? await this.getJobUri(sasJob)
+          : ''
+
+      apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
+
+      apiUrl += config.contextName ? `&_contextname=${config.contextName}` : ''
+    }
 
     let requestParams = {
       ...this.getRequestParams(config)

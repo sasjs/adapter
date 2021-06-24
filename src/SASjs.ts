@@ -24,7 +24,7 @@ const defaultConfig: SASjsConfig = {
   serverType: ServerType.SasViya,
   debug: false,
   contextName: 'SAS Job Execution compute context',
-  useComputeApi: false,
+  useComputeApi: null,
   allowInsecureRequests: false
 }
 
@@ -544,12 +544,7 @@ export default class SASjs {
   public uploadFile(sasJob: string, files: UploadFile[], params: any) {
     const fileUploader =
       this.fileUploader ||
-      new FileUploader(
-        this.sasjsConfig.appLoc,
-        this.sasjsConfig.serverUrl,
-        this.jobsPath,
-        this.requestClient!
-      )
+      new FileUploader(this.sasjsConfig, this.jobsPath, this.requestClient!)
 
     return fileUploader.uploadFile(sasJob, files, params)
   }
@@ -595,7 +590,11 @@ export default class SASjs {
     const validationResult = this.validateInput(data)
 
     if (validationResult.status) {
-      if (config.serverType === ServerType.SasViya && config.contextName) {
+      if (
+        config.serverType !== ServerType.Sas9 &&
+        config.useComputeApi !== undefined &&
+        config.useComputeApi !== null
+      ) {
         if (config.useComputeApi) {
           return await this.computeJobExecutor!.execute(
             sasJob,
@@ -935,8 +934,7 @@ export default class SASjs {
     }
 
     this.fileUploader = new FileUploader(
-      this.sasjsConfig.appLoc,
-      this.sasjsConfig.serverUrl,
+      this.sasjsConfig,
       this.jobsPath,
       this.requestClient
     )
