@@ -132,14 +132,14 @@ export class SASViyaApiClient {
 
   /**
    * Returns all compute contexts on this server that the user has access to.
-   * @param accessToken - an access token for an authorized user.
+   * @param authConfig - an access token, refresh token, client and secret for an authorized user.
    */
-  public async getExecutableContexts(accessToken?: string) {
+  public async getExecutableContexts(authConfig?: AuthConfig) {
     const bindedExecuteScript = this.executeScript.bind(this)
 
     return await this.contextManager.getExecutableContexts(
       bindedExecuteScript,
-      accessToken
+      authConfig
     )
   }
 

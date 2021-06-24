@@ -103,12 +103,12 @@ export default class SASjs {
 
   /**
    * Gets executable compute contexts.
-   * @param accessToken - an access token for an authorized user.
+   * @param authConfig - an access token, refresh token, client and secret for an authorized user.
    */
-  public async getExecutableContexts(accessToken: string) {
+  public async getExecutableContexts(authConfig: AuthConfig) {
     this.isMethodSupported('getExecutableContexts', ServerType.SasViya)
 
-    return await this.sasViyaApiClient!.getExecutableContexts(accessToken)
+    return await this.sasViyaApiClient!.getExecutableContexts(authConfig)
   }
 
   /**
