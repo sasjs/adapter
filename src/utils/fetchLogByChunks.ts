@@ -15,12 +15,14 @@ export const fetchLogByChunks = async (
   logUrl: string,
   logCount: number
 ): Promise<string> => {
+  const logger = process.logger || console
+
   let log: string = ''
 
   const loglimit = logCount < 10000 ? logCount : 10000
   let start = 0
   do {
-    console.log(
+    logger.info(
       `Fetching logs from line no: ${start + 1} to ${
         start + loglimit
       } of ${logCount}.`

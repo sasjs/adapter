@@ -607,6 +607,7 @@ export class SASViyaApiClient {
     accessToken?: string,
     isForced?: boolean
   ): Promise<Folder> {
+    const logger = process.logger || console
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Path or URI of the parent folder is required.')
     }
@@ -614,7 +615,7 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
       if (!parentFolderUri) {
-        console.log(
+        logger.info(
           `Parent folder at path '${parentFolderPath}' is not present.`
         )
 
@@ -626,7 +627,7 @@ export class SASViyaApiClient {
         if (newParentFolderPath === '') {
           throw new Error('Root folder has to be present on the server.')
         }
-        console.log(
+        logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
         const parentFolder = await this.createFolder(
@@ -635,7 +636,7 @@ export class SASViyaApiClient {
           undefined,
           accessToken
         )
-        console.log(
+        logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
         )
         parentFolderUri = `/folders/folders/${parentFolder.id}`
@@ -1138,6 +1139,8 @@ export class SASViyaApiClient {
     authConfig?: AuthConfig,
     pollOptions?: PollOptions
   ) {
+    const logger = process.logger || console
+
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
     let MAX_ERROR_COUNT = 5
@@ -1258,8 +1261,8 @@ export class SASViyaApiClient {
             }
 
             if (this.debug && printedState !== postedJobState) {
-              console.log('Polling job status...')
-              console.log(`Current job state: ${postedJobState}`)
+              logger.info('Polling job status...')
+              logger.info(`Current job state: ${postedJobState}`)
 
               printedState = postedJobState
             }
@@ -1449,6 +1452,9 @@ export class SASViyaApiClient {
       accessToken
     )
 
+    if (!sourceFolderUri) {
+      return undefined
+    }
     const sourceFolderId = sourceFolderUri?.split('/').pop()
 
     const { result: folder } = await this.requestClient

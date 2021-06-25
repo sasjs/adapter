@@ -287,7 +287,8 @@ export class RequestClient implements HttpClient {
       })
       .then((res) => res.data)
       .catch((error) => {
-        console.log(error)
+        const logger = process.logger || console
+        logger.error(error)
       })
   }
 
