@@ -3,7 +3,7 @@
  */
 
 import { FileUploader } from '../FileUploader'
-import { UploadFile } from '../types'
+import { SASjsConfig, UploadFile } from '../types'
 import { RequestClient } from '../request/RequestClient'
 import axios from 'axios'
 jest.mock('axios')
@@ -32,9 +32,13 @@ const prepareFilesAndParams = () => {
 }
 
 describe('FileUploader', () => {
+  const config: SASjsConfig = {
+    ...new SASjsConfig(),
+    appLoc: '/sample/apploc'
+  }
+
   const fileUploader = new FileUploader(
-    '/sample/apploc',
-    'https://sample.server.com',
+    config,
     '/jobs/path',
     new RequestClient('https://sample.server.com')
   )

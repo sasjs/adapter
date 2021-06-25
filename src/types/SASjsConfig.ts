@@ -40,23 +40,19 @@ export class SASjsConfig {
    */
   debug: boolean = true
   /**
-   * The name of the compute context to use when calling the Viya APIs directly.
+   * The name of the compute context to use when calling the Viya services directly.
    * Example value: 'SAS Job Execution compute context'
-   * If set to missing or empty, and useComputeApi is true, the adapter will use
-   * the JES APIs.  If provided, the Job Code will be executed in pooled
-   * compute sessions on this named context.
    */
   contextName: string = ''
   /**
-   * Set to `false` to use the Job Execution Web Service.  To enhance VIYA
+   * If it's `false` adapter will use the JES API as connection approach.  To enhance VIYA
    * performance, set to `true` and provide a `contextName` on which to run
    * the code.  When running on a named context, the code executes under the
    * user identity.  When running as a Job Execution service, the code runs
-   * under the identity in the JES context.  If no `contextName` is provided,
-   * and `useComputeApi` is `true`, then the service will run as a Job, except
+   * under the identity in the JES context.  If `useComputeApi` is `null` or `undefined`, the service will run as a Job, except
    * triggered using the APIs instead of the Job Execution Web Service broker.
    */
-  useComputeApi = false
+  useComputeApi: boolean | null = null
   /**
    * Defaults to `false`.
    * When set to `true`, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
