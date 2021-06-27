@@ -339,7 +339,6 @@ export class SASViyaApiClient {
       if (debug) {
         jobArguments['_OMITTEXTLOG'] = false
         jobArguments['_OMITSESSIONRESULTS'] = false
-        jobArguments['_DEBUG'] = 131
       }
 
       let fileName
@@ -361,6 +360,8 @@ export class SASViyaApiClient {
       }
 
       if (variables) jobVariables = { ...jobVariables, ...variables }
+
+      if (debug) jobVariables = { ...jobVariables, _DEBUG: 131 }
 
       let files: any[] = []
 
