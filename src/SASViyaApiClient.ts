@@ -886,7 +886,7 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ) {
-    let { access_token, refresh_token, client, secret } = authConfig || {}
+    let { access_token } = authConfig || {}
 
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -985,7 +985,7 @@ export class SASViyaApiClient {
     data?: any,
     authConfig?: AuthConfig
   ) {
-    let { access_token, refresh_token, client, secret } = authConfig || {}
+    let { access_token } = authConfig || {}
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name.'
