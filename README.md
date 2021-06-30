@@ -189,6 +189,8 @@ In this setup, all requests are routed through the JES web app, at `YOURSERVER/S
 }
 ```
 
+Note - to use the web approach, the `useComputeApi` property must be `undefined` or `null`.
+
 ### Using the JES API
 Here we are running Jobs using the Job Execution Service except this time we are making the requests directly using the REST API instead of through the JES Web App.  This is helpful when we need to call web services outside of a browser (eg with the SASjs CLI or other commandline tools).  To save one network request, the adapter prefetches the JOB URIs and passes them in the `__job` parameter.  Depending on your network bandwidth, it may or may not be faster than the JES Web approach.
 
