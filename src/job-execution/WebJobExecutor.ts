@@ -108,7 +108,7 @@ export class WebJobExecutor extends BaseJobExecutor {
                 'Valid JSON could not be extracted from response.'
               )
             }
-            console.log('WebJobExecutor')
+
             isValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)

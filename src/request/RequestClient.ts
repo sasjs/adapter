@@ -425,7 +425,7 @@ export class RequestClient implements HttpClient {
         if (weboutResponse === '') {
           throw new Error('Valid JSON could not be extracted from response.')
         }
-        console.log('RequestClient')
+
         isValidJson(weboutResponse)
         parsedResponse = JSON.parse(weboutResponse)
       } catch {
