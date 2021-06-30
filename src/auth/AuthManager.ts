@@ -1,5 +1,4 @@
 import { ServerType } from '@sasjs/utils/types'
-import { isAuthorizeFormRequired } from '.'
 import { RequestClient } from '../request/RequestClient'
 import { serialize } from '../utils'
 

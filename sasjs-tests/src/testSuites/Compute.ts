@@ -25,7 +25,7 @@ export const computeTests = (adapter: SASjs): TestSuite => ({
           '/Public/app/common/sendArr',
           data,
           {},
-          '',
+          undefined,
           true
         )
       },
