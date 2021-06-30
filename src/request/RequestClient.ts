@@ -63,6 +63,9 @@ export class RequestClient implements HttpClient {
         baseURL: baseUrl
       })
     }
+
+    this.httpClient.defaults.validateStatus = (status) =>
+      status >= 200 && status < 305
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {

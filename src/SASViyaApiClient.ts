@@ -290,16 +290,14 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ): Promise<any> {
-    const { access_token } = authConfig || {}
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await this.getTokens(authConfig))
+    }
+
     const logger = process.logger || console
 
     try {
-      const headers: any = {
-        'Content-Type': 'application/json'
-      }
-
-      if (access_token) headers.Authorization = `Bearer ${access_token}`
-
       let executionSessionId: string
 
       const session = await this.sessionManager
@@ -442,6 +440,10 @@ export class SASViyaApiClient {
         }
         throw prefixMessage(err, 'Error while polling job status. ')
       })
+
+      if (authConfig) {
+        ;({ access_token } = await this.getTokens(authConfig))
+      }
 
       const { result: currentJob } = await this.requestClient
         .get<Job>(
@@ -886,7 +888,10 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ) {
-    let { access_token } = authConfig || {}
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await this.getTokens(authConfig))
+    }
 
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -911,12 +916,6 @@ export class SASViyaApiClient {
       throw new Error(
         `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'`
       )
-    }
-
-    const headers: any = { 'Content-Type': 'application/json' }
-
-    if (!!access_token) {
-      headers.Authorization = `Bearer ${access_token}`
     }
 
     const jobToExecute = jobFolder?.find((item) => item.name === jobName)
@@ -985,7 +984,10 @@ export class SASViyaApiClient {
     data?: any,
     authConfig?: AuthConfig
   ) {
-    let { access_token } = authConfig || {}
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await this.getTokens(authConfig))
+    }
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name.'
@@ -1145,21 +1147,9 @@ export class SASViyaApiClient {
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
     let MAX_ERROR_COUNT = 5
-    let { access_token, refresh_token, client, secret } = authConfig || {}
-    if (access_token && refresh_token) {
-      if (
-        client &&
-        secret &&
-        refresh_token &&
-        (isAccessTokenExpiring(access_token) ||
-          isRefreshTokenExpiring(refresh_token))
-      ) {
-        ;({ access_token, refresh_token } = await this.refreshTokens(
-          client,
-          secret,
-          refresh_token
-        ))
-      }
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await this.getTokens(authConfig))
     }
 
     if (pollOptions) {
@@ -1213,20 +1203,8 @@ export class SASViyaApiClient {
           postedJobState === 'pending' ||
           postedJobState === 'unavailable'
         ) {
-          if (access_token && refresh_token) {
-            if (
-              client &&
-              secret &&
-              refresh_token &&
-              (isAccessTokenExpiring(access_token) ||
-                isRefreshTokenExpiring(refresh_token))
-            ) {
-              ;({ access_token, refresh_token } = await this.refreshTokens(
-                client,
-                secret,
-                refresh_token
-              ))
-            }
+          if (authConfig) {
+            ;({ access_token } = await this.getTokens(authConfig))
           }
 
           if (stateLink) {
@@ -1509,5 +1487,22 @@ export class SASViyaApiClient {
     )
 
     return movedFolder
+  }
+
+  private async getTokens(authConfig: AuthConfig): Promise<AuthConfig> {
+    const logger = process.logger || console
+    let { access_token, refresh_token, client, secret } = authConfig
+    if (
+      isAccessTokenExpiring(access_token) ||
+      isRefreshTokenExpiring(refresh_token)
+    ) {
+      logger.info('Refreshing access and refresh tokens.')
+      ;({ access_token, refresh_token } = await this.refreshTokens(
+        client,
+        secret,
+        refresh_token
+      ))
+    }
+    return { access_token, refresh_token, client, secret }
   }
 }

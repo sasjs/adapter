@@ -13,7 +13,7 @@
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",
     "typedoc": "typedoc",
-    "postinstall": "[ -d .git ] && git config core.hooksPath ./.git-hooks || true"
+    "prepare": "[ -d .git ] && git config core.hooksPath ./.git-hooks || true"
   },
   "publishConfig": {
     "access": "public"
