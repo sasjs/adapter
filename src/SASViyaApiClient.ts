@@ -3,7 +3,9 @@ import {
   isRelativePath,
   isUri,
   isUrl,
-  fetchLogByChunks
+  fetchLogByChunks,
+  isAccessTokenExpiring,
+  isRefreshTokenExpiring
 } from './utils'
 import * as NodeFormData from 'form-data'
 import {
@@ -29,7 +31,7 @@ import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { SasAuthResponse, MacroVar } from '@sasjs/utils/types'
+import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as mime from 'mime'
 
@@ -130,14 +132,14 @@ export class SASViyaApiClient {
 
   /**
    * Returns all compute contexts on this server that the user has access to.
-   * @param accessToken - an access token for an authorized user.
+   * @param authConfig - an access token, refresh token, client and secret for an authorized user.
    */
-  public async getExecutableContexts(accessToken?: string) {
+  public async getExecutableContexts(authConfig?: AuthConfig) {
     const bindedExecuteScript = this.executeScript.bind(this)
 
     return await this.contextManager.getExecutableContexts(
       bindedExecuteScript,
-      accessToken
+      authConfig
     )
   }
 
@@ -266,7 +268,7 @@ export class SASViyaApiClient {
    * @param jobPath - the path to the file being submitted for execution.
    * @param linesOfCode - an array of code lines to execute.
    * @param contextName - the context to execute the code in.
-   * @param accessToken - an access token for an authorized user.
+   * @param authConfig - an object containing an access token, refresh token, client ID and secret.
    * @param data - execution data.
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
@@ -279,7 +281,7 @@ export class SASViyaApiClient {
     jobPath: string,
     linesOfCode: string[],
     contextName: string,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     data = null,
     debug: boolean = false,
     expectWebout = false,
@@ -288,17 +290,20 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ): Promise<any> {
+    const { access_token } = authConfig || {}
+    const logger = process.logger || console
+
     try {
       const headers: any = {
         'Content-Type': 'application/json'
       }
 
-      if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+      if (access_token) headers.Authorization = `Bearer ${access_token}`
 
       let executionSessionId: string
 
       const session = await this.sessionManager
-        .getSession(accessToken)
+        .getSession(access_token)
         .catch((err) => {
           throw prefixMessage(err, 'Error while getting session. ')
         })
@@ -307,7 +312,7 @@ export class SASViyaApiClient {
 
       if (printPid) {
         const { result: jobIdVariable } = await this.sessionManager
-          .getVariable(executionSessionId, 'SYSJOBID', accessToken)
+          .getVariable(executionSessionId, 'SYSJOBID', access_token)
           .catch((err) => {
             throw prefixMessage(err, 'Error while getting session variable. ')
           })
@@ -367,7 +372,7 @@ export class SASViyaApiClient {
 
       if (data) {
         if (JSON.stringify(data).includes(';')) {
-          files = await this.uploadTables(data, accessToken).catch((err) => {
+          files = await this.uploadTables(data, access_token).catch((err) => {
             throw prefixMessage(err, 'Error while uploading tables. ')
           })
 
@@ -397,7 +402,7 @@ export class SASViyaApiClient {
         .post<Job>(
           `/compute/sessions/${executionSessionId}/jobs`,
           jobRequestBody,
-          accessToken
+          access_token
         )
         .catch((err) => {
           throw prefixMessage(err, 'Error while posting job. ')
@@ -406,8 +411,8 @@ export class SASViyaApiClient {
       if (!waitForResult) return session
 
       if (debug) {
-        console.log(`Job has been submitted for '${fileName}'.`)
-        console.log(
+        logger.info(`Job has been submitted for '${fileName}'.`)
+        logger.info(
           `You can monitor the job progress at '${this.serverUrl}${
             postedJob.links.find((l: any) => l.rel === 'state')!.href
           }'.`
@@ -417,7 +422,7 @@ export class SASViyaApiClient {
       const jobStatus = await this.pollJobState(
         postedJob,
         etag,
-        accessToken,
+        authConfig,
         pollOptions
       ).catch(async (err) => {
         const error = err?.response?.data
@@ -430,7 +435,7 @@ export class SASViyaApiClient {
           const logCount = 1000000
           err.log = await fetchLogByChunks(
             this.requestClient,
-            accessToken!,
+            access_token!,
             sessionLogUrl,
             logCount
           )
@@ -441,7 +446,7 @@ export class SASViyaApiClient {
       const { result: currentJob } = await this.requestClient
         .get<Job>(
           `/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
-          accessToken
+          access_token
         )
         .catch((err) => {
           throw prefixMessage(err, 'Error while getting job. ')
@@ -457,7 +462,7 @@ export class SASViyaApiClient {
         const logCount = currentJob.logStatistics?.lineCount ?? 1000000
         log = await fetchLogByChunks(
           this.requestClient,
-          accessToken!,
+          access_token!,
           logUrl,
           logCount
         )
@@ -477,7 +482,7 @@ export class SASViyaApiClient {
 
       if (resultLink) {
         jobResult = await this.requestClient
-          .get<any>(resultLink, accessToken, 'text/plain')
+          .get<any>(resultLink, access_token, 'text/plain')
           .catch(async (e) => {
             if (e instanceof NotFoundError) {
               if (logLink) {
@@ -485,7 +490,7 @@ export class SASViyaApiClient {
                 const logCount = currentJob.logStatistics?.lineCount ?? 1000000
                 log = await fetchLogByChunks(
                   this.requestClient,
-                  accessToken!,
+                  access_token!,
                   logUrl,
                   logCount
                 )
@@ -504,7 +509,7 @@ export class SASViyaApiClient {
       }
 
       await this.sessionManager
-        .clearSession(executionSessionId, accessToken)
+        .clearSession(executionSessionId, access_token)
         .catch((err) => {
           throw prefixMessage(err, 'Error while clearing session. ')
         })
@@ -516,7 +521,7 @@ export class SASViyaApiClient {
           jobPath,
           linesOfCode,
           contextName,
-          accessToken,
+          authConfig,
           data,
           debug,
           false,
@@ -603,6 +608,7 @@ export class SASViyaApiClient {
     accessToken?: string,
     isForced?: boolean
   ): Promise<Folder> {
+    const logger = process.logger || console
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Path or URI of the parent folder is required.')
     }
@@ -610,7 +616,7 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
       if (!parentFolderUri) {
-        console.log(
+        logger.info(
           `Parent folder at path '${parentFolderPath}' is not present.`
         )
 
@@ -622,7 +628,7 @@ export class SASViyaApiClient {
         if (newParentFolderPath === '') {
           throw new Error('Root folder has to be present on the server.')
         }
-        console.log(
+        logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
         const parentFolder = await this.createFolder(
@@ -631,7 +637,7 @@ export class SASViyaApiClient {
           undefined,
           accessToken
         )
-        console.log(
+        logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
         )
         parentFolderUri = `/folders/folders/${parentFolder.id}`
@@ -873,13 +879,15 @@ export class SASViyaApiClient {
     contextName: string,
     debug?: boolean,
     data?: any,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     waitForResult = true,
     expectWebout = false,
     pollOptions?: PollOptions,
     printPid = false,
     variables?: MacroVar
   ) {
+    let { access_token } = authConfig || {}
+
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name'
@@ -893,7 +901,7 @@ export class SASViyaApiClient {
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
 
-    await this.populateFolderMap(fullFolderPath, accessToken).catch((err) => {
+    await this.populateFolderMap(fullFolderPath, access_token).catch((err) => {
       throw prefixMessage(err, 'Error while populating folder map. ')
     })
 
@@ -907,8 +915,8 @@ export class SASViyaApiClient {
 
     const headers: any = { 'Content-Type': 'application/json' }
 
-    if (!!accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
+    if (!!access_token) {
+      headers.Authorization = `Bearer ${access_token}`
     }
 
     const jobToExecute = jobFolder?.find((item) => item.name === jobName)
@@ -931,7 +939,7 @@ export class SASViyaApiClient {
       const { result: jobDefinition } = await this.requestClient
         .get<JobDefinition>(
           `${this.serverUrl}${jobDefinitionLink.href}`,
-          accessToken
+          access_token
         )
         .catch((err) => {
           throw prefixMessage(err, 'Error while getting job definition. ')
@@ -951,7 +959,7 @@ export class SASViyaApiClient {
       sasJob,
       linesToExecute,
       contextName,
-      accessToken,
+      authConfig,
       data,
       debug,
       expectWebout,
@@ -975,8 +983,9 @@ export class SASViyaApiClient {
     contextName: string,
     debug: boolean,
     data?: any,
-    accessToken?: string
+    authConfig?: AuthConfig
   ) {
+    let { access_token } = authConfig || {}
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name.'
@@ -989,7 +998,7 @@ export class SASViyaApiClient {
     const fullFolderPath = isRelativePath(sasJob)
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
-    await this.populateFolderMap(fullFolderPath, accessToken)
+    await this.populateFolderMap(fullFolderPath, access_token)
 
     const jobFolder = this.folderMap.get(fullFolderPath)
     if (!jobFolder) {
@@ -1002,7 +1011,7 @@ export class SASViyaApiClient {
 
     let files: any[] = []
     if (data && Object.keys(data).length) {
-      files = await this.uploadTables(data, accessToken)
+      files = await this.uploadTables(data, access_token)
     }
 
     if (!jobToExecute) {
@@ -1014,7 +1023,7 @@ export class SASViyaApiClient {
 
     const { result: jobDefinition } = await this.requestClient.get<Job>(
       `${this.serverUrl}${jobDefinitionLink}`,
-      accessToken
+      access_token
     )
 
     const jobArguments: { [key: string]: any } = {
@@ -1050,18 +1059,18 @@ export class SASViyaApiClient {
     const { result: postedJob, etag } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
-      accessToken
+      access_token
     )
     const jobStatus = await this.pollJobState(
       postedJob,
       etag,
-      accessToken
+      authConfig
     ).catch((err) => {
       throw prefixMessage(err, 'Error while polling job status. ')
     })
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
-      accessToken
+      access_token
     )
 
     let jobResult
@@ -1072,13 +1081,13 @@ export class SASViyaApiClient {
     if (resultLink) {
       jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
-        accessToken,
+        access_token,
         'text/plain'
       )
     }
     if (debug && logLink) {
       log = await this.requestClient
-        .get<any>(`${this.serverUrl}${logLink.href}/content`, accessToken)
+        .get<any>(`${this.serverUrl}${logLink.href}/content`, access_token)
         .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
     if (jobStatus === 'failed') {
@@ -1128,12 +1137,30 @@ export class SASViyaApiClient {
   private async pollJobState(
     postedJob: any,
     etag: string | null,
-    accessToken?: string,
+    authConfig?: AuthConfig,
     pollOptions?: PollOptions
   ) {
+    const logger = process.logger || console
+
     let POLL_INTERVAL = 300
     let MAX_POLL_COUNT = 1000
     let MAX_ERROR_COUNT = 5
+    let { access_token, refresh_token, client, secret } = authConfig || {}
+    if (access_token && refresh_token) {
+      if (
+        client &&
+        secret &&
+        refresh_token &&
+        (isAccessTokenExpiring(access_token) ||
+          isRefreshTokenExpiring(refresh_token))
+      ) {
+        ;({ access_token, refresh_token } = await this.refreshTokens(
+          client,
+          secret,
+          refresh_token
+        ))
+      }
+    }
 
     if (pollOptions) {
       POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
@@ -1147,8 +1174,8 @@ export class SASViyaApiClient {
       'Content-Type': 'application/json',
       'If-None-Match': etag
     }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
+    if (access_token) {
+      headers.Authorization = `Bearer ${access_token}`
     }
     const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
     if (!stateLink) {
@@ -1158,7 +1185,7 @@ export class SASViyaApiClient {
     const { result: state } = await this.requestClient
       .get<string>(
         `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
-        accessToken,
+        access_token,
         'text/plain',
         {},
         this.debug
@@ -1186,11 +1213,27 @@ export class SASViyaApiClient {
           postedJobState === 'pending' ||
           postedJobState === 'unavailable'
         ) {
+          if (access_token && refresh_token) {
+            if (
+              client &&
+              secret &&
+              refresh_token &&
+              (isAccessTokenExpiring(access_token) ||
+                isRefreshTokenExpiring(refresh_token))
+            ) {
+              ;({ access_token, refresh_token } = await this.refreshTokens(
+                client,
+                secret,
+                refresh_token
+              ))
+            }
+          }
+
           if (stateLink) {
             const { result: jobState } = await this.requestClient
               .get<string>(
                 `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
-                accessToken,
+                access_token,
                 'text/plain',
                 {},
                 this.debug
@@ -1219,8 +1262,8 @@ export class SASViyaApiClient {
             }
 
             if (this.debug && printedState !== postedJobState) {
-              console.log('Polling job status...')
-              console.log(`Current job state: ${postedJobState}`)
+              logger.info('Polling job status...')
+              logger.info(`Current job state: ${postedJobState}`)
 
               printedState = postedJobState
             }
@@ -1410,6 +1453,9 @@ export class SASViyaApiClient {
       accessToken
     )
 
+    if (!sourceFolderUri) {
+      return undefined
+    }
     const sourceFolderId = sourceFolderUri?.split('/').pop()
 
     const { result: folder } = await this.requestClient

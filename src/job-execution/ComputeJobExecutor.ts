@@ -1,4 +1,4 @@
-import { ServerType } from '@sasjs/utils/types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   ErrorResponse,
@@ -17,7 +17,7 @@ export class ComputeJobExecutor extends BaseJobExecutor {
     data: any,
     config: any,
     loginRequiredCallback?: any,
-    accessToken?: string
+    authConfig?: AuthConfig
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
     const waitForResult = true
@@ -30,7 +30,7 @@ export class ComputeJobExecutor extends BaseJobExecutor {
           config.contextName,
           config.debug,
           data,
-          accessToken,
+          authConfig,
           waitForResult,
           expectWebout
         )

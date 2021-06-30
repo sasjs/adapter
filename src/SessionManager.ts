@@ -158,6 +158,8 @@ export class SessionManager {
     etag: string | null,
     accessToken?: string
   ) {
+    const logger = process.logger || console
+
     let sessionState = session.state
 
     const stateLink = session.links.find((l: any) => l.rel === 'state')
@@ -170,7 +172,7 @@ export class SessionManager {
       ) {
         if (stateLink) {
           if (this.debug && !this.printedSessionState.printed) {
-            console.log('Polling session status...')
+            logger.info('Polling session status...')
 
             this.printedSessionState.printed = true
           }
@@ -186,7 +188,7 @@ export class SessionManager {
           sessionState = state.trim()
 
           if (this.debug && this.printedSessionState.state !== sessionState) {
-            console.log(`Current session state is '${sessionState}'`)
+            logger.info(`Current session state is '${sessionState}'`)
 
             this.printedSessionState.state = sessionState
             this.printedSessionState.printed = false

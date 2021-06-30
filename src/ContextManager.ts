@@ -2,6 +2,7 @@ import { Context, EditContextInput, ContextAllAttributes } from './types'
 import { isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
+import { AuthConfig } from '@sasjs/utils/types'
 
 export class ContextManager {
   private defaultComputeContexts = [
@@ -328,12 +329,12 @@ export class ContextManager {
 
   public async getExecutableContexts(
     executeScript: Function,
-    accessToken?: string
+    authConfig?: AuthConfig
   ) {
     const { result: contexts } = await this.requestClient
       .get<{ items: Context[] }>(
         `${this.serverUrl}/compute/contexts?limit=10000`,
-        accessToken
+        authConfig?.access_token
       )
       .catch((err) => {
         throw prefixMessage(err, 'Error while fetching compute contexts.')
@@ -350,7 +351,7 @@ export class ContextManager {
           `test-${context.name}`,
           linesOfCode,
           context.name,
-          accessToken,
+          authConfig,
           null,
           false,
           true,
