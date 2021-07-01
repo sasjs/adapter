@@ -6,10 +6,6 @@ import { RequestClient } from './request/RequestClient'
 const MAX_SESSION_COUNT = 1
 const RETRY_LIMIT: number = 3
 let RETRY_COUNT: number = 0
-const INTERNAL_SAS_ERROR = {
-  status: 304,
-  message: 'Not Modified'
-}
 
 export class SessionManager {
   constructor(
@@ -164,7 +160,7 @@ export class SessionManager {
 
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
-    return new Promise(async (resolve, _) => {
+    return new Promise(async (resolve, reject) => {
       if (
         sessionState === 'pending' ||
         sessionState === 'running' ||
@@ -182,7 +178,7 @@ export class SessionManager {
             etag!,
             accessToken
           ).catch((err) => {
-            throw err
+            throw prefixMessage(err, 'Error while getting session state.')
           })
 
           sessionState = state.trim()
@@ -196,13 +192,14 @@ export class SessionManager {
 
           // There is an internal error present in SAS Viya 3.5
           // Retry to wait for a session status in such case of SAS internal error
-          if (
-            sessionState === INTERNAL_SAS_ERROR.message &&
-            RETRY_COUNT < RETRY_LIMIT
-          ) {
-            RETRY_COUNT++
+          if (!sessionState) {
+            if (RETRY_COUNT < RETRY_LIMIT) {
+              RETRY_COUNT++
 
-            resolve(this.waitForSession(session, etag, accessToken))
+              resolve(this.waitForSession(session, etag, accessToken))
+            } else {
+              reject('Could not get session state.')
+            }
           }
 
           resolve(sessionState)
@@ -222,9 +219,6 @@ export class SessionManager {
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
       .then((res) => res.result as string)
       .catch((err) => {
-        if (err.status === INTERNAL_SAS_ERROR.status)
-          return INTERNAL_SAS_ERROR.message
-
         throw err
       })
   }
