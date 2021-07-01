@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const terserPlugin = require('terser-webpack-plugin')
+const nodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const defaultPlugins = [
   new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
@@ -37,7 +38,7 @@ const browserConfig = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
-    fallback: { https: false }
+    fallback: { https: false, fs: false, readline: false }
   },
   output: {
     filename: 'index.js',
@@ -49,7 +50,8 @@ const browserConfig = {
     ...defaultPlugins,
     new webpack.ProvidePlugin({
       process: 'process/browser'
-    })
+    }),
+    new nodePolyfillPlugin()
   ]
 }
 
