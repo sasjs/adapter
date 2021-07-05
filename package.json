@@ -3,8 +3,8 @@
   "description": "JavaScript adapter for SAS",
   "homepage": "https://adapter.sasjs.io",
   "scripts": {
-    "build": "rimraf build && rimraf node && mkdir node && cp -r src/* node && webpack && rimraf build/src && rimraf node",
-    "package:lib": "npm run build && cp ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
+    "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
+    "package:lib": "npm run build && copyfiles ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
@@ -13,7 +13,7 @@
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",
     "typedoc": "typedoc",
-    "prepare": "[ -d .git ] && git config core.hooksPath ./.git-hooks || true"
+    "prepare": "git rev-parse --git-dir && git config core.hooksPath ./.git-hooks && git config core.autocrlf false || true"
   },
   "publishConfig": {
     "access": "public"
@@ -41,11 +41,13 @@
     "@types/jest": "^26.0.23",
     "@types/mime": "^2.0.3",
     "@types/tough-cookie": "^4.0.0",
+    "copyfiles": "^2.4.1",
     "cp": "^0.2.0",
     "dotenv": "^10.0.0",
     "jest": "^27.0.6",
     "jest-extended": "^0.11.5",
     "mime": "^2.5.2",
+    "node-polyfill-webpack-plugin": "^1.1.4",
     "path": "^0.12.7",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
@@ -64,12 +66,11 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@sasjs/utils": "^2.21.0",
+    "@sasjs/utils": "^2.23.2",
     "axios": "^0.21.1",
     "axios-cookiejar-support": "^1.0.1",
     "form-data": "^4.0.0",
     "https": "^1.0.0",
-    "jwt-decode": "^3.1.2",
     "tough-cookie": "^4.0.0",
     "url": "^0.11.0"
   }
