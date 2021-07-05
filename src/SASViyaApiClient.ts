@@ -3,9 +3,7 @@ import {
   isRelativePath,
   isUri,
   isUrl,
-  fetchLogByChunks,
-  isAccessTokenExpiring,
-  isRefreshTokenExpiring
+  fetchLogByChunks
 } from './utils'
 import * as NodeFormData from 'form-data'
 import {
@@ -27,11 +25,18 @@ import {
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
-import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
-import { Logger, LogLevel } from '@sasjs/utils/logger'
+import {
+  timestampToYYYYMMDDHHMMSS,
+  isAccessTokenExpiring,
+  isRefreshTokenExpiring,
+  Logger,
+  LogLevel,
+  SasAuthResponse,
+  MacroVar,
+  AuthConfig
+} from '@sasjs/utils'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
-import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as mime from 'mime'
 
