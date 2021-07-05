@@ -3,7 +3,7 @@
   "description": "JavaScript adapter for SAS",
   "homepage": "https://adapter.sasjs.io",
   "scripts": {
-    "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 ./src/**/* ./node && webpack && rimraf build/src && rimraf node",
+    "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && copyfiles ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
