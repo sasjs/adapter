@@ -40,7 +40,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.23",
     "@types/mime": "^2.0.3",
-    "@types/tough-cookie": "^4.0.0",
+    "@types/tough-cookie": "^4.0.1",
     "copyfiles": "^2.4.1",
     "cp": "^0.2.0",
     "dotenv": "^10.0.0",
