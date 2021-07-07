@@ -1,4 +1,6 @@
 export interface PollOptions {
-  MAX_POLL_COUNT?: number
-  POLL_INTERVAL?: number
+  maxPollCount: number
+  pollInterval: number
+  streamLog: boolean
+  logFilePath?: string
 }
