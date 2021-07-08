@@ -14,7 +14,7 @@ import {
 import { JobExecutionError } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
-import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils'
+import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
