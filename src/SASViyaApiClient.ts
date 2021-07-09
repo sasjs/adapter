@@ -18,7 +18,6 @@ import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
-import * as mime from 'mime'
 import { pollJobState } from './api/viya/pollJobState'
 import { getAccessToken, getTokens, refreshTokens } from './auth/tokens'
 import { uploadTables } from './api/viya/uploadTables'
@@ -333,9 +332,6 @@ export class SASViyaApiClient {
 
     const formData = new NodeFormData()
     formData.append('file', contentBuffer, fileName)
-
-    const mimeType =
-      mime.getType(fileName.match(/\.[0-9a-z]+$/i)?.[0] || '') ?? 'text/plain'
 
     return (
       await this.requestClient.post<File>(
@@ -938,14 +934,6 @@ export class SASViyaApiClient {
     const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder
       : await this.getFolderUri(sourceFolder, accessToken)
-
-    const requestInfo = {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + accessToken
-      }
-    }
 
     const { result: members } = await this.requestClient.get<{ items: any[] }>(
       `${this.serverUrl}${sourceFolderUri}/members?limit=${limit}`,

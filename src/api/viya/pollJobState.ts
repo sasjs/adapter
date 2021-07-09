@@ -1,5 +1,7 @@
-import { AuthConfig, createFile, generateTimestamp } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils'
 import { prefixMessage } from '@sasjs/utils/error'
+import { generateTimestamp } from '@sasjs/utils/time'
+import { createFile } from '@sasjs/utils/file'
 import { Job, PollOptions } from '../..'
 import { getTokens } from '../../auth/tokens'
 import { RequestClient } from '../../request/RequestClient'
@@ -15,17 +17,23 @@ export async function pollJobState(
 ) {
   const logger = process.logger || console
 
-  let POLL_INTERVAL = 300
-  let MAX_POLL_COUNT = 1000
-  let MAX_ERROR_COUNT = 5
+  let pollInterval = 300
+  let maxPollCount = 1000
+  let maxErrorCount = 5
   let access_token = (authConfig || {}).access_token
+
+  const logFileName = `${postedJob.name || 'job'}-${generateTimestamp()}.log`
+  const logFilePath = `${
+    pollOptions?.logFilePath || process.cwd()
+  }/${logFileName}`
+
   if (authConfig) {
     ;({ access_token } = await getTokens(requestClient, authConfig))
   }
 
   if (pollOptions) {
-    POLL_INTERVAL = pollOptions.pollInterval || POLL_INTERVAL
-    MAX_POLL_COUNT = pollOptions.maxPollCount || MAX_POLL_COUNT
+    pollInterval = pollOptions.pollInterval || pollInterval
+    maxPollCount = pollOptions.maxPollCount || maxPollCount
   }
 
   let postedJobState = ''
@@ -89,10 +97,7 @@ export async function pollJobState(
             )
             .catch((err) => {
               errorCount++
-              if (
-                pollCount >= MAX_POLL_COUNT ||
-                errorCount >= MAX_ERROR_COUNT
-              ) {
+              if (pollCount >= maxPollCount || errorCount >= maxErrorCount) {
                 throw prefixMessage(
                   err,
                   'Error while getting job state after interval. '
@@ -123,11 +128,11 @@ export async function pollJobState(
             postedJob,
             requestClient,
             pollOptions?.streamLog || false,
-            pollOptions?.logFilePath,
+            logFilePath,
             access_token
           )
 
-          if (pollCount >= MAX_POLL_COUNT) {
+          if (pollCount >= maxPollCount) {
             resolve(postedJobState)
           }
         }
@@ -135,7 +140,7 @@ export async function pollJobState(
         clearInterval(interval)
         resolve(postedJobState)
       }
-    }, POLL_INTERVAL)
+    }, pollInterval)
   })
 }
 
@@ -143,7 +148,7 @@ async function saveLog(
   job: Job,
   requestClient: RequestClient,
   shouldSaveLog: boolean,
-  logFilePath?: string,
+  logFilePath: string,
   accessToken?: string
 ) {
   if (!shouldSaveLog) {
@@ -157,8 +162,6 @@ async function saveLog(
   }
 
   const logger = process.logger || console
-  const logFileName = `${job.name || 'job'}-${generateTimestamp()}.log`
-  const logPath = `${logFilePath || process.cwd()}/${logFileName}`
   const jobLogUrl = job.links.find((l) => l.rel === 'log')
 
   if (!jobLogUrl) {
@@ -173,6 +176,6 @@ async function saveLog(
     logCount
   )
 
-  logger.info(`Writing logs to ${logPath}`)
-  await createFile(logPath, log)
+  logger.info(`Writing logs to ${logFilePath}`)
+  await createFile(logFilePath, log)
 }

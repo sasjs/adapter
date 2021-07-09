@@ -1,10 +1,5 @@
-import {
-  AuthConfig,
-  MacroVar,
-  Logger,
-  LogLevel,
-  timestampToYYYYMMDDHHMMSS
-} from '@sasjs/utils'
+import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
+import { AuthConfig, MacroVar } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import {
   PollOptions,
@@ -42,7 +37,7 @@ export async function executeScript(
   linesOfCode: string[],
   contextName: string,
   authConfig?: AuthConfig,
-  data = null,
+  data: any = null,
   debug: boolean = false,
   expectWebout = false,
   waitForResult = true,
@@ -80,7 +75,7 @@ export async function executeScript(
           ? jobPath.split(rootFolderName).join('').replace(/^\//, '')
           : jobPath
 
-        const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
+        const logger = process.logger || console
 
         logger.info(
           `Triggered '${relativeJobPath}' with PID ${
@@ -235,44 +230,40 @@ export async function executeScript(
     }
 
     if (jobStatus === 'failed' || jobStatus === 'error') {
-      return Promise.reject(new ComputeJobExecutionError(currentJob, log))
+      throw new ComputeJobExecutionError(currentJob, log)
     }
 
-    let resultLink
-
-    if (expectWebout) {
-      resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
-    } else {
+    if (!expectWebout) {
       return { job: currentJob, log }
     }
 
-    if (resultLink) {
-      jobResult = await requestClient
-        .get<any>(resultLink, access_token, 'text/plain')
-        .catch(async (e) => {
-          if (e instanceof NotFoundError) {
-            if (logLink) {
-              const logUrl = `${logLink.href}/content`
-              const logCount = currentJob.logStatistics?.lineCount ?? 1000000
-              log = await fetchLogByChunks(
-                requestClient,
-                access_token!,
-                logUrl,
-                logCount
-              )
+    const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
 
-              return Promise.reject({
-                status: 500,
-                log
-              })
-            }
-          }
+    jobResult = await requestClient
+      .get<any>(resultLink, access_token, 'text/plain')
+      .catch(async (e) => {
+        if (e instanceof NotFoundError) {
+          if (logLink) {
+            const logUrl = `${logLink.href}/content`
+            const logCount = currentJob.logStatistics?.lineCount ?? 1000000
+            log = await fetchLogByChunks(
+              requestClient,
+              access_token!,
+              logUrl,
+              logCount
+            )
 
-          return {
-            result: JSON.stringify(e)
+            return Promise.reject({
+              status: 500,
+              log
+            })
           }
-        })
-    }
+        }
+
+        return {
+          result: JSON.stringify(e)
+        }
+      })
 
     await sessionManager
       .clearSession(executionSessionId, access_token)
