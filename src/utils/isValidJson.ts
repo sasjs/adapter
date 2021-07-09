@@ -4,6 +4,7 @@
  */
 export const isValidJson = (str: string) => {
   try {
+    str = typeof str !== 'string' ? JSON.stringify(str) : str
     JSON.parse(str)
   } catch (e) {
     throw new Error('Invalid JSON response.')
