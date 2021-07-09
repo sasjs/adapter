@@ -624,10 +624,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => {
-      console.log(e)
-      return e
-    })
+    ).catch((e) => e)
 
     expect(error.includes('Error while clearing session.')).toBeTruthy()
   })
