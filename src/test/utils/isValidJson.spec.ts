@@ -1,6 +1,6 @@
 import { isValidJson } from '../../utils'
 
-describe.only('jsonValidator', () => {
+describe('jsonValidator', () => {
   it('should not throw an error with an valid json', () => {
     const json = {
       test: 'test'
