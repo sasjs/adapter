@@ -4,7 +4,7 @@ import { executeScript } from '../executeScript'
 import { mockSession, mockAuthConfig, mockJob } from './mockResponses'
 import * as pollJobStateModule from '../pollJobState'
 import * as uploadTablesModule from '../uploadTables'
-import * as tokensModule from '../../../auth/tokens'
+import * as getTokensModule from '../../../auth/getTokens'
 import * as formatDataModule from '../../../utils/formatDataForRequest'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import { PollOptions } from '../../../types'
@@ -35,7 +35,7 @@ describe('executeScript', () => {
       'test context'
     )
 
-    expect(tokensModule.getTokens).not.toHaveBeenCalled()
+    expect(getTokensModule.getTokens).not.toHaveBeenCalled()
   })
 
   it('should try to get fresh tokens if an authConfig is provided', async () => {
@@ -49,7 +49,7 @@ describe('executeScript', () => {
       mockAuthConfig
     )
 
-    expect(tokensModule.getTokens).toHaveBeenCalledWith(
+    expect(getTokensModule.getTokens).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig
     )
@@ -82,7 +82,7 @@ describe('executeScript', () => {
       'test context'
     ).catch((e) => e)
 
-    expect(error.includes('Error while getting session.')).toBeTruthy()
+    expect(error).toContain('Error while getting session.')
   })
 
   it('should fetch the PID when printPid is true', async () => {
@@ -130,7 +130,7 @@ describe('executeScript', () => {
       true
     ).catch((e) => e)
 
-    expect(error.includes('Error while getting session variable.')).toBeTruthy()
+    expect(error).toContain('Error while getting session variable.')
   })
 
   it('should use the file upload approach when data contains semicolons', async () => {
@@ -300,7 +300,7 @@ describe('executeScript', () => {
     ).catch((e) => e)
 
     console.log(error)
-    expect(error.includes('Error while posting job')).toBeTruthy()
+    expect(error).toContain('Error while posting job')
   })
 
   it('should immediately return the session when waitForResult is false', async () => {
@@ -371,7 +371,7 @@ describe('executeScript', () => {
       true
     ).catch((e) => e)
 
-    expect(error.includes('Error while polling job status.')).toBeTruthy()
+    expect(error).toContain('Error while polling job status.')
   })
 
   it('should fetch the log and append it to the error in case of a 5113 error code', async () => {
@@ -626,7 +626,7 @@ describe('executeScript', () => {
       true
     ).catch((e) => e)
 
-    expect(error.includes('Error while clearing session.')).toBeTruthy()
+    expect(error).toContain('Error while clearing session.')
   })
 })
 
@@ -634,7 +634,7 @@ const setupMocks = () => {
   jest.restoreAllMocks()
   jest.mock('../../../request/RequestClient')
   jest.mock('../../../SessionManager')
-  jest.mock('../../../auth/tokens')
+  jest.mock('../../../auth/getTokens')
   jest.mock('../pollJobState')
   jest.mock('../uploadTables')
   jest.mock('../../../utils/formatDataForRequest')
@@ -650,7 +650,7 @@ const setupMocks = () => {
     .spyOn(requestClient, 'delete')
     .mockImplementation(() => Promise.resolve({ result: {}, etag: '' }))
   jest
-    .spyOn(tokensModule, 'getTokens')
+    .spyOn(getTokensModule, 'getTokens')
     .mockImplementation(() => Promise.resolve(mockAuthConfig))
   jest
     .spyOn(pollJobStateModule, 'pollJobState')

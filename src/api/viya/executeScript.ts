@@ -7,7 +7,7 @@ import {
   ComputeJobExecutionError,
   NotFoundError
 } from '../..'
-import { getTokens } from '../../auth/tokens'
+import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { SessionManager } from '../../SessionManager'
 import { isRelativePath, fetchLogByChunks } from '../../utils'

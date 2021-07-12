@@ -19,9 +19,11 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
 import { pollJobState } from './api/viya/pollJobState'
-import { getAccessToken, getTokens, refreshTokens } from './auth/tokens'
+import { getTokens } from './auth/getTokens'
 import { uploadTables } from './api/viya/uploadTables'
 import { executeScript } from './api/viya/executeScript'
+import { getAccessToken } from './auth/getAccessToken'
+import { refreshTokens } from './auth/refreshTokens'
 
 /**
  * A client for interfacing with the SAS Viya REST API.

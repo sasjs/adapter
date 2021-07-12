@@ -1,11 +1,10 @@
-import { AuthConfig } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import { generateTimestamp } from '@sasjs/utils/time'
-import { createFile } from '@sasjs/utils/file'
 import { Job, PollOptions } from '../..'
-import { getTokens } from '../../auth/tokens'
+import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
-import { fetchLogByChunks } from '../../utils'
+import { saveLog } from './saveLog'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -48,7 +47,7 @@ export async function pollJobState(
   }
   const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
   if (!stateLink) {
-    return Promise.reject(`Job state link was not found.`)
+    throw new Error(`Job state link was not found.`)
   }
 
   const { result: state } = await requestClient
@@ -72,7 +71,7 @@ export async function pollJobState(
     return Promise.resolve(currentState)
   }
 
-  return new Promise(async (resolve, _) => {
+  return new Promise(async (resolve, reject) => {
     let printedState = ''
 
     const interval = setInterval(async () => {
@@ -98,9 +97,12 @@ export async function pollJobState(
             .catch((err) => {
               errorCount++
               if (pollCount >= maxPollCount || errorCount >= maxErrorCount) {
-                throw prefixMessage(
-                  err,
-                  'Error while getting job state after interval. '
+                clearInterval(interval)
+                reject(
+                  prefixMessage(
+                    err,
+                    'Error while getting job state after interval. '
+                  )
                 )
               }
               logger.error(
@@ -142,40 +144,4 @@ export async function pollJobState(
       }
     }, pollInterval)
   })
-}
-
-async function saveLog(
-  job: Job,
-  requestClient: RequestClient,
-  shouldSaveLog: boolean,
-  logFilePath: string,
-  accessToken?: string
-) {
-  if (!shouldSaveLog) {
-    return
-  }
-
-  if (!accessToken) {
-    throw new Error(
-      `Logs for job ${job.id} cannot be fetched without a valid access token.`
-    )
-  }
-
-  const logger = process.logger || console
-  const jobLogUrl = job.links.find((l) => l.rel === 'log')
-
-  if (!jobLogUrl) {
-    throw new Error(`Log URL for job ${job.id} was not found.`)
-  }
-
-  const logCount = job.logStatistics?.lineCount ?? 1000000
-  const log = await fetchLogByChunks(
-    requestClient,
-    accessToken,
-    `${jobLogUrl.href}/content`,
-    logCount
-  )
-
-  logger.info(`Writing logs to ${logFilePath}`)
-  await createFile(logFilePath, log)
 }
