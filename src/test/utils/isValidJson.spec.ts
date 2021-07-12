@@ -1,31 +1,31 @@
-import { isValidJson } from "../../utils"
+import { isValidJson } from '../../utils'
 
 describe.only('jsonValidator', () => {
-    it('should not throw an error with an valid json', () => {
-      const json = {
-          test: 'test'
+  it('should not throw an error with an valid json', () => {
+    const json = {
+      test: 'test'
+    }
+
+    expect(isValidJson(json)).not.toThrowError
+  })
+
+  it('should not throw an error with an valid json string', () => {
+    const json = JSON.stringify({
+      test: 'test'
+    })
+
+    expect(isValidJson(json)).not.toThrowError
+  })
+
+  it('should throw an error with an invalid json', () => {
+    const json = `{\"test\":\"test\"\"test2\":\"test\"}`
+
+    expect(() => {
+      try {
+        isValidJson(json)
+      } catch (err) {
+        throw new Error()
       }
-  
-      expect(isValidJson(json)).not.toThrowError
-    })
-
-    it('should not throw an error with an valid json string', () => {
-      const json = JSON.stringify({
-          test: 'test'
-      })
-  
-      expect(isValidJson(json)).not.toThrowError
-    })
-
-    it('should throw an error with an invalid json', () => {
-      const json = `{\"test\":\"test\"\"test2\":\"test\"}`
-  
-      expect(() => {
-        try {
-          isValidJson(json)
-        } catch(err) {
-          throw new Error()
-        }
-      }).toThrowError
-    })
+    }).toThrowError
+  })
 })
