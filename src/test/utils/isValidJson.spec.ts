@@ -6,15 +6,15 @@ describe.only('jsonValidator', () => {
       test: 'test'
     }
 
-    expect(isValidJson(json)).not.toThrowError
+    expect(isValidJson(json)).toBe(json)
   })
 
   it('should not throw an error with an valid json string', () => {
-    const json = JSON.stringify({
+    const json = {
       test: 'test'
-    })
+    }
 
-    expect(isValidJson(json)).not.toThrowError
+    expect(isValidJson(JSON.stringify(json))).toStrictEqual(json)
   })
 
   it('should throw an error with an invalid json', () => {
