@@ -8,12 +8,6 @@ export async function uploadTables(
   accessToken?: string
 ) {
   const uploadedFiles = []
-  const headers: any = {
-    'Content-Type': 'application/json'
-  }
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`
-  }
 
   for (const tableName in data) {
     const csv = convertToCSV(data[tableName])

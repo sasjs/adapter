@@ -1,4 +1,5 @@
-import { SasAuthResponse } from '@sasjs/utils'
+import { SasAuthResponse } from '@sasjs/utils/types'
+import { prefixMessage } from '@sasjs/utils/error'
 import * as NodeFormData from 'form-data'
 import { RequestClient } from '../request/RequestClient'
 
@@ -44,6 +45,9 @@ export async function getAccessToken(
       headers
     )
     .then((res) => res.result as SasAuthResponse)
+    .catch((err) => {
+      throw prefixMessage(err, 'Error while getting access token')
+    })
 
   return authResponse
 }
