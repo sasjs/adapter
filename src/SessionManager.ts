@@ -1,4 +1,5 @@
-import { Session, Context, CsrfToken, SessionVariable } from './types'
+import { Session, Context, SessionVariable } from './types'
+import { NoSessionStateError } from './types/errors'
 import { asyncForEach, isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
@@ -173,13 +174,14 @@ export class SessionManager {
             this.printedSessionState.printed = true
           }
 
-          const state = await this.getSessionState(
-            `${this.serverUrl}${stateLink.href}?wait=30`,
-            etag!,
-            accessToken
-          ).catch((err) => {
-            throw prefixMessage(err, 'Error while getting session state.')
-          })
+          const { result: state, responseStatus: responseStatus } =
+            await this.getSessionState(
+              `${this.serverUrl}${stateLink.href}?wait=30`,
+              etag!,
+              accessToken
+            ).catch((err) => {
+              throw prefixMessage(err, 'Error while getting session state.')
+            })
 
           sessionState = state.trim()
 
@@ -198,7 +200,14 @@ export class SessionManager {
 
               resolve(this.waitForSession(session, etag, accessToken))
             } else {
-              reject('Could not get session state.')
+              reject(
+                new NoSessionStateError(
+                  responseStatus,
+                  this.serverUrl + stateLink.href,
+                  session.links.find((l: any) => l.rel === 'log')
+                    ?.href as string
+                )
+              )
             }
           }
 
@@ -217,7 +226,10 @@ export class SessionManager {
   ) {
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
-      .then((res) => res.result as string)
+      .then((res) => ({
+        result: res.result as string,
+        responseStatus: res.status
+      }))
       .catch((err) => {
         throw err
       })
