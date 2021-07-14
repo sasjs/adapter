@@ -1,7 +1,9 @@
 import { SessionManager } from '../SessionManager'
-import * as dotenv from 'dotenv'
 import { RequestClient } from '../request/RequestClient'
+import { NoSessionStateError } from '../types/errors'
+import * as dotenv from 'dotenv'
 import axios from 'axios'
+
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -41,6 +43,40 @@ describe('SessionManager', () => {
           'fakeAccessToken'
         )
       ).resolves.toEqual(expectedResponse)
+    })
+  })
+
+  describe('waitForSession', () => {
+    it('should reject with NoSessionStateError if SAS server did not provide session state', async () => {
+      const responseStatus = 304
+
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: '', status: responseStatus })
+      )
+
+      await expect(
+        sessionManager['waitForSession'](
+          {
+            id: 'id',
+            state: '',
+            links: [
+              { rel: 'state', href: '', uri: '', type: '', method: 'GET' }
+            ],
+            attributes: {
+              sessionInactiveTimeout: 0
+            },
+            creationTimeStamp: ''
+          },
+          null,
+          'access_token'
+        )
+      ).rejects.toEqual(
+        new NoSessionStateError(
+          responseStatus,
+          process.env.SERVER_URL as string,
+          'logUrl'
+        )
+      )
     })
   })
 })
