@@ -23,7 +23,7 @@ export async function pollJobState(
 
   const logFileName = `${postedJob.name || 'job'}-${generateTimestamp()}.log`
   const logFilePath = `${
-    pollOptions?.logFilePath || process.cwd()
+    pollOptions?.logFolderPath || process.cwd()
   }/${logFileName}`
 
   if (authConfig) {
