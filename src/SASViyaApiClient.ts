@@ -25,16 +25,13 @@ import {
 import { formatDataForRequest } from './utils/formatDataForRequest'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
+import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import {
-  timestampToYYYYMMDDHHMMSS,
   isAccessTokenExpiring,
-  isRefreshTokenExpiring,
-  Logger,
-  LogLevel,
-  SasAuthResponse,
-  MacroVar,
-  AuthConfig
-} from '@sasjs/utils'
+  isRefreshTokenExpiring
+} from '@sasjs/utils/auth'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
+import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
