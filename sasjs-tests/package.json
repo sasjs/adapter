@@ -23,7 +23,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
-    "deploy:tests": "rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH",
+    "deploy:tests": "rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH || npm run deploy:tests-win",
+    "deploy:tests-win": "scp %DEPLOY_PATH% ./build/*",
     "deploy": "npm run update:adapter && npm run build && npm run deploy:tests"
   },
   "eslintConfig": {
