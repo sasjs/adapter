@@ -37,6 +37,8 @@ const moreSpecialCharData: any = {
   ]
 }
 
+const stringData: any = { table1: [{ col1: 'first col value' }] }
+
 const getWideData = () => {
   const cols: any = {}
   for (let i = 1; i <= 10000; i++) {
@@ -246,6 +248,34 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res._csrf[0].COL3 === errorAndCsrfData._csrf[0].col3 &&
           res._csrf[0].COL4 === errorAndCsrfData._csrf[0].col4
         )
+      }
+    },
+    {
+      title: 'Request with extra attributes on JES approach',
+      description:
+        'Should complete successful request with extra attributes present in response',
+      test: async () => {
+        if (adapter.getSasjsConfig().serverType !== 'SASVIYA')
+          return Promise.resolve('skip')
+
+        const config = {
+          useComputeApi: false
+        }
+
+        return await adapter.request(
+          'common/sendArr',
+          stringData,
+          config,
+          undefined,
+          undefined,
+          ['file', 'data']
+        )
+      },
+      assertion: (response: any) => {
+        if (response === 'skip') return true
+
+        const responseKeys: any = Object.keys(response)
+        return responseKeys.includes('file') && responseKeys.includes('data')
       }
     }
   ]
