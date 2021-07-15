@@ -39,7 +39,7 @@ export class Sas9RequestClient extends RequestClient {
     contentType: string = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {},
     debug: boolean = false
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status: number }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders

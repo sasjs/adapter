@@ -89,7 +89,7 @@ export class RequestClient implements HttpClient {
     contentType: string = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {},
     debug: boolean = false
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status: number }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders
@@ -434,8 +434,8 @@ export class RequestClient implements HttpClient {
           throw new Error('Valid JSON could not be extracted from response.')
         }
 
-        isValidJson(weboutResponse)
-        parsedResponse = JSON.parse(weboutResponse)
+        const jsonResponse = isValidJson(weboutResponse)
+        parsedResponse = jsonResponse
       } catch {
         parsedResponse = response.data
       }
@@ -443,9 +443,15 @@ export class RequestClient implements HttpClient {
       includeSAS9Log = true
     }
 
-    let responseToReturn: { result: T; etag: any; log?: string } = {
+    let responseToReturn: {
+      result: T
+      etag: any
+      log?: string
+      status: number
+    } = {
       result: parsedResponse as T,
-      etag
+      etag,
+      status: response.status
     }
 
     if (includeSAS9Log) {
