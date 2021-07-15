@@ -41,6 +41,15 @@ So you can run the script like so:
 SSH_ACCOUNT=me@my-sas-server.com DEPLOY_PATH=/var/www/html/my-folder/sasjs-tests npm run deploy
 ```
 
+If you are on `WINDOWS`, you will first need to install one dependency:
+```bash
+npm i -g copyfiles
+```
+and then run:
+```bash
+npm run deploy --DEPLOY_PATH me@my-sas-server.com:/var/www/html/my-folder/sasjs-tests
+```
+
 If you'd like to deploy just `sasjs-tests` without changing the adapter version, you can use the `deploy:tests` script, while also setting the same environment variables as above.
 
 ## 3. Creating the required SAS services
