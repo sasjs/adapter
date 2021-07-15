@@ -43,6 +43,7 @@ export interface HttpClient {
 
   getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
   clearCsrfTokens(): void
+  getBaseUrl(): string
 }
 
 export class RequestClient implements HttpClient {
@@ -76,6 +77,10 @@ export class RequestClient implements HttpClient {
   public clearCsrfTokens() {
     this.csrfToken = { headerName: '', value: '' }
     this.fileUploadCsrfToken = { headerName: '', value: '' }
+  }
+
+  public getBaseUrl() {
+    return this.httpClient.defaults.baseURL || ''
   }
 
   public async get<T>(

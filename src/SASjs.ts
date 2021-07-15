@@ -4,7 +4,12 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
-import { ServerType, MacroVar, AuthConfig } from '@sasjs/utils/types'
+import {
+  ServerType,
+  MacroVar,
+  AuthConfig,
+  ExtraResponseAttributes
+} from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import {
   JobExecutor,
@@ -14,7 +19,6 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
-import { ExtraResponseAttributes } from '@sasjs/utils/types'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
