@@ -6,7 +6,7 @@
       "username": "",
       "password": "",
       "screenshotOnRunFailure": false,
-      "testingFinishTimeout": 10000
+      "testingFinishTimeout": 600000
     }
   }
   
