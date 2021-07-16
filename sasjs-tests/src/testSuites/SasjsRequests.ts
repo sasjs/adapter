@@ -28,7 +28,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
       test: async () => {
         return adapter
           .request('common/makeErr', data, { debug: true })
-          .then(() => {
+          .catch(() => {
             const sasRequests = adapter.getSasRequests()
             const makeErrRequest: any =
               sasRequests.find((req) => req.serviceLink.includes('makeErr')) ||
