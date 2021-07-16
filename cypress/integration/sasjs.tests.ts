@@ -18,8 +18,8 @@ context('sasjs-tests', function() {
 
             cy.get('input[placeholder="User Name"]', {timeout: 40000}).should('not.exist').then(() => {
                 cy.get('.ui.massive.icon.primary.left.labeled.button').click().then(() => {
-                    cy.get('.ui.massive.loading.primary.button').should('not.exist').then(() => {
-                        cy.get('span.icon.failed', {timeout: testingFinishTimeout}).should('not.exist').then(() => {
+                    cy.get('.ui.massive.loading.primary.button', {timeout: testingFinishTimeout}).should('not.exist').then(() => {
+                        cy.get('span.icon.failed').should('not.exist').then(() => {
                             done()
                         })
                     })
