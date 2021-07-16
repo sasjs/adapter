@@ -27,6 +27,10 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with: 
           key: ${{ secrets.DCGITLAB_KEY }}
+          known_hosts: 'placeholder'
+
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Write VPN Files
         run: |
