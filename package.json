@@ -14,7 +14,8 @@
     "semantic-release": "semantic-release",
     "typedoc": "typedoc",
     "prepare": "git rev-parse --git-dir && git config core.hooksPath ./.git-hooks && git config core.autocrlf false || true",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "cy:run": "cypress run"
   },
   "publishConfig": {
     "access": "public"
