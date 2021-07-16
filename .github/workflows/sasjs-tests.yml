@@ -54,20 +54,22 @@ jobs:
         run: openvpn3 session-start --config .github/vpn/config.ovpn
 
       - name: Deploy sasjs-tests viya
-        run: npm i
-        run: cd sasjs-tests
-        run: npm i
-        run: npm install -g replace-in-files-cli
-        run: replace-in-files --regex='userName.*' --replacement='userName:"${{ secrets.SAS_USERNAME }}",' ./public/config.json
-        run: replace-in-files --regex='password.*' --replacement='password:"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
-        run: replace-in-files --regex='serverType.*' --replacement='serverType:"SASVIYA",' ./public/config.json
-        run: npm run update:adapter && npm run build
-        run: rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
+        run: | 
+          npm i
+          cd sasjs-tests
+          npm i
+          npm install -g replace-in-files-cli
+          replace-in-files --regex='userName.*' --replacement='userName:"${{ secrets.SAS_USERNAME }}",' ./public/config.json
+          replace-in-files --regex='password.*' --replacement='password:"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
+          replace-in-files --regex='serverType.*' --replacement='serverType:"SASVIYA",' ./public/config.json
+          npm run update:adapter && npm run build
+          rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
       
       - name: Deploy sasjs-tests sas9
-        run: replace-in-files --regex='serverType.*' --replacement='serverType:"SAS9",' ./public/config.json
-        run: npm run update:adapter && npm run build
-        run: rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
+        run: |
+          replace-in-files --regex='serverType.*' --replacement='serverType:"SAS9",' ./public/config.json
+          npm run update:adapter && npm run build
+          rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
       
       - name: Run cypress on viya
         run: ls
