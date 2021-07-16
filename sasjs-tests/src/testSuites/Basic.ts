@@ -145,29 +145,6 @@ export const basicTests = (
           sasjsConfig.debug === false
         )
       }
-    },
-    {
-      title: 'Request with extra attributes on JES approach',
-      description:
-        'Should complete successful request with extra attributes present in response',
-      test: async () => {
-        const config = {
-          useComputeApi: false
-        }
-
-        return await adapter.request(
-          'common/sendArr',
-          stringData,
-          config,
-          undefined,
-          undefined,
-          ['file', 'data']
-        )
-      },
-      assertion: (response: any) => {
-        const responseKeys: any = Object.keys(response)
-        return responseKeys.includes('file') && responseKeys.includes('data')
-      }
     }
   ]
 })
