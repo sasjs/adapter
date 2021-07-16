@@ -54,7 +54,7 @@ jobs:
       - name: Start Open VPN 3
         run: openvpn3 session-start --config .github/vpn/config.ovpn
 
-      - name: Deploy sasjs-tests viya
+      - name: Deploy sasjs-tests
         run: | 
           npm i
           npm install -g replace-in-files-cli
@@ -66,13 +66,10 @@ jobs:
           replace-in-files --regex='serverType.*' --replacement='serverType:"SASVIYA",' ./public/config.json
           npm run update:adapter && npm run build
           scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
-      
-      - name: Deploy sasjs-tests sas9
-        run: |
           replace-in-files --regex='serverType.*' --replacement='serverType:"SAS9",' ./public/config.json
           npm run build
           scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
-      
+          
       - name: Run cypress on viya
         run: ls
       
