@@ -58,6 +58,7 @@ jobs:
         run: | 
           npm i
           cd sasjs-tests
+          replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"2.8.13",' ./package.json
           npm i
           npm install -g replace-in-files-cli
           replace-in-files --regex='userName.*' --replacement='userName:"${{ secrets.SAS_USERNAME }}",' ./public/config.json
