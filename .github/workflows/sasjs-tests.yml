@@ -29,9 +29,6 @@ jobs:
           key: ${{ secrets.DCGITLAB_KEY }}
           known_hosts: 'placeholder'
 
-      - name: Adding Known Hosts
-        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
       - name: Write VPN Files
         run: |
           echo "$CA_CRT" > .github/vpn/ca.crt
@@ -67,13 +64,13 @@ jobs:
           replace-in-files --regex='password.*' --replacement='password:"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='serverType.*' --replacement='serverType:"SASVIYA",' ./public/config.json
           npm run update:adapter && npm run build
-          rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
+          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
       
       - name: Deploy sasjs-tests sas9
         run: |
           replace-in-files --regex='serverType.*' --replacement='serverType:"SAS9",' ./public/config.json
           npm run update:adapter && npm run build
-          rsync -avhe ssh ./build/* --delete ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
+          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
       
       - name: Run cypress on viya
         run: ls
