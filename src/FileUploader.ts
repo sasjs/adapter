@@ -1,4 +1,4 @@
-import { isUrl } from './utils'
+import { isUrl, isValidJson, parseSasViyaDebugResponse } from './utils'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse, LoginRequiredError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
@@ -63,13 +63,28 @@ export class FileUploader {
 
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
-      .then((res) => {
-        let result
+      .then(async (res) => {
+        // for web approach on Viya
+        if (
+          this.sasjsConfig.debug &&
+          (this.sasjsConfig.useComputeApi === null ||
+            this.sasjsConfig.useComputeApi === undefined) &&
+          this.sasjsConfig.serverType === ServerType.SasViya
+        ) {
+          const jsonResponse = await parseSasViyaDebugResponse(
+            res.result as string,
+            this.requestClient,
+            this.sasjsConfig.serverUrl
+          )
+          return typeof jsonResponse === 'string'
+            ? isValidJson(jsonResponse)
+            : jsonResponse
+        }
 
-        result =
-          typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+        return typeof res.result === 'string'
+          ? isValidJson(res.result)
+          : res.result
 
-        return result
         //TODO: append to SASjs requests
       })
       .catch((err: Error) => {
