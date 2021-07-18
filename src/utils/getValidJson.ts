@@ -2,7 +2,7 @@
  * Checks if string is in valid JSON format else throw error.
  * @param str - string to check.
  */
-export const isValidJson = (str: string | object) => {
+export const getValidJson = (str: string | object) => {
   try {
     if (typeof str === 'object') return str
 

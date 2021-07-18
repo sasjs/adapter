@@ -10,7 +10,7 @@ import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
-  isValidJson,
+  getValidJson,
   parseSasViyaDebugResponse
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
@@ -115,11 +115,11 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             }
 
-            isValidJson(jsonResponse)
+            getValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)
           }
-          isValidJson(res.result as string)
+          getValidJson(res.result as string)
           this.appendRequest(res, sasJob, config.debug)
           resolve(res.result)
         })

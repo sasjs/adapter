@@ -1,4 +1,4 @@
-import { isUrl, isValidJson, parseSasViyaDebugResponse } from './utils'
+import { isUrl, getValidJson, parseSasViyaDebugResponse } from './utils'
 import { UploadFile } from './types/UploadFile'
 import { ErrorResponse, LoginRequiredError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
@@ -77,12 +77,12 @@ export class FileUploader {
             this.sasjsConfig.serverUrl
           )
           return typeof jsonResponse === 'string'
-            ? isValidJson(jsonResponse)
+            ? getValidJson(jsonResponse)
             : jsonResponse
         }
 
         return typeof res.result === 'string'
-          ? isValidJson(res.result)
+          ? getValidJson(res.result)
           : res.result
 
         //TODO: append to SASjs requests

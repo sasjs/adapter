@@ -11,7 +11,7 @@ import {
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { isValidJson } from '../utils'
+import { getValidJson } from '../utils'
 
 export interface HttpClient {
   get<T>(
@@ -429,7 +429,7 @@ export class RequestClient implements HttpClient {
           throw new Error('Valid JSON could not be extracted from response.')
         }
 
-        const jsonResponse = isValidJson(weboutResponse)
+        const jsonResponse = getValidJson(weboutResponse)
         parsedResponse = jsonResponse
       } catch {
         parsedResponse = response.data

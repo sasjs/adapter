@@ -1,4 +1,4 @@
-import { isValidJson } from '../../utils'
+import { getValidJson } from '../../utils'
 
 describe('jsonValidator', () => {
   it('should not throw an error with an valid json', () => {
@@ -6,7 +6,7 @@ describe('jsonValidator', () => {
       test: 'test'
     }
 
-    expect(isValidJson(json)).toBe(json)
+    expect(getValidJson(json)).toBe(json)
   })
 
   it('should not throw an error with an valid json string', () => {
@@ -14,7 +14,7 @@ describe('jsonValidator', () => {
       test: 'test'
     }
 
-    expect(isValidJson(JSON.stringify(json))).toStrictEqual(json)
+    expect(getValidJson(JSON.stringify(json))).toStrictEqual(json)
   })
 
   it('should throw an error with an invalid json', () => {
@@ -22,7 +22,7 @@ describe('jsonValidator', () => {
 
     expect(() => {
       try {
-        isValidJson(json)
+        getValidJson(json)
       } catch (err) {
         throw new Error()
       }
