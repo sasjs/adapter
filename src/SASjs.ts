@@ -282,21 +282,25 @@ export default class SASjs {
     parentFolderUri?: string,
     accessToken?: string,
     sasApiClient?: SASViyaApiClient,
-    isForced?: boolean
+    isForced?: boolean,
+    serverUrl?: string
   ) {
     if (sasApiClient)
       return await sasApiClient.createFolder(
         folderName,
         parentFolderPath,
         parentFolderUri,
-        accessToken
+        accessToken,
+        isForced,
+        serverUrl
       )
     return await this.sasViyaApiClient!.createFolder(
       folderName,
       parentFolderPath,
       parentFolderUri,
       accessToken,
-      isForced
+      isForced,
+      serverUrl
     )
   }
 
@@ -761,7 +765,8 @@ export default class SASjs {
       members,
       accessToken,
       sasApiClient,
-      isForced
+      isForced,
+      serverUrl
     )
   }
 
@@ -969,7 +974,8 @@ export default class SASjs {
     membersJson: any[],
     accessToken?: string,
     sasApiClient?: SASViyaApiClient,
-    isForced?: boolean
+    isForced?: boolean,
+    serverUrl?: string
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
@@ -980,7 +986,8 @@ export default class SASjs {
             undefined,
             accessToken,
             sasApiClient,
-            isForced
+            isForced,
+            serverUrl
           )
           break
         case 'file':
@@ -1012,7 +1019,8 @@ export default class SASjs {
           member.members,
           accessToken,
           sasApiClient,
-          isForced
+          isForced,
+          serverUrl
         )
     })
   }

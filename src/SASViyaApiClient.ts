@@ -36,6 +36,7 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as mime from 'mime'
+import jwtDecode from 'jwt-decode'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -610,7 +611,8 @@ export class SASViyaApiClient {
     parentFolderPath?: string,
     parentFolderUri?: string,
     accessToken?: string,
-    isForced?: boolean
+    isForced?: boolean,
+    serverUrl?: string
   ): Promise<Folder> {
     const logger = process.logger || console
     if (!parentFolderPath && !parentFolderUri) {
@@ -630,7 +632,17 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          throw new Error('Root folder has to be present on the server.')
+          let error: string = `Root folder ${parentFolderPath} was not found\nPlease check ${serverUrl}/SASDrive\nIf folder DOES exist then it is likely a permission problem\n`
+          if (accessToken) {
+            const tokenResponse: any = jwtDecode(accessToken)
+            const scope = tokenResponse.scope
+            error =
+              error + `The following scopes are contained in client/secret:\n`
+            scope.forEach((element: any) => {
+              error = error + `* ${element}\n`
+            })
+          }
+          throw new Error(error)
         }
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
@@ -639,7 +651,9 @@ export class SASViyaApiClient {
           newFolderName,
           newParentFolderPath,
           undefined,
-          accessToken
+          accessToken,
+          isForced,
+          serverUrl
         )
         logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
