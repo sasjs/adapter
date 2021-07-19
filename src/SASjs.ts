@@ -540,17 +540,17 @@ export default class SASjs {
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param files - array of files to be uploaded, including File object and file name.
    * @param params - request URL parameters.
-   * @param config - object to override existing config (optional)
+   * @param overrideSasjsConfig - object to override existing config (optional)
    */
   public uploadFile(
     sasJob: string,
     files: UploadFile[],
     params: any,
-    config?: any
+    overrideSasjsConfig?: any
   ) {
-    const fileUploader = config
+    const fileUploader = overrideSasjsConfig
       ? new FileUploader(
-          { ...this.sasjsConfig, ...config },
+          { ...this.sasjsConfig, ...overrideSasjsConfig },
           this.jobsPath,
           this.requestClient!
         )
