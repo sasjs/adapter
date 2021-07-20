@@ -1,11 +1,13 @@
 import { Logger, LogLevel } from '@sasjs/utils'
-import * as fileModule from '@sasjs/utils/file'
 import { RequestClient } from '../../../request/RequestClient'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
+import * as writeStreamModule from '../writeStream'
 import { saveLog } from '../saveLog'
 import { mockJob } from './mockResponses'
+import { WriteStream } from 'fs'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
+const stream = {} as unknown as WriteStream
 
 describe('saveLog', () => {
   beforeEach(() => {
@@ -14,16 +16,21 @@ describe('saveLog', () => {
   })
 
   it('should return immediately if shouldSaveLog is false', async () => {
-    await saveLog(mockJob, requestClient, false, '/test', 't0k3n')
+    await saveLog(mockJob, requestClient, false, 0, 100, stream, 't0k3n')
 
-    expect(fetchLogsModule.fetchLogByChunks).not.toHaveBeenCalled()
-    expect(fileModule.createFile).not.toHaveBeenCalled()
+    expect(fetchLogsModule.fetchLog).not.toHaveBeenCalled()
+    expect(writeStreamModule.writeStream).not.toHaveBeenCalled()
   })
 
   it('should throw an error when a valid access token is not provided', async () => {
-    const error = await saveLog(mockJob, requestClient, true, '/test').catch(
-      (e) => e
-    )
+    const error = await saveLog(
+      mockJob,
+      requestClient,
+      true,
+      0,
+      100,
+      stream
+    ).catch((e) => e)
 
     expect(error.message).toContain(
       `Logs for job ${mockJob.id} cannot be fetched without a valid access token.`
@@ -35,7 +42,9 @@ describe('saveLog', () => {
       { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'log') },
       requestClient,
       true,
-      '/test',
+      0,
+      100,
+      stream,
       't0k3n'
     ).catch((e) => e)
 
@@ -45,15 +54,19 @@ describe('saveLog', () => {
   })
 
   it('should fetch and save logs to the given path', async () => {
-    await saveLog(mockJob, requestClient, true, '/test', 't0k3n')
+    await saveLog(mockJob, requestClient, true, 0, 100, stream, 't0k3n')
 
-    expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
+    expect(fetchLogsModule.fetchLog).toHaveBeenCalledWith(
       requestClient,
       't0k3n',
       '/log/content',
+      0,
       100
     )
-    expect(fileModule.createFile).toHaveBeenCalledWith('/test', 'Test Log')
+    expect(writeStreamModule.writeStream).toHaveBeenCalledWith(
+      stream,
+      'Test Log'
+    )
   })
 })
 
@@ -62,11 +75,12 @@ const setupMocks = () => {
   jest.mock('../../../request/RequestClient')
   jest.mock('../../../utils/fetchLogByChunks')
   jest.mock('@sasjs/utils')
+  jest.mock('../writeStream')
 
   jest
-    .spyOn(fetchLogsModule, 'fetchLogByChunks')
+    .spyOn(fetchLogsModule, 'fetchLog')
     .mockImplementation(() => Promise.resolve('Test Log'))
   jest
-    .spyOn(fileModule, 'createFile')
+    .spyOn(writeStreamModule, 'writeStream')
     .mockImplementation(() => Promise.resolve())
 }

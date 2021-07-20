@@ -1,15 +1,19 @@
-import { createFile } from '@sasjs/utils/file'
 import { Job } from '../..'
 import { RequestClient } from '../../request/RequestClient'
-import { fetchLogByChunks } from '../../utils'
+import { fetchLog } from '../../utils'
+import { WriteStream } from 'fs'
+import { writeStream } from './writeStream'
 
 export async function saveLog(
   job: Job,
   requestClient: RequestClient,
   shouldSaveLog: boolean,
-  logFilePath: string,
+  startLine: number,
+  endLine: number,
+  logFileStream?: WriteStream,
   accessToken?: string
 ) {
+  console.log('startLine: ', startLine, ' endLine: ', endLine)
   if (!shouldSaveLog) {
     return
   }
@@ -20,6 +24,12 @@ export async function saveLog(
     )
   }
 
+  if (!logFileStream) {
+    throw new Error(
+      `Logs for job ${job.id} cannot be written without a valid write stream.`
+    )
+  }
+
   const logger = process.logger || console
   const jobLogUrl = job.links.find((l) => l.rel === 'log')
 
@@ -27,14 +37,14 @@ export async function saveLog(
     throw new Error(`Log URL for job ${job.id} was not found.`)
   }
 
-  const logCount = job.logStatistics?.lineCount ?? 1000000
-  const log = await fetchLogByChunks(
+  const log = await fetchLog(
     requestClient,
     accessToken,
     `${jobLogUrl.href}/content`,
-    logCount
-  )
+    startLine,
+    endLine
+  ).catch((e) => console.log(e))
 
-  logger.info(`Writing logs to ${logFilePath}`)
-  await createFile(logFilePath, log)
+  logger.info(`Writing logs to ${logFileStream.path}`)
+  await writeStream(logFileStream, log || '').catch((e) => console.log(e))
 }

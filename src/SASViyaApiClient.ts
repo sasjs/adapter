@@ -754,18 +754,16 @@ export class SASViyaApiClient {
       jobDefinition,
       arguments: jobArguments
     }
-    const { result: postedJob, etag } = await this.requestClient.post<Job>(
+    const { result: postedJob } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
       access_token
     )
-    const jobStatus = await this.pollJobState(
-      postedJob,
-      etag,
-      authConfig
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while polling job status. ')
-    })
+    const jobStatus = await this.pollJobState(postedJob, authConfig).catch(
+      (err) => {
+        throw prefixMessage(err, 'Error while polling job status. ')
+      }
+    )
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       access_token
@@ -833,7 +831,6 @@ export class SASViyaApiClient {
 
   private async pollJobState(
     postedJob: Job,
-    etag: string | null,
     authConfig?: AuthConfig,
     pollOptions?: PollOptions
   ) {
@@ -841,7 +838,6 @@ export class SASViyaApiClient {
       this.requestClient,
       postedJob,
       this.debug,
-      etag,
       authConfig,
       pollOptions
     )

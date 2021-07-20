@@ -344,7 +344,6 @@ describe('executeScript', () => {
       requestClient,
       mockJob,
       false,
-      '',
       mockAuthConfig,
       defaultPollOptions
     )
@@ -546,7 +545,7 @@ describe('executeScript', () => {
       if (url.includes('_webout')) {
         return Promise.reject(new NotFoundError(url))
       }
-      return Promise.resolve({ result: mockJob, etag: '' })
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     })
 
     const error = await executeScript(
@@ -645,7 +644,9 @@ const setupMocks = () => {
     .mockImplementation(() => Promise.resolve({ result: mockJob, etag: '' }))
   jest
     .spyOn(requestClient, 'get')
-    .mockImplementation(() => Promise.resolve({ result: mockJob, etag: '' }))
+    .mockImplementation(() =>
+      Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    )
   jest
     .spyOn(requestClient, 'delete')
     .mockImplementation(() => Promise.resolve({ result: {}, etag: '' }))
@@ -658,7 +659,7 @@ const setupMocks = () => {
   jest
     .spyOn(sessionManager, 'getVariable')
     .mockImplementation(() =>
-      Promise.resolve({ result: { value: 'test' }, etag: 'test' })
+      Promise.resolve({ result: { value: 'test' }, etag: 'test', status: 200 })
     )
   jest
     .spyOn(sessionManager, 'getSession')

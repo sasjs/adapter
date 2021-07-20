@@ -178,7 +178,6 @@ export async function executeScript(
       requestClient,
       postedJob,
       debug,
-      etag,
       authConfig,
       pollOptions
     ).catch(async (err) => {

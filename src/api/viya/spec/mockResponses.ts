@@ -32,6 +32,13 @@ export const mockJob: Job = {
       uri: 'log'
     },
     {
+      rel: 'self',
+      href: '/job',
+      method: 'GET',
+      type: 'job',
+      uri: 'job'
+    },
+    {
       rel: 'state',
       href: '/state',
       method: 'GET',
@@ -53,4 +60,14 @@ export const mockAuthConfig: AuthConfig = {
   secret: '53cr3t',
   access_token: 'acc355',
   refresh_token: 'r3fr35h'
+}
+
+export class MockStream {
+  _write(chunk: string, _: any, next: Function) {
+    next()
+  }
+
+  reset() {}
+
+  destroy() {}
 }

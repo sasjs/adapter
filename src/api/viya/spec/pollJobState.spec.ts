@@ -1,10 +1,11 @@
+import * as fs from 'fs'
+import { Logger, LogLevel } from '@sasjs/utils'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
 import { pollJobState } from '../pollJobState'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as saveLogModule from '../saveLog'
 import { PollOptions } from '../../../types'
-import { Logger, LogLevel } from '@sasjs/utils'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 const defaultPollOptions: PollOptions = {
@@ -24,7 +25,6 @@ describe('pollJobState', () => {
       requestClient,
       mockJob,
       false,
-      'test',
       mockAuthConfig,
       defaultPollOptions
     )
@@ -40,7 +40,6 @@ describe('pollJobState', () => {
       requestClient,
       mockJob,
       false,
-      'test',
       undefined,
       defaultPollOptions
     )
@@ -53,7 +52,6 @@ describe('pollJobState', () => {
       requestClient,
       { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'state') },
       false,
-      'test',
       undefined,
       defaultPollOptions
     ).catch((e) => e)
@@ -62,23 +60,12 @@ describe('pollJobState', () => {
   })
 
   it('should attempt to refresh tokens before each poll', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'running', etag: '' })
-      )
-      .mockImplementation(() =>
-        Promise.resolve({ result: 'completed', etag: '' })
-      )
+    mockSimplePoll()
 
     await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
       mockAuthConfig,
       defaultPollOptions
     )
@@ -87,23 +74,12 @@ describe('pollJobState', () => {
   })
 
   it('should attempt to fetch and save the log after each poll', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'running', etag: '' })
-      )
-      .mockImplementation(() =>
-        Promise.resolve({ result: 'completed', etag: '' })
-      )
+    mockSimplePoll()
 
     await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
       mockAuthConfig,
       defaultPollOptions
     )
@@ -112,20 +88,12 @@ describe('pollJobState', () => {
   })
 
   it('should return the current status when the max poll count is reached', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'running', etag: '' })
-      )
+    mockRunningPoll()
 
     const state = await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
       mockAuthConfig,
       {
         ...defaultPollOptions,
@@ -136,51 +104,47 @@ describe('pollJobState', () => {
     expect(state).toEqual('running')
   })
 
-  it('should continue polling until the job completes or errors', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'running', etag: '' })
-      )
-      .mockImplementation(() =>
-        Promise.resolve({ result: 'completed', etag: '' })
-      )
+  it('should poll with a larger interval for longer running jobs', async () => {
+    mockLongPoll()
 
     const state = await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
+      mockAuthConfig,
+      {
+        ...defaultPollOptions,
+        maxPollCount: 200,
+        pollInterval: 10
+      }
+    )
+
+    expect(state).toEqual('completed')
+  }, 200000)
+
+  it('should continue polling until the job completes or errors', async () => {
+    mockSimplePoll(1)
+
+    const state = await pollJobState(
+      requestClient,
+      mockJob,
+      false,
       undefined,
       defaultPollOptions
     )
 
-    expect(requestClient.get).toHaveBeenCalledTimes(4)
+    expect(requestClient.get).toHaveBeenCalledTimes(3)
     expect(state).toEqual('completed')
   })
 
   it('should print the state to the console when debug is on', async () => {
     jest.spyOn((process as any).logger, 'info')
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'running', etag: '' })
-      )
-      .mockImplementation(() =>
-        Promise.resolve({ result: 'completed', etag: '' })
-      )
+    mockSimplePoll()
 
     await pollJobState(
       requestClient,
       mockJob,
       true,
-      'test',
       undefined,
       defaultPollOptions
     )
@@ -205,21 +169,12 @@ describe('pollJobState', () => {
   })
 
   it('should continue polling when there is a single error in between', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'pending', etag: '' })
-      )
-      .mockImplementationOnce(() => Promise.reject('Status Error'))
-      .mockImplementationOnce(() =>
-        Promise.resolve({ result: 'completed', etag: '' })
-      )
+    mockPollWithSingleError()
 
     const state = await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
       undefined,
       defaultPollOptions
     )
@@ -229,20 +184,19 @@ describe('pollJobState', () => {
   })
 
   it('should throw an error when the error count exceeds the set value of 5', async () => {
-    jest
-      .spyOn(requestClient, 'get')
-      .mockImplementation(() => Promise.reject('Status Error'))
+    mockErroredPoll()
 
     const error = await pollJobState(
       requestClient,
       mockJob,
       false,
-      'test',
       undefined,
       defaultPollOptions
     ).catch((e) => e)
 
-    expect(error).toContain('Error while getting job state after interval.')
+    expect(error.message).toEqual(
+      'Error while polling job state for job j0b: Status Error'
+    )
   })
 })
 
@@ -251,11 +205,12 @@ const setupMocks = () => {
   jest.mock('../../../request/RequestClient')
   jest.mock('../../../auth/getTokens')
   jest.mock('../saveLog')
+  jest.mock('fs')
 
   jest
     .spyOn(requestClient, 'get')
     .mockImplementation(() =>
-      Promise.resolve({ result: 'completed', etag: '' })
+      Promise.resolve({ result: 'completed', etag: '', status: 200 })
     )
   jest
     .spyOn(getTokensModule, 'getTokens')
@@ -263,4 +218,84 @@ const setupMocks = () => {
   jest
     .spyOn(saveLogModule, 'saveLog')
     .mockImplementation(() => Promise.resolve())
+  jest
+    .spyOn(fs, 'createWriteStream')
+    .mockImplementation(() => ({} as unknown as fs.WriteStream))
+}
+
+const mockSimplePoll = (runningCount = 2) => {
+  let count = 0
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
+    count++
+    if (url.includes('job')) {
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    }
+    return Promise.resolve({
+      result:
+        count === 0
+          ? 'pending'
+          : count <= runningCount
+          ? 'running'
+          : 'completed',
+      etag: '',
+      status: 200
+    })
+  })
+}
+
+const mockRunningPoll = () => {
+  let count = 0
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
+    count++
+    if (url.includes('job')) {
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    }
+    return Promise.resolve({
+      result: count === 0 ? 'pending' : 'running',
+      etag: '',
+      status: 200
+    })
+  })
+}
+
+const mockLongPoll = () => {
+  let count = 0
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
+    count++
+    if (url.includes('job')) {
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    }
+    return Promise.resolve({
+      result: count <= 101 ? 'running' : 'completed',
+      etag: '',
+      status: 200
+    })
+  })
+}
+
+const mockPollWithSingleError = () => {
+  let count = 0
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
+    count++
+    if (url.includes('job')) {
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    }
+    if (count === 1) {
+      return Promise.reject('Status Error')
+    }
+    return Promise.resolve({
+      result: count === 0 ? 'pending' : 'completed',
+      etag: '',
+      status: 200
+    })
+  })
+}
+
+const mockErroredPoll = () => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
+    if (url.includes('job')) {
+      return Promise.resolve({ result: mockJob, etag: '', status: 200 })
+    }
+    return Promise.reject('Status Error')
+  })
 }
