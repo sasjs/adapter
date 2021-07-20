@@ -14,12 +14,76 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        
       - name: Install Dependencies
         run: npm ci
+
       - name: Check code style
         run: npm run lint
+
       - name: Build Project
         run: npm run build
+        - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with: 
+          key: ${{ secrets.DCGITLAB_KEY }}
+          known_hosts: 'placeholder'
+
+      - name: Write VPN Files
+        run: |
+          echo "$CA_CRT" > .github/vpn/ca.crt
+          echo "$USER_CRT" > .github/vpn/user.crt
+          echo "$USER_KEY" > .github/vpn/user.key
+          echo "$TLS_KEY" > .github/vpn/tls.key
+        shell: bash
+        env:
+          CA_CRT: ${{ secrets.CA_CRT}}
+          USER_CRT: ${{ secrets.USER_CRT }}
+          USER_KEY: ${{ secrets.USER_KEY }}
+          TLS_KEY: ${{ secrets.TLS_KEY }}
+
+      - name: Install Open VPN
+        run: |
+          sudo apt install apt-transport-https
+          sudo wget https://swupdate.openvpn.net/repos/openvpn-repo-pkg-key.pub
+          sudo apt-key add openvpn-repo-pkg-key.pub
+          sudo wget -O /etc/apt/sources.list.d/openvpn3.list https://swupdate.openvpn.net/community/openvpn3/repos/openvpn3-bionic.list
+          sudo apt update
+          sudo apt install openvpn3
+
+      - name: Start Open VPN 3
+        run: openvpn3 session-start --config .github/vpn/config.ovpn
+
+      - name: Deploy sasjs-tests
+        run: | 
+          npm i
+          npm install -g replace-in-files-cli
+          cd sasjs-tests
+          replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"2.8.13",' ./package.json
+          npm i
+          replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SAS_USERNAME }}",' ./public/config.json
+          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
+          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASVIYA",' ./public/config.json
+          npm run update:adapter && npm run build
+          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
+          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SAS9",' ./public/config.json
+          npm run build
+          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
+
+      - name: Run cypress on viya
+        run: |
+          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
+          replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
+          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
+          npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts"
+
+      - name: Run cypress on sas9
+        run: |
+          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_SAS9 }}",' ./cypress.json
+          replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
+          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
+          npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts"
+        
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v2
         env:
