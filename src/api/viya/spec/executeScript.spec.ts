@@ -299,7 +299,6 @@ describe('executeScript', () => {
       true
     ).catch((e) => e)
 
-    console.log(error)
     expect(error).toContain('Error while posting job')
   })
 

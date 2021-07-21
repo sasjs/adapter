@@ -48,8 +48,8 @@ export async function saveLog(
     `${jobLogUrl.href}/content`,
     startLine,
     endLine
-  ).catch((e) => console.log(e))
+  )
 
   logger.info(`Writing logs to ${logFileStream.path}`)
-  await writeStream(logFileStream, log || '').catch((e) => console.log(e))
+  await writeStream(logFileStream, log || '')
 }
