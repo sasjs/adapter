@@ -8,7 +8,6 @@ import { saveLog } from './saveLog'
 import { createWriteStream } from '@sasjs/utils/file'
 import { WriteStream } from 'fs'
 import { Link } from '../../types'
-import { prefixMessage } from '@sasjs/utils/error'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -206,25 +205,26 @@ const doPoll = async (
 
     pollCount++
 
-    const jobUrl = postedJob.links.find((l: Link) => l.rel === 'self')
-    const { result: job } = await requestClient.get<Job>(
-      jobUrl!.href,
-      authConfig?.access_token
-    )
+    if (pollOptions?.streamLog) {
+      const jobUrl = postedJob.links.find((l: Link) => l.rel === 'self')
+      const { result: job } = await requestClient.get<Job>(
+        jobUrl!.href,
+        authConfig?.access_token
+      )
 
-    const endLogLine = job.logStatistics?.lineCount ?? 1000000
+      const endLogLine = job.logStatistics?.lineCount ?? 1000000
 
-    await saveLog(
-      postedJob,
-      requestClient,
-      pollOptions?.streamLog || false,
-      startLogLine,
-      endLogLine,
-      logStream,
-      authConfig?.access_token
-    )
+      await saveLog(
+        postedJob,
+        requestClient,
+        startLogLine,
+        endLogLine,
+        logStream,
+        authConfig?.access_token
+      )
 
-    startLogLine += job.logStatistics.lineCount
+      startLogLine += endLogLine
+    }
 
     if (debug && printedState !== state) {
       logger.info('Polling job status...')

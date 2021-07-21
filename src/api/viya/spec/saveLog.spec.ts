@@ -15,22 +15,10 @@ describe('saveLog', () => {
     setupMocks()
   })
 
-  it('should return immediately if shouldSaveLog is false', async () => {
-    await saveLog(mockJob, requestClient, false, 0, 100, stream, 't0k3n')
-
-    expect(fetchLogsModule.fetchLog).not.toHaveBeenCalled()
-    expect(writeStreamModule.writeStream).not.toHaveBeenCalled()
-  })
-
   it('should throw an error when a valid access token is not provided', async () => {
-    const error = await saveLog(
-      mockJob,
-      requestClient,
-      true,
-      0,
-      100,
-      stream
-    ).catch((e) => e)
+    const error = await saveLog(mockJob, requestClient, 0, 100, stream).catch(
+      (e) => e
+    )
 
     expect(error.message).toContain(
       `Logs for job ${mockJob.id} cannot be fetched without a valid access token.`
@@ -41,7 +29,6 @@ describe('saveLog', () => {
     const error = await saveLog(
       { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'log') },
       requestClient,
-      true,
       0,
       100,
       stream,
@@ -54,7 +41,7 @@ describe('saveLog', () => {
   })
 
   it('should fetch and save logs to the given path', async () => {
-    await saveLog(mockJob, requestClient, true, 0, 100, stream, 't0k3n')
+    await saveLog(mockJob, requestClient, 0, 100, stream, 't0k3n')
 
     expect(fetchLogsModule.fetchLog).toHaveBeenCalledWith(
       requestClient,

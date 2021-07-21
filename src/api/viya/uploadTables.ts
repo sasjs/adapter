@@ -2,6 +2,14 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../../request/RequestClient'
 import { convertToCSV } from '../../utils/convertToCsv'
 
+/**
+ * Uploads tables to SAS as specially formatted CSVs.
+ * This is more compact than JSON, and easier to read within SAS.
+ * @param requestClient - the pre-configured HTTP request client
+ * @param data - the JSON representation of the data to be uploaded
+ * @param accessToken - an optional access token for authentication/authorization
+ * The access token is not required when uploading tables from the browser.
+ */
 export async function uploadTables(
   requestClient: RequestClient,
   data: any,

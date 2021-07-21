@@ -1,11 +1,12 @@
-import * as fs from 'fs'
 import { Logger, LogLevel } from '@sasjs/utils'
+import * as fileModule from '@sasjs/utils/file'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
 import { pollJobState } from '../pollJobState'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as saveLogModule from '../saveLog'
 import { PollOptions } from '../../../types'
+import { WriteStream } from 'fs'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 const defaultPollOptions: PollOptions = {
@@ -73,7 +74,18 @@ describe('pollJobState', () => {
     expect(getTokensModule.getTokens).toHaveBeenCalledTimes(3)
   })
 
-  it('should attempt to fetch and save the log after each poll', async () => {
+  it('should attempt to fetch and save the log after each poll when streamLog is true', async () => {
+    mockSimplePoll()
+
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollOptions,
+      streamLog: true
+    })
+
+    expect(saveLogModule.saveLog).toHaveBeenCalledTimes(2)
+  })
+
+  it('should not attempt to fetch and save the log after each poll when streamLog is false', async () => {
     mockSimplePoll()
 
     await pollJobState(
@@ -84,7 +96,7 @@ describe('pollJobState', () => {
       defaultPollOptions
     )
 
-    expect(saveLogModule.saveLog).toHaveBeenCalledTimes(2)
+    expect(saveLogModule.saveLog).not.toHaveBeenCalled()
   })
 
   it('should return the current status when the max poll count is reached', async () => {
@@ -133,7 +145,7 @@ describe('pollJobState', () => {
       defaultPollOptions
     )
 
-    expect(requestClient.get).toHaveBeenCalledTimes(3)
+    expect(requestClient.get).toHaveBeenCalledTimes(2)
     expect(state).toEqual('completed')
   })
 
@@ -179,7 +191,7 @@ describe('pollJobState', () => {
       defaultPollOptions
     )
 
-    expect(requestClient.get).toHaveBeenCalledTimes(3)
+    expect(requestClient.get).toHaveBeenCalledTimes(2)
     expect(state).toEqual('completed')
   })
 
@@ -205,7 +217,7 @@ const setupMocks = () => {
   jest.mock('../../../request/RequestClient')
   jest.mock('../../../auth/getTokens')
   jest.mock('../saveLog')
-  jest.mock('fs')
+  jest.mock('@sasjs/utils/file')
 
   jest
     .spyOn(requestClient, 'get')
@@ -219,8 +231,8 @@ const setupMocks = () => {
     .spyOn(saveLogModule, 'saveLog')
     .mockImplementation(() => Promise.resolve())
   jest
-    .spyOn(fs, 'createWriteStream')
-    .mockImplementation(() => ({} as unknown as fs.WriteStream))
+    .spyOn(fileModule, 'createWriteStream')
+    .mockImplementation(() => Promise.resolve({} as unknown as WriteStream))
 }
 
 const mockSimplePoll = (runningCount = 2) => {
