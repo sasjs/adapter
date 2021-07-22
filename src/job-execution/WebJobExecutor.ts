@@ -101,20 +101,9 @@ export class WebJobExecutor extends BaseJobExecutor {
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
-          if (this.serverType === ServerType.Sas9 && config.debug) {
-            const jsonResponse = parseWeboutResponse(res.result as string)
-            if (jsonResponse === '') {
-              throw new Error(
-                'Valid JSON could not be extracted from response.'
-              )
-            }
-
-            isValidJson(jsonResponse)
-            this.appendRequest(res, sasJob, config.debug)
-            resolve(res.result)
-          }
-          isValidJson(res.result as string)
+          
           this.appendRequest(res, sasJob, config.debug)
+          isValidJson(res.result as string)
           resolve(res.result)
         })
         .catch(async (e: Error) => {
