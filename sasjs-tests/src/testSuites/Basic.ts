@@ -173,5 +173,6 @@ export const basicTests = (
         const responseKeys: any = Object.keys(response)
         return responseKeys.includes('file') && responseKeys.includes('data')
       }
+    }
   ]
 })
