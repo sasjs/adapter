@@ -42,7 +42,6 @@ import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as mime from 'mime'
-import jwtDecode from 'jwt-decode'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
