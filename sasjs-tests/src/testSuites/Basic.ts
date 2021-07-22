@@ -151,6 +151,9 @@ export const basicTests = (
       description:
         'Should complete successful request with extra attributes present in response',
       test: async () => {
+        if (adapter.getSasjsConfig().serverType !== 'SASVIYA')
+          return Promise.resolve('skip')
+
         const config = {
           useComputeApi: false
         }
@@ -165,9 +168,10 @@ export const basicTests = (
         )
       },
       assertion: (response: any) => {
+        if (response === 'skip') return true
+
         const responseKeys: any = Object.keys(response)
         return responseKeys.includes('file') && responseKeys.includes('data')
       }
-    }
   ]
 })
