@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "medjedovicm",
+      "name": "Mihajlo Medjedovic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18329105?v=4",
+      "profile": "https://github.com/medjedovicm",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "adapter",
+  "projectOwner": "sasjs",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}

@@ -1,10 +1,4 @@
-import {
-  convertToCSV,
-  isRelativePath,
-  isUri,
-  isUrl,
-  fetchLogByChunks
-} from './utils'
+import { isRelativePath, isUri, isUrl } from './utils'
 import * as NodeFormData from 'form-data'
 import {
   Job,
@@ -17,21 +11,10 @@ import {
   JobDefinition,
   PollOptions
 } from './types'
-import {
-  ComputeJobExecutionError,
-  JobExecutionError,
-  NotFoundError
-} from './types/errors'
-import { formatDataForRequest } from './utils/formatDataForRequest'
+import { JobExecutionError } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
-import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
-import {
-  isAccessTokenExpiring,
-  isRefreshTokenExpiring,
-  decodeToken
-} from '@sasjs/utils/auth'
-import { Logger, LogLevel } from '@sasjs/utils/logger'
+import { decodeToken } from '@sasjs/utils/auth'
 import {
   SasAuthResponse,
   MacroVar,
@@ -41,7 +24,12 @@ import {
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
-import * as mime from 'mime'
+import { pollJobState } from './api/viya/pollJobState'
+import { getTokens } from './auth/getTokens'
+import { uploadTables } from './api/viya/uploadTables'
+import { executeScript } from './api/viya/executeScript'
+import { getAccessToken } from './auth/getAccessToken'
+import { refreshTokens } from './auth/refreshTokens'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -177,13 +165,6 @@ export class SASViyaApiClient {
       throw new Error(`Execution context ${contextName} not found.`)
     }
 
-    const createSessionRequest = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    }
     const { result: createdSession } = await this.requestClient.post<Session>(
       `/compute/contexts/${executionContext.id}/sessions`,
       {},
@@ -298,249 +279,22 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ): Promise<any> {
-    let access_token = (authConfig || {}).access_token
-    if (authConfig) {
-      ;({ access_token } = await this.getTokens(authConfig))
-    }
-
-    const logger = process.logger || console
-
-    try {
-      let executionSessionId: string
-
-      const session = await this.sessionManager
-        .getSession(access_token)
-        .catch((err) => {
-          throw prefixMessage(err, 'Error while getting session. ')
-        })
-
-      executionSessionId = session!.id
-
-      if (printPid) {
-        const { result: jobIdVariable } = await this.sessionManager
-          .getVariable(executionSessionId, 'SYSJOBID', access_token)
-          .catch((err) => {
-            throw prefixMessage(err, 'Error while getting session variable. ')
-          })
-
-        if (jobIdVariable && jobIdVariable.value) {
-          const relativeJobPath = this.rootFolderName
-            ? jobPath.split(this.rootFolderName).join('').replace(/^\//, '')
-            : jobPath
-
-          const logger = new Logger(debug ? LogLevel.Debug : LogLevel.Info)
-
-          logger.info(
-            `Triggered '${relativeJobPath}' with PID ${
-              jobIdVariable.value
-            } at ${timestampToYYYYMMDDHHMMSS()}`
-          )
-        }
-      }
-
-      const jobArguments: { [key: string]: any } = {
-        _contextName: contextName,
-        _OMITJSONLISTING: true,
-        _OMITJSONLOG: true,
-        _OMITSESSIONRESULTS: true,
-        _OMITTEXTLISTING: true,
-        _OMITTEXTLOG: true
-      }
-
-      if (debug) {
-        jobArguments['_OMITTEXTLOG'] = false
-        jobArguments['_OMITSESSIONRESULTS'] = false
-      }
-
-      let fileName
-
-      if (isRelativePath(jobPath)) {
-        fileName = `exec-${
-          jobPath.includes('/') ? jobPath.split('/')[1] : jobPath
-        }`
-      } else {
-        const jobPathParts = jobPath.split('/')
-        fileName = jobPathParts.pop()
-      }
-
-      let jobVariables: any = {
-        SYS_JES_JOB_URI: '',
-        _program: isRelativePath(jobPath)
-          ? this.rootFolderName + '/' + jobPath
-          : jobPath
-      }
-
-      if (variables) jobVariables = { ...jobVariables, ...variables }
-
-      if (debug) jobVariables = { ...jobVariables, _DEBUG: 131 }
-
-      let files: any[] = []
-
-      if (data) {
-        if (JSON.stringify(data).includes(';')) {
-          files = await this.uploadTables(data, access_token).catch((err) => {
-            throw prefixMessage(err, 'Error while uploading tables. ')
-          })
-
-          jobVariables['_webin_file_count'] = files.length
-
-          files.forEach((fileInfo, index) => {
-            jobVariables[
-              `_webin_fileuri${index + 1}`
-            ] = `/files/files/${fileInfo.file.id}`
-            jobVariables[`_webin_name${index + 1}`] = fileInfo.tableName
-          })
-        } else {
-          jobVariables = { ...jobVariables, ...formatDataForRequest(data) }
-        }
-      }
-
-      // Execute job in session
-      const jobRequestBody = {
-        name: fileName,
-        description: 'Powered by SASjs',
-        code: linesOfCode,
-        variables: jobVariables,
-        arguments: jobArguments
-      }
-
-      const { result: postedJob, etag } = await this.requestClient
-        .post<Job>(
-          `/compute/sessions/${executionSessionId}/jobs`,
-          jobRequestBody,
-          access_token
-        )
-        .catch((err) => {
-          throw prefixMessage(err, 'Error while posting job. ')
-        })
-
-      if (!waitForResult) return session
-
-      if (debug) {
-        logger.info(`Job has been submitted for '${fileName}'.`)
-        logger.info(
-          `You can monitor the job progress at '${this.serverUrl}${
-            postedJob.links.find((l: any) => l.rel === 'state')!.href
-          }'.`
-        )
-      }
-
-      const jobStatus = await this.pollJobState(
-        postedJob,
-        etag,
-        authConfig,
-        pollOptions
-      ).catch(async (err) => {
-        const error = err?.response?.data
-        const result = /err=[0-9]*,/.exec(error)
-
-        const errorCode = '5113'
-        if (result?.[0]?.slice(4, -1) === errorCode) {
-          const sessionLogUrl =
-            postedJob.links.find((l: any) => l.rel === 'up')!.href + '/log'
-          const logCount = 1000000
-          err.log = await fetchLogByChunks(
-            this.requestClient,
-            access_token!,
-            sessionLogUrl,
-            logCount
-          )
-        }
-        throw prefixMessage(err, 'Error while polling job status. ')
-      })
-
-      if (authConfig) {
-        ;({ access_token } = await this.getTokens(authConfig))
-      }
-
-      const { result: currentJob } = await this.requestClient
-        .get<Job>(
-          `/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
-          access_token
-        )
-        .catch((err) => {
-          throw prefixMessage(err, 'Error while getting job. ')
-        })
-
-      let jobResult
-      let log = ''
-
-      const logLink = currentJob.links.find((l) => l.rel === 'log')
-
-      if (debug && logLink) {
-        const logUrl = `${logLink.href}/content`
-        const logCount = currentJob.logStatistics?.lineCount ?? 1000000
-        log = await fetchLogByChunks(
-          this.requestClient,
-          access_token!,
-          logUrl,
-          logCount
-        )
-      }
-
-      if (jobStatus === 'failed' || jobStatus === 'error') {
-        return Promise.reject(new ComputeJobExecutionError(currentJob, log))
-      }
-
-      let resultLink
-
-      if (expectWebout) {
-        resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
-      } else {
-        return { job: currentJob, log }
-      }
-
-      if (resultLink) {
-        jobResult = await this.requestClient
-          .get<any>(resultLink, access_token, 'text/plain')
-          .catch(async (e) => {
-            if (e instanceof NotFoundError) {
-              if (logLink) {
-                const logUrl = `${logLink.href}/content`
-                const logCount = currentJob.logStatistics?.lineCount ?? 1000000
-                log = await fetchLogByChunks(
-                  this.requestClient,
-                  access_token!,
-                  logUrl,
-                  logCount
-                )
-
-                return Promise.reject({
-                  status: 500,
-                  log
-                })
-              }
-            }
-
-            return {
-              result: JSON.stringify(e)
-            }
-          })
-      }
-
-      await this.sessionManager
-        .clearSession(executionSessionId, access_token)
-        .catch((err) => {
-          throw prefixMessage(err, 'Error while clearing session. ')
-        })
-
-      return { result: jobResult?.result, log }
-    } catch (e) {
-      if (e && e.status === 404) {
-        return this.executeScript(
-          jobPath,
-          linesOfCode,
-          contextName,
-          authConfig,
-          data,
-          debug,
-          false,
-          true
-        )
-      } else {
-        throw prefixMessage(e, 'Error while executing script. ')
-      }
-    }
+    return executeScript(
+      this.requestClient,
+      this.sessionManager,
+      this.rootFolderName,
+      jobPath,
+      linesOfCode,
+      contextName,
+      authConfig,
+      data,
+      debug,
+      expectWebout,
+      waitForResult,
+      pollOptions,
+      printPid,
+      variables
+    )
   }
 
   /**
@@ -586,9 +340,6 @@ export class SASViyaApiClient {
 
     const formData = new NodeFormData()
     formData.append('file', contentBuffer, fileName)
-
-    const mimeType =
-      mime.getType(fileName.match(/\.[0-9a-z]+$/i)?.[0] || '') ?? 'text/plain'
 
     return (
       await this.requestClient.post<File>(
@@ -786,37 +537,7 @@ export class SASViyaApiClient {
     clientSecret: string,
     authCode: string
   ): Promise<SasAuthResponse> {
-    const url = this.serverUrl + '/SASLogon/oauth/token'
-    let token
-    if (typeof Buffer === 'undefined') {
-      token = btoa(clientId + ':' + clientSecret)
-    } else {
-      token = Buffer.from(clientId + ':' + clientSecret).toString('base64')
-    }
-    const headers = {
-      Authorization: 'Basic ' + token
-    }
-
-    let formData
-    if (typeof FormData === 'undefined') {
-      formData = new NodeFormData()
-    } else {
-      formData = new FormData()
-    }
-    formData.append('grant_type', 'authorization_code')
-    formData.append('code', authCode)
-
-    const authResponse = await this.requestClient
-      .post(
-        url,
-        formData,
-        undefined,
-        'multipart/form-data; boundary=' + (formData as any)._boundary,
-        headers
-      )
-      .then((res) => res.result as SasAuthResponse)
-
-    return authResponse
+    return getAccessToken(this.requestClient, clientId, clientSecret, authCode)
   }
 
   /**
@@ -830,39 +551,12 @@ export class SASViyaApiClient {
     clientSecret: string,
     refreshToken: string
   ) {
-    const url = this.serverUrl + '/SASLogon/oauth/token'
-    let token
-    if (typeof Buffer === 'undefined') {
-      token = btoa(clientId + ':' + clientSecret)
-    } else {
-      token = Buffer.from(clientId + ':' + clientSecret).toString('base64')
-    }
-    const headers = {
-      Authorization: 'Basic ' + token
-    }
-
-    let formData
-    if (typeof FormData === 'undefined') {
-      formData = new NodeFormData()
-      formData.append('grant_type', 'refresh_token')
-      formData.append('refresh_token', refreshToken)
-    } else {
-      formData = new FormData()
-      formData.append('grant_type', 'refresh_token')
-      formData.append('refresh_token', refreshToken)
-    }
-
-    const authResponse = await this.requestClient
-      .post<SasAuthResponse>(
-        url,
-        formData,
-        undefined,
-        'multipart/form-data; boundary=' + (formData as any)._boundary,
-        headers
-      )
-      .then((res) => res.result)
-
-    return authResponse
+    return refreshTokens(
+      this.requestClient,
+      clientId,
+      clientSecret,
+      refreshToken
+    )
   }
 
   /**
@@ -909,7 +603,7 @@ export class SASViyaApiClient {
   ) {
     let access_token = (authConfig || {}).access_token
     if (authConfig) {
-      ;({ access_token } = await this.getTokens(authConfig))
+      ;({ access_token } = await getTokens(this.requestClient, authConfig))
     }
 
     if (isRelativePath(sasJob) && !this.rootFolderName) {
@@ -1005,7 +699,7 @@ export class SASViyaApiClient {
   ) {
     let access_token = (authConfig || {}).access_token
     if (authConfig) {
-      ;({ access_token } = await this.getTokens(authConfig))
+      ;({ access_token } = await getTokens(this.requestClient, authConfig))
     }
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
@@ -1077,18 +771,16 @@ export class SASViyaApiClient {
       jobDefinition,
       arguments: jobArguments
     }
-    const { result: postedJob, etag } = await this.requestClient.post<Job>(
+    const { result: postedJob } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
       access_token
     )
-    const jobStatus = await this.pollJobState(
-      postedJob,
-      etag,
-      authConfig
-    ).catch((err) => {
-      throw prefixMessage(err, 'Error while polling job status. ')
-    })
+    const jobStatus = await this.pollJobState(postedJob, authConfig).catch(
+      (err) => {
+        throw prefixMessage(err, 'Error while polling job status. ')
+      }
+    )
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       access_token
@@ -1154,157 +846,22 @@ export class SASViyaApiClient {
     this.folderMap.set(path, itemsAtRoot)
   }
 
-  // REFACTOR: set default value for 'pollOptions' attribute
   private async pollJobState(
-    postedJob: any,
-    etag: string | null,
+    postedJob: Job,
     authConfig?: AuthConfig,
     pollOptions?: PollOptions
   ) {
-    const logger = process.logger || console
-
-    let POLL_INTERVAL = 300
-    let MAX_POLL_COUNT = 1000
-    let MAX_ERROR_COUNT = 5
-    let access_token = (authConfig || {}).access_token
-    if (authConfig) {
-      ;({ access_token } = await this.getTokens(authConfig))
-    }
-
-    if (pollOptions) {
-      POLL_INTERVAL = pollOptions.POLL_INTERVAL || POLL_INTERVAL
-      MAX_POLL_COUNT = pollOptions.MAX_POLL_COUNT || MAX_POLL_COUNT
-    }
-
-    let postedJobState = ''
-    let pollCount = 0
-    let errorCount = 0
-    const headers: any = {
-      'Content-Type': 'application/json',
-      'If-None-Match': etag
-    }
-    if (access_token) {
-      headers.Authorization = `Bearer ${access_token}`
-    }
-    const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
-    if (!stateLink) {
-      Promise.reject(`Job state link was not found.`)
-    }
-
-    const { result: state } = await this.requestClient
-      .get<string>(
-        `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
-        access_token,
-        'text/plain',
-        {},
-        this.debug
-      )
-      .catch((err) => {
-        console.error(
-          `Error fetching job state from ${this.serverUrl}${stateLink.href}. Starting poll, assuming job to be running.`,
-          err
-        )
-        return { result: 'unavailable' }
-      })
-
-    const currentState = state.trim()
-    if (currentState === 'completed') {
-      return Promise.resolve(currentState)
-    }
-
-    return new Promise(async (resolve, _) => {
-      let printedState = ''
-
-      const interval = setInterval(async () => {
-        if (
-          postedJobState === 'running' ||
-          postedJobState === '' ||
-          postedJobState === 'pending' ||
-          postedJobState === 'unavailable'
-        ) {
-          if (authConfig) {
-            ;({ access_token } = await this.getTokens(authConfig))
-          }
-
-          if (stateLink) {
-            const { result: jobState } = await this.requestClient
-              .get<string>(
-                `${this.serverUrl}${stateLink.href}?_action=wait&wait=300`,
-                access_token,
-                'text/plain',
-                {},
-                this.debug
-              )
-              .catch((err) => {
-                errorCount++
-                if (
-                  pollCount >= MAX_POLL_COUNT ||
-                  errorCount >= MAX_ERROR_COUNT
-                ) {
-                  throw prefixMessage(
-                    err,
-                    'Error while getting job state after interval. '
-                  )
-                }
-                console.error(
-                  `Error fetching job state from ${this.serverUrl}${stateLink.href}. Resuming poll, assuming job to be running.`,
-                  err
-                )
-                return { result: 'unavailable' }
-              })
-
-            postedJobState = jobState.trim()
-            if (postedJobState != 'unavailable' && errorCount > 0) {
-              errorCount = 0
-            }
-
-            if (this.debug && printedState !== postedJobState) {
-              logger.info('Polling job status...')
-              logger.info(`Current job state: ${postedJobState}`)
-
-              printedState = postedJobState
-            }
-
-            pollCount++
-
-            if (pollCount >= MAX_POLL_COUNT) {
-              resolve(postedJobState)
-            }
-          }
-        } else {
-          clearInterval(interval)
-          resolve(postedJobState)
-        }
-      }, POLL_INTERVAL)
-    })
+    return pollJobState(
+      this.requestClient,
+      postedJob,
+      this.debug,
+      authConfig,
+      pollOptions
+    )
   }
 
   private async uploadTables(data: any, accessToken?: string) {
-    const uploadedFiles = []
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    for (const tableName in data) {
-      const csv = convertToCSV(data[tableName])
-      if (csv === 'ERROR: LARGE STRING LENGTH') {
-        throw new Error(
-          'The max length of a string value in SASjs is 32765 characters.'
-        )
-      }
-
-      const uploadResponse = await this.requestClient
-        .uploadFile(`${this.serverUrl}/files/files#rawUpload`, csv, accessToken)
-        .catch((err) => {
-          throw prefixMessage(err, 'Error while uploading file. ')
-        })
-
-      uploadedFiles.push({ tableName, file: uploadResponse.result })
-    }
-    return uploadedFiles
+    return uploadTables(this.requestClient, data, accessToken)
   }
 
   private async getFolderDetails(
@@ -1392,14 +949,6 @@ export class SASViyaApiClient {
     const sourceFolderUri = isUri(sourceFolder)
       ? sourceFolder
       : await this.getFolderUri(sourceFolder, accessToken)
-
-    const requestInfo = {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + accessToken
-      }
-    }
 
     const { result: members } = await this.requestClient.get<{ items: any[] }>(
       `${this.serverUrl}${sourceFolderUri}/members?limit=${limit}`,
@@ -1506,22 +1055,5 @@ export class SASViyaApiClient {
     )
 
     return movedFolder
-  }
-
-  private async getTokens(authConfig: AuthConfig): Promise<AuthConfig> {
-    const logger = process.logger || console
-    let { access_token, refresh_token, client, secret } = authConfig
-    if (
-      isAccessTokenExpiring(access_token) ||
-      isRefreshTokenExpiring(refresh_token)
-    ) {
-      logger.info('Refreshing access and refresh tokens.')
-      ;({ access_token, refresh_token } = await this.refreshTokens(
-        client,
-        secret,
-        refresh_token
-      ))
-    }
-    return { access_token, refresh_token, client, secret }
   }
 }
