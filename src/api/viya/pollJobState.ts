@@ -21,10 +21,13 @@ export async function pollJobState(
   let pollInterval = 300
   let maxPollCount = 1000
 
-  if (pollOptions) {
-    pollInterval = pollOptions.pollInterval || pollInterval
-    maxPollCount = pollOptions.maxPollCount || maxPollCount
+  const defaultPollOptions: PollOptions = {
+    maxPollCount,
+    pollInterval,
+    streamLog: false
   }
+
+  pollOptions = { ...defaultPollOptions, ...(pollOptions || {}) }
 
   const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
   if (!stateLink) {
@@ -52,7 +55,7 @@ export async function pollJobState(
   }
 
   let logFileStream
-  if (pollOptions?.streamLog) {
+  if (pollOptions.streamLog) {
     const logPath = pollOptions?.logFolderPath || process.cwd()
     const isFolderPath = await isFolder(logPath)
     if (isFolderPath) {
@@ -69,6 +72,7 @@ export async function pollJobState(
     }
   }
 
+  // Poll up to the first 100 times with the specified poll interval
   let result = await doPoll(
     requestClient,
     postedJob,
@@ -76,14 +80,18 @@ export async function pollJobState(
     debug,
     pollCount,
     authConfig,
-    pollOptions,
+    {
+      ...pollOptions,
+      maxPollCount:
+        pollOptions.maxPollCount <= 100 ? pollOptions.maxPollCount : 100
+    },
     logFileStream
   )
 
   currentState = result.state
   pollCount = result.pollCount
 
-  if (!needsRetry(currentState) || pollCount >= maxPollCount) {
+  if (!needsRetry(currentState) || pollCount >= pollOptions.maxPollCount) {
     return currentState
   }
 
@@ -192,7 +200,7 @@ const doPoll = async (
     throw new Error(`Job state link was not found.`)
   }
 
-  while (needsRetry(state) && pollCount <= 100 && pollCount <= maxPollCount) {
+  while (needsRetry(state) && pollCount <= maxPollCount) {
     state = await getJobState(
       requestClient,
       postedJob,
