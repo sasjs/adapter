@@ -28,10 +28,16 @@ import { ContextManager } from './ContextManager'
 import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
 import {
   isAccessTokenExpiring,
-  isRefreshTokenExpiring
+  isRefreshTokenExpiring,
+  decodeToken
 } from '@sasjs/utils/auth'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
-import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
+import {
+  SasAuthResponse,
+  MacroVar,
+  AuthConfig,
+  DecodedToken
+} from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
@@ -611,8 +617,7 @@ export class SASViyaApiClient {
     parentFolderPath?: string,
     parentFolderUri?: string,
     accessToken?: string,
-    isForced?: boolean,
-    serverUrl?: string
+    isForced?: boolean
   ): Promise<Folder> {
     const logger = process.logger || console
     if (!parentFolderPath && !parentFolderUri) {
@@ -632,10 +637,11 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          let error: string = `Root folder ${parentFolderPath} was not found\nPlease check ${serverUrl}/SASDrive\nIf folder DOES exist then it is likely a permission problem\n`
+          let error: string = `Root folder ${parentFolderPath} was not found\nPlease check ${this.serverUrl}/SASDrive\nIf folder DOES exist then it is likely a permission problem\n`
           if (accessToken) {
-            const tokenResponse: any = jwtDecode(accessToken)
-            const scope = tokenResponse.scope
+            const decodedToken: DecodedToken = decodeToken(accessToken)
+            console.log(decodedToken)
+            const scope = decodedToken.scope
             error =
               error + `The following scopes are contained in client/secret:\n`
             scope.forEach((element: any) => {
@@ -651,9 +657,7 @@ export class SASViyaApiClient {
           newFolderName,
           newParentFolderPath,
           undefined,
-          accessToken,
-          isForced,
-          serverUrl
+          accessToken
         )
         logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
