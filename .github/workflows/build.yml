@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [15.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -27,6 +27,10 @@ jobs:
         run: npm run lint
       - name: Run unit tests
         run: npm test
+      - name: Generate coverage report
+        uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Package
         run: npm run package:lib
         env:
