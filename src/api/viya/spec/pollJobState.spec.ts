@@ -111,7 +111,7 @@ describe('pollJobState', () => {
 
     expect(fileModule.createWriteStream).not.toHaveBeenCalledWith(__dirname)
     expect(fileModule.createWriteStream).toHaveBeenCalledWith(
-      expect.stringContaining(__dirname + '/20')
+      expect.stringContaining(__dirname + '/test job-20')
     )
   })
 
