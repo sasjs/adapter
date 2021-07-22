@@ -5,7 +5,7 @@ import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
 import { generateTimestamp } from '@sasjs/utils/time'
 import { saveLog } from './saveLog'
-import { createWriteStream } from '@sasjs/utils/file'
+import { createWriteStream, isFolder } from '@sasjs/utils/file'
 import { WriteStream } from 'fs'
 import { Link } from '../../types'
 
@@ -53,12 +53,20 @@ export async function pollJobState(
 
   let logFileStream
   if (pollOptions?.streamLog) {
-    const logFileName = `${postedJob.name || 'job'}-${generateTimestamp()}.log`
-    const logFilePath = `${
-      pollOptions?.logFolderPath || process.cwd()
-    }/${logFileName}`
+    const logPath = pollOptions?.logFolderPath || process.cwd()
+    const isFolderPath = await isFolder(logPath)
+    if (isFolderPath) {
+      const logFileName = `${
+        postedJob.name || 'job'
+      }-${generateTimestamp()}.log`
+      const logFilePath = `${
+        pollOptions?.logFolderPath || process.cwd()
+      }/${logFileName}`
 
-    logFileStream = await createWriteStream(logFilePath)
+      logFileStream = await createWriteStream(logFilePath)
+    } else {
+      logFileStream = await createWriteStream(logPath)
+    }
   }
 
   let result = await doPoll(

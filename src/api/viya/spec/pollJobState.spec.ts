@@ -1,4 +1,5 @@
 import { Logger, LogLevel } from '@sasjs/utils'
+import * as path from 'path'
 import * as fileModule from '@sasjs/utils/file'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
@@ -83,6 +84,35 @@ describe('pollJobState', () => {
     })
 
     expect(saveLogModule.saveLog).toHaveBeenCalledTimes(2)
+  })
+
+  it('should use the given log path if it points to a file', async () => {
+    mockSimplePoll()
+
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollOptions,
+      streamLog: true,
+      logFolderPath: path.join(__dirname, 'test.log')
+    })
+
+    expect(fileModule.createWriteStream).toHaveBeenCalledWith(
+      path.join(__dirname, 'test.log')
+    )
+  })
+
+  it('should generate a log file path with a timestamp if it points to a folder', async () => {
+    mockSimplePoll()
+
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollOptions,
+      streamLog: true,
+      logFolderPath: path.join(__dirname)
+    })
+
+    expect(fileModule.createWriteStream).not.toHaveBeenCalledWith(__dirname)
+    expect(fileModule.createWriteStream).toHaveBeenCalledWith(
+      expect.stringContaining(__dirname + '/test job-20')
+    )
   })
 
   it('should not attempt to fetch and save the log after each poll when streamLog is false', async () => {
