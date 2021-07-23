@@ -311,7 +311,7 @@ const mockLongPoll = () => {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
     return Promise.resolve({
-      result: count <= 101 ? 'running' : 'completed',
+      result: count <= 102 ? 'running' : 'completed',
       etag: '',
       status: 200
     })
