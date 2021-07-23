@@ -5,8 +5,7 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
-const RETRY_LIMIT: number = 3
-let RETRY_COUNT: number = 0
+const loggedErrors: NoSessionStateError[] = []
 
 export class SessionManager {
   constructor(
@@ -161,7 +160,7 @@ export class SessionManager {
 
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       if (
         sessionState === 'pending' ||
         sessionState === 'running' ||
@@ -192,23 +191,25 @@ export class SessionManager {
             this.printedSessionState.printed = false
           }
 
-          // There is an internal error present in SAS Viya 3.5
-          // Retry to wait for a session status in such case of SAS internal error
           if (!sessionState) {
-            if (RETRY_COUNT < RETRY_LIMIT) {
-              RETRY_COUNT++
+            const stateError = new NoSessionStateError(
+              responseStatus,
+              this.serverUrl + stateLink.href,
+              session.links.find((l: any) => l.rel === 'log')?.href as string
+            )
 
-              resolve(this.waitForSession(session, etag, accessToken))
-            } else {
-              reject(
-                new NoSessionStateError(
-                  responseStatus,
-                  this.serverUrl + stateLink.href,
-                  session.links.find((l: any) => l.rel === 'log')
-                    ?.href as string
-                )
+            if (
+              !loggedErrors.find(
+                (err: NoSessionStateError) =>
+                  err.serverResponseStatus === stateError.serverResponseStatus
               )
+            ) {
+              loggedErrors.push(stateError)
+
+              logger.error(stateError.message)
             }
+
+            resolve(this.waitForSession(session, etag, accessToken))
           }
 
           resolve(sessionState)
