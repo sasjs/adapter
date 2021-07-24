@@ -8,7 +8,8 @@ export const getFileStream = async (job: Job, filePath?: string) => {
   const isFolderPath = await isFolder(logPath)
   if (isFolderPath) {
     const logFileName = `${job.name || 'job'}-${generateTimestamp()}.log`
-    const logFilePath = `${filePath || process.cwd()}/${logFileName}`
+    const path = require('path')
+    const logFilePath = path.join(filePath || process.cwd(), logFileName)
     return await createWriteStream(logFilePath)
   } else {
     return await createWriteStream(logPath)

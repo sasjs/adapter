@@ -27,7 +27,7 @@ describe('getFileStream', () => {
 
     expect(createWriteStream).not.toHaveBeenCalledWith(__dirname)
     expect(createWriteStream).toHaveBeenCalledWith(
-      expect.stringContaining(__dirname + '/test job-20')
+      expect.stringContaining(path.join(__dirname, '/test job-20'))
     )
   })
 })
