@@ -194,6 +194,8 @@ Note - to use the web approach, the `useComputeApi` property must be `undefined`
 ### Using the JES API
 Here we are running Jobs using the Job Execution Service except this time we are making the requests directly using the REST API instead of through the JES Web App.  This is helpful when we need to call web services outside of a browser (eg with the SASjs CLI or other commandline tools).  To save one network request, the adapter prefetches the JOB URIs and passes them in the `__job` parameter.  Depending on your network bandwidth, it may or may not be faster than the JES Web approach.
 
+This approach (`useComputeApi: false`) also ensures that jobs are displayed in Environment Manager.
+
 ```
 {
   appLoc:"/Your/Path",
@@ -205,6 +207,8 @@ Here we are running Jobs using the Job Execution Service except this time we are
 
 ### Using the Compute API
 This approach is by far the fastest, as a result of the optimisations we have built into the adapter.  With this configuration, in the first sasjs request, we take a URI map of the services in the target folder, and create a session manager.  This manager will spawn a additional session every time a request is made. Subsequent requests will use the existing 'hot' session, if it exists.  Sessions are always deleted after every use, which actually makes this _less_ resource intensive than a typical JES web app, in which all sessions are kept alive by default for 15 minutes.
+
+With this approach (`useComputeApi: true`), the requests/logs will _not_ appear in the list in Environment manager.
 
 ```
 {

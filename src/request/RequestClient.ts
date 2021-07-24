@@ -11,7 +11,7 @@ import {
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { isValidJson } from '../utils'
+import { getValidJson } from '../utils'
 
 export interface HttpClient {
   get<T>(
@@ -43,6 +43,7 @@ export interface HttpClient {
 
   getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
   clearCsrfTokens(): void
+  getBaseUrl(): string
 }
 
 export class RequestClient implements HttpClient {
@@ -78,13 +79,17 @@ export class RequestClient implements HttpClient {
     this.fileUploadCsrfToken = { headerName: '', value: '' }
   }
 
+  public getBaseUrl() {
+    return this.httpClient.defaults.baseURL || ''
+  }
+
   public async get<T>(
     url: string,
     accessToken: string | undefined,
     contentType: string = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {},
     debug: boolean = false
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status: number }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders
@@ -429,8 +434,8 @@ export class RequestClient implements HttpClient {
           throw new Error('Valid JSON could not be extracted from response.')
         }
 
-        isValidJson(weboutResponse)
-        parsedResponse = JSON.parse(weboutResponse)
+        const jsonResponse = getValidJson(weboutResponse)
+        parsedResponse = jsonResponse
       } catch {
         parsedResponse = response.data
       }
@@ -438,9 +443,15 @@ export class RequestClient implements HttpClient {
       includeSAS9Log = true
     }
 
-    let responseToReturn: { result: T; etag: any; log?: string } = {
+    let responseToReturn: {
+      result: T
+      etag: any
+      log?: string
+      status: number
+    } = {
       result: parsedResponse as T,
-      etag
+      etag,
+      status: response.status
     }
 
     if (includeSAS9Log) {
