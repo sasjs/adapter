@@ -47,7 +47,9 @@ export const basicTests = (
         'Should fail on first attempt and should log the user in on second attempt',
       test: async () => {
         await adapter.logOut()
+        await sleep(1000)
         await adapter.logIn('invalid', 'invalid')
+        await sleep(1000)
         return adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
@@ -176,3 +178,7 @@ export const basicTests = (
     }
   ]
 })
+
+const sleep = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
