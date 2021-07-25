@@ -1,9 +1,9 @@
 import {
-  AuthConfig,
   isAccessTokenExpiring,
   isRefreshTokenExpiring,
   hasTokenExpired
-} from '@sasjs/utils'
+} from '@sasjs/utils/auth'
+import { AuthConfig } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
 import { refreshTokens } from './refreshTokens'
 

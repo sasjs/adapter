@@ -3,11 +3,8 @@ import { Job, PollOptions } from '../..'
 import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
-import { generateTimestamp } from '@sasjs/utils/time'
-import { saveLog } from './saveLog'
-import { createWriteStream, isFolder } from '@sasjs/utils/file'
-import { WriteStream } from 'fs'
-import { Link } from '../../types'
+import { Link, WriteStream } from '../../types'
+import { isNode } from '../../utils'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -55,21 +52,9 @@ export async function pollJobState(
   }
 
   let logFileStream
-  if (pollOptions.streamLog) {
-    const logPath = pollOptions?.logFolderPath || process.cwd()
-    const isFolderPath = await isFolder(logPath)
-    if (isFolderPath) {
-      const logFileName = `${
-        postedJob.name || 'job'
-      }-${generateTimestamp()}.log`
-      const logFilePath = `${
-        pollOptions?.logFolderPath || process.cwd()
-      }/${logFileName}`
-
-      logFileStream = await createWriteStream(logFilePath)
-    } else {
-      logFileStream = await createWriteStream(logPath)
-    }
+  if (pollOptions.streamLog && isNode()) {
+    const { getFileStream } = require('./getFileStream')
+    logFileStream = await getFileStream(postedJob, pollOptions.logFolderPath)
   }
 
   // Poll up to the first 100 times with the specified poll interval
@@ -230,14 +215,17 @@ const doPoll = async (
 
       const endLogLine = job.logStatistics?.lineCount ?? 1000000
 
-      await saveLog(
-        postedJob,
-        requestClient,
-        startLogLine,
-        endLogLine,
-        logStream,
-        authConfig?.access_token
-      )
+      const { saveLog } = isNode() ? require('./saveLog') : { saveLog: null }
+      if (saveLog) {
+        await saveLog(
+          postedJob,
+          requestClient,
+          startLogLine,
+          endLogLine,
+          logStream,
+          authConfig?.access_token
+        )
+      }
 
       startLogLine += endLogLine
     }

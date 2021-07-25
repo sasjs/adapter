@@ -1,11 +1,11 @@
 import { Logger, LogLevel } from '@sasjs/utils'
-import * as path from 'path'
-import * as fileModule from '@sasjs/utils/file'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
 import { pollJobState } from '../pollJobState'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as saveLogModule from '../saveLog'
+import * as getFileStreamModule from '../getFileStream'
+import * as isNodeModule from '../../../utils/isNode'
 import { PollOptions } from '../../../types'
 import { WriteStream } from 'fs'
 
@@ -77,42 +77,43 @@ describe('pollJobState', () => {
 
   it('should attempt to fetch and save the log after each poll when streamLog is true', async () => {
     mockSimplePoll()
+    const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
       ...defaultPollOptions,
       streamLog: true
     })
 
-    expect(saveLogModule.saveLog).toHaveBeenCalledTimes(2)
+    expect(saveLog).toHaveBeenCalledTimes(2)
   })
 
-  it('should use the given log path if it points to a file', async () => {
+  it('should create a write stream in Node.js environment when streamLog is true', async () => {
     mockSimplePoll()
+    const { getFileStream } = require('../getFileStream')
+    const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
       ...defaultPollOptions,
-      streamLog: true,
-      logFolderPath: path.join(__dirname, 'test.log')
+      streamLog: true
     })
 
-    expect(fileModule.createWriteStream).toHaveBeenCalledWith(
-      path.join(__dirname, 'test.log')
-    )
+    expect(getFileStream).toHaveBeenCalled()
+    expect(saveLog).toHaveBeenCalledTimes(2)
   })
 
-  it('should generate a log file path with a timestamp if it points to a folder', async () => {
+  it('should not create a write stream in a non-Node.js environment', async () => {
     mockSimplePoll()
+    jest.spyOn(isNodeModule, 'isNode').mockImplementation(() => false)
+    const { saveLog } = require('../saveLog')
+    const { getFileStream } = require('../getFileStream')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
       ...defaultPollOptions,
-      streamLog: true,
-      logFolderPath: path.join(__dirname)
+      streamLog: true
     })
 
-    expect(fileModule.createWriteStream).not.toHaveBeenCalledWith(__dirname)
-    expect(fileModule.createWriteStream).toHaveBeenCalledWith(
-      expect.stringContaining(__dirname + '/test job-20')
-    )
+    expect(getFileStream).not.toHaveBeenCalled()
+    expect(saveLog).not.toHaveBeenCalled()
   })
 
   it('should not attempt to fetch and save the log after each poll when streamLog is false', async () => {
@@ -247,7 +248,8 @@ const setupMocks = () => {
   jest.mock('../../../request/RequestClient')
   jest.mock('../../../auth/getTokens')
   jest.mock('../saveLog')
-  jest.mock('@sasjs/utils/file')
+  jest.mock('../getFileStream')
+  jest.mock('../../../utils/isNode')
 
   jest
     .spyOn(requestClient, 'get')
@@ -261,8 +263,9 @@ const setupMocks = () => {
     .spyOn(saveLogModule, 'saveLog')
     .mockImplementation(() => Promise.resolve())
   jest
-    .spyOn(fileModule, 'createWriteStream')
+    .spyOn(getFileStreamModule, 'getFileStream')
     .mockImplementation(() => Promise.resolve({} as unknown as WriteStream))
+  jest.spyOn(isNodeModule, 'isNode').mockImplementation(() => true)
 }
 
 const mockSimplePoll = (runningCount = 2) => {
@@ -308,7 +311,7 @@ const mockLongPoll = () => {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
     return Promise.resolve({
-      result: count <= 101 ? 'running' : 'completed',
+      result: count <= 102 ? 'running' : 'completed',
       etag: '',
       status: 200
     })

@@ -4,7 +4,7 @@ import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import * as writeStreamModule from '../writeStream'
 import { saveLog } from '../saveLog'
 import { mockJob } from './mockResponses'
-import { WriteStream } from 'fs'
+import { WriteStream } from '../../../types'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 const stream = {} as unknown as WriteStream
