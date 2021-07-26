@@ -147,43 +147,11 @@ export const basicTests = (
       }
     },
     {
-      title: 'Compute API request',
-      description: 'Should run the request with compute API approach',
-      test: async () => {
-        if (adapter.getSasjsConfig().serverType !== 'SASVIYA')
-          return Promise.resolve('skip')
-        
-        return await adapter.request('common/sendArr', stringData)
-      },
-      assertion: (response: any) => {
-        if (response === 'skip') return true
-        return response.table1[0][0] === stringData.table1[0].col1
-      }
-    },
-    {
-      title: 'JES API request',
-      description: 'Should run the request with JES API approach',
-      test: async () => {
-        if (adapter.getSasjsConfig().serverType !== 'SASVIYA')
-          return Promise.resolve('skip')
-        
-        const config = {
-          useComputeApi: false
-        }
-
-        return await adapter.request('common/sendArr', stringData, config)
-      },
-      assertion: (response: any) => {
-        if (response === 'skip') return true
-        return response.table1[0][0] === stringData.table1[0].col1
-      }
-    },
-    {
       title: 'Web request',
       description: 'Should run the request with old web approach',
       test: async () => {
         const config = {
-          useComputeApi: null
+          useComputeApi: undefined
         }
 
         return await adapter.request('common/sendArr', stringData, config)
