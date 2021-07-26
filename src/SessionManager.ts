@@ -206,7 +206,7 @@ export class SessionManager {
             ) {
               loggedErrors.push(stateError)
 
-              logger.error(stateError.message)
+              logger.info(stateError.message)
             }
 
             resolve(this.waitForSession(session, etag, accessToken))
