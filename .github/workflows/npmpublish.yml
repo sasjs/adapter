@@ -75,14 +75,14 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
-          npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts"
+          sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Run cypress on sas9
         run: |
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_SAS9 }}",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
-          npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts"
+          sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
         
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v2
