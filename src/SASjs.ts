@@ -4,7 +4,12 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
-import { ServerType, MacroVar, AuthConfig } from '@sasjs/utils/types'
+import {
+  ServerType,
+  MacroVar,
+  AuthConfig,
+  ExtraResponseAttributes
+} from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import {
   JobExecutor,
@@ -14,7 +19,6 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
-import { ExtraResponseAttributes } from '@sasjs/utils/types'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -540,11 +544,22 @@ export default class SASjs {
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param files - array of files to be uploaded, including File object and file name.
    * @param params - request URL parameters.
+   * @param overrideSasjsConfig - object to override existing config (optional)
    */
-  public uploadFile(sasJob: string, files: UploadFile[], params: any) {
-    const fileUploader =
-      this.fileUploader ||
-      new FileUploader(this.sasjsConfig, this.jobsPath, this.requestClient!)
+  public uploadFile(
+    sasJob: string,
+    files: UploadFile[],
+    params: any,
+    overrideSasjsConfig?: any
+  ) {
+    const fileUploader = overrideSasjsConfig
+      ? new FileUploader(
+          { ...this.sasjsConfig, ...overrideSasjsConfig },
+          this.jobsPath,
+          this.requestClient!
+        )
+      : this.fileUploader ||
+        new FileUploader(this.sasjsConfig, this.jobsPath, this.requestClient!)
 
     return fileUploader.uploadFile(sasJob, files, params)
   }
