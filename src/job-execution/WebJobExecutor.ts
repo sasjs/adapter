@@ -8,7 +8,11 @@ import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
 import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
-import { isRelativePath, isValidJson } from '../utils'
+import {
+  isRelativePath,
+  getValidJson,
+  parseSasViyaDebugResponse
+} from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 
@@ -95,8 +99,10 @@ export class WebJobExecutor extends BaseJobExecutor {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res) => {
           if (this.serverType === ServerType.SasViya && config.debug) {
-            const jsonResponse = await this.parseSasViyaDebugResponse(
-              res.result as string
+            const jsonResponse = await parseSasViyaDebugResponse(
+              res.result as string,
+              this.requestClient,
+              this.serverUrl
             )
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
@@ -109,11 +115,11 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             }
 
-            isValidJson(jsonResponse)
+            getValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)
           }
-          isValidJson(res.result as string)
+          getValidJson(res.result as string)
           this.appendRequest(res, sasJob, config.debug)
           resolve(res.result)
         })
@@ -149,20 +155,6 @@ export class WebJobExecutor extends BaseJobExecutor {
     })
 
     return requestPromise
-  }
-
-  private parseSasViyaDebugResponse = async (response: string) => {
-    const iframeStart = response.split(
-      '<iframe style="width: 99%; height: 500px" src="'
-    )[1]
-    const jsonUrl = iframeStart ? iframeStart.split('"></iframe>')[0] : null
-    if (!jsonUrl) {
-      throw new Error('Unable to find webout file URL.')
-    }
-
-    return this.requestClient
-      .get(this.serverUrl + jsonUrl, undefined)
-      .then((res) => res.result)
   }
 
   private async getJobUri(sasJob: string) {
