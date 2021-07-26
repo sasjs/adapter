@@ -1,4 +1,4 @@
-import { isRelativePath, isUri, isUrl } from './utils'
+import { isRelativePath, isUri, isUrl, rootFolderNotFound } from './utils'
 import * as NodeFormData from 'form-data'
 import {
   Job,
@@ -14,13 +14,7 @@ import {
 import { JobExecutionError } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
-import { decodeToken } from '@sasjs/utils/auth'
-import {
-  SasAuthResponse,
-  MacroVar,
-  AuthConfig,
-  DecodedToken
-} from '@sasjs/utils/types'
+import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
@@ -387,17 +381,7 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          let error: string = `Root folder ${parentFolderPath} was not found\nPlease check ${this.serverUrl}/SASDrive\nIf folder DOES exist then it is likely a permission problem\n`
-          if (accessToken) {
-            const decodedToken: DecodedToken = decodeToken(accessToken)
-            const scope = decodedToken.scope
-            error =
-              error + `The following scopes are contained in access token:\n`
-            scope.forEach((element: any) => {
-              error = error + `* ${element}\n`
-            })
-          }
-          throw new Error(error)
+          rootFolderNotFound(parentFolderPath, this.serverUrl, accessToken)
         }
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
