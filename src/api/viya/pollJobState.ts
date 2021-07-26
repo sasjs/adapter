@@ -3,11 +3,8 @@ import { Job, PollOptions } from '../..'
 import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
-import { generateTimestamp } from '@sasjs/utils/time'
-import { saveLog } from './saveLog'
-import { createWriteStream, isFolder } from '@sasjs/utils/file'
-import { WriteStream } from 'fs'
-import { Link } from '../../types'
+import { Link, WriteStream } from '../../types'
+import { isNode } from '../../utils'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -21,10 +18,13 @@ export async function pollJobState(
   let pollInterval = 300
   let maxPollCount = 1000
 
-  if (pollOptions) {
-    pollInterval = pollOptions.pollInterval || pollInterval
-    maxPollCount = pollOptions.maxPollCount || maxPollCount
+  const defaultPollOptions: PollOptions = {
+    maxPollCount,
+    pollInterval,
+    streamLog: false
   }
+
+  pollOptions = { ...defaultPollOptions, ...(pollOptions || {}) }
 
   const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
   if (!stateLink) {
@@ -52,23 +52,12 @@ export async function pollJobState(
   }
 
   let logFileStream
-  if (pollOptions?.streamLog) {
-    const logPath = pollOptions?.logFolderPath || process.cwd()
-    const isFolderPath = await isFolder(logPath)
-    if (isFolderPath) {
-      const logFileName = `${
-        postedJob.name || 'job'
-      }-${generateTimestamp()}.log`
-      const logFilePath = `${
-        pollOptions?.logFolderPath || process.cwd()
-      }/${logFileName}`
-
-      logFileStream = await createWriteStream(logFilePath)
-    } else {
-      logFileStream = await createWriteStream(logPath)
-    }
+  if (pollOptions.streamLog && isNode()) {
+    const { getFileStream } = require('./getFileStream')
+    logFileStream = await getFileStream(postedJob, pollOptions.logFolderPath)
   }
 
+  // Poll up to the first 100 times with the specified poll interval
   let result = await doPoll(
     requestClient,
     postedJob,
@@ -76,14 +65,18 @@ export async function pollJobState(
     debug,
     pollCount,
     authConfig,
-    pollOptions,
+    {
+      ...pollOptions,
+      maxPollCount:
+        pollOptions.maxPollCount <= 100 ? pollOptions.maxPollCount : 100
+    },
     logFileStream
   )
 
   currentState = result.state
   pollCount = result.pollCount
 
-  if (!needsRetry(currentState) || pollCount >= maxPollCount) {
+  if (!needsRetry(currentState) || pollCount >= pollOptions.maxPollCount) {
     return currentState
   }
 
@@ -192,7 +185,7 @@ const doPoll = async (
     throw new Error(`Job state link was not found.`)
   }
 
-  while (needsRetry(state) && pollCount <= 100 && pollCount <= maxPollCount) {
+  while (needsRetry(state) && pollCount <= maxPollCount) {
     state = await getJobState(
       requestClient,
       postedJob,
@@ -222,14 +215,17 @@ const doPoll = async (
 
       const endLogLine = job.logStatistics?.lineCount ?? 1000000
 
-      await saveLog(
-        postedJob,
-        requestClient,
-        startLogLine,
-        endLogLine,
-        logStream,
-        authConfig?.access_token
-      )
+      const { saveLog } = isNode() ? require('./saveLog') : { saveLog: null }
+      if (saveLog) {
+        await saveLog(
+          postedJob,
+          requestClient,
+          startLogLine,
+          endLogLine,
+          logStream,
+          authConfig?.access_token
+        )
+      }
 
       startLogLine += endLogLine
     }

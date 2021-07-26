@@ -12,9 +12,9 @@ What code changes have been made to achieve the intent.
 
 ## Checks
 
-No PR (that involves a non-trivial code change) should be merged, unless all four of the items below are confirmed!  If an urgent fix is needed - use a tar file.
+No PR (that involves a non-trivial code change) should be merged, unless all items below are confirmed!  If an urgent fix is needed - use a tar file.
 
-- [ ] Code is formatted correctly (`npm run lint:fix`).
-- [ ] All unit tests are passing (`npm test`).
+
 - [ ] All `sasjs-cli` unit tests are passing (`npm test`).
 - [ ] All `sasjs-tests` are passing (instructions available [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md)).
+- [ ] [Data Controller](https://datacontroller.io) builds and is functional on both SAS 9 and Viya
