@@ -172,7 +172,7 @@ Configuration on the client side involves passing an object on startup, which ca
 * `serverType` - either `SAS9` or `SASVIYA`.
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
-* `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.  
+* `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.
 
 The adapter supports a number of approaches for interfacing with Viya (`serverType` is `SASVIYA`).  For maximum performance, be sure to [configure your compute context](https://sasjs.io/guide-viya/#shared-account-and-server-re-use) with `reuseServerProcesses` as `true` and a system account in `runServerAs`.  This functionality is available since Viya 3.5.  This configuration is supported when [creating contexts using the CLI](https://sasjs.io/sasjs-cli-context/#sasjs-context-create).
@@ -236,6 +236,9 @@ If you find this library useful, help us grow our star graph!
 ![](https://starchart.cc/sasjs/adapter.svg)
 
 ## Contributors ✨
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -244,7 +247,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/medjedovicm"><img src="https://avatars.githubusercontent.com/u/18329105?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Mihajlo Medjedovic</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Code">💻</a></td>
+    <td align="center"><a href="https://krishna-acondy.io/"><img src="https://avatars.githubusercontent.com/u/2980428?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Krishna Acondy</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=krishna-acondy" title="Code">💻</a> <a href="#infra-krishna-acondy" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#blog-krishna-acondy" title="Blogposts">📝</a> <a href="#content-krishna-acondy" title="Content">🖋</a> <a href="#ideas-krishna-acondy" title="Ideas, Planning, & Feedback">🤔</a> <a href="#video-krishna-acondy" title="Videos">📹</a></td>
+    <td align="center"><a href="https://www.erudicat.com/"><img src="https://avatars.githubusercontent.com/u/25773492?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Yury Shkoda</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Code">💻</a> <a href="#infra-YuryShkoda" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-YuryShkoda" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Tests">⚠️</a> <a href="#video-YuryShkoda" title="Videos">📹</a></td>
+    <td align="center"><a href="https://github.com/medjedovicm"><img src="https://avatars.githubusercontent.com/u/18329105?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Mihajlo Medjedovic</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Code">💻</a> <a href="#infra-medjedovicm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Amedjedovicm" title="Reviewed Pull Requests">👀</a></td>
+    <td align="center"><a href="https://github.com/allanbowe"><img src="https://avatars.githubusercontent.com/u/4420615?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Allan Bowe</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Aallanbowe" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Tests">⚠️</a> <a href="#mentoring-allanbowe" title="Mentoring">🧑‍🏫</a> <a href="#maintenance-allanbowe" title="Maintenance">🚧</a></td>
+    <td align="center"><a href="https://github.com/saadjutt01"><img src="https://avatars.githubusercontent.com/u/8914650?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Muhammad Saad </b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asaadjutt01" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Tests">⚠️</a> <a href="#mentoring-saadjutt01" title="Mentoring">🧑‍🏫</a> <a href="#infra-saadjutt01" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/sabhas"><img src="https://avatars.githubusercontent.com/u/82647447?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sabir Hassan</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asabhas" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Tests">⚠️</a> <a href="#ideas-sabhas" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/VladislavParhomchik"><img src="https://avatars.githubusercontent.com/u/83717836?v=4?s=100" width="100px;" alt=""/><br /><sub><b>VladislavParhomchik</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=VladislavParhomchik" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3AVladislavParhomchik" title="Reviewed Pull Requests">👀</a></td>
   </tr>
 </table>
 
