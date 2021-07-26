@@ -390,10 +390,9 @@ export class SASViyaApiClient {
           let error: string = `Root folder ${parentFolderPath} was not found\nPlease check ${this.serverUrl}/SASDrive\nIf folder DOES exist then it is likely a permission problem\n`
           if (accessToken) {
             const decodedToken: DecodedToken = decodeToken(accessToken)
-            console.log(decodedToken)
             const scope = decodedToken.scope
             error =
-              error + `The following scopes are contained in client/secret:\n`
+              error + `The following scopes are contained in access token:\n`
             scope.forEach((element: any) => {
               error = error + `* ${element}\n`
             })
