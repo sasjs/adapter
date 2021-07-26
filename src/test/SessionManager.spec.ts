@@ -3,6 +3,7 @@ import { RequestClient } from '../request/RequestClient'
 import { NoSessionStateError } from '../types/errors'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
+import { Logger, LogLevel } from '@sasjs/utils'
 
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
@@ -47,12 +48,26 @@ describe('SessionManager', () => {
   })
 
   describe('waitForSession', () => {
-    it('should reject with NoSessionStateError if SAS server did not provide session state', async () => {
-      const responseStatus = 304
+    beforeEach(() => {
+      ;(process as any).logger = new Logger(LogLevel.Off)
+    })
 
-      mockedAxios.get.mockImplementation(() =>
-        Promise.resolve({ data: '', status: responseStatus })
-      )
+    it('should reject with NoSessionStateError if SAS server did not provide session state', async () => {
+      let requestAttempt = 0
+
+      mockedAxios.get.mockImplementation(() => {
+        requestAttempt += 1
+
+        if (requestAttempt > 10) {
+          return Promise.resolve({ data: 'idle', status: 200 })
+        }
+
+        return Promise.resolve({ data: '', status: 304 })
+      })
+
+      mockedAxios
+
+      jest.spyOn((process as any).logger, 'info')
 
       await expect(
         sessionManager['waitForSession'](
@@ -70,12 +85,11 @@ describe('SessionManager', () => {
           null,
           'access_token'
         )
-      ).rejects.toEqual(
-        new NoSessionStateError(
-          responseStatus,
-          process.env.SERVER_URL as string,
-          'logUrl'
-        )
+      ).resolves.toEqual('idle')
+
+      expect((process as any).logger.info).toHaveBeenCalledTimes(1)
+      expect((process as any).logger.info).toHaveBeenLastCalledWith(
+        `Could not get session state. Server responded with 304 whilst checking state: ${process.env.SERVER_URL}`
       )
     })
   })
