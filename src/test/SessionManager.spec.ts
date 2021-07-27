@@ -54,18 +54,17 @@ describe('SessionManager', () => {
 
     it('should reject with NoSessionStateError if SAS server did not provide session state', async () => {
       let requestAttempt = 0
+      const requestAttemptLimit = 10
 
       mockedAxios.get.mockImplementation(() => {
         requestAttempt += 1
 
-        if (requestAttempt > 10) {
+        if (requestAttempt >= requestAttemptLimit) {
           return Promise.resolve({ data: 'idle', status: 200 })
         }
 
         return Promise.resolve({ data: '', status: 304 })
       })
-
-      mockedAxios
 
       jest.spyOn((process as any).logger, 'info')
 
@@ -91,6 +90,7 @@ describe('SessionManager', () => {
       expect((process as any).logger.info).toHaveBeenLastCalledWith(
         `Could not get session state. Server responded with 304 whilst checking state: ${process.env.SERVER_URL}`
       )
+      expect(mockedAxios.get).toHaveBeenCalledTimes(requestAttemptLimit)
     })
   })
 })
