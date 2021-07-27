@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - master
+      - auto-tests
 
 jobs:
   build:
@@ -84,10 +85,10 @@ jobs:
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
           sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
         
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Send Slack message
-        run: curl -X POST --data-urlencode "payload={\"channel\":\"#sasjs\", \"username\":\"GitHub CI\", \"text\":\"New version of @sasjs/adapter has been released! \n Please deploy and run `dctests` with new adapter to make sure everything is still in place.\", \"icon_emoji\":\":rocket:\"}" ${{ secrets.SLACK_WEBHOOK }}
+      # - name: Semantic Release
+      #   uses: cycjimmy/semantic-release-action@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - name: Send Slack message
+      #   run: curl -X POST --data-urlencode "payload={\"channel\":\"#sasjs\", \"username\":\"GitHub CI\", \"text\":\"New version of @sasjs/adapter has been released! \n Please deploy and run `dctests` with new adapter to make sure everything is still in place.\", \"icon_emoji\":\":rocket:\"}" ${{ secrets.SLACK_WEBHOOK }}
