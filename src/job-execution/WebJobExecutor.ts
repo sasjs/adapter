@@ -54,6 +54,11 @@ export class WebJobExecutor extends BaseJobExecutor {
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
+      if (jobUri.length > 0) {
+        apiUrl += '&_job=' + jobUri
+        apiUrl = apiUrl.replace('_program=', '__program=')
+      }
+
       apiUrl += config.contextName ? `&_contextname=${config.contextName}` : ''
     }
 
