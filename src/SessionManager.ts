@@ -153,71 +153,71 @@ export class SessionManager {
     session: Session,
     etag: string | null,
     accessToken?: string
-  ) {
+  ): Promise<string> {
     const logger = process.logger || console
 
     let sessionState = session.state
 
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
-    return new Promise(async (resolve) => {
-      if (
-        sessionState === 'pending' ||
-        sessionState === 'running' ||
-        sessionState === ''
-      ) {
-        if (stateLink) {
-          if (this.debug && !this.printedSessionState.printed) {
-            logger.info('Polling session status...')
+    if (
+      sessionState === 'pending' ||
+      sessionState === 'running' ||
+      sessionState === ''
+    ) {
+      if (stateLink) {
+        if (this.debug && !this.printedSessionState.printed) {
+          logger.info('Polling session status...')
 
-            this.printedSessionState.printed = true
-          }
-
-          const { result: state, responseStatus: responseStatus } =
-            await this.getSessionState(
-              `${this.serverUrl}${stateLink.href}?wait=30`,
-              etag!,
-              accessToken
-            ).catch((err) => {
-              throw prefixMessage(err, 'Error while getting session state.')
-            })
-
-          sessionState = state.trim()
-
-          if (this.debug && this.printedSessionState.state !== sessionState) {
-            logger.info(`Current session state is '${sessionState}'`)
-
-            this.printedSessionState.state = sessionState
-            this.printedSessionState.printed = false
-          }
-
-          if (!sessionState) {
-            const stateError = new NoSessionStateError(
-              responseStatus,
-              this.serverUrl + stateLink.href,
-              session.links.find((l: any) => l.rel === 'log')?.href as string
-            )
-
-            if (
-              !loggedErrors.find(
-                (err: NoSessionStateError) =>
-                  err.serverResponseStatus === stateError.serverResponseStatus
-              )
-            ) {
-              loggedErrors.push(stateError)
-
-              logger.info(stateError.message)
-            }
-
-            resolve(this.waitForSession(session, etag, accessToken))
-          }
-
-          resolve(sessionState)
+          this.printedSessionState.printed = true
         }
+
+        const { result: state, responseStatus: responseStatus } =
+          await this.getSessionState(
+            `${this.serverUrl}${stateLink.href}?wait=30`,
+            etag!,
+            accessToken
+          ).catch((err) => {
+            throw prefixMessage(err, 'Error while getting session state.')
+          })
+
+        sessionState = state.trim()
+
+        if (this.debug && this.printedSessionState.state !== sessionState) {
+          logger.info(`Current session state is '${sessionState}'`)
+
+          this.printedSessionState.state = sessionState
+          this.printedSessionState.printed = false
+        }
+
+        if (!sessionState) {
+          const stateError = new NoSessionStateError(
+            responseStatus,
+            this.serverUrl + stateLink.href,
+            session.links.find((l: any) => l.rel === 'log')?.href as string
+          )
+
+          if (
+            !loggedErrors.find(
+              (err: NoSessionStateError) =>
+                err.serverResponseStatus === stateError.serverResponseStatus
+            )
+          ) {
+            loggedErrors.push(stateError)
+
+            logger.info(stateError.message)
+          }
+
+          return await this.waitForSession(session, etag, accessToken)
+        }
+
+        return sessionState
       } else {
-        resolve(sessionState)
+        throw 'Error while getting session state link.'
       }
-    })
+    } else {
+      return sessionState
+    }
   }
 
   private async getSessionState(
