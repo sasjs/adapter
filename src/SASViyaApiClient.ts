@@ -1,4 +1,4 @@
-import { isRelativePath, isUri, isUrl, rootFolderNotFound } from './utils'
+import { isRelativePath, isUri, isUrl } from './utils'
 import * as NodeFormData from 'form-data'
 import {
   Job,
@@ -11,7 +11,7 @@ import {
   JobDefinition,
   PollOptions
 } from './types'
-import { JobExecutionError } from './types/errors'
+import { JobExecutionError, RootFolderNotFoundError } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
@@ -381,7 +381,11 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          rootFolderNotFound(parentFolderPath, this.serverUrl, accessToken)
+          throw new RootFolderNotFoundError(
+            parentFolderPath,
+            this.serverUrl,
+            accessToken
+          )
         }
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
