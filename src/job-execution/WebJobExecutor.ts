@@ -112,7 +112,7 @@ export class WebJobExecutor extends BaseJobExecutor {
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
-          
+
           this.appendRequest(res, sasJob, config.debug)
           getValidJson(res.result as string)
           resolve(res.result)
