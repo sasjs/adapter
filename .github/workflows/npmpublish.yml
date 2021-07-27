@@ -23,7 +23,8 @@ jobs:
 
       - name: Build Project
         run: npm run build
-        - name: Install SSH Key
+
+      - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with: 
           key: ${{ secrets.DCGITLAB_KEY }}
@@ -55,12 +56,11 @@ jobs:
         run: openvpn3 session-start --config .github/vpn/config.ovpn
 
       - name: Deploy sasjs-tests
-        run: | 
-          npm i
+        run: |
           npm install -g replace-in-files-cli
           cd sasjs-tests
           replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"2.8.13",' ./package.json
-          npm i
+          npm ci
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SAS_USERNAME }}",' ./public/config.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASVIYA",' ./public/config.json
