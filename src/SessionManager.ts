@@ -5,9 +5,10 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
-const loggedErrors: NoSessionStateError[] = []
 
 export class SessionManager {
+  private loggedErrors: NoSessionStateError[] = []
+
   constructor(
     private serverUrl: string,
     private contextName: string,
@@ -198,12 +199,12 @@ export class SessionManager {
           )
 
           if (
-            !loggedErrors.find(
+            !this.loggedErrors.find(
               (err: NoSessionStateError) =>
                 err.serverResponseStatus === stateError.serverResponseStatus
             )
           ) {
-            loggedErrors.push(stateError)
+            this.loggedErrors.push(stateError)
 
             logger.info(stateError.message)
           }
@@ -211,11 +212,15 @@ export class SessionManager {
           return await this.waitForSession(session, etag, accessToken)
         }
 
+        this.loggedErrors = []
+
         return sessionState
       } else {
         throw 'Error while getting session state link.'
       }
     } else {
+      this.loggedErrors = []
+
       return sessionState
     }
   }
