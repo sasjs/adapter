@@ -1,7 +1,7 @@
 import { Job } from '../..'
 import { RequestClient } from '../../request/RequestClient'
 import { fetchLog } from '../../utils'
-import { WriteStream } from 'fs'
+import { WriteStream } from '../../types'
 import { writeStream } from './writeStream'
 
 /**
