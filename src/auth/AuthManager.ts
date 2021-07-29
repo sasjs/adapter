@@ -124,7 +124,8 @@ export class AuthManager {
 
     if (!isLoggedIn) {
       //We will logout to make sure cookies are removed and login form is presented
-      this.logOut()
+      //Residue can happen in case of session expiration
+      await this.logOut()
 
       const { result: formResponse } = await this.requestClient.get<string>(
         this.loginUrl.replace('.do', ''),
