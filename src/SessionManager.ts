@@ -5,10 +5,10 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
-const RETRY_LIMIT: number = 3
-let RETRY_COUNT: number = 0
 
 export class SessionManager {
+  private loggedErrors: NoSessionStateError[] = []
+
   constructor(
     private serverUrl: string,
     private contextName: string,
@@ -154,69 +154,75 @@ export class SessionManager {
     session: Session,
     etag: string | null,
     accessToken?: string
-  ) {
+  ): Promise<string> {
     const logger = process.logger || console
 
     let sessionState = session.state
 
     const stateLink = session.links.find((l: any) => l.rel === 'state')
 
-    return new Promise(async (resolve, reject) => {
-      if (
-        sessionState === 'pending' ||
-        sessionState === 'running' ||
-        sessionState === ''
-      ) {
-        if (stateLink) {
-          if (this.debug && !this.printedSessionState.printed) {
-            logger.info('Polling session status...')
+    if (
+      sessionState === 'pending' ||
+      sessionState === 'running' ||
+      sessionState === ''
+    ) {
+      if (stateLink) {
+        if (this.debug && !this.printedSessionState.printed) {
+          logger.info('Polling session status...')
 
-            this.printedSessionState.printed = true
-          }
-
-          const { result: state, responseStatus: responseStatus } =
-            await this.getSessionState(
-              `${this.serverUrl}${stateLink.href}?wait=30`,
-              etag!,
-              accessToken
-            ).catch((err) => {
-              throw prefixMessage(err, 'Error while getting session state.')
-            })
-
-          sessionState = state.trim()
-
-          if (this.debug && this.printedSessionState.state !== sessionState) {
-            logger.info(`Current session state is '${sessionState}'`)
-
-            this.printedSessionState.state = sessionState
-            this.printedSessionState.printed = false
-          }
-
-          // There is an internal error present in SAS Viya 3.5
-          // Retry to wait for a session status in such case of SAS internal error
-          if (!sessionState) {
-            if (RETRY_COUNT < RETRY_LIMIT) {
-              RETRY_COUNT++
-
-              resolve(this.waitForSession(session, etag, accessToken))
-            } else {
-              reject(
-                new NoSessionStateError(
-                  responseStatus,
-                  this.serverUrl + stateLink.href,
-                  session.links.find((l: any) => l.rel === 'log')
-                    ?.href as string
-                )
-              )
-            }
-          }
-
-          resolve(sessionState)
+          this.printedSessionState.printed = true
         }
+
+        const { result: state, responseStatus: responseStatus } =
+          await this.getSessionState(
+            `${this.serverUrl}${stateLink.href}?wait=30`,
+            etag!,
+            accessToken
+          ).catch((err) => {
+            throw prefixMessage(err, 'Error while getting session state.')
+          })
+
+        sessionState = state.trim()
+
+        if (this.debug && this.printedSessionState.state !== sessionState) {
+          logger.info(`Current session state is '${sessionState}'`)
+
+          this.printedSessionState.state = sessionState
+          this.printedSessionState.printed = false
+        }
+
+        if (!sessionState) {
+          const stateError = new NoSessionStateError(
+            responseStatus,
+            this.serverUrl + stateLink.href,
+            session.links.find((l: any) => l.rel === 'log')?.href as string
+          )
+
+          if (
+            !this.loggedErrors.find(
+              (err: NoSessionStateError) =>
+                err.serverResponseStatus === stateError.serverResponseStatus
+            )
+          ) {
+            this.loggedErrors.push(stateError)
+
+            logger.info(stateError.message)
+          }
+
+          return await this.waitForSession(session, etag, accessToken)
+        }
+
+        this.loggedErrors = []
+
+        return sessionState
       } else {
-        resolve(sessionState)
+        throw 'Error while getting session state link.'
       }
-    })
+    } else {
+      this.loggedErrors = []
+
+      return sessionState
+    }
   }
 
   private async getSessionState(
