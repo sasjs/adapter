@@ -110,7 +110,7 @@ export class AuthManager {
     //For SAS9 we will send request on SASStoredProcess
     const url =
       this.serverType === 'SASVIYA'
-        ? `${this.serverUrl}/identities`
+        ? `${this.serverUrl}/identities/users/@currentUser`
         : `${this.serverUrl}/SASStoredProcess`
 
     const { result: loginResponse } = await this.requestClient
@@ -120,6 +120,10 @@ export class AuthManager {
       })
 
     const isLoggedIn = loginResponse !== 'authErr'
+    const userName = isLoggedIn
+      ? this.extractUserName(loginResponse)
+      : this.userName
+
     let loginForm = null
 
     if (!isLoggedIn) {
@@ -137,10 +141,15 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: this.userName,
+      userName: userName ?? this.userName,
       loginForm
     })
   }
+
+  private extractUserName = (response: string) =>
+    this.serverType === 'SASVIYA'
+      ? response?.match(/<id>[0-1a-zA-Z]*<\/id>/)?.[0].slice(4, -5)
+      : response?.match(/"title":"Log Off [0-1a-zA-Z]*"/)?.[0].slice(17, -1)
 
   private getLoginForm(response: any) {
     const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
