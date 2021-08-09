@@ -61,6 +61,8 @@ export class FileUploader {
       'Content-Type': 'text/plain'
     }
 
+    // currently only web approach is supported for file upload
+    // therefore log is part of response with debug enabled and must be parsed
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then(async (res) => {
