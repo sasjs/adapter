@@ -64,12 +64,9 @@ export class FileUploader {
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then(async (res) => {
-        // for web approach on Viya
         if (
-          this.sasjsConfig.debug &&
-          (this.sasjsConfig.useComputeApi === null ||
-            this.sasjsConfig.useComputeApi === undefined) &&
-          this.sasjsConfig.serverType === ServerType.SasViya
+          this.sasjsConfig.serverType === ServerType.SasViya &&
+          this.sasjsConfig.debug
         ) {
           const jsonResponse = await parseSasViyaDebugResponse(
             res.result as string,
