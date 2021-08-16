@@ -54,7 +54,12 @@ export class WebJobExecutor extends BaseJobExecutor {
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
-      apiUrl += config.contextName ? `&_contextname=${config.contextName}` : ''
+      // if context name exists and is not blank string
+      // then add _contextname variable in apiUrl
+      apiUrl +=
+        config.contextName && !/\s/.test(config.contextName)
+          ? `&_contextname=${config.contextName}`
+          : ''
     }
 
     let requestParams = {

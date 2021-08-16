@@ -619,6 +619,11 @@ export default class SASjs {
             authConfig
           )
         } else {
+          if (!config.contextName)
+            config = {
+              ...config,
+              contextName: 'SAS Job Execution compute context'
+            }
           return await this.jesJobExecutor!.execute(
             sasJob,
             data,
