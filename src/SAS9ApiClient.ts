@@ -10,9 +10,13 @@ import { isUrl } from './utils'
 export class SAS9ApiClient {
   private requestClient: Sas9RequestClient
 
-  constructor(private serverUrl: string, private jobsPath: string) {
+  constructor(
+    private serverUrl: string,
+    private jobsPath: string,
+    allowInsecureRequests: boolean
+  ) {
     if (serverUrl) isUrl(serverUrl)
-    this.requestClient = new Sas9RequestClient(serverUrl, false)
+    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
   }
 
   /**

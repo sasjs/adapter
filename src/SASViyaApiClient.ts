@@ -11,7 +11,7 @@ import {
   JobDefinition,
   PollOptions
 } from './types'
-import { JobExecutionError } from './types/errors'
+import { JobExecutionError, RootFolderNotFoundError } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
@@ -381,7 +381,11 @@ export class SASViyaApiClient {
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
         if (newParentFolderPath === '') {
-          throw new Error('Root folder has to be present on the server.')
+          throw new RootFolderNotFoundError(
+            parentFolderPath,
+            this.serverUrl,
+            accessToken
+          )
         }
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`

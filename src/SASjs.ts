@@ -619,6 +619,11 @@ export default class SASjs {
             authConfig
           )
         } else {
+          if (!config.contextName)
+            config = {
+              ...config,
+              contextName: 'SAS Job Execution compute context'
+            }
           return await this.jesJobExecutor!.execute(
             sasJob,
             data,
@@ -749,7 +754,11 @@ export default class SASjs {
         )
         sasApiClient.debug = this.sasjsConfig.debug
       } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
-        sasApiClient = new SAS9ApiClient(serverUrl, this.jobsPath)
+        sasApiClient = new SAS9ApiClient(
+          serverUrl,
+          this.jobsPath,
+          this.sasjsConfig.allowInsecureRequests
+        )
       }
     } else {
       let sasClientConfig: any = null
@@ -944,7 +953,8 @@ export default class SASjs {
       else
         this.sas9ApiClient = new SAS9ApiClient(
           this.sasjsConfig.serverUrl,
-          this.jobsPath
+          this.jobsPath,
+          this.sasjsConfig.allowInsecureRequests
         )
     }
 
@@ -965,7 +975,8 @@ export default class SASjs {
     this.sas9JobExecutor = new Sas9JobExecutor(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
-      this.jobsPath
+      this.jobsPath,
+      this.sasjsConfig.allowInsecureRequests
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(

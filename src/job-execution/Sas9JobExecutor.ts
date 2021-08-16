@@ -16,10 +16,11 @@ export class Sas9JobExecutor extends BaseJobExecutor {
   constructor(
     serverUrl: string,
     serverType: ServerType,
-    private jobsPath: string
+    private jobsPath: string,
+    allowInsecureRequests: boolean
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, false)
+    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
   }
 
   async execute(sasJob: string, data: any, config: any) {
