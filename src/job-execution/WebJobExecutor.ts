@@ -2,7 +2,8 @@ import { ServerType } from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
-  LoginRequiredError
+  LoginRequiredError,
+  WeboutResponseError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
@@ -102,10 +103,11 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
-        .then(async (res) => {
+        .then(async (res: any) => {
+          console.log(106, res)
           if (this.serverType === ServerType.SasViya && config.debug) {
             const jsonResponse = await parseSasViyaDebugResponse(
-              res.result as string,
+              res.result,
               this.requestClient,
               this.serverUrl
             )
@@ -113,18 +115,19 @@ export class WebJobExecutor extends BaseJobExecutor {
             resolve(jsonResponse)
           }
           if (this.serverType === ServerType.Sas9 && config.debug) {
-            const jsonResponse = parseWeboutResponse(res.result as string)
-            if (jsonResponse === '') {
-              throw new Error(
-                'Valid JSON could not be extracted from response.'
-              )
+            let jsonResponse
+            if (typeof res.result === 'string') {
+              jsonResponse = parseWeboutResponse(res.result)
+              if (jsonResponse === '') throw new WeboutResponseError(apiUrl)
+            } else {
+              jsonResponse = res.result
             }
 
             getValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)
           }
-          getValidJson(res.result as string)
+          getValidJson(res.result)
           this.appendRequest(res, sasJob, config.debug)
           resolve(res.result)
         })
