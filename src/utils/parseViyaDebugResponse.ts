@@ -1,4 +1,5 @@
 import { RequestClient } from '../request/RequestClient'
+import { getValidJson } from '../utils'
 
 /**
  * When querying a Viya job using the Web approach (as opposed to using the APIs) with _DEBUG enabled,
@@ -25,5 +26,5 @@ export const parseSasViyaDebugResponse = async (
 
   return requestClient
     .get(serverUrl + jsonUrl, undefined)
-    .then((res) => res.result)
+    .then((res: any) => getValidJson(res.result))
 }
