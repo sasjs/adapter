@@ -104,7 +104,6 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res: any) => {
-          console.log(106, res)
           if (this.serverType === ServerType.SasViya && config.debug) {
             const jsonResponse = await parseSasViyaDebugResponse(
               res.result,
