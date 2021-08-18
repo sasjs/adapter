@@ -114,13 +114,9 @@ export class WebJobExecutor extends BaseJobExecutor {
             resolve(jsonResponse)
           }
           if (this.serverType === ServerType.Sas9 && config.debug) {
-            let jsonResponse
-            if (typeof res.result === 'string') {
-              jsonResponse = parseWeboutResponse(res.result)
-              if (jsonResponse === '') throw new WeboutResponseError(apiUrl)
-            } else {
-              jsonResponse = res.result
-            }
+            let jsonResponse = res.result
+            if (typeof res.result === 'string')
+              jsonResponse = parseWeboutResponse(res.result, apiUrl)
 
             getValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
