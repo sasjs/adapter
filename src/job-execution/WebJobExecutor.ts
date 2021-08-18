@@ -70,7 +70,6 @@ export class WebJobExecutor extends BaseJobExecutor {
           ? `&_contextname=${config.contextName}`
           : ''
     }
-    
 
     let requestParams = {
       ...this.getRequestParams(config)
