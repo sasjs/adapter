@@ -6,8 +6,7 @@ import { JsonParseArrayError, InvalidJsonError } from '../types/errors'
  */
 export const getValidJson = (str: string | object) => {
   try {
-    const arrayErrorMessage = 'Can not parse array object to json.'
-    if (Array.isArray(str)) throw new JsonParseArrayError(arrayErrorMessage)
+    if (Array.isArray(str)) throw new JsonParseArrayError()
 
     if (typeof str === 'object') return str
 
