@@ -54,6 +54,15 @@ export class WebJobExecutor extends BaseJobExecutor {
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
+      if (jobUri.length > 0) {
+        apiUrl += '&_job=' + jobUri
+        /**
+         * Using both _job and _program parameters will cause a conflict in the JES web app, as it’s not clear whether or not the server should make the extra fetch for the job uri.
+         * To handle this, we add the extra underscore and recreate the _program variable in the SAS side of the SASjs adapter so it remains available for backend developers.
+         */
+        apiUrl = apiUrl.replace('_program=', '__program=')
+      }
+
       // if context name exists and is not blank string
       // then add _contextname variable in apiUrl
       apiUrl +=
@@ -61,6 +70,7 @@ export class WebJobExecutor extends BaseJobExecutor {
           ? `&_contextname=${config.contextName}`
           : ''
     }
+    
 
     let requestParams = {
       ...this.getRequestParams(config)
@@ -112,20 +122,9 @@ export class WebJobExecutor extends BaseJobExecutor {
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
-          if (this.serverType === ServerType.Sas9 && config.debug) {
-            const jsonResponse = parseWeboutResponse(res.result as string)
-            if (jsonResponse === '') {
-              throw new Error(
-                'Valid JSON could not be extracted from response.'
-              )
-            }
 
-            getValidJson(jsonResponse)
-            this.appendRequest(res, sasJob, config.debug)
-            resolve(res.result)
-          }
-          getValidJson(res.result as string)
           this.appendRequest(res, sasJob, config.debug)
+          getValidJson(res.result as string)
           resolve(res.result)
         })
         .catch(async (e: Error) => {
