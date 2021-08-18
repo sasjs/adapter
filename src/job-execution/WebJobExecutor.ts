@@ -2,7 +2,8 @@ import { ServerType } from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
-  LoginRequiredError
+  LoginRequiredError,
+  WeboutResponseError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
@@ -111,17 +112,25 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
-        .then(async (res) => {
+        .then(async (res: any) => {
           if (this.serverType === ServerType.SasViya && config.debug) {
             const jsonResponse = await parseSasViyaDebugResponse(
-              res.result as string,
+              res.result,
               this.requestClient,
               this.serverUrl
             )
             this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
+          if (this.serverType === ServerType.Sas9 && config.debug) {
+            let jsonResponse = res.result
+            if (typeof res.result === 'string')
+              jsonResponse = parseWeboutResponse(res.result, apiUrl)
 
+            getValidJson(jsonResponse)
+            this.appendRequest(res, sasJob, config.debug)
+            resolve(res.result)
+          }
           this.appendRequest(res, sasJob, config.debug)
           getValidJson(res.result as string)
           resolve(res.result)

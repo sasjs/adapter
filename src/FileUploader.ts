@@ -75,9 +75,7 @@ export class FileUploader {
             this.requestClient,
             this.sasjsConfig.serverUrl
           )
-          return typeof jsonResponse === 'string'
-            ? getValidJson(jsonResponse)
-            : jsonResponse
+          return jsonResponse
         }
 
         return typeof res.result === 'string'

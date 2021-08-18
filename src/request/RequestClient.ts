@@ -429,13 +429,7 @@ export class RequestClient implements HttpClient {
       }
     } catch {
       try {
-        const weboutResponse = parseWeboutResponse(response.data)
-        if (weboutResponse === '') {
-          throw new Error('Valid JSON could not be extracted from response.')
-        }
-
-        const jsonResponse = getValidJson(weboutResponse)
-        parsedResponse = jsonResponse
+        parsedResponse = JSON.parse(parseWeboutResponse(response.data))
       } catch {
         parsedResponse = response.data
       }
