@@ -4,7 +4,7 @@ import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
 import { Link, WriteStream } from '../../types'
-import { isNode } from '../../utils'
+import { delay, isNode } from '../../utils'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -246,5 +246,3 @@ const doPoll = async (
 
   return { state, pollCount }
 }
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

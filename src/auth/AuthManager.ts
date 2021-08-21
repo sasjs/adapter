@@ -1,6 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { serialize } from '../utils'
+import { delay, serialize } from '../utils'
 
 export class AuthManager {
   public userName = ''
@@ -17,6 +17,37 @@ export class AuthManager {
       this.serverType === ServerType.Sas9
         ? '/SASLogon/logout?'
         : '/SASLogon/logout.do?'
+  }
+
+  public async redirectedLogIn() {
+    await this.logOut()
+    const loginPopup = window.open(
+      this.loginUrl.replace('.do', ''),
+      '_blank',
+      'toolbar=0,location=0,menubar=0,width=500,height=500'
+    )
+    let isLoggedIn = false
+    let startTime = new Date()
+    let elapsedSeconds = 0
+    do {
+      await delay(1000)
+      isLoggedIn =
+        document.cookie.includes('Current-User') &&
+        document.cookie.includes('userId')
+      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
+    } while (!isLoggedIn && elapsedSeconds < 5 * 60)
+
+    let isAuthorized = false
+    startTime = new Date()
+    do {
+      await delay(1000)
+      isAuthorized = !loginPopup?.window.location.href.includes('SASLogon')
+      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
+    } while (!isAuthorized && elapsedSeconds < 5 * 60)
+
+    loginPopup?.close()
+
+    return { isLoggedIn: isLoggedIn && isAuthorized, userName: 'test' }
   }
 
   /**
