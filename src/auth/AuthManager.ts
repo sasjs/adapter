@@ -20,17 +20,34 @@ export class AuthManager {
   }
 
   public async redirectedLogIn() {
-    await this.logOut()
+    const width = 500
+    const height = 600
+    const left = screen.width / 2 - width / 2
+    const top = screen.height / 2 - height / 2
+
     const loginPopup = window.open(
-      this.loginUrl.replace('.do', ''),
+      this.loginUrl,
       '_blank',
-      'toolbar=0,location=0,menubar=0,width=500,height=500'
+      `toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`
     )
+
+    const { isLoggedIn } =
+      this.serverType === ServerType.SasViya
+        ? await this.verifyingPopUpLoginSASVIYA(loginPopup!)
+        : await this.verifyingPopUpLoginSAS9(loginPopup!)
+
+    loginPopup?.close()
+
+    return { isLoggedIn, userName: 'test' }
+  }
+
+  async verifyingPopUpLoginSASVIYA(loginPopup: Window) {
     let isLoggedIn = false
     let startTime = new Date()
     let elapsedSeconds = 0
     do {
       await delay(1000)
+      if (loginPopup.closed) break
       isLoggedIn =
         document.cookie.includes('Current-User') &&
         document.cookie.includes('userId')
@@ -41,13 +58,33 @@ export class AuthManager {
     startTime = new Date()
     do {
       await delay(1000)
-      isAuthorized = !loginPopup?.window.location.href.includes('SASLogon')
+      if (loginPopup.closed) break
+      isAuthorized =
+        !loginPopup.window.location.href.includes('SASLogon') ||
+        loginPopup.window.document.body.innerText.includes(
+          'You have signed in.'
+        )
       elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
     } while (!isAuthorized && elapsedSeconds < 5 * 60)
 
-    loginPopup?.close()
+    return { isLoggedIn: isLoggedIn && isAuthorized }
+  }
 
-    return { isLoggedIn: isLoggedIn && isAuthorized, userName: 'test' }
+  async verifyingPopUpLoginSAS9(loginPopup: Window) {
+    let isLoggedIn = false
+    let startTime = new Date()
+    let elapsedSeconds = 0
+    do {
+      await delay(1000)
+      if (loginPopup.closed) break
+
+      isLoggedIn = loginPopup.window.document.body.innerText.includes(
+        'You have signed in.'
+      )
+      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
+    } while (!isLoggedIn && elapsedSeconds < 5 * 60)
+
+    return { isLoggedIn }
   }
 
   /**
