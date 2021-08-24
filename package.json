@@ -4,6 +4,7 @@
   "homepage": "https://adapter.sasjs.io",
   "scripts": {
     "preinstall": "node checkNodeVersion",
+    "prebuild": "node checkNodeVersion",
     "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && copyfiles ./package.json ./checkNodeVersion.js build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
