@@ -52,7 +52,7 @@
     "path": "^0.12.7",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
-    "semantic-release": "^17.4.4",
+    "semantic-release": "^17.4.6",
     "terser-webpack-plugin": "^5.1.4",
     "ts-jest": "^27.0.3",
     "ts-loader": "^9.2.2",
