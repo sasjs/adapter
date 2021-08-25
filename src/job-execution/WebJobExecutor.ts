@@ -2,8 +2,7 @@ import { ServerType } from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
-  LoginRequiredError,
-  WeboutResponseError
+  LoginRequiredError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
@@ -16,6 +15,7 @@ import {
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import { isLoggedInSASVIYA } from '../auth/verifyingPopUpLoginSASVIYA'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -40,6 +40,11 @@ export class WebJobExecutor extends BaseJobExecutor {
     loginRequiredCallback?: any
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
+
+    if (this.serverType === ServerType.SasViya && !isLoggedInSASVIYA()) {
+      await loginCallback()
+    }
+
     const program = isRelativePath(sasJob)
       ? config.appLoc
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
@@ -143,8 +148,6 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
-            await loginCallback()
-
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -160,6 +163,8 @@ export class WebJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+
+            await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }

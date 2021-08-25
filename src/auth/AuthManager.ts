@@ -1,11 +1,15 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { delay, serialize } from '../utils'
+import { serialize } from '../utils'
+import { openWebPage } from './openWebPage'
+import { verifyingPopUpLoginSAS9 } from './verifyingPopUpLoginSAS9'
+import { verifyingPopUpLoginSASVIYA } from './verifyingPopUpLoginSASVIYA'
 
 export class AuthManager {
   public userName = ''
   private loginUrl: string
   private logoutUrl: string
+  private loginPreventRedirectUrl = `/SASLogon/home`
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
@@ -20,69 +24,35 @@ export class AuthManager {
   }
 
   public async redirectedLogIn() {
-    const width = 500
-    const height = 600
-    const left = screen.width / 2 - width / 2
-    const top = screen.height / 2 - height / 2
+    const loginPopup = openWebPage(this.loginPreventRedirectUrl, 'SASLogon', {
+      width: 500,
+      height: 600
+    })
 
-    const loginPopup = window.open(
-      this.loginUrl,
-      '_blank',
-      `toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`
-    )
+    if (!loginPopup) {
+      alert('Unable to open popup for login. Please try with other browser.')
+      return { isLoggedIn: false }
+    }
 
     const { isLoggedIn } =
       this.serverType === ServerType.SasViya
-        ? await this.verifyingPopUpLoginSASVIYA(loginPopup!)
-        : await this.verifyingPopUpLoginSAS9(loginPopup!)
+        ? await verifyingPopUpLoginSASVIYA(loginPopup)
+        : await verifyingPopUpLoginSAS9(loginPopup)
 
-    loginPopup?.close()
+    loginPopup.close()
 
-    return { isLoggedIn, userName: 'test' }
-  }
+    if (isLoggedIn) {
+      if (this.serverType === ServerType.Sas9) {
+        const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
-  async verifyingPopUpLoginSASVIYA(loginPopup: Window) {
-    let isLoggedIn = false
-    let startTime = new Date()
-    let elapsedSeconds = 0
-    do {
-      await delay(1000)
-      if (loginPopup.closed) break
-      isLoggedIn =
-        document.cookie.includes('Current-User') &&
-        document.cookie.includes('userId')
-      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
-    } while (!isLoggedIn && elapsedSeconds < 5 * 60)
-
-    let isAuthorized = false
-    startTime = new Date()
-    do {
-      await delay(1000)
-      if (loginPopup.closed) break
-      isAuthorized =
-        !loginPopup.window.location.href.includes('SASLogon') ||
-        loginPopup.window.document.body.innerText.includes(
-          'You have signed in.'
+        await this.requestClient.get<string>(
+          `/SASLogon/login?service=${casAuthenticationUrl}`,
+          undefined
         )
-      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
-    } while (!isAuthorized && elapsedSeconds < 5 * 60)
+      }
 
-    return { isLoggedIn: isLoggedIn && isAuthorized }
-  }
-
-  async verifyingPopUpLoginSAS9(loginPopup: Window) {
-    let isLoggedIn = false
-    let startTime = new Date()
-    let elapsedSeconds = 0
-    do {
-      await delay(1000)
-      if (loginPopup.closed) break
-
-      isLoggedIn = loginPopup.window.document.body.innerText.includes(
-        'You have signed in.'
-      )
-      elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
-    } while (!isLoggedIn && elapsedSeconds < 5 * 60)
+      await this.loginCallback()
+    }
 
     return { isLoggedIn }
   }
