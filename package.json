@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/form-data": "^2.5.0",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^27.0.1",
     "@types/mime": "^2.0.3",
     "@types/tough-cookie": "^4.0.1",
     "copyfiles": "^2.4.1",
