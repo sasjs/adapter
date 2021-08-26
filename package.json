@@ -3,8 +3,10 @@
   "description": "JavaScript adapter for SAS",
   "homepage": "https://adapter.sasjs.io",
   "scripts": {
+    "preinstall": "node checkNodeVersion",
+    "prebuild": "node checkNodeVersion",
     "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
-    "package:lib": "npm run build && copyfiles ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
+    "package:lib": "npm run build && copyfiles ./package.json ./checkNodeVersion.js build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
@@ -73,8 +75,5 @@
     "form-data": "^4.0.0",
     "https": "^1.0.0",
     "tough-cookie": "^4.0.0"
-  },
-  "engines": {
-    "node": ">=15"
   }
 }
