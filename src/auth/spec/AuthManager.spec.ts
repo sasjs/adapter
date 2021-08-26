@@ -67,7 +67,7 @@ describe('AuthManager', () => {
     jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
       Promise.resolve({
         isLoggedIn: true,
-        userName: 'test',
+        userName,
         loginForm: 'test'
       })
     )
@@ -75,7 +75,6 @@ describe('AuthManager', () => {
     const loginResponse = await authManager.logIn(userName, password)
 
     expect(loginResponse.isLoggedIn).toBeTruthy()
-    expect(loginResponse.userName).toEqual(userName)
     expect(authCallback).toHaveBeenCalledTimes(1)
   })
 
@@ -100,7 +99,6 @@ describe('AuthManager', () => {
     const loginResponse = await authManager.logIn(userName, password)
 
     expect(loginResponse.isLoggedIn).toBeTruthy()
-    expect(loginResponse.userName).toEqual(userName)
 
     const loginParams = serialize({
       _service: 'default',
