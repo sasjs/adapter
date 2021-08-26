@@ -2,7 +2,8 @@ import { ServerType } from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
-  LoginRequiredError
+  LoginRequiredError,
+  WeboutResponseError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
@@ -54,7 +55,21 @@ export class WebJobExecutor extends BaseJobExecutor {
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
-      apiUrl += config.contextName ? `&_contextname=${config.contextName}` : ''
+      if (jobUri.length > 0) {
+        apiUrl += '&_job=' + jobUri
+        /**
+         * Using both _job and _program parameters will cause a conflict in the JES web app, as it’s not clear whether or not the server should make the extra fetch for the job uri.
+         * To handle this, we add the extra underscore and recreate the _program variable in the SAS side of the SASjs adapter so it remains available for backend developers.
+         */
+        apiUrl = apiUrl.replace('_program=', '__program=')
+      }
+
+      // if context name exists and is not blank string
+      // then add _contextname variable in apiUrl
+      apiUrl +=
+        config.contextName && !/\s/.test(config.contextName)
+          ? `&_contextname=${config.contextName}`
+          : ''
     }
 
     let requestParams = {
@@ -97,10 +112,10 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
-        .then(async (res) => {
+        .then(async (res: any) => {
           if (this.serverType === ServerType.SasViya && config.debug) {
             const jsonResponse = await parseSasViyaDebugResponse(
-              res.result as string,
+              res.result,
               this.requestClient,
               this.serverUrl
             )
@@ -108,19 +123,16 @@ export class WebJobExecutor extends BaseJobExecutor {
             resolve(jsonResponse)
           }
           if (this.serverType === ServerType.Sas9 && config.debug) {
-            const jsonResponse = parseWeboutResponse(res.result as string)
-            if (jsonResponse === '') {
-              throw new Error(
-                'Valid JSON could not be extracted from response.'
-              )
-            }
+            let jsonResponse = res.result
+            if (typeof res.result === 'string')
+              jsonResponse = parseWeboutResponse(res.result, apiUrl)
 
             getValidJson(jsonResponse)
             this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)
           }
-          getValidJson(res.result as string)
           this.appendRequest(res, sasJob, config.debug)
+          getValidJson(res.result as string)
           resolve(res.result)
         })
         .catch(async (e: Error) => {

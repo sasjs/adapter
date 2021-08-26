@@ -61,24 +61,21 @@ export class FileUploader {
       'Content-Type': 'text/plain'
     }
 
+    // currently only web approach is supported for file upload
+    // therefore log is part of response with debug enabled and must be parsed
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then(async (res) => {
-        // for web approach on Viya
         if (
-          this.sasjsConfig.debug &&
-          (this.sasjsConfig.useComputeApi === null ||
-            this.sasjsConfig.useComputeApi === undefined) &&
-          this.sasjsConfig.serverType === ServerType.SasViya
+          this.sasjsConfig.serverType === ServerType.SasViya &&
+          this.sasjsConfig.debug
         ) {
           const jsonResponse = await parseSasViyaDebugResponse(
             res.result as string,
             this.requestClient,
             this.sasjsConfig.serverUrl
           )
-          return typeof jsonResponse === 'string'
-            ? getValidJson(jsonResponse)
-            : jsonResponse
+          return jsonResponse
         }
 
         return typeof res.result === 'string'
