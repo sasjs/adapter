@@ -23,43 +23,53 @@ export class AuthManager {
    * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
+   * @returns - a boolean `isLoggedin`
    */
-  public async logIn(username: string, password: string) {
-    const loginParams: any = {
+  public async logIn(
+    username: string,
+    password: string
+  ): Promise<{
+    isLoggedIn: boolean
+  }> {
+    const loginParams = {
       _service: 'default',
       username,
       password
     }
 
-    this.userName = loginParams.username
-
-    const { isLoggedIn, loginForm } = await this.checkSession()
+    let { isLoggedIn, loginForm, userName } = await this.checkSession()
 
     if (isLoggedIn) {
-      await this.loginCallback()
+      if (userName === loginParams.username) {
+        await this.loginCallback()
 
-      return {
-        isLoggedIn,
-        userName: this.userName
+        this.userName = userName!
+        return {
+          isLoggedIn
+        }
+      } else {
+        this.logOut()
       }
-    }
+    } else this.userName = ''
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    let loggedIn = isLogInSuccess(loginResponse)
+    isLoggedIn = isLogInSuccess(loginResponse)
 
-    if (!loggedIn) {
+    if (!isLoggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
         const newLoginForm = await this.getLoginForm(loginResponse)
 
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
-      const currentSession = await this.checkSession()
-      loggedIn = currentSession.isLoggedIn
+      ;({ isLoggedIn, userName } = await this.checkSession())
+    } else {
+      this.userName = loginParams.username
     }
 
-    if (loggedIn) {
+    if (isLoggedIn) {
+      this.userName = userName!
       if (this.serverType === ServerType.Sas9) {
         const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
@@ -70,11 +80,10 @@ export class AuthManager {
       }
 
       this.loginCallback()
-    }
+    } else this.userName = ''
 
     return {
-      isLoggedIn: !!loggedIn,
-      userName: this.userName
+      isLoggedIn
     }
   }
 
@@ -103,9 +112,16 @@ export class AuthManager {
 
   /**
    * Checks whether a session is active, or login is required.
-   * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
+   * @returns - a promise which resolves with an object containing three values
+   *  - a boolean `isLoggedIn`
+   *  - a string `userName` and
+   *  - a form `loginForm` if not loggedin.
    */
-  public async checkSession() {
+  public async checkSession(): Promise<{
+    isLoggedIn: boolean
+    userName?: string
+    loginForm?: any
+  }> {
     //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
     //For SAS9 we will send request on SASStoredProcess
     const url =
@@ -122,7 +138,7 @@ export class AuthManager {
     const isLoggedIn = loginResponse !== 'authErr'
     const userName = isLoggedIn
       ? this.extractUserName(loginResponse)
-      : this.userName
+      : undefined
 
     let loginForm = null
 
@@ -142,14 +158,14 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: userName ?? this.userName,
+      userName,
       loginForm
     })
   }
 
-  private extractUserName = (response: string) =>
+  private extractUserName = (response: any) =>
     this.serverType === 'SASVIYA'
-      ? response?.match(/<id>[0-1a-zA-Z]*<\/id>/)?.[0].slice(4, -5)
+      ? response?.id
       : response?.match(/"title":"Log Off [0-1a-zA-Z]*"/)?.[0].slice(17, -1)
 
   private getLoginForm(response: any) {

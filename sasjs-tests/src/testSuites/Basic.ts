@@ -42,6 +42,19 @@ export const basicTests = (
         response && response.isLoggedIn && response.userName === userName
     },
     {
+      title: 'Fetch username for already logged in user',
+      description: 'Should log the user in',
+      test: async () => {
+        await adapter.logIn(userName, password)
+
+        const newAdapterIns = new SASjs(adapter.getSasjsConfig())
+
+        return newAdapterIns.checkSession()
+      },
+      assertion: (response: any) =>
+        response?.isLoggedIn && response?.userName === userName
+    },
+    {
       title: 'Multiple Log in attempts',
       description:
         'Should fail on first attempt and should log the user in on second attempt',
