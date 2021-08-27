@@ -1,4 +1,5 @@
 sasjs-tests/
 docs/
 .github/
-CONTRIBUTING.md
+*.md
+*.spec.ts
