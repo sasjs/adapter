@@ -23,14 +23,18 @@ export class AuthManager {
         : '/SASLogon/logout.do?'
   }
 
+  /**
+   * Opens Pop up window to SAS Login screen.
+   * And checks if user has finished login process.
+   */
   public async redirectedLogIn() {
-    const loginPopup = openWebPage(this.loginPreventRedirectUrl, 'SASLogon', {
-      width: 500,
-      height: 600
-    })
+    const loginPopup = await openWebPage(
+      this.loginPreventRedirectUrl,
+      'SASLogon',
+      { width: 500, height: 600 }
+    )
 
     if (!loginPopup) {
-      alert('Unable to open popup for login. Please try with other browser.')
       return { isLoggedIn: false }
     }
 
