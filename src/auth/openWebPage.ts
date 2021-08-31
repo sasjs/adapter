@@ -8,7 +8,8 @@ interface windowFeatures {
 export async function openWebPage(
   url: string,
   windowName: string = '',
-  { width, height }: windowFeatures
+  { width, height }: windowFeatures,
+  onLoggedOut?: Function
 ): Promise<Window | null> {
   const left = screen.width / 2 - width / 2
   const top = screen.height / 2 - height / 2
@@ -20,6 +21,11 @@ export async function openWebPage(
   )
 
   if (!loginPopup) {
+    if (onLoggedOut) {
+      onLoggedOut()
+      return null
+    }
+
     const doLogin = await openLoginPrompt()
     return doLogin
       ? window.open(

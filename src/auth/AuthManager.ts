@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
+import { LoginOptions } from '../types/LoginOptions'
 import { serialize } from '../utils'
 import { openWebPage } from './openWebPage'
 import { verifyingPopUpLoginSAS9 } from './verifyingPopUpLoginSAS9'
@@ -27,11 +28,15 @@ export class AuthManager {
    * Opens Pop up window to SAS Login screen.
    * And checks if user has finished login process.
    */
-  public async redirectedLogIn() {
+  public async redirectedLogIn({ onLoggedOut }: LoginOptions) {
     const loginPopup = await openWebPage(
       this.loginPreventRedirectUrl,
       'SASLogon',
-      { width: 500, height: 600 }
+      {
+        width: 500,
+        height: 600
+      },
+      onLoggedOut
     )
 
     if (!loginPopup) {

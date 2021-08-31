@@ -25,6 +25,7 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
+import { LoginOptions } from './types/LoginOptions'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -533,7 +534,11 @@ export default class SASjs {
    * @param username - a string representing the username.
    * @param password - a string representing the password.
    */
-  public async logIn(username?: string, password?: string) {
+  public async logIn(
+    username?: string,
+    password?: string,
+    options: LoginOptions = {}
+  ) {
     if (this.sasjsConfig.loginMechanism === LoginMechanism.Default) {
       if (!username || !password) {
         throw new Error(
@@ -549,7 +554,7 @@ export default class SASjs {
       )
     }
 
-    return this.authManager!.redirectedLogIn()
+    return this.authManager!.redirectedLogIn(options)
   }
 
   /**
