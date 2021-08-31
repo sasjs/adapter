@@ -49,7 +49,7 @@ export const basicTests = (
 
         const newAdapterIns = new SASjs(adapter.getSasjsConfig())
 
-        return newAdapterIns.checkSession()
+        return await newAdapterIns.checkSession()
       },
       assertion: (response: any) =>
         response?.isLoggedIn && response?.userName === userName
@@ -61,7 +61,7 @@ export const basicTests = (
       test: async () => {
         await adapter.logOut()
         await adapter.logIn('invalid', 'invalid')
-        return adapter.logIn(userName, password)
+        return await adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
@@ -164,7 +164,7 @@ export const basicTests = (
       description:
         'Should complete successful request with extra attributes present in response',
       test: async () => {
-        const config = {
+        const config: Partial<SASjsConfig> = {
           useComputeApi: false
         }
 
