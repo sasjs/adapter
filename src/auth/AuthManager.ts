@@ -38,15 +38,19 @@ export class AuthManager {
       password
     }
 
-    let { isLoggedIn, loginForm, userName } = await this.checkSession()
+    let {
+      isLoggedIn: isLoggedInAlready,
+      loginForm,
+      userName: currentSessionUsername
+    } = await this.checkSession()
 
-    if (isLoggedIn) {
-      if (userName === loginParams.username) {
+    if (isLoggedInAlready) {
+      if (currentSessionUsername === loginParams.username) {
         await this.loginCallback()
 
-        this.userName = userName!
+        this.userName = currentSessionUsername!
         return {
-          isLoggedIn,
+          isLoggedIn: true,
           userName: this.userName
         }
       } else {
@@ -56,7 +60,7 @@ export class AuthManager {
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    isLoggedIn = isLogInSuccess(loginResponse)
+    let isLoggedIn = isLogInSuccess(loginResponse)
 
     if (!isLoggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
@@ -65,13 +69,15 @@ export class AuthManager {
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
-      ;({ isLoggedIn, userName } = await this.checkSession())
+      const res = await this.checkSession()
+      isLoggedIn = res.isLoggedIn
+
+      if (isLoggedIn) this.userName = res.userName!
     } else {
       this.userName = loginParams.username
     }
 
     if (isLoggedIn) {
-      this.userName = userName!
       if (this.serverType === ServerType.Sas9) {
         const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
