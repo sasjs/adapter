@@ -23,7 +23,7 @@ export class AuthManager {
    * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
-   * @returns - a boolean `isLoggedin`
+   * @returns - a boolean `isLoggedin` and a string `username`
    */
   public async logIn(
     username: string,
@@ -161,12 +161,12 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName,
+      userName: userName?.toLowerCase(),
       loginForm
     })
   }
 
-  private extractUserName = (response: any) =>
+  private extractUserName = (response: any): string =>
     this.serverType === 'SASVIYA'
       ? response?.id
       : response?.match(/"title":"Log Off [0-1a-zA-Z]*"/)?.[0].slice(17, -1)
