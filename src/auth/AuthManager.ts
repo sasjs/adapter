@@ -30,6 +30,7 @@ export class AuthManager {
     password: string
   ): Promise<{
     isLoggedIn: boolean
+    username: string
   }> {
     const loginParams = {
       _service: 'default',
@@ -45,7 +46,8 @@ export class AuthManager {
 
         this.userName = userName!
         return {
-          isLoggedIn
+          isLoggedIn,
+          username: this.userName
         }
       } else {
         this.logOut()
@@ -83,7 +85,8 @@ export class AuthManager {
     } else this.userName = ''
 
     return {
-      isLoggedIn
+      isLoggedIn,
+      username: this.userName
     }
   }
 
