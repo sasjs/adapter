@@ -55,7 +55,7 @@
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
     "semantic-release": "^17.4.4",
-    "terser-webpack-plugin": "^5.1.4",
+    "terser-webpack-plugin": "^5.2.0",
     "ts-jest": "^27.0.3",
     "ts-loader": "^9.2.2",
     "tslint": "^6.1.3",
