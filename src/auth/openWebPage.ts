@@ -9,7 +9,7 @@ export async function openWebPage(
   url: string,
   windowName: string = '',
   { width, height }: windowFeatures,
-  onLoggedOut?: Function
+  onLoggedOut?: () => Promise<Boolean>
 ): Promise<Window | null> {
   const left = screen.width / 2 - width / 2
   const top = screen.height / 2 - height / 2
@@ -21,12 +21,9 @@ export async function openWebPage(
   )
 
   if (!loginPopup) {
-    if (onLoggedOut) {
-      onLoggedOut()
-      return null
-    }
+    const getUserAction: () => Promise<Boolean> = onLoggedOut ?? openLoginPrompt
 
-    const doLogin = await openLoginPrompt()
+    const doLogin = await getUserAction()
     return doLogin
       ? window.open(
           url,

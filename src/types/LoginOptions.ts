@@ -1,3 +1,3 @@
 export interface LoginOptions {
-  onLoggedOut?: Function
+  onLoggedOut?: () => Promise<boolean>
 }

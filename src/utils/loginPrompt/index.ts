@@ -1,16 +1,21 @@
+enum domIDs {
+  styles = 'sasjsAdapterStyles',
+  overlay = 'sasjsAdapterLoginPromptBG',
+  dialog = 'sasjsAdapterLoginPrompt'
+}
+
 export const openLoginPrompt = (): Promise<boolean> => {
   return new Promise(async (resolve) => {
-    // const cssContent = await readFile(path.join(__dirname, 'style.css'))
     const style = document.createElement('style')
-    style.id = 'stylesBySASjsAdapter'
+    style.id = domIDs.styles
     style.innerText = cssContent
 
     const loginPromptBG = document.createElement('div')
-    loginPromptBG.id = 'loginPromptBG'
+    loginPromptBG.id = domIDs.overlay
     loginPromptBG.classList.add('popUpBG')
 
     const loginPrompt = document.createElement('div')
-    loginPrompt.id = 'loginPrompt'
+    loginPrompt.id = domIDs.dialog
     loginPrompt.classList.add('popUp')
 
     const title = document.createElement('h1')
@@ -49,14 +54,10 @@ export const openLoginPrompt = (): Promise<boolean> => {
   })
 }
 const closeLoginPrompt = () => {
-  let elem = document.querySelector('#stylesBySASjsAdapter')
-  elem?.parentNode?.removeChild(elem)
-
-  elem = document.querySelector('#loginPrompt')
-  elem?.parentNode?.removeChild(elem)
-
-  elem = document.querySelector('#loginPromptBG')
-  elem?.parentNode?.removeChild(elem)
+  Object.keys(domIDs).forEach((id) => {
+    const elem = document.getElementById(id)
+    elem?.parentNode?.removeChild(elem)
+  })
 
   document.body.style.overflow = 'auto'
 }
