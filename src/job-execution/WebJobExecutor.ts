@@ -113,13 +113,13 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res: any) => {
+          this.requestClient!.appendRequest(res, sasJob, config.debug)
           if (this.serverType === ServerType.SasViya && config.debug) {
             const jsonResponse = await parseSasViyaDebugResponse(
               res.result,
               this.requestClient,
               this.serverUrl
             )
-            this.appendRequest(res, sasJob, config.debug)
             resolve(jsonResponse)
           }
           if (this.serverType === ServerType.Sas9 && config.debug) {
@@ -128,17 +128,14 @@ export class WebJobExecutor extends BaseJobExecutor {
               jsonResponse = parseWeboutResponse(res.result, apiUrl)
 
             getValidJson(jsonResponse)
-            this.appendRequest(res, sasJob, config.debug)
             resolve(res.result)
           }
-          this.appendRequest(res, sasJob, config.debug)
           getValidJson(res.result as string)
           resolve(res.result)
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
-            this.appendRequest(e, sasJob, config.debug)
-
+            this.requestClient!.appendRequest(e, sasJob, config.debug)
             reject(new ErrorResponse(e?.message, e))
           }
 

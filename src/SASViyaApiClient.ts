@@ -51,6 +51,10 @@ export class SASViyaApiClient {
   )
   private folderMap = new Map<string, Job[]>()
 
+  public appendRequest(response: any, program: string, debug: boolean) {
+    this.requestClient!.appendRequest(response, program, debug)
+  }
+
   public get debug() {
     return this._debug
   }

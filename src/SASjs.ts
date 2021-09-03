@@ -879,19 +879,13 @@ export default class SASjs {
   }
 
   public getSasRequests() {
-    const requests = [
-      ...this.webJobExecutor!.getRequests(),
-      ...this.computeJobExecutor!.getRequests(),
-      ...this.jesJobExecutor!.getRequests()
-    ]
+    const requests = [...this.requestClient!.getRequests()]
     const sortedRequests = requests.sort(compareTimestamps)
     return sortedRequests
   }
 
   public clearSasRequests() {
-    this.webJobExecutor!.clearRequests()
-    this.computeJobExecutor!.clearRequests()
-    this.jesJobExecutor!.clearRequests()
+    this.requestClient!.clearRequests()
   }
 
   private setupConfiguration() {
