@@ -51,6 +51,12 @@ export class SASViyaApiClient {
   )
   private folderMap = new Map<string, Job[]>()
 
+  /**
+   * A helper method used to call appendRequest method of RequestClient
+   * @param response - response from sasjs request
+   * @param program - name of program
+   * @param debug - a boolean that indicates whether debug was enabled or not
+   */
   public appendRequest(response: any, program: string, debug: boolean) {
     this.requestClient!.appendRequest(response, program, debug)
   }

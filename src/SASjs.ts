@@ -878,6 +878,10 @@ export default class SASjs {
     })
   }
 
+  /**
+   * this method returns an array of SASjsRequest
+   * @returns SASjsRequest[]
+   */
   public getSasRequests() {
     const requests = [...this.requestClient!.getRequests()]
     const sortedRequests = requests.sort(compareTimestamps)

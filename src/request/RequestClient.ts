@@ -86,12 +86,25 @@ export class RequestClient implements HttpClient {
     return this.httpClient.defaults.baseURL || ''
   }
 
+  /**
+   * this method returns all requests, an array of SASjsRequest type
+   * @returns SASjsRequest[]
+   */
   public getRequests = () => this.requests
 
+  /**
+   * this method clears the requests array, i.e set to empty
+   */
   public clearRequests = () => {
     this.requests = []
   }
 
+  /**
+   * this method appends the response from sasjs request to requests array
+   * @param response - response from sasjs request
+   * @param program - name of program
+   * @param debug - a boolean that indicates whether debug was enabled or not
+   */
   public appendRequest(response: any, program: string, debug: boolean) {
     let sourceCode = ''
     let generatedCode = ''
