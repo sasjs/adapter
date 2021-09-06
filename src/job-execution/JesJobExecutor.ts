@@ -27,8 +27,6 @@ export class JesJobExecutor extends BaseJobExecutor {
       this.sasViyaApiClient
         ?.executeJob(sasJob, config.contextName, config.debug, data, authConfig)
         .then((response: any) => {
-          this.sasViyaApiClient.appendRequest(response, sasJob, config.debug)
-
           let responseObject = {}
 
           if (extraResponseAttributes && extraResponseAttributes.length > 0) {
@@ -49,8 +47,6 @@ export class JesJobExecutor extends BaseJobExecutor {
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
-            this.sasViyaApiClient.appendRequest(e, sasJob, config.debug)
-
             reject(new ErrorResponse(e?.message, e))
           }
 

@@ -35,12 +35,11 @@ export class ComputeJobExecutor extends BaseJobExecutor {
           expectWebout
         )
         .then((response) => {
-          this.sasViyaApiClient.appendRequest(response, sasJob, config.debug)
+          console.log('then block of compute job executor')
           resolve(response.result)
         })
         .catch(async (e: Error) => {
           if (e instanceof ComputeJobExecutionError) {
-            this.sasViyaApiClient.appendRequest(e, sasJob, config.debug)
             reject(new ErrorResponse(e?.message, e))
           }
 

@@ -50,6 +50,7 @@ export default class SASjs {
   private sas9JobExecutor: JobExecutor | null = null
 
   constructor(config?: any) {
+    console.log('from SASjs constructor')
     this.sasjsConfig = {
       ...defaultConfig,
       ...config
@@ -611,6 +612,7 @@ export default class SASjs {
         config.useComputeApi !== null
       ) {
         if (config.useComputeApi) {
+          console.log(615)
           return await this.computeJobExecutor!.execute(
             sasJob,
             data,
@@ -883,8 +885,10 @@ export default class SASjs {
    * @returns SASjsRequest[]
    */
   public getSasRequests() {
-    const requests = [...this.requestClient!.getRequests()]
+    console.log('from getSASRequests')
+    const requests = this.requestClient!.getRequests()
     const sortedRequests = requests.sort(compareTimestamps)
+    console.log('sortedRequests', sortedRequests)
     return sortedRequests
   }
 

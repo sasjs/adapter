@@ -105,7 +105,8 @@ export class RequestClient implements HttpClient {
    * @param program - name of program
    * @param debug - a boolean that indicates whether debug was enabled or not
    */
-  public appendRequest(response: any, program: string, debug: boolean) {
+  public appendRequest = (response: any, program: string, debug: boolean) => {
+    console.log('from appendRequest')
     let sourceCode = ''
     let generatedCode = ''
     let sasWork = null
@@ -151,7 +152,9 @@ export class RequestClient implements HttpClient {
     accessToken: string | undefined,
     contentType: string = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {},
-    debug: boolean = false
+    debug: boolean = false,
+    captureRequest: boolean = false,
+    sasJob: string = ''
   ): Promise<{ result: T; etag: string; status: number }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
@@ -171,8 +174,11 @@ export class RequestClient implements HttpClient {
       .get<T>(url, requestConfig)
       .then((response) => {
         throwIfError(response)
-
-        return this.parseResponse<T>(response)
+        const responseToReturn = this.parseResponse<T>(response)
+        if (captureRequest) {
+          this.appendRequest(responseToReturn, sasJob, debug)
+        }
+        return responseToReturn
       })
       .catch(async (e) => {
         return await this.handleError(
@@ -198,7 +204,10 @@ export class RequestClient implements HttpClient {
     data: any,
     accessToken: string | undefined,
     contentType = 'application/json',
-    overrideHeaders: { [key: string]: string | number } = {}
+    overrideHeaders: { [key: string]: string | number } = {},
+    debug: boolean = false,
+    captureRequest: boolean = false,
+    sasJob: string = ''
   ): Promise<{ result: T; etag: string }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
@@ -209,7 +218,11 @@ export class RequestClient implements HttpClient {
       .post<T>(url, data, { headers, withCredentials: true })
       .then((response) => {
         throwIfError(response)
-        return this.parseResponse<T>(response)
+        const responseToReturn = this.parseResponse<T>(response)
+        if (captureRequest) {
+          this.appendRequest(responseToReturn, sasJob, debug)
+        }
+        return responseToReturn
       })
       .catch(async (e) => {
         return await this.handleError(e, () =>

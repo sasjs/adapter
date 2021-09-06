@@ -239,7 +239,15 @@ export async function executeScript(
     const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
 
     jobResult = await requestClient
-      .get<any>(resultLink, access_token, 'text/plain')
+      .get<any>(
+        resultLink,
+        access_token,
+        'text/plain',
+        {},
+        debug,
+        true,
+        jobPath
+      )
       .catch(async (e) => {
         if (e instanceof NotFoundError) {
           if (logLink) {

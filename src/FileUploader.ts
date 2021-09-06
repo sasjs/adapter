@@ -64,9 +64,17 @@ export class FileUploader {
     // currently only web approach is supported for file upload
     // therefore log is part of response with debug enabled and must be parsed
     return this.requestClient
-      .post(uploadUrl, formData, undefined, 'application/json', headers)
+      .post(
+        uploadUrl,
+        formData,
+        undefined,
+        'application/json',
+        headers,
+        this.sasjsConfig.debug,
+        true,
+        sasJob
+      )
       .then(async (res) => {
-        this.requestClient!.appendRequest(res, sasJob, this.sasjsConfig.debug)
         if (
           this.sasjsConfig.serverType === ServerType.SasViya &&
           this.sasjsConfig.debug

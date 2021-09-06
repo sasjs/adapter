@@ -51,16 +51,6 @@ export class SASViyaApiClient {
   )
   private folderMap = new Map<string, Job[]>()
 
-  /**
-   * A helper method used to call appendRequest method of RequestClient
-   * @param response - response from sasjs request
-   * @param program - name of program
-   * @param debug - a boolean that indicates whether debug was enabled or not
-   */
-  public appendRequest(response: any, program: string, debug: boolean) {
-    this.requestClient!.appendRequest(response, program, debug)
-  }
-
   public get debug() {
     return this._debug
   }
@@ -792,12 +782,24 @@ export class SASViyaApiClient {
       jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
         access_token,
-        'text/plain'
+        'text/plain',
+        {},
+        debug,
+        true,
+        sasJob
       )
     }
     if (debug && logLink) {
       log = await this.requestClient
-        .get<any>(`${this.serverUrl}${logLink.href}/content`, access_token)
+        .get<any>(
+          `${this.serverUrl}${logLink.href}/content`,
+          access_token,
+          'application/json',
+          {},
+          debug,
+          true,
+          sasJob
+        )
         .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
     if (jobStatus === 'failed') {

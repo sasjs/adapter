@@ -2,7 +2,7 @@
   "userName": "",
   "password": "",
   "sasJsConfig": {
-    "serverUrl": "",
+    "serverUrl": "https://sas.analytium.co.uk/",
     "appLoc": "/Public/app",
     "serverType": "SASVIYA",
     "debug": false,
