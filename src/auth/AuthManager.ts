@@ -176,11 +176,12 @@ export class AuthManager {
     switch (this.serverType) {
       case ServerType.SasViya:
         return response?.id
+
       case ServerType.Sas9:
         const matched = response?.match(/"title":"Log Off [0-1a-zA-Z ]*"/)
         const username = matched?.[0].slice(17, -1)
 
-        if (username.length === 6) return username
+        if (!username.includes(' ')) return username
 
         return username
           .split(' ')
