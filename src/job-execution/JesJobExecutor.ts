@@ -7,6 +7,7 @@ import {
 } from '../types/errors'
 import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { BaseJobExecutor } from './JobExecutor'
+import { appendExtraResponseAttributes } from '../utils'
 
 export class JesJobExecutor extends BaseJobExecutor {
   constructor(serverUrl: string, private sasViyaApiClient: SASViyaApiClient) {
@@ -29,21 +30,10 @@ export class JesJobExecutor extends BaseJobExecutor {
         .then((response: any) => {
           this.appendRequest(response, sasJob, config.debug)
 
-          let responseObject = {}
-
-          if (extraResponseAttributes && extraResponseAttributes.length > 0) {
-            const extraAttributes = extraResponseAttributes.reduce(
-              (map: any, obj: any) => ((map[obj] = response[obj]), map),
-              {}
-            )
-
-            responseObject = {
-              result: response.result,
-              ...extraAttributes
-            }
-          } else {
-            responseObject = response.result
-          }
+          const responseObject = appendExtraResponseAttributes(
+            response,
+            extraResponseAttributes
+          )
 
           resolve(responseObject)
         })

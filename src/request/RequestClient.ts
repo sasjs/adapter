@@ -499,46 +499,60 @@ export const throwIfError = (response: AxiosResponse) => {
 }
 
 const parseError = (data: string) => {
+  if (!data) return null
+
   try {
     const responseJson = JSON.parse(data?.replace(/[\n\r]/g, ' '))
-    return responseJson.errorCode && responseJson.message
-      ? new JobExecutionError(
-          responseJson.errorCode,
-          responseJson.message,
-          data?.replace(/[\n\r]/g, ' ')
-        )
-      : null
-  } catch (_) {
-    try {
-      const hasError = data?.includes('{"errorCode')
-      if (hasError) {
-        const parts = data.split('{"errorCode')
-        if (parts.length > 1) {
-          const error = '{"errorCode' + parts[1].split('"}')[0] + '"}'
-          const errorJson = JSON.parse(error.replace(/[\n\r]/g, ' '))
-          return new JobExecutionError(
-            errorJson.errorCode,
-            errorJson.message,
-            data?.replace(/[\n\r]/g, '\n')
-          )
-        }
-        return null
-      }
-      try {
-        const hasError = !!data?.match(/stored process not found: /i)
-        if (hasError) {
-          const parts = data.split(/stored process not found: /i)
-          if (parts.length > 1) {
-            const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
-            const message = `Stored process not found: ${storedProcessPath}`
-            return new JobExecutionError(404, message, '')
-          }
-        }
-      } catch (_) {
-        return null
-      }
-    } catch (_) {
-      return null
+    if (responseJson.errorCode && responseJson.message) {
+      return new JobExecutionError(
+        responseJson.errorCode,
+        responseJson.message,
+        data?.replace(/[\n\r]/g, ' ')
+      )
     }
-  }
+  } catch (_) {}
+
+  try {
+    const hasError = data?.includes('{"errorCode')
+    if (hasError) {
+      const parts = data.split('{"errorCode')
+      if (parts.length > 1) {
+        const error = '{"errorCode' + parts[1].split('"}')[0] + '"}'
+        const errorJson = JSON.parse(error.replace(/[\n\r]/g, ' '))
+        return new JobExecutionError(
+          errorJson.errorCode,
+          errorJson.message,
+          data?.replace(/[\n\r]/g, '\n')
+        )
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const hasError = !!data?.match(/stored process not found: /i)
+    if (hasError) {
+      const parts = data.split(/stored process not found: /i)
+      if (parts.length > 1) {
+        const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
+        const message = `Stored process not found: ${storedProcessPath}`
+        return new JobExecutionError(404, message, '')
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const hasError =
+      !!data?.match(/Stored Process Error/i) &&
+      !!data?.match(/This request completed with errors./i)
+    if (hasError) {
+      const parts = data.split('<h2>SAS Log</h2>')
+      if (parts.length > 1) {
+        const log = parts[1].split('<pre>')[1].split('</pre>')[0]
+        const message = `This request completed with errors.`
+        return new JobExecutionError(404, message, log)
+      }
+    }
+  } catch (_) {}
+
+  return null
 }
