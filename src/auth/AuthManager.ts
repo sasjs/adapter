@@ -172,10 +172,22 @@ export class AuthManager {
     })
   }
 
-  private extractUserName = (response: any): string =>
-    this.serverType === 'SASVIYA'
-      ? response?.id
-      : response?.match(/"title":"Log Off [0-1a-zA-Z]*"/)?.[0].slice(17, -1)
+  private extractUserName = (response: any): string => {
+    switch (this.serverType) {
+      case ServerType.SasViya:
+        return response?.id
+      case ServerType.Sas9:
+        const matched = response?.match(/"title":"Log Off [0-1a-zA-Z ]*"/)
+        const username = matched?.[0].slice(17, -1)
+
+        if (username.length === 6) return username
+
+        return username
+          .split(' ')
+          .map((name: string) => name.slice(0, 3).toLowerCase())
+          .join('')
+    }
+  }
 
   private getLoginForm(response: any) {
     const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
