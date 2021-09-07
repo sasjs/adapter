@@ -1,6 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { LoginOptions } from '../types/LoginOptions'
+import { LoginOptions, LoginReturn } from '../types/Login'
 import { serialize } from '../utils'
 import { openWebPage } from './openWebPage'
 import { verifyingPopUpLoginSAS9 } from './verifyingPopUpLoginSAS9'
@@ -28,7 +28,9 @@ export class AuthManager {
    * Opens Pop up window to SAS Login screen.
    * And checks if user has finished login process.
    */
-  public async redirectedLogIn({ onLoggedOut }: LoginOptions) {
+  public async redirectedLogIn({
+    onLoggedOut
+  }: LoginOptions): Promise<LoginReturn> {
     const loginPopup = await openWebPage(
       this.loginPreventRedirectUrl,
       'SASLogon',
@@ -40,7 +42,7 @@ export class AuthManager {
     )
 
     if (!loginPopup) {
-      return { isLoggedIn: false }
+      return { isLoggedIn: false, userName: '' }
     }
 
     const { isLoggedIn } =
@@ -60,10 +62,14 @@ export class AuthManager {
         )
       }
 
+      const { userName } = await this.fetchUserName()
+
       await this.loginCallback()
+
+      return { isLoggedIn: true, userName }
     }
 
-    return { isLoggedIn }
+    return { isLoggedIn: false, userName: '' }
   }
 
   /**
@@ -72,13 +78,7 @@ export class AuthManager {
    * @param password - a string representing the password.
    * @returns - a boolean `isLoggedin` and a string `username`
    */
-  public async logIn(
-    username: string,
-    password: string
-  ): Promise<{
-    isLoggedIn: boolean
-    userName: string
-  }> {
+  public async logIn(username: string, password: string): Promise<LoginReturn> {
     const loginParams = {
       _service: 'default',
       username,
@@ -119,7 +119,7 @@ export class AuthManager {
       const res = await this.checkSession()
       isLoggedIn = res.isLoggedIn
 
-      if (isLoggedIn) this.userName = res.userName!
+      if (isLoggedIn) this.userName = res.userName
     } else {
       this.userName = loginParams.username
     }
@@ -175,27 +175,10 @@ export class AuthManager {
    */
   public async checkSession(): Promise<{
     isLoggedIn: boolean
-    userName?: string
+    userName: string
     loginForm?: any
   }> {
-    //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
-    //For SAS9 we will send request on SASStoredProcess
-    const url =
-      this.serverType === 'SASVIYA'
-        ? `${this.serverUrl}/identities/users/@currentUser`
-        : `${this.serverUrl}/SASStoredProcess`
-
-    const { result: loginResponse } = await this.requestClient
-      .get<string>(url, undefined, 'text/plain')
-      .catch((err: any) => {
-        return { result: 'authErr' }
-      })
-
-    const isLoggedIn = loginResponse !== 'authErr'
-    const userName = isLoggedIn
-      ? this.extractUserName(loginResponse)
-      : undefined
-
+    const { isLoggedIn, userName } = await this.fetchUserName()
     let loginForm = null
 
     if (!isLoggedIn) {
@@ -214,9 +197,32 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: userName?.toLowerCase(),
+      userName: userName.toLowerCase(),
       loginForm
     })
+  }
+
+  private async fetchUserName(): Promise<{
+    isLoggedIn: boolean
+    userName: string
+  }> {
+    //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
+    //For SAS9 we will send request on SASStoredProcess
+    const url =
+      this.serverType === 'SASVIYA'
+        ? `${this.serverUrl}/identities/users/@currentUser`
+        : `${this.serverUrl}/SASStoredProcess`
+
+    const { result: loginResponse } = await this.requestClient
+      .get<string>(url, undefined, 'text/plain')
+      .catch((err: any) => {
+        return { result: 'authErr' }
+      })
+
+    const isLoggedIn = loginResponse !== 'authErr'
+    const userName = isLoggedIn ? this.extractUserName(loginResponse) : ''
+
+    return { isLoggedIn, userName }
   }
 
   private extractUserName = (response: any): string => {
