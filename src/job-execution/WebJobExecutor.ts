@@ -1,4 +1,8 @@
-import { ServerType } from '@sasjs/utils/types'
+import {
+  AuthConfig,
+  ExtraResponseAttributes,
+  ServerType
+} from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
@@ -11,7 +15,8 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   getValidJson,
-  parseSasViyaDebugResponse
+  parseSasViyaDebugResponse,
+  appendExtraResponseAttributes
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -37,7 +42,9 @@ export class WebJobExecutor extends BaseJobExecutor {
     sasJob: string,
     data: any,
     config: any,
-    loginRequiredCallback?: any
+    loginRequiredCallback?: any,
+    authConfig?: AuthConfig,
+    extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
 
@@ -118,27 +125,33 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res: any) => {
-          if (this.serverType === ServerType.SasViya && config.debug) {
-            const jsonResponse = await parseSasViyaDebugResponse(
-              res.result,
-              this.requestClient,
-              this.serverUrl
-            )
-            this.appendRequest(res, sasJob, config.debug)
-            resolve(jsonResponse)
-          }
-          if (this.serverType === ServerType.Sas9 && config.debug) {
-            let jsonResponse = res.result
-            if (typeof res.result === 'string')
-              jsonResponse = parseWeboutResponse(res.result, apiUrl)
+          let jsonResponse = res.result
 
-            getValidJson(jsonResponse)
-            this.appendRequest(res, sasJob, config.debug)
-            resolve(res.result)
+          if (config.debug) {
+            switch (this.serverType) {
+              case ServerType.SasViya:
+                jsonResponse = await parseSasViyaDebugResponse(
+                  res.result,
+                  this.requestClient,
+                  this.serverUrl
+                )
+                break
+              case ServerType.Sas9:
+                jsonResponse =
+                  typeof res.result === 'string'
+                    ? parseWeboutResponse(res.result, apiUrl)
+                    : res.result
+                break
+            }
           }
+
           this.appendRequest(res, sasJob, config.debug)
-          getValidJson(res.result as string)
-          resolve(res.result)
+
+          const responseObject = appendExtraResponseAttributes(
+            { result: jsonResponse },
+            extraResponseAttributes
+          )
+          resolve(responseObject)
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
@@ -153,7 +166,9 @@ export class WebJobExecutor extends BaseJobExecutor {
                 sasJob,
                 data,
                 config,
-                loginRequiredCallback
+                loginRequiredCallback,
+                authConfig,
+                extraResponseAttributes
               ).then(
                 (res: any) => {
                   resolve(res)
