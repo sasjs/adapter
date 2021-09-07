@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv'
 import { ServerType } from '@sasjs/utils/types'
 import axios from 'axios'
 import {
+  mockedCurrentUserApi,
   mockLoginAuthoriseRequiredResponse,
   mockLoginSuccessResponse
 } from './mockResponses'
@@ -89,6 +90,7 @@ describe('AuthManager', () => {
     jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
       Promise.resolve({
         isLoggedIn: false,
+        userName: '',
         loginForm: { name: 'test' }
       })
     )
@@ -167,11 +169,12 @@ describe('AuthManager', () => {
       authCallback
     )
     mockedAxios.get.mockImplementation(() =>
-      Promise.resolve({ data: '<button onClick="logout">' })
+      Promise.resolve({ data: mockedCurrentUserApi(userName) })
     )
 
     const response = await authManager.checkSession()
     expect(response.isLoggedIn).toBeTruthy()
+    expect(response.userName).toEqual(userName)
     expect(mockedAxios.get).toHaveBeenNthCalledWith(
       1,
       `http://test-server.com/identities/users/@currentUser`,
