@@ -66,12 +66,7 @@ export class AuthManager {
 
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
-        const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
-
-        await this.requestClient.get<string>(
-          `/SASLogon/login?service=${casAuthenticationUrl}`,
-          undefined
-        )
+        await this.performCASSecurityCheck()
       }
 
       const { userName } = await this.fetchUserName()
@@ -113,7 +108,8 @@ export class AuthManager {
           userName: this.userName
         }
       } else {
-        this.logOut()
+        await this.logOut()
+        loginForm = await this.getNewLoginForm()
       }
     } else this.userName = ''
 
@@ -138,12 +134,7 @@ export class AuthManager {
 
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
-        const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
-
-        await this.requestClient.get<string>(
-          `/SASLogon/login?service=${casAuthenticationUrl}`,
-          undefined
-        )
+        await this.performCASSecurityCheck()
       }
 
       this.loginCallback()
@@ -153,6 +144,15 @@ export class AuthManager {
       isLoggedIn,
       userName: this.userName
     }
+  }
+
+  private async performCASSecurityCheck() {
+    const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
+
+    await this.requestClient.get<string>(
+      `/SASLogon/login?service=${casAuthenticationUrl}`,
+      undefined
+    )
   }
 
   private async sendLoginRequest(
@@ -198,13 +198,7 @@ export class AuthManager {
       //Residue can happen in case of session expiration
       await this.logOut()
 
-      const { result: formResponse } = await this.requestClient.get<string>(
-        this.loginUrl.replace('.do', ''),
-        undefined,
-        'text/plain'
-      )
-
-      loginForm = await this.getLoginForm(formResponse)
+      loginForm = await this.getNewLoginForm()
     }
 
     return Promise.resolve({
@@ -212,6 +206,16 @@ export class AuthManager {
       userName: userName.toLowerCase(),
       loginForm
     })
+  }
+
+  private async getNewLoginForm() {
+    const { result: formResponse } = await this.requestClient.get<string>(
+      this.loginUrl.replace('.do', ''),
+      undefined,
+      'text/plain'
+    )
+
+    return await this.getLoginForm(formResponse)
   }
 
   private async fetchUserName(): Promise<{
