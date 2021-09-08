@@ -14,13 +14,11 @@ import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
-  getValidJson,
   parseSasViyaDebugResponse,
   appendExtraResponseAttributes
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
-import { isLoggedInSASVIYA } from '../auth/verifyingPopUpLoginSASVIYA'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -47,11 +45,6 @@ export class WebJobExecutor extends BaseJobExecutor {
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
-
-    if (this.serverType === ServerType.SasViya && !isLoggedInSASVIYA()) {
-      await loginCallback()
-    }
-
     const program = isRelativePath(sasJob)
       ? config.appLoc
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
@@ -60,10 +53,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     let apiUrl = `${config.serverUrl}${this.jobsPath}/?${'_program=' + program}`
 
     if (config.serverType === ServerType.SasViya) {
-      const jobUri =
-        config.serverType === ServerType.SasViya
-          ? await this.getJobUri(sasJob)
-          : ''
+      const jobUri = await this.getJobUri(sasJob)
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
