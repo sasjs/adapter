@@ -19,7 +19,7 @@ export async function verifySasViyaLogin(loginPopup: Window): Promise<{
     await delay(1000)
     if (loginPopup.closed) break
     isAuthorized =
-      !loginPopup.window.location.href.includes('SASLogon') ||
+      loginPopup.window.location.href.includes('SASLogon') ||
       loginPopup.window.document.body?.innerText?.includes(
         'You have signed in.'
       )
