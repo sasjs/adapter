@@ -912,10 +912,12 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
-    this.requestClient = new RequestClient(
-      this.sasjsConfig.serverUrl,
-      this.sasjsConfig.allowInsecureRequests
-    )
+    if (!this.requestClient) {
+      this.requestClient = new RequestClient(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.allowInsecureRequests
+      )
+    }
 
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
