@@ -31,6 +31,18 @@ export class AuthManager {
   public async redirectedLogIn({
     onLoggedOut
   }: LoginOptions): Promise<LoginResult> {
+    const { isLoggedIn: isLoggedInAlready, userName: currentSessionUsername } =
+      await this.fetchUserName()
+
+    if (isLoggedInAlready) {
+      await this.loginCallback()
+
+      return {
+        isLoggedIn: true,
+        userName: currentSessionUsername
+      }
+    }
+
     const loginPopup = await openWebPage(
       this.loginPreventRedirectUrl,
       'SASLogon',

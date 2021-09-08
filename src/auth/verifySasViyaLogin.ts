@@ -1,6 +1,8 @@
 import { delay } from '../utils'
 
-export async function verifySasViyaLogin(loginPopup: Window) {
+export async function verifySasViyaLogin(loginPopup: Window): Promise<{
+  isLoggedIn: boolean
+}> {
   let isLoggedIn = false
   let startTime = new Date()
   let elapsedSeconds = 0
