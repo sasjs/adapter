@@ -67,7 +67,7 @@ describe('AuthManager', () => {
     jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
       Promise.resolve({
         isLoggedIn: true,
-        userName: 'test',
+        userName,
         loginForm: 'test'
       })
     )
@@ -89,7 +89,6 @@ describe('AuthManager', () => {
     jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
       Promise.resolve({
         isLoggedIn: false,
-        userName: 'test',
         loginForm: { name: 'test' }
       })
     )
@@ -175,7 +174,7 @@ describe('AuthManager', () => {
     expect(response.isLoggedIn).toBeTruthy()
     expect(mockedAxios.get).toHaveBeenNthCalledWith(
       1,
-      `http://test-server.com/identities`,
+      `http://test-server.com/identities/users/@currentUser`,
       {
         withCredentials: true,
         responseType: 'text',

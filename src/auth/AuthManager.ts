@@ -23,43 +23,61 @@ export class AuthManager {
    * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
+   * @returns - a boolean `isLoggedin` and a string `username`
    */
-  public async logIn(username: string, password: string) {
-    const loginParams: any = {
+  public async logIn(
+    username: string,
+    password: string
+  ): Promise<{
+    isLoggedIn: boolean
+    userName: string
+  }> {
+    const loginParams = {
       _service: 'default',
       username,
       password
     }
 
-    this.userName = loginParams.username
+    let {
+      isLoggedIn: isLoggedInAlready,
+      loginForm,
+      userName: currentSessionUsername
+    } = await this.checkSession()
 
-    const { isLoggedIn, loginForm } = await this.checkSession()
+    if (isLoggedInAlready) {
+      if (currentSessionUsername === loginParams.username) {
+        await this.loginCallback()
 
-    if (isLoggedIn) {
-      await this.loginCallback()
-
-      return {
-        isLoggedIn,
-        userName: this.userName
+        this.userName = currentSessionUsername!
+        return {
+          isLoggedIn: true,
+          userName: this.userName
+        }
+      } else {
+        this.logOut()
       }
-    }
+    } else this.userName = ''
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    let loggedIn = isLogInSuccess(loginResponse)
+    let isLoggedIn = isLogInSuccess(loginResponse)
 
-    if (!loggedIn) {
+    if (!isLoggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
         const newLoginForm = await this.getLoginForm(loginResponse)
 
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
-      const currentSession = await this.checkSession()
-      loggedIn = currentSession.isLoggedIn
+      const res = await this.checkSession()
+      isLoggedIn = res.isLoggedIn
+
+      if (isLoggedIn) this.userName = res.userName!
+    } else {
+      this.userName = loginParams.username
     }
 
-    if (loggedIn) {
+    if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
         const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
@@ -70,10 +88,10 @@ export class AuthManager {
       }
 
       this.loginCallback()
-    }
+    } else this.userName = ''
 
     return {
-      isLoggedIn: !!loggedIn,
+      isLoggedIn,
       userName: this.userName
     }
   }
@@ -103,14 +121,21 @@ export class AuthManager {
 
   /**
    * Checks whether a session is active, or login is required.
-   * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
+   * @returns - a promise which resolves with an object containing three values
+   *  - a boolean `isLoggedIn`
+   *  - a string `userName` and
+   *  - a form `loginForm` if not loggedin.
    */
-  public async checkSession() {
+  public async checkSession(): Promise<{
+    isLoggedIn: boolean
+    userName?: string
+    loginForm?: any
+  }> {
     //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
     //For SAS9 we will send request on SASStoredProcess
     const url =
       this.serverType === 'SASVIYA'
-        ? `${this.serverUrl}/identities`
+        ? `${this.serverUrl}/identities/users/@currentUser`
         : `${this.serverUrl}/SASStoredProcess`
 
     const { result: loginResponse } = await this.requestClient
@@ -120,6 +145,10 @@ export class AuthManager {
       })
 
     const isLoggedIn = loginResponse !== 'authErr'
+    const userName = isLoggedIn
+      ? this.extractUserName(loginResponse)
+      : undefined
+
     let loginForm = null
 
     if (!isLoggedIn) {
@@ -138,9 +167,27 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: this.userName,
+      userName: userName?.toLowerCase(),
       loginForm
     })
+  }
+
+  private extractUserName = (response: any): string => {
+    switch (this.serverType) {
+      case ServerType.SasViya:
+        return response?.id
+
+      case ServerType.Sas9:
+        const matched = response?.match(/"title":"Log Off [0-1a-zA-Z ]*"/)
+        const username = matched?.[0].slice(17, -1)
+
+        if (!username.includes(' ')) return username
+
+        return username
+          .split(' ')
+          .map((name: string) => name.slice(0, 3).toLowerCase())
+          .join('')
+    }
   }
 
   private getLoginForm(response: any) {
