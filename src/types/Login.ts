@@ -2,7 +2,7 @@ export interface LoginOptions {
   onLoggedOut?: () => Promise<boolean>
 }
 
-export interface LoginReturn {
+export interface LoginResult {
   isLoggedIn: boolean
   userName: string
 }

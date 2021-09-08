@@ -1,10 +1,10 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { LoginOptions, LoginReturn } from '../types/Login'
+import { LoginOptions, LoginResult } from '../types/Login'
 import { serialize } from '../utils'
 import { openWebPage } from './openWebPage'
-import { verifyingPopUpLoginSAS9 } from './verifyingPopUpLoginSAS9'
-import { verifyingPopUpLoginSASVIYA } from './verifyingPopUpLoginSASVIYA'
+import { verifySas9Login } from './verifySas9Login'
+import { verifySasViyaLogin } from './verifySasViyaLogin'
 
 export class AuthManager {
   public userName = ''
@@ -30,7 +30,7 @@ export class AuthManager {
    */
   public async redirectedLogIn({
     onLoggedOut
-  }: LoginOptions): Promise<LoginReturn> {
+  }: LoginOptions): Promise<LoginResult> {
     const loginPopup = await openWebPage(
       this.loginPreventRedirectUrl,
       'SASLogon',
@@ -47,8 +47,8 @@ export class AuthManager {
 
     const { isLoggedIn } =
       this.serverType === ServerType.SasViya
-        ? await verifyingPopUpLoginSASVIYA(loginPopup)
-        : await verifyingPopUpLoginSAS9(loginPopup)
+        ? await verifySasViyaLogin(loginPopup)
+        : await verifySas9Login(loginPopup)
 
     loginPopup.close()
 
@@ -78,7 +78,7 @@ export class AuthManager {
    * @param password - a string representing the password.
    * @returns - a boolean `isLoggedin` and a string `username`
    */
-  public async logIn(username: string, password: string): Promise<LoginReturn> {
+  public async logIn(username: string, password: string): Promise<LoginResult> {
     const loginParams = {
       _service: 'default',
       username,
@@ -209,7 +209,7 @@ export class AuthManager {
     //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
     //For SAS9 we will send request on SASStoredProcess
     const url =
-      this.serverType === 'SASVIYA'
+      this.serverType === ServerType.SasViya
         ? `${this.serverUrl}/identities/users/@currentUser`
         : `${this.serverUrl}/SASStoredProcess`
 

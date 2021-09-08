@@ -25,7 +25,7 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
-import { LoginOptions, LoginReturn } from './types/Login'
+import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -538,7 +538,7 @@ export default class SASjs {
     username?: string,
     password?: string,
     options: LoginOptions = {}
-  ): Promise<LoginReturn> {
+  ): Promise<LoginResult> {
     if (this.sasjsConfig.loginMechanism === LoginMechanism.Default) {
       if (!username || !password) {
         throw new Error(

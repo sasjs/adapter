@@ -1,16 +1,19 @@
 import { openLoginPrompt } from '../utils/loginPrompt'
 
-interface windowFeatures {
+interface WindowFeatures {
   width: number
   height: number
 }
 
+const defaultWindowFeatures: WindowFeatures = { width: 500, height: 600 }
+
 export async function openWebPage(
   url: string,
   windowName: string = '',
-  { width, height }: windowFeatures,
+  WindowFeatures: WindowFeatures = defaultWindowFeatures,
   onLoggedOut?: () => Promise<Boolean>
 ): Promise<Window | null> {
+  const { width, height } = WindowFeatures
   const left = screen.width / 2 - width / 2
   const top = screen.height / 2 - height / 2
 

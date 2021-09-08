@@ -1,6 +1,6 @@
 import { delay } from '../utils'
 
-export async function verifyingPopUpLoginSAS9(loginPopup: Window) {
+export async function verifySas9Login(loginPopup: Window) {
   let isLoggedIn = false
   let startTime = new Date()
   let elapsedSeconds = 0

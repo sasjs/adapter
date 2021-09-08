@@ -1,6 +1,6 @@
 import { delay } from '../utils'
 
-export async function verifyingPopUpLoginSASVIYA(loginPopup: Window) {
+export async function verifySasViyaLogin(loginPopup: Window) {
   let isLoggedIn = false
   let startTime = new Date()
   let elapsedSeconds = 0
@@ -18,7 +18,9 @@ export async function verifyingPopUpLoginSASVIYA(loginPopup: Window) {
     if (loginPopup.closed) break
     isAuthorized =
       !loginPopup.window.location.href.includes('SASLogon') ||
-      loginPopup.window.document.body.innerText.includes('You have signed in.')
+      loginPopup.window.document.body?.innerText?.includes(
+        'You have signed in.'
+      )
     elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
   } while (!isAuthorized && elapsedSeconds < 5 * 60)
 
