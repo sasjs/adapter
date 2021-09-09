@@ -54,7 +54,7 @@ export const openLoginPrompt = (): Promise<boolean> => {
   })
 }
 const closeLoginPrompt = () => {
-  Object.keys(domIDs).forEach((id) => {
+  Object.values(domIDs).forEach((id) => {
     const elem = document.getElementById(id)
     elem?.parentNode?.removeChild(elem)
   })
