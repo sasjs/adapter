@@ -1,4 +1,4 @@
-import SASjs, { SASjsConfig } from '@sasjs/adapter'
+import SASjs, { LoginMechanism, SASjsConfig } from '@sasjs/adapter'
 import { TestSuite } from '@sasjs/test-framework'
 import { ServerType } from '@sasjs/utils/types'
 
@@ -13,7 +13,8 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false,
-  allowInsecureRequests: false
+  allowInsecureRequests: false,
+  loginMechanism: LoginMechanism.Default
 }
 
 const customConfig = {
