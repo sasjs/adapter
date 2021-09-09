@@ -917,6 +917,11 @@ export default class SASjs {
         this.sasjsConfig.serverUrl,
         this.sasjsConfig.allowInsecureRequests
       )
+    } else {
+      this.requestClient.setConfig(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.allowInsecureRequests
+      )
     }
 
     this.jobsPath =

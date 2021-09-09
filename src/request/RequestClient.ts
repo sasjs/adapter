@@ -52,25 +52,14 @@ export class RequestClient implements HttpClient {
 
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
-  protected httpClient: AxiosInstance
+  protected httpClient!: AxiosInstance
 
   constructor(protected baseUrl: string, allowInsecure = false) {
-    const https = require('https')
-    if (allowInsecure && https.Agent) {
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: !allowInsecure
-        })
-      })
-    } else {
-      this.httpClient = axios.create({
-        baseURL: baseUrl
-      })
-    }
+    this.instantiateHttpClient(baseUrl, allowInsecure)
+  }
 
-    this.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status < 305
+  public setConfig(baseUrl: string, allowInsecure = false) {
+    this.instantiateHttpClient(baseUrl, allowInsecure)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -516,6 +505,25 @@ export class RequestClient implements HttpClient {
     }
 
     return responseToReturn
+  }
+
+  private instantiateHttpClient(baseUrl: string, allowInsecure = false) {
+    const https = require('https')
+    if (allowInsecure && https.Agent) {
+      this.httpClient = axios.create({
+        baseURL: baseUrl,
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: !allowInsecure
+        })
+      })
+    } else {
+      this.httpClient = axios.create({
+        baseURL: baseUrl
+      })
+    }
+
+    this.httpClient.defaults.validateStatus = (status) =>
+      status >= 200 && status < 305
   }
 }
 
