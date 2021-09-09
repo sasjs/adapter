@@ -10,7 +10,7 @@ export class AuthManager {
   public userName = ''
   private loginUrl: string
   private logoutUrl: string
-  private loginPreventRedirectUrl = `/SASLogon/home`
+  private redirectedLoginUrl = `/SASLogon/home`
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
@@ -44,7 +44,7 @@ export class AuthManager {
     }
 
     const loginPopup = await openWebPage(
-      this.loginPreventRedirectUrl,
+      this.redirectedLoginUrl,
       'SASLogon',
       {
         width: 500,
