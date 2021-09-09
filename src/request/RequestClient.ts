@@ -55,11 +55,11 @@ export class RequestClient implements HttpClient {
   protected httpClient!: AxiosInstance
 
   constructor(protected baseUrl: string, allowInsecure = false) {
-    this.instantiateHttpClient(baseUrl, allowInsecure)
+    this.createHttpClient(baseUrl, allowInsecure)
   }
 
   public setConfig(baseUrl: string, allowInsecure = false) {
-    this.instantiateHttpClient(baseUrl, allowInsecure)
+    this.createHttpClient(baseUrl, allowInsecure)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -507,7 +507,7 @@ export class RequestClient implements HttpClient {
     return responseToReturn
   }
 
-  private instantiateHttpClient(baseUrl: string, allowInsecure = false) {
+  private createHttpClient(baseUrl: string, allowInsecure = false) {
     const https = require('https')
     if (allowInsecure && https.Agent) {
       this.httpClient = axios.create({
