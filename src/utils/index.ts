@@ -1,6 +1,7 @@
 export * from './asyncForEach'
 export * from './compareTimestamps'
 export * from './convertToCsv'
+export * from './delay'
 export * from './isNode'
 export * from './isRelativePath'
 export * from './isUri'

@@ -1,5 +1,11 @@
 import { compareTimestamps, asyncForEach } from './utils'
-import { SASjsConfig, UploadFile, EditContextInput, PollOptions } from './types'
+import {
+  SASjsConfig,
+  UploadFile,
+  EditContextInput,
+  PollOptions,
+  LoginMechanism
+} from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { FileUploader } from './FileUploader'
@@ -19,6 +25,7 @@ import {
   Sas9JobExecutor
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
+import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -29,7 +36,8 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: null,
-  allowInsecureRequests: false
+  allowInsecureRequests: false,
+  loginMechanism: LoginMechanism.Default
 }
 
 /**
@@ -526,8 +534,27 @@ export default class SASjs {
    * @param username - a string representing the username.
    * @param password - a string representing the password.
    */
-  public async logIn(username: string, password: string) {
-    return this.authManager!.logIn(username, password)
+  public async logIn(
+    username?: string,
+    password?: string,
+    options: LoginOptions = {}
+  ): Promise<LoginResult> {
+    if (this.sasjsConfig.loginMechanism === LoginMechanism.Default) {
+      if (!username || !password) {
+        throw new Error(
+          'A username and password are required when using the default login mechanism.'
+        )
+      }
+      return this.authManager!.logIn(username, password)
+    }
+
+    if (typeof window === typeof undefined) {
+      throw new Error(
+        'The redirected login mechanism is only available for use in the browser.'
+      )
+    }
+
+    return this.authManager!.redirectedLogIn(options)
   }
 
   /**

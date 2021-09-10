@@ -3,10 +3,14 @@ import * as dotenv from 'dotenv'
 import { ServerType } from '@sasjs/utils/types'
 import axios from 'axios'
 import {
+  mockedCurrentUserApi,
   mockLoginAuthoriseRequiredResponse,
   mockLoginSuccessResponse
 } from './mockResponses'
 import { serialize } from '../../utils'
+import * as openWebPageModule from '../openWebPage'
+import * as verifySasViyaLoginModule from '../verifySasViyaLogin'
+import * as verifySas9LoginModule from '../verifySas9Login'
 import { RequestClient } from '../../request/RequestClient'
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
@@ -57,133 +61,614 @@ describe('AuthManager', () => {
     expect((authManager as any).logoutUrl).toEqual('/SASLogon/logout?')
   })
 
-  it('should call the auth callback and return when already logged in', async () => {
-    const authManager = new AuthManager(
-      serverUrl,
-      serverType,
-      requestClient,
-      authCallback
-    )
-    jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
-      Promise.resolve({
-        isLoggedIn: true,
-        userName,
-        loginForm: 'test'
-      })
-    )
+  describe('login - default mechanism', () => {
+    it('should call the auth callback and return when already logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: true,
+          userName,
+          loginForm: 'test'
+        })
+      )
 
-    const loginResponse = await authManager.logIn(userName, password)
+      const loginResponse = await authManager.logIn(userName, password)
 
-    expect(loginResponse.isLoggedIn).toBeTruthy()
-    expect(loginResponse.userName).toEqual(userName)
-    expect(authCallback).toHaveBeenCalledTimes(1)
-  })
-
-  it('should post a login request to the server if not logged in', async () => {
-    const authManager = new AuthManager(
-      serverUrl,
-      serverType,
-      requestClient,
-      authCallback
-    )
-    jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
-      Promise.resolve({
-        isLoggedIn: false,
-        loginForm: { name: 'test' }
-      })
-    )
-    mockedAxios.post.mockImplementation(() =>
-      Promise.resolve({ data: mockLoginSuccessResponse })
-    )
-
-    const loginResponse = await authManager.logIn(userName, password)
-
-    expect(loginResponse.isLoggedIn).toBeTruthy()
-    expect(loginResponse.userName).toEqual(userName)
-
-    const loginParams = serialize({
-      _service: 'default',
-      username: userName,
-      password,
-      name: 'test'
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+      expect(authCallback).toHaveBeenCalledTimes(1)
     })
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      `/SASLogon/login`,
-      loginParams,
-      {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: '*/*'
+
+    it('should post a login request to the server when already logged in with other username', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: true,
+          userName: 'someOtherUsername',
+          loginForm: null
+        })
+      )
+      jest
+        .spyOn(authManager, 'logOut')
+        .mockImplementation(() => Promise.resolve(true))
+
+      jest
+        .spyOn<any, any>(authManager, 'getNewLoginForm')
+        .mockImplementation(() =>
+          Promise.resolve({
+            name: 'test'
+          })
+        )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginSuccessResponse })
+      )
+
+      const loginResponse = await authManager.logIn(userName, password)
+
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+
+      const loginParams = serialize({
+        _service: 'default',
+        username: userName,
+        password,
+        name: 'test'
+      })
+      expect(authCallback).toHaveBeenCalledTimes(1)
+      expect(authManager.logOut).toHaveBeenCalledTimes(1)
+      expect(authManager['getNewLoginForm']).toHaveBeenCalledTimes(1)
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/SASLogon/login`,
+        loginParams,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: '*/*'
+          }
         }
-      }
-    )
-    expect(authCallback).toHaveBeenCalledTimes(1)
+      )
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should post a login request to the server when not logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: false,
+          userName: '',
+          loginForm: { name: 'test' }
+        })
+      )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginSuccessResponse })
+      )
+
+      const loginResponse = await authManager.logIn(userName, password)
+
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+
+      const loginParams = serialize({
+        _service: 'default',
+        username: userName,
+        password,
+        name: 'test'
+      })
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/SASLogon/login`,
+        loginParams,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: '*/*'
+          }
+        }
+      )
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should post a login & a cas_security request to the SAS9 server when not logged in', async () => {
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: false,
+          userName: '',
+          loginForm: { name: 'test' }
+        })
+      )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginSuccessResponse })
+      )
+      mockedAxios.get.mockImplementation(() => Promise.resolve({ status: 200 }))
+
+      const loginResponse = await authManager.logIn(userName, password)
+
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+
+      const loginParams = serialize({
+        _service: 'default',
+        username: userName,
+        password,
+        name: 'test'
+      })
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/SASLogon/login`,
+        loginParams,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: '*/*'
+          }
+        }
+      )
+      const casAuthenticationUrl = `${serverUrl}/SASStoredProcess/j_spring_cas_security_check`
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        `/SASLogon/login?service=${casAuthenticationUrl}`,
+        getHeadersJson
+      )
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return empty username if unable to logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: false,
+          userName: '',
+          loginForm: { name: 'test' }
+        })
+      )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: 'Not Signed in' })
+      )
+
+      const loginResponse = await authManager.logIn(userName, password)
+
+      expect(loginResponse.isLoggedIn).toBeFalsy()
+      expect(loginResponse.userName).toEqual('')
+
+      const loginParams = serialize({
+        _service: 'default',
+        username: userName,
+        password,
+        name: 'test'
+      })
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/SASLogon/login`,
+        loginParams,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: '*/*'
+          }
+        }
+      )
+    })
+
+    it('should parse and submit the authorisation form when necessary', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn(requestClient, 'authorize')
+        .mockImplementation(() => Promise.resolve())
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: false,
+          userName: 'test',
+          loginForm: { name: 'test' }
+        })
+      )
+      mockedAxios.post.mockImplementationOnce(() =>
+        Promise.resolve({
+          data: mockLoginAuthoriseRequiredResponse,
+          config: { url: 'https://test.com/SASLogon/login' },
+          request: { responseURL: 'https://test.com/OAuth/authorize' }
+        })
+      )
+
+      mockedAxios.get.mockImplementationOnce(() =>
+        Promise.resolve({
+          data: mockLoginAuthoriseRequiredResponse
+        })
+      )
+
+      await authManager.logIn(userName, password)
+
+      expect(requestClient.authorize).toHaveBeenCalledWith(
+        mockLoginAuthoriseRequiredResponse
+      )
+    })
   })
 
-  it('should parse and submit the authorisation form when necessary', async () => {
-    const authManager = new AuthManager(
-      serverUrl,
-      serverType,
-      requestClient,
-      authCallback
-    )
-    jest
-      .spyOn(requestClient, 'authorize')
-      .mockImplementation(() => Promise.resolve())
-    jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
-      Promise.resolve({
-        isLoggedIn: false,
-        userName: 'test',
-        loginForm: { name: 'test' }
-      })
-    )
-    mockedAxios.post.mockImplementationOnce(() =>
-      Promise.resolve({
-        data: mockLoginAuthoriseRequiredResponse,
-        config: { url: 'https://test.com/SASLogon/login' },
-        request: { responseURL: 'https://test.com/OAuth/authorize' }
-      })
-    )
+  describe('login - redirect mechanism', () => {
+    beforeAll(() => {
+      jest.mock('../openWebPage')
+      jest
+        .spyOn(openWebPageModule, 'openWebPage')
+        .mockImplementation(() =>
+          Promise.resolve({ close: jest.fn() } as unknown as Window)
+        )
+      jest.mock('../verifySasViyaLogin')
+      jest
+        .spyOn(verifySasViyaLoginModule, 'verifySasViyaLogin')
+        .mockImplementation(() => Promise.resolve({ isLoggedIn: true }))
+      jest.mock('../verifySas9Login')
+      jest
+        .spyOn(verifySas9LoginModule, 'verifySas9Login')
+        .mockImplementation(() => Promise.resolve({ isLoggedIn: true }))
+    })
 
-    mockedAxios.get.mockImplementationOnce(() =>
-      Promise.resolve({
-        data: mockLoginAuthoriseRequiredResponse
-      })
-    )
+    it('should call the auth callback and return when already logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementation(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
 
-    await authManager.logIn(userName, password)
+      const loginResponse = await authManager.redirectedLogIn({})
 
-    expect(requestClient.authorize).toHaveBeenCalledWith(
-      mockLoginAuthoriseRequiredResponse
-    )
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should perform login via pop up if not logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: false,
+            userName: ''
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
+
+      const loginResponse = await authManager.redirectedLogIn({})
+
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+
+      expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
+        `/SASLogon/home`,
+        'SASLogon',
+        {
+          width: 500,
+          height: 600
+        },
+        undefined
+      )
+      expect(authManager['fetchUserName']).toHaveBeenCalledTimes(2)
+      expect(verifySasViyaLoginModule.verifySasViyaLogin).toHaveBeenCalledTimes(
+        1
+      )
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should perform login via pop up if not logged in with server sas9', async () => {
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: false,
+            userName: ''
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
+
+      const loginResponse = await authManager.redirectedLogIn({})
+
+      expect(loginResponse.isLoggedIn).toBeTruthy()
+      expect(loginResponse.userName).toEqual(userName)
+
+      expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
+        `/SASLogon/home`,
+        'SASLogon',
+        {
+          width: 500,
+          height: 600
+        },
+        undefined
+      )
+      expect(authManager['fetchUserName']).toHaveBeenCalledTimes(2)
+      expect(verifySas9LoginModule.verifySas9Login).toHaveBeenCalledTimes(1)
+      expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return empty username if user unable to re-login via pop up', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: false,
+            userName: ''
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
+      jest
+        .spyOn(verifySasViyaLoginModule, 'verifySasViyaLogin')
+        .mockImplementation(() => Promise.resolve({ isLoggedIn: false }))
+
+      const loginResponse = await authManager.redirectedLogIn({})
+
+      expect(loginResponse.isLoggedIn).toBeFalsy()
+      expect(loginResponse.userName).toEqual('')
+
+      expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
+        `/SASLogon/home`,
+        'SASLogon',
+        {
+          width: 500,
+          height: 600
+        },
+        undefined
+      )
+      expect(authManager['fetchUserName']).toHaveBeenCalledTimes(1)
+
+      expect(authCallback).toHaveBeenCalledTimes(0)
+    })
+
+    it('should return empty username if user rejects to re-login', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: false,
+            userName: ''
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
+      jest
+        .spyOn(openWebPageModule, 'openWebPage')
+        .mockImplementation(() => Promise.resolve(null))
+
+      const loginResponse = await authManager.redirectedLogIn({})
+
+      expect(loginResponse.isLoggedIn).toBeFalsy()
+      expect(loginResponse.userName).toEqual('')
+
+      expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
+        `/SASLogon/home`,
+        'SASLogon',
+        {
+          width: 500,
+          height: 600
+        },
+        undefined
+      )
+      expect(authManager['fetchUserName']).toHaveBeenCalledTimes(1)
+
+      expect(authCallback).toHaveBeenCalledTimes(0)
+    })
   })
 
-  it('should check and return session information if logged in', async () => {
-    const authManager = new AuthManager(
-      serverUrl,
-      serverType,
-      requestClient,
-      authCallback
-    )
-    mockedAxios.get.mockImplementation(() =>
-      Promise.resolve({ data: '<button onClick="logout">' })
-    )
+  describe('checkSession', () => {
+    it('return session information when logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: mockedCurrentUserApi(userName) })
+      )
 
-    const response = await authManager.checkSession()
-    expect(response.isLoggedIn).toBeTruthy()
-    expect(mockedAxios.get).toHaveBeenNthCalledWith(
-      1,
-      `http://test-server.com/identities/users/@currentUser`,
-      {
-        withCredentials: true,
-        responseType: 'text',
-        transformResponse: undefined,
-        headers: {
-          Accept: '*/*',
-          'Content-Type': 'text/plain'
+      const response = await authManager.checkSession()
+      expect(response.isLoggedIn).toBeTruthy()
+      expect(response.userName).toEqual(userName)
+      expect(mockedAxios.get).toHaveBeenNthCalledWith(
+        1,
+        `http://test-server.com/identities/users/@currentUser`,
+        {
+          withCredentials: true,
+          responseType: 'text',
+          transformResponse: undefined,
+          headers: {
+            Accept: '*/*',
+            'Content-Type': 'text/plain'
+          }
         }
-      }
-    )
+      )
+    })
+
+    it('return session information when logged in - SAS9', async () => {
+      // username cannot have `-` and cannot be uppercased
+      const username = 'testusername'
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({
+          data: `"title":"Log Off ${username}","url":"javascript: clearFrame(\"/SASStoredProcess/do?_action=logoff\")"' })`
+        })
+      )
+
+      const response = await authManager.checkSession()
+      expect(response.isLoggedIn).toBeTruthy()
+      expect(response.userName).toEqual(username)
+      expect(mockedAxios.get).toHaveBeenNthCalledWith(
+        1,
+        `http://test-server.com/SASStoredProcess`,
+        {
+          withCredentials: true,
+          responseType: 'text',
+          transformResponse: undefined,
+          headers: {
+            Accept: '*/*',
+            'Content-Type': 'text/plain'
+          }
+        }
+      )
+    })
+
+    it('return session information when logged in - SAS9 - having full name in html', async () => {
+      const fullname = 'FirstName LastName'
+      const username = 'firlas'
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({
+          data: `"title":"Log Off ${fullname}","url":"javascript: clearFrame(\"/SASStoredProcess/do?_action=logoff\")"' })`
+        })
+      )
+
+      const response = await authManager.checkSession()
+      expect(response.isLoggedIn).toBeTruthy()
+      expect(response.userName).toEqual(username)
+      expect(mockedAxios.get).toHaveBeenNthCalledWith(
+        1,
+        `http://test-server.com/SASStoredProcess`,
+        {
+          withCredentials: true,
+          responseType: 'text',
+          transformResponse: undefined,
+          headers: {
+            Accept: '*/*',
+            'Content-Type': 'text/plain'
+          }
+        }
+      )
+    })
+
+    it('perform logout when not logged in', async () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      mockedAxios.get
+        .mockImplementationOnce(() => Promise.resolve({ status: 401 }))
+        .mockImplementation(() => Promise.resolve({}))
+
+      const response = await authManager.checkSession()
+      expect(response.isLoggedIn).toBeFalsy()
+      expect(response.userName).toEqual('')
+      expect(mockedAxios.get).toHaveBeenNthCalledWith(
+        1,
+        `http://test-server.com/identities/users/@currentUser`,
+        {
+          withCredentials: true,
+          responseType: 'text',
+          transformResponse: undefined,
+          headers: {
+            Accept: '*/*',
+            'Content-Type': 'text/plain'
+          }
+        }
+      )
+      expect(mockedAxios.get).toHaveBeenNthCalledWith(
+        2,
+        `/SASLogon/logout.do?`,
+        getHeadersJson
+      )
+    })
   })
 })
+
+const getHeadersJson = {
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json'
+  },
+  responseType: 'json'
+}

@@ -59,4 +59,13 @@ export class SASjsConfig {
    * Changing this setting is not recommended.
    */
   allowInsecureRequests = false
+  /**
+   * Supported login mechanisms are - Redirected and Default
+   */
+  loginMechanism: LoginMechanism = LoginMechanism.Default
+}
+
+export enum LoginMechanism {
+  Default = 'Default',
+  Redirected = 'Redirected'
 }

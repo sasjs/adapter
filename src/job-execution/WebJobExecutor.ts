@@ -6,8 +6,7 @@ import {
 import {
   ErrorResponse,
   JobExecutionError,
-  LoginRequiredError,
-  WeboutResponseError
+  LoginRequiredError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../file/generateTableUploadForm'
@@ -15,7 +14,6 @@ import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
-  getValidJson,
   parseSasViyaDebugResponse,
   appendExtraResponseAttributes
 } from '../utils'
@@ -55,10 +53,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     let apiUrl = `${config.serverUrl}${this.jobsPath}/?${'_program=' + program}`
 
     if (config.serverType === ServerType.SasViya) {
-      const jobUri =
-        config.serverType === ServerType.SasViya
-          ? await this.getJobUri(sasJob)
-          : ''
+      const jobUri = await this.getJobUri(sasJob)
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
@@ -156,8 +151,6 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
-            await loginCallback()
-
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -175,6 +168,8 @@ export class WebJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+
+            await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
