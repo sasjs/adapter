@@ -66,6 +66,7 @@ export class FileUploader {
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then(async (res) => {
+        this.requestClient!.appendRequest(res, sasJob, this.sasjsConfig.debug)
         if (
           this.sasjsConfig.serverType === ServerType.SasViya &&
           this.sasjsConfig.debug

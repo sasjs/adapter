@@ -34,7 +34,8 @@ const prepareFilesAndParams = () => {
 describe('FileUploader', () => {
   const config: SASjsConfig = {
     ...new SASjsConfig(),
-    appLoc: '/sample/apploc'
+    appLoc: '/sample/apploc',
+    debug: false
   }
 
   const fileUploader = new FileUploader(

@@ -115,6 +115,8 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res: any) => {
+          this.requestClient!.appendRequest(res, sasJob, config.debug)
+
           let jsonResponse = res.result
 
           if (config.debug) {
@@ -135,8 +137,6 @@ export class WebJobExecutor extends BaseJobExecutor {
             }
           }
 
-          this.appendRequest(res, sasJob, config.debug)
-
           const responseObject = appendExtraResponseAttributes(
             { result: jsonResponse },
             extraResponseAttributes
@@ -145,8 +145,7 @@ export class WebJobExecutor extends BaseJobExecutor {
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
-            this.appendRequest(e, sasJob, config.debug)
-
+            this.requestClient!.appendRequest(e, sasJob, config.debug)
             reject(new ErrorResponse(e?.message, e))
           }
 

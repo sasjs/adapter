@@ -905,20 +905,18 @@ export default class SASjs {
     })
   }
 
+  /**
+   * this method returns an array of SASjsRequest
+   * @returns SASjsRequest[]
+   */
   public getSasRequests() {
-    const requests = [
-      ...this.webJobExecutor!.getRequests(),
-      ...this.computeJobExecutor!.getRequests(),
-      ...this.jesJobExecutor!.getRequests()
-    ]
+    const requests = [...this.requestClient!.getRequests()]
     const sortedRequests = requests.sort(compareTimestamps)
     return sortedRequests
   }
 
   public clearSasRequests() {
-    this.webJobExecutor!.clearRequests()
-    this.computeJobExecutor!.clearRequests()
-    this.jesJobExecutor!.clearRequests()
+    this.requestClient!.clearRequests()
   }
 
   private setupConfiguration() {
@@ -941,10 +939,17 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
-    this.requestClient = new RequestClient(
-      this.sasjsConfig.serverUrl,
-      this.sasjsConfig.allowInsecureRequests
-    )
+    if (!this.requestClient) {
+      this.requestClient = new RequestClient(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.allowInsecureRequests
+      )
+    } else {
+      this.requestClient.setConfig(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.allowInsecureRequests
+      )
+    }
 
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya

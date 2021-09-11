@@ -33,4 +33,18 @@ describe('jsonValidator', () => {
     }
     expect(test).toThrow(JsonParseArrayError)
   })
+
+  it('should throw an error when null is passed', () => {
+    const test = () => {
+      getValidJson(null as any)
+    }
+    expect(test).toThrow(InvalidJsonError)
+  })
+
+  it('should throw an error when undefined is passed', () => {
+    const test = () => {
+      getValidJson(undefined as any)
+    }
+    expect(test).toThrow(InvalidJsonError)
+  })
 })

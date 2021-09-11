@@ -8,10 +8,11 @@ import {
   InternalServerError,
   JobExecutionError
 } from '../types/errors'
+import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { getValidJson } from '../utils'
+import { parseGeneratedCode, parseSourceCode } from '../utils'
 
 export interface HttpClient {
   get<T>(
@@ -47,27 +48,18 @@ export interface HttpClient {
 }
 
 export class RequestClient implements HttpClient {
+  private requests: SASjsRequest[] = []
+
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
-  protected httpClient: AxiosInstance
+  protected httpClient!: AxiosInstance
 
   constructor(protected baseUrl: string, allowInsecure = false) {
-    const https = require('https')
-    if (allowInsecure && https.Agent) {
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: !allowInsecure
-        })
-      })
-    } else {
-      this.httpClient = axios.create({
-        baseURL: baseUrl
-      })
-    }
+    this.createHttpClient(baseUrl, allowInsecure)
+  }
 
-    this.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status < 305
+  public setConfig(baseUrl: string, allowInsecure = false) {
+    this.createHttpClient(baseUrl, allowInsecure)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -81,6 +73,66 @@ export class RequestClient implements HttpClient {
 
   public getBaseUrl() {
     return this.httpClient.defaults.baseURL || ''
+  }
+
+  /**
+   * this method returns all requests, an array of SASjsRequest type
+   * @returns SASjsRequest[]
+   */
+  public getRequests = () => this.requests
+
+  /**
+   * this method clears the requests array, i.e set to empty
+   */
+  public clearRequests = () => {
+    this.requests = []
+  }
+
+  /**
+   * this method appends the response from sasjs request to requests array
+   * @param response - response from sasjs request
+   * @param program - name of program
+   * @param debug - a boolean that indicates whether debug was enabled or not
+   */
+  public appendRequest(response: any, program: string, debug: boolean) {
+    let sourceCode = ''
+    let generatedCode = ''
+    let sasWork = null
+
+    if (debug) {
+      if (response?.log) {
+        sourceCode = parseSourceCode(response.log)
+        generatedCode = parseGeneratedCode(response.log)
+
+        if (response?.result) {
+          sasWork = response.result.WORK
+        } else {
+          sasWork = response.log
+        }
+      } else if (response?.result) {
+        sourceCode = parseSourceCode(response.result)
+        generatedCode = parseGeneratedCode(response.result)
+        sasWork = response.result.WORK
+      }
+    }
+
+    const stringifiedResult =
+      typeof response?.result === 'string'
+        ? response?.result
+        : JSON.stringify(response?.result, null, 2)
+
+    this.requests.push({
+      logFile: response?.log || stringifiedResult || response,
+      serviceLink: program,
+      timestamp: new Date(),
+      sourceCode,
+      generatedCode,
+      SASWORK: sasWork
+    })
+
+    if (this.requests.length > 20) {
+      this.requests.splice(0, 1)
+    }
   }
 
   public async get<T>(
@@ -453,6 +505,25 @@ export class RequestClient implements HttpClient {
     }
 
     return responseToReturn
+  }
+
+  private createHttpClient(baseUrl: string, allowInsecure = false) {
+    const https = require('https')
+    if (allowInsecure && https.Agent) {
+      this.httpClient = axios.create({
+        baseURL: baseUrl,
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: !allowInsecure
+        })
+      })
+    } else {
+      this.httpClient = axios.create({
+        baseURL: baseUrl
+      })
+    }
+
+    this.httpClient.defaults.validateStatus = (status) =>
+      status >= 200 && status < 305
   }
 }
 
