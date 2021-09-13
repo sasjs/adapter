@@ -8,7 +8,6 @@ import {
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
-import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
 import {
   ServerType,
@@ -22,7 +21,8 @@ import {
   WebJobExecutor,
   ComputeJobExecutor,
   JesJobExecutor,
-  Sas9JobExecutor
+  Sas9JobExecutor,
+  FileUploader
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
 import { LoginOptions, LoginResult } from './types/Login'
@@ -579,10 +579,11 @@ export default class SASjs {
     params: any,
     overrideSasjsConfig?: any
   ) {
-    return await this.fileUploader!.uploadFile(sasJob, files, params, {
+    const config = {
       ...this.sasjsConfig,
       ...overrideSasjsConfig
-    })
+    }
+    return await this.fileUploader!.execute(sasJob, files, params, config)
   }
 
   /**
@@ -984,7 +985,12 @@ export default class SASjs {
         )
     }
 
-    this.fileUploader = new FileUploader(this.jobsPath, this.requestClient)
+    this.fileUploader = new FileUploader(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.jobsPath,
+      this.requestClient
+    )
 
     this.webJobExecutor = new WebJobExecutor(
       this.sasjsConfig.serverUrl,

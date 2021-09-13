@@ -45,7 +45,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     if (data) {
       try {
         formData = generateFileUploadForm(formData, data)
-      } catch (e) {
+      } catch (e: any) {
         return Promise.reject(new ErrorResponse(e?.message, e))
       }
     }
