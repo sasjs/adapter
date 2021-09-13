@@ -39,7 +39,6 @@ describe('FileUploader', () => {
   }
 
   const fileUploader = new FileUploader(
-    config,
     '/jobs/path',
     new RequestClient('https://sample.server.com')
   )
@@ -51,7 +50,7 @@ describe('FileUploader', () => {
       Promise.resolve({ data: sampleResponse })
     )
 
-    const res = await fileUploader.uploadFile(sasJob, files, params)
+    const res = await fileUploader.uploadFile(sasJob, files, params, config)
 
     expect(res).toEqual(JSON.parse(sampleResponse))
   })
@@ -62,7 +61,7 @@ describe('FileUploader', () => {
     const params = { table: 'libtable' }
 
     const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+      .uploadFile(sasJob, files, params, config)
       .catch((err: any) => err)
     expect(err.error.message).toEqual('At least one file must be provided.')
   })
@@ -72,7 +71,7 @@ describe('FileUploader', () => {
     const { files, params } = prepareFilesAndParams()
 
     const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+      .uploadFile(sasJob, files, params, config)
       .catch((err: any) => err)
     expect(err.error.message).toEqual('sasJob must be provided.')
   })
@@ -86,7 +85,7 @@ describe('FileUploader', () => {
     const { files, params } = prepareFilesAndParams()
 
     const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+      .uploadFile(sasJob, files, params, config)
       .catch((err: any) => err)
     expect(err.error.message).toEqual('You must be logged in to upload a file.')
   })
@@ -100,7 +99,7 @@ describe('FileUploader', () => {
     const { files, params } = prepareFilesAndParams()
 
     const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+      .uploadFile(sasJob, files, params, config)
       .catch((err: any) => err)
     expect(err.error.message).toEqual('File upload request failed.')
   })
@@ -114,7 +113,7 @@ describe('FileUploader', () => {
     const { files, params } = prepareFilesAndParams()
 
     const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+      .uploadFile(sasJob, files, params, config)
       .catch((err: any) => err)
     expect(err.error.message).toEqual('File upload request failed.')
   })
