@@ -90,7 +90,7 @@ export class WebJobExecutor extends BaseJobExecutor {
         // file upload approach
         try {
           formData = generateFileUploadForm(formData, data)
-        } catch (e) {
+        } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       } else {
@@ -100,7 +100,7 @@ export class WebJobExecutor extends BaseJobExecutor {
             generateTableUploadForm(formData, data)
           formData = newFormData
           requestParams = { ...requestParams, ...params }
-        } catch (e) {
+        } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       }

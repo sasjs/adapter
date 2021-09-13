@@ -182,7 +182,7 @@ export class RequestClient implements HttpClient {
       })
   }
 
-  public post<T>(
+  public async post<T>(
     url: string,
     data: any,
     accessToken: string | undefined,
@@ -286,7 +286,7 @@ export class RequestClient implements HttpClient {
         result: response.data,
         etag: response.headers['etag'] as string
       }
-    } catch (e) {
+    } catch (e: any) {
       const response = e.response as AxiosResponse
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetFileUploadCsrfToken(response)

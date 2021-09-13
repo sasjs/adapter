@@ -3,21 +3,17 @@ import { UploadFile } from './types/UploadFile'
 import { ErrorResponse, LoginRequiredError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
 import { ServerType } from '@sasjs/utils/types'
-import SASjs from './SASjs'
-import { Server } from 'https'
 import { SASjsConfig } from './types'
-import { config } from 'process'
 
 export class FileUploader {
-  constructor(
-    private sasjsConfig: SASjsConfig,
-    private jobsPath: string,
-    private requestClient: RequestClient
-  ) {
-    if (this.sasjsConfig.serverUrl) isUrl(this.sasjsConfig.serverUrl)
-  }
+  constructor(private jobsPath: string, private requestClient: RequestClient) {}
 
-  public uploadFile(sasJob: string, files: UploadFile[], params: any) {
+  public async uploadFile(
+    sasJob: string,
+    files: UploadFile[],
+    params: any,
+    config: SASjsConfig
+  ) {
     if (files?.length < 1)
       return Promise.reject(
         new ErrorResponse('At least one file must be provided.')
@@ -33,8 +29,8 @@ export class FileUploader {
       }
     }
 
-    const program = this.sasjsConfig.appLoc
-      ? this.sasjsConfig.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
+    const program = config.appLoc
+      ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
       : sasJob
     const uploadUrl = `${this.jobsPath}/?${
       '_program=' + program
@@ -48,12 +44,9 @@ export class FileUploader {
 
     const csrfToken = this.requestClient.getCsrfToken('file')
     if (csrfToken) formData.append('_csrf', csrfToken.value)
-    if (this.sasjsConfig.debug) formData.append('_debug', '131')
-    if (
-      this.sasjsConfig.serverType === ServerType.SasViya &&
-      this.sasjsConfig.contextName
-    )
-      formData.append('_contextname', this.sasjsConfig.contextName)
+    if (config.debug) formData.append('_debug', '131')
+    if (config.serverType === ServerType.SasViya && config.contextName)
+      formData.append('_contextname', config.contextName)
 
     const headers = {
       'cache-control': 'no-cache',
@@ -66,15 +59,12 @@ export class FileUploader {
     return this.requestClient
       .post(uploadUrl, formData, undefined, 'application/json', headers)
       .then(async (res) => {
-        this.requestClient!.appendRequest(res, sasJob, this.sasjsConfig.debug)
-        if (
-          this.sasjsConfig.serverType === ServerType.SasViya &&
-          this.sasjsConfig.debug
-        ) {
+        this.requestClient.appendRequest(res, sasJob, config.debug)
+        if (config.serverType === ServerType.SasViya && config.debug) {
           const jsonResponse = await parseSasViyaDebugResponse(
             res.result as string,
             this.requestClient,
-            this.sasjsConfig.serverUrl
+            config.serverUrl
           )
           return jsonResponse
         }

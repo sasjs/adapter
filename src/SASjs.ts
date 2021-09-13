@@ -507,7 +507,7 @@ export default class SASjs {
       ...this.sasjsConfig,
       ...config
     }
-    await this.setupConfiguration()
+    this.setupConfiguration()
   }
 
   /**
@@ -573,22 +573,16 @@ export default class SASjs {
    * @param params - request URL parameters.
    * @param overrideSasjsConfig - object to override existing config (optional)
    */
-  public uploadFile(
+  public async uploadFile(
     sasJob: string,
     files: UploadFile[],
     params: any,
     overrideSasjsConfig?: any
   ) {
-    const fileUploader = overrideSasjsConfig
-      ? new FileUploader(
-          { ...this.sasjsConfig, ...overrideSasjsConfig },
-          this.jobsPath,
-          this.requestClient!
-        )
-      : this.fileUploader ||
-        new FileUploader(this.sasjsConfig, this.jobsPath, this.requestClient!)
-
-    return fileUploader.uploadFile(sasJob, files, params)
+    return await this.fileUploader!.uploadFile(sasJob, files, params, {
+      ...this.sasjsConfig,
+      ...overrideSasjsConfig
+    })
   }
 
   /**
@@ -990,11 +984,7 @@ export default class SASjs {
         )
     }
 
-    this.fileUploader = new FileUploader(
-      this.sasjsConfig,
-      this.jobsPath,
-      this.requestClient
-    )
+    this.fileUploader = new FileUploader(this.jobsPath, this.requestClient)
 
     this.webJobExecutor = new WebJobExecutor(
       this.sasjsConfig.serverUrl,
