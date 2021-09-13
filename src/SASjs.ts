@@ -869,6 +869,7 @@ export default class SASjs {
     await this.webJobExecutor?.resendWaitingRequests()
     await this.computeJobExecutor?.resendWaitingRequests()
     await this.jesJobExecutor?.resendWaitingRequests()
+    await this.fileUploader?.resendWaitingRequests()
   }
 
   /**
