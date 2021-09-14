@@ -8,7 +8,6 @@ import {
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
-import { FileUploader } from './FileUploader'
 import { AuthManager } from './auth'
 import {
   ServerType,
@@ -22,7 +21,8 @@ import {
   WebJobExecutor,
   ComputeJobExecutor,
   JesJobExecutor,
-  Sas9JobExecutor
+  Sas9JobExecutor,
+  FileUploader
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
 import { LoginOptions, LoginResult } from './types/Login'
@@ -571,18 +571,32 @@ export default class SASjs {
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param files - array of files to be uploaded, including File object and file name.
    * @param params - request URL parameters.
-   * @param overrideSasjsConfig - object to override existing config (optional)
+   * @param config - provide any changes to the config here, for instance to
+   * enable/disable `debug`. Any change provided will override the global config,
+   * for that particular function call.
+   * @param loginRequiredCallback - a function that is called if the
+   * user is not logged in (eg to display a login form). The request will be
+   * resubmitted after successful login.
    */
   public async uploadFile(
     sasJob: string,
     files: UploadFile[],
-    params: any,
-    overrideSasjsConfig?: any
+    params: { [key: string]: any } | null,
+    config: { [key: string]: any } = {},
+    loginRequiredCallback?: () => any
   ) {
-    return await this.fileUploader!.uploadFile(sasJob, files, params, {
+    config = {
       ...this.sasjsConfig,
-      ...overrideSasjsConfig
-    })
+      ...config
+    }
+    const data = { files, params }
+
+    return await this.fileUploader!.execute(
+      sasJob,
+      data,
+      config,
+      loginRequiredCallback
+    )
   }
 
   /**
@@ -868,6 +882,7 @@ export default class SASjs {
     await this.webJobExecutor?.resendWaitingRequests()
     await this.computeJobExecutor?.resendWaitingRequests()
     await this.jesJobExecutor?.resendWaitingRequests()
+    await this.fileUploader?.resendWaitingRequests()
   }
 
   /**
@@ -984,7 +999,12 @@ export default class SASjs {
         )
     }
 
-    this.fileUploader = new FileUploader(this.jobsPath, this.requestClient)
+    this.fileUploader = new FileUploader(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.jobsPath,
+      this.requestClient
+    )
 
     this.webJobExecutor = new WebJobExecutor(
       this.sasjsConfig.serverUrl,

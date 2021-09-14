@@ -3,6 +3,12 @@ enum domIDs {
   overlay = 'sasjsAdapterLoginPromptBG',
   dialog = 'sasjsAdapterLoginPrompt'
 }
+const cssPrefix = 'sasjs-adapter'
+
+const classes = {
+  popUp: `${cssPrefix}popUp`,
+  popUpBG: `${cssPrefix}popUpBG`
+}
 
 export const openLoginPrompt = (): Promise<boolean> => {
   return new Promise(async (resolve) => {
@@ -12,11 +18,11 @@ export const openLoginPrompt = (): Promise<boolean> => {
 
     const loginPromptBG = document.createElement('div')
     loginPromptBG.id = domIDs.overlay
-    loginPromptBG.classList.add('popUpBG')
+    loginPromptBG.classList.add(classes.popUpBG)
 
     const loginPrompt = document.createElement('div')
     loginPrompt.id = domIDs.dialog
-    loginPrompt.classList.add('popUp')
+    loginPrompt.classList.add(classes.popUp)
 
     const title = document.createElement('h1')
     title.innerText = 'Session Expired!'
@@ -63,7 +69,11 @@ const closeLoginPrompt = () => {
 }
 
 const cssContent = `
-.popUp {
+.${classes.popUpBG} ,
+.${classes.popUp} {
+  z-index: 10000;
+}
+.${classes.popUp} {
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -86,7 +96,7 @@ const cssContent = `
   max-height: 300px;
   transform: translate(-50%, -50%);
 }
-.popUp > h1 {
+.${classes.popUp} > h1 {
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -101,7 +111,7 @@ const cssContent = `
   border-width: 5px;
   border-color: black;
 }
-.popUp > div {
+.${classes.popUp} > div {
   width: 100%;
   height: calc(100% -108px);
   margin: 0;
@@ -116,7 +126,7 @@ const cssContent = `
   border-style: none none solid none;
   overflow: auto;
 }
-.popUp > div > span {
+.${classes.popUp} > div > span {
   display: table-cell;
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -128,13 +138,13 @@ const cssContent = `
   vertical-align: middle;
   border-style: none;
 }
-.popUp .cancel {
+.${classes.popUp} .cancel {
   float: left;
 }
-.popUp .confirm {
+.${classes.popUp} .confirm {
   float: right;
 }
-.popUp > button {
+.${classes.popUp} > button {
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -148,10 +158,10 @@ const cssContent = `
   height: 50px;
   background: rgba(1, 1, 1, 0.2);
 }
-.popUp > button:hover {
+.${classes.popUp} > button:hover {
   background: rgba(0, 0, 0, 0.2);
 }
-.popUpBG {
+.${classes.popUpBG} {
   display: block;
   position: fixed;
   top: 0;
