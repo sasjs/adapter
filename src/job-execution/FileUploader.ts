@@ -15,7 +15,7 @@ import { BaseJobExecutor } from './JobExecutor'
 
 interface dataFileUpload {
   files: UploadFile[]
-  params: any
+  params: { [key: string]: any } | null
 }
 
 export class FileUploader extends BaseJobExecutor {

@@ -571,19 +571,32 @@ export default class SASjs {
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param files - array of files to be uploaded, including File object and file name.
    * @param params - request URL parameters.
-   * @param overrideSasjsConfig - object to override existing config (optional)
+   * @param config - provide any changes to the config here, for instance to
+   * enable/disable `debug`. Any change provided will override the global config,
+   * for that particular function call.
+   * @param loginRequiredCallback - a function that is called if the
+   * user is not logged in (eg to display a login form). The request will be
+   * resubmitted after successful login.
    */
   public async uploadFile(
     sasJob: string,
     files: UploadFile[],
-    params: any,
-    overrideSasjsConfig?: any
+    params: { [key: string]: any } | null,
+    config: { [key: string]: any } = {},
+    loginRequiredCallback?: () => any
   ) {
-    const config = {
+    config = {
       ...this.sasjsConfig,
-      ...overrideSasjsConfig
+      ...config
     }
-    return await this.fileUploader!.execute(sasJob, files, params, config)
+    const data = { files, params }
+
+    return await this.fileUploader!.execute(
+      sasJob,
+      data,
+      config,
+      loginRequiredCallback
+    )
   }
 
   /**
