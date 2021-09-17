@@ -25,6 +25,6 @@ export const parseSasViyaDebugResponse = async (
   }
 
   return requestClient
-    .get(serverUrl + jsonUrl, undefined)
+    .get(serverUrl + jsonUrl, undefined, 'text/plain')
     .then((res: any) => getValidJson(res.result))
 }
