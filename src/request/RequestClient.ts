@@ -281,7 +281,11 @@ export class RequestClient implements HttpClient {
     }
 
     try {
-      const response = await this.httpClient.post(url, content, { headers })
+      const response = await this.httpClient.post(url, content, {
+        headers,
+        transformRequest: (requestBody) => requestBody
+      })
+
       return {
         result: response.data,
         etag: response.headers['etag'] as string
