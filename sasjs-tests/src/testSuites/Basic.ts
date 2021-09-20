@@ -78,8 +78,8 @@ export const basicTests = (
           'common/sendArr',
           stringData,
           undefined,
-          () => {
-            adapter.logIn(userName, password)
+          async () => {
+            await adapter.logIn(userName, password)
           }
         )
       },
