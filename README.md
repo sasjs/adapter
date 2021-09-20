@@ -36,7 +36,7 @@ Ok ok. Deploy this [example.html](https://raw.githubusercontent.com/sasjs/adapte
 
 The backend part can be deployed as follows:
 
-```
+```sas
 %let appLoc=/Public/app/readme;  /* Metadata or Viya Folder per SASjs config */
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc; /* compile macros (can also be downloaded & compiled seperately) */
@@ -85,11 +85,11 @@ let sasJs = new SASjs.default(
 );
 ```
 If you've installed it via NPM, you can import it as a default import like so:
-```
+```js
   import SASjs from '@sasjs/adapter';
 ```
 You can then instantiate it with:
-```
+```js
 const sasJs = new SASjs({your config})
 ```
 
@@ -119,6 +119,7 @@ sasJs.request("/path/to/my/service", dataObject)
     console.log(response.tablewith2cols1row[0].COL1.value)
   })
 ```
+
 We supply the path to the SAS service, and a data object.  The data object can be null (for services with no input), or can contain one or more tables in the following format:
 
 ```javascript
@@ -146,6 +147,7 @@ The adapter will also cache the logs (if debug enabled) and even the work tables
 The SAS side is handled by a number of macros in the [macro core](https://github.com/sasjs/core) library.
 
 The following snippet shows the process of SAS tables arriving / leaving:
+
 ```sas
 /* fetch all input tables sent from frontend - they arrive as work tables */
 %webout(FETCH)
@@ -161,7 +163,6 @@ run;
 %webout(OBJ,tables,fmt=N) /* unformatted (raw) data */
 %webout(OBJ,tables,label=newtable) /* rename tables on export */
 %webout(CLOSE) /* close the JSON and send some extra useful variables too */
-
 ```
 
 ## Configuration
@@ -172,6 +173,7 @@ Configuration on the client side involves passing an object on startup, which ca
 * `serverType` - either `SAS9` or `SASVIYA`.
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
+* `LoginMechanism` - either `Default` or `Redirected`.  If `Redirected` then authentication occurs through the injection of an additional screen, which contains the SASLogon prompt.  This allows for more complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the redirect flow can also be modified.  If left at "Default" then the developer must capture the username and password and use these with the `.login()` method.
 * `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.
 
@@ -196,7 +198,7 @@ Here we are running Jobs using the Job Execution Service except this time we are
 
 This approach (`useComputeApi: false`) also ensures that jobs are displayed in Environment Manager.
 
-```
+```json
 {
   appLoc:"/Your/Path",
   serverType:"SASVIYA",
@@ -210,12 +212,12 @@ This approach is by far the fastest, as a result of the optimisations we have bu
 
 With this approach (`useComputeApi: true`), the requests/logs will _not_ appear in the list in Environment manager.
 
-```
+```json
 {
   appLoc:"/Your/Path",
   serverType:"SASVIYA",
   useComputeApi: true,
-  contextName: 'yourComputeContext'
+  contextName: "yourComputeContext"
 }
 ```
 
