@@ -53,7 +53,36 @@ export class WebJobExecutor extends BaseJobExecutor {
     let apiUrl = `${config.serverUrl}${this.jobsPath}/?${'_program=' + program}`
 
     if (config.serverType === ServerType.SasViya) {
-      const jobUri = await this.getJobUri(sasJob)
+      let jobUri
+      try {
+        jobUri = await this.getJobUri(sasJob)
+      } catch (e: any) {
+        return new Promise(async (resolve, reject) => {
+          if (e instanceof LoginRequiredError) {
+            this.appendWaitingRequest(() => {
+              return this.execute(
+                sasJob,
+                data,
+                config,
+                loginRequiredCallback,
+                authConfig,
+                extraResponseAttributes
+              ).then(
+                (res: any) => {
+                  resolve(res)
+                },
+                (err: any) => {
+                  reject(err)
+                }
+              )
+            })
+
+            await loginCallback()
+          } else {
+            reject(new ErrorResponse(e?.message, e))
+          }
+        })
+      }
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 

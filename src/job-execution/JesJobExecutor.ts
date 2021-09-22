@@ -45,8 +45,6 @@ export class JesJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
-            await loginCallback()
-
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -64,6 +62,8 @@ export class JesJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+
+            await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
