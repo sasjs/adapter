@@ -1,6 +1,7 @@
 import { generateTimestamp } from '@sasjs/utils/time'
 import * as NodeFormData from 'form-data'
 import { Sas9RequestClient } from './request/Sas9RequestClient'
+import { HttpsAgent } from './types/HttpsAgent'
 import { isUrl } from './utils'
 
 /**
@@ -13,10 +14,13 @@ export class SAS9ApiClient {
   constructor(
     private serverUrl: string,
     private jobsPath: string,
-    allowInsecureRequests: boolean
+    httpsAgentConfiguration?: HttpsAgent
   ) {
     if (serverUrl) isUrl(serverUrl)
-    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
+    this.requestClient = new Sas9RequestClient(
+      serverUrl,
+      httpsAgentConfiguration
+    )
   }
 
   /**

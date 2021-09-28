@@ -13,6 +13,7 @@ import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
 import { parseGeneratedCode, parseSourceCode } from '../utils'
+import { HttpsAgent } from '../types/HttpsAgent'
 
 export interface HttpClient {
   get<T>(
@@ -54,12 +55,12 @@ export class RequestClient implements HttpClient {
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
 
-  constructor(protected baseUrl: string, allowInsecure = false) {
-    this.createHttpClient(baseUrl, allowInsecure)
+  constructor(protected baseUrl: string, httpsAgentConfiguration?: HttpsAgent) {
+    this.createHttpClient(baseUrl, httpsAgentConfiguration)
   }
 
-  public setConfig(baseUrl: string, allowInsecure = false) {
-    this.createHttpClient(baseUrl, allowInsecure)
+  public setConfig(baseUrl: string, httpsAgentConfiguration?: HttpsAgent) {
+    this.createHttpClient(baseUrl, httpsAgentConfiguration)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -511,15 +512,24 @@ export class RequestClient implements HttpClient {
     return responseToReturn
   }
 
-  private createHttpClient(baseUrl: string, allowInsecure = false) {
+  private createHttpClient(
+    baseUrl: string,
+    httpsAgentConfiguration: HttpsAgent = {}
+  ) {
     const https = require('https')
-    if (allowInsecure && https.Agent) {
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: !allowInsecure
-        })
-      })
+    const { selfSigned, clientCA, allowInsecure } = httpsAgentConfiguration
+
+    const httpsAgentConfig = selfSigned
+      ? { ca: selfSigned.ca }
+      : clientCA
+      ? { key: clientCA.key, cert: clientCA.cert, requestCert: true }
+      : allowInsecure
+      ? { rejectUnauthorized: !allowInsecure }
+      : undefined
+
+    if (httpsAgentConfig) {
+      const httpsAgent = new https.Agent(httpsAgentConfig)
+      this.httpClient = axios.create({ httpsAgent })
     } else {
       this.httpClient = axios.create({
         baseURL: baseUrl

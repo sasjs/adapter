@@ -4,6 +4,7 @@ import { ErrorResponse } from '../types/errors'
 import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { Sas9RequestClient } from '../request/Sas9RequestClient'
+import { HttpsAgent } from '../types/HttpsAgent'
 
 /**
  * Job executor for SAS9 servers for use in Node.js environments.
@@ -17,10 +18,13 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
-    allowInsecureRequests: boolean
+    httpsAgentConfiguration: HttpsAgent
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
+    this.requestClient = new Sas9RequestClient(
+      serverUrl,
+      httpsAgentConfiguration
+    )
   }
 
   async execute(sasJob: string, data: any, config: any) {

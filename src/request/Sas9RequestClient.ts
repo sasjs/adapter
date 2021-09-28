@@ -3,14 +3,15 @@ import axiosCookieJarSupport from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
+import { HttpsAgent } from '../types/HttpsAgent'
 
 /**
  * Specific request client for SAS9 in Node.js environments.
  * Handles redirects and cookie management.
  */
 export class Sas9RequestClient extends RequestClient {
-  constructor(baseUrl: string, allowInsecure = false) {
-    super(baseUrl, allowInsecure)
+  constructor(baseUrl: string, httpsAgentConfiguration?: HttpsAgent) {
+    super(baseUrl, httpsAgentConfiguration)
     this.httpClient.defaults.maxRedirects = 0
     this.httpClient.defaults.validateStatus = (status) =>
       status >= 200 && status < 303

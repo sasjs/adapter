@@ -36,7 +36,7 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: null,
-  allowInsecureRequests: false,
+  httpsAgentConfiguration: {},
   loginMechanism: LoginMechanism.Default
 }
 
@@ -57,7 +57,7 @@ export default class SASjs {
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
 
-  constructor(config?: any) {
+  constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
       ...defaultConfig,
       ...config
@@ -792,7 +792,7 @@ export default class SASjs {
         sasApiClient = new SAS9ApiClient(
           serverUrl,
           this.jobsPath,
-          this.sasjsConfig.allowInsecureRequests
+          this.sasjsConfig.httpsAgentConfiguration
         )
       }
     } else {
@@ -951,12 +951,12 @@ export default class SASjs {
     if (!this.requestClient) {
       this.requestClient = new RequestClient(
         this.sasjsConfig.serverUrl,
-        this.sasjsConfig.allowInsecureRequests
+        this.sasjsConfig.httpsAgentConfiguration
       )
     } else {
       this.requestClient.setConfig(
         this.sasjsConfig.serverUrl,
-        this.sasjsConfig.allowInsecureRequests
+        this.sasjsConfig.httpsAgentConfiguration
       )
     }
 
@@ -995,7 +995,7 @@ export default class SASjs {
         this.sas9ApiClient = new SAS9ApiClient(
           this.sasjsConfig.serverUrl,
           this.jobsPath,
-          this.sasjsConfig.allowInsecureRequests
+          this.sasjsConfig.httpsAgentConfiguration
         )
     }
 
@@ -1018,7 +1018,7 @@ export default class SASjs {
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
       this.jobsPath,
-      this.sasjsConfig.allowInsecureRequests
+      this.sasjsConfig.httpsAgentConfiguration
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(
