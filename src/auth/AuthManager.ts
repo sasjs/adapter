@@ -256,6 +256,8 @@ export class AuthManager {
           .split(' ')
           .map((name: string) => name.slice(0, 3).toLowerCase())
           .join('')
+      default:
+        return ''
     }
   }
 

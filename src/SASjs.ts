@@ -4,10 +4,14 @@ import {
   UploadFile,
   EditContextInput,
   PollOptions,
-  LoginMechanism
+  LoginMechanism,
+  FolderMember,
+  ServiceMember,
+  ExecutionQuery
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
+import { SASBaseApiClient } from './SASBaseApiClient'
 import { AuthManager } from './auth'
 import {
   ServerType,
@@ -29,6 +33,7 @@ import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
+  pathSASBase: '',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -49,6 +54,7 @@ export default class SASjs {
   private jobsPath: string = ''
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
+  private sasBaseApiClient: SASBaseApiClient | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
@@ -824,6 +830,14 @@ export default class SASjs {
     )
   }
 
+  public async deployToSASBase(members: [FolderMember, ServiceMember]) {
+    return await this.sasBaseApiClient?.deploy(members)
+  }
+
+  public async executeScriptSASBase(query: ExecutionQuery) {
+    return await this.sasBaseApiClient?.executeScript(query)
+  }
+
   /**
    * Kicks off execution of the given job via the compute API.
    * @returns an object representing the compute session created for the given job.
@@ -973,30 +987,43 @@ export default class SASjs {
     )
 
     if (this.sasjsConfig.serverType === ServerType.SasViya) {
-      if (this.sasViyaApiClient)
+      if (this.sasViyaApiClient) {
         this.sasViyaApiClient!.setConfig(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc
         )
-      else
+      } else {
         this.sasViyaApiClient = new SASViyaApiClient(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
           this.requestClient
         )
+      }
 
       this.sasViyaApiClient.debug = this.sasjsConfig.debug
     }
+
     if (this.sasjsConfig.serverType === ServerType.Sas9) {
-      if (this.sas9ApiClient)
+      if (this.sas9ApiClient) {
         this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
-      else
+      } else {
         this.sas9ApiClient = new SAS9ApiClient(
           this.sasjsConfig.serverUrl,
           this.jobsPath,
           this.sasjsConfig.allowInsecureRequests
         )
+      }
+    }
+
+    if (this.sasjsConfig.serverType === ServerType.Sasjs) {
+      if (this.sasBaseApiClient) {
+        this.sasBaseApiClient.setConfig(this.sasjsConfig.pathSASBase)
+      } else {
+        this.sasBaseApiClient = new SASBaseApiClient(
+          this.sasjsConfig.pathSASBase
+        )
+      }
     }
 
     this.fileUploader = new FileUploader(
