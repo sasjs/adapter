@@ -6,6 +6,3 @@ build
 /coverage
 
 .DS_Store
-
-temporary sasjs/server files
-/tmp
