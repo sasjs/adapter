@@ -834,8 +834,8 @@ export default class SASjs {
     return await this.sasBaseApiClient?.deploy(members)
   }
 
-  public async executeScriptSASBase(query: ExecutionQuery) {
-    return await this.sasBaseApiClient?.executeScript(query)
+  public async executeJobSASBase(query: ExecutionQuery) {
+    return await this.sasBaseApiClient?.executeJob(query)
   }
 
   /**
@@ -1018,10 +1018,11 @@ export default class SASjs {
 
     if (this.sasjsConfig.serverType === ServerType.Sasjs) {
       if (this.sasBaseApiClient) {
-        this.sasBaseApiClient.setConfig(this.sasjsConfig.pathSASBase)
+        this.sasBaseApiClient.setConfig(this.sasjsConfig.serverUrl)
       } else {
         this.sasBaseApiClient = new SASBaseApiClient(
-          this.sasjsConfig.pathSASBase
+          this.sasjsConfig.serverUrl,
+          this.requestClient
         )
       }
     }
