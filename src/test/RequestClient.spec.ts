@@ -4,6 +4,15 @@ import * as https from 'https'
 import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils'
 import SASjs from '../SASjs'
+import * as axiosModules from '../utils/createAxiosInstance'
+
+const axiosActual = jest.requireActual('axios')
+
+jest
+  .spyOn(axiosModules, 'createAxiosInstance')
+  .mockImplementation((baseURL: string, httpsAgent?: https.Agent) =>
+    axiosActual.create({ baseURL, httpsAgent })
+  )
 
 const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`

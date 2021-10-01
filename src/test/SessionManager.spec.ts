@@ -1,6 +1,5 @@
 import { SessionManager } from '../SessionManager'
 import { RequestClient } from '../request/RequestClient'
-import { NoSessionStateError } from '../types/errors'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils'

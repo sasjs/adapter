@@ -12,7 +12,11 @@ import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { parseGeneratedCode, parseSourceCode } from '../utils'
+import {
+  parseGeneratedCode,
+  parseSourceCode,
+  createAxiosInstance
+} from '../utils'
 import { HttpsAgent } from '../types/HttpsAgent'
 
 export interface HttpClient {
@@ -519,7 +523,7 @@ export class RequestClient implements HttpClient {
     const https = require('https')
     const { selfSigned, clientCA, allowInsecure } = httpsAgentConfiguration
 
-    const httpsAgentConfig = selfSigned
+    const httpsAgentOptions = selfSigned
       ? { ca: selfSigned.ca }
       : clientCA
       ? { key: clientCA.key, cert: clientCA.cert, requestCert: true }
@@ -527,17 +531,12 @@ export class RequestClient implements HttpClient {
       ? { rejectUnauthorized: !allowInsecure }
       : undefined
 
-    if (httpsAgentConfig && https.Agent) {
-      const httpsAgent = new https.Agent(httpsAgentConfig)
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent
-      })
-    } else {
-      this.httpClient = axios.create({
-        baseURL: baseUrl
-      })
-    }
+    const httpsAgent =
+      httpsAgentOptions && https.Agent
+        ? new https.Agent(httpsAgentOptions)
+        : undefined
+
+    this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 
     this.httpClient.defaults.validateStatus = (status) =>
       status >= 200 && status < 305
