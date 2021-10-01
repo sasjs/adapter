@@ -527,9 +527,12 @@ export class RequestClient implements HttpClient {
       ? { rejectUnauthorized: !allowInsecure }
       : undefined
 
-    if (httpsAgentConfig) {
+    if (httpsAgentConfig && https.Agent) {
       const httpsAgent = new https.Agent(httpsAgentConfig)
-      this.httpClient = axios.create({ httpsAgent })
+      this.httpClient = axios.create({
+        baseURL: baseUrl,
+        httpsAgent
+      })
     } else {
       this.httpClient = axios.create({
         baseURL: baseUrl
