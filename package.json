@@ -17,7 +17,7 @@
     "typedoc": "typedoc",
     "prepare": "git rev-parse --git-dir && git config core.hooksPath ./.git-hooks && git config core.autocrlf false || true"
   },
-  "browser":{
+  "browser": {
     "child_process": false
   },
   "publishConfig": {

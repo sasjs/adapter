@@ -11,12 +11,12 @@ export class SASBaseApiClient {
     if (serverUrl) this.serverUrl = serverUrl
   }
 
-  public async deploy(members: [FolderMember, ServiceMember]) {
+  public async deploy(members: [FolderMember, ServiceMember], appLoc: string) {
     const { result } = await this.requestClient.post<{
       status: string
       message: string
       example?: {}
-    }>('/deploy', members, undefined)
+    }>('/deploy', { ...members, appLoc }, undefined)
 
     return Promise.resolve(result)
   }
