@@ -5,6 +5,12 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
+import {
+  clientCert,
+  createCertificates,
+  rootCaCert,
+  serverCert
+} from './serverUtils'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -16,6 +22,11 @@ jest
 
 const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`
+
+const ERROR_MESSAGES = {
+  selfSigned: 'self signed certificate',
+  CCA: 'unable to verify the first certificate'
+}
 
 describe('RequestClient', () => {
   let server: http.Server
@@ -50,10 +61,8 @@ describe('RequestClient', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toEqual(
-      new Error(
-        'Error while getting access tokenRequest failed with status code 401'
-      )
+    ).rejects.toThrow(
+      'Error while getting access token. Request failed with status code 401'
     )
   })
 })
@@ -97,10 +106,8 @@ describe('RequestClient - Self Signed Server', () => {
         'clientSecret',
         'authCode'
       )
-    ).rejects.toEqual(
-      expect.objectContaining({
-        message: 'Error while getting access tokenself signed certificate'
-      })
+    ).rejects.toThrow(
+      `Error while getting access token. ${ERROR_MESSAGES.selfSigned}`
     )
   })
 
@@ -135,10 +142,8 @@ describe('RequestClient - Self Signed Server', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toEqual(
-      new Error(
-        'Error while getting access tokenRequest failed with status code 401'
-      )
+    ).rejects.toThrow(
+      'Error while getting access token. Request failed with status code 401'
     )
   })
 })
