@@ -1,0 +1,15 @@
+>> self signed certificate in certificate chain
+
+
+
+  const { key, cert } = serverCert
+  const httpsServer = https.createServer(
+    {
+      key,
+      cert,
+      ca: rootCaCert.cert,
+      requestCert: true,
+      rejectUnauthorized: false
+    },
+    app
+  )

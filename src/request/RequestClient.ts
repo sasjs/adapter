@@ -1,4 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
 import {
@@ -17,7 +18,6 @@ import {
   parseSourceCode,
   createAxiosInstance
 } from '../utils'
-import { HttpsAgent } from '../types/HttpsAgent'
 
 export interface HttpClient {
   get<T>(
@@ -59,12 +59,15 @@ export class RequestClient implements HttpClient {
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
 
-  constructor(protected baseUrl: string, httpsAgentConfiguration?: HttpsAgent) {
-    this.createHttpClient(baseUrl, httpsAgentConfiguration)
+  constructor(
+    protected baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions
+  ) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
-  public setConfig(baseUrl: string, httpsAgentConfiguration?: HttpsAgent) {
-    this.createHttpClient(baseUrl, httpsAgentConfiguration)
+  public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -518,23 +521,11 @@ export class RequestClient implements HttpClient {
 
   private createHttpClient(
     baseUrl: string,
-    httpsAgentConfiguration: HttpsAgent = {}
+    httpsAgentOptions?: https.AgentOptions
   ) {
-    const https = require('https')
-    const { selfSigned, clientCA, allowInsecure } = httpsAgentConfiguration
-
-    const httpsAgentOptions = selfSigned
-      ? { ca: selfSigned.ca }
-      : clientCA
-      ? { key: clientCA.key, cert: clientCA.cert, requestCert: true }
-      : allowInsecure
-      ? { rejectUnauthorized: !allowInsecure }
+    const httpsAgent = httpsAgentOptions
+      ? new https.Agent(httpsAgentOptions)
       : undefined
-
-    const httpsAgent =
-      httpsAgentOptions && https.Agent
-        ? new https.Agent(httpsAgentOptions)
-        : undefined
 
     this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 

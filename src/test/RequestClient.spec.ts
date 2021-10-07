@@ -5,12 +5,6 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
-import {
-  clientCert,
-  createCertificates,
-  rootCaCert,
-  serverCert
-} from './serverUtils'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -84,9 +78,7 @@ describe('RequestClient - Self Signed Server', () => {
     adapter = new SASjs({
       serverUrl: SERVER_URL,
       serverType: ServerType.SasViya,
-      httpsAgentConfiguration: {
-        selfSigned: { ca: [sslConfig.certificate] }
-      }
+      httpsAgentOptions: { ca: [sslConfig.certificate] }
     })
   })
 
@@ -115,9 +107,7 @@ describe('RequestClient - Self Signed Server', () => {
     const adapterAllowInsecure = new SASjs({
       serverUrl: SERVER_URL,
       serverType: ServerType.SasViya,
-      httpsAgentConfiguration: {
-        allowInsecure: true
-      }
+      httpsAgentOptions: { rejectUnauthorized: false }
     })
 
     const authResponse = await adapterAllowInsecure.getAccessToken(

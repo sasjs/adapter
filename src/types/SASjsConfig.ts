@@ -1,5 +1,5 @@
+import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
-import { HttpsAgent } from './HttpsAgent'
 
 /**
  * Specifies the configuration for the SASjs instance - eg where and how to
@@ -59,7 +59,9 @@ export class SASjsConfig {
    * When set to `true`, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
    * Changing this setting is not recommended.
    */
-  httpsAgentConfiguration: HttpsAgent = {}
+
+  httpsAgentOptions?: https.AgentOptions
+
   /**
    * Supported login mechanisms are - Redirected and Default
    */
