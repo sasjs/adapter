@@ -1,7 +1,10 @@
-import * as path from 'path'
-import { getRealPath, folderExists, createFolder } from '@sasjs/utils'
+import { isNode } from '../utils'
 
 export const getTmpFolderPath = async () => {
+  if (!isNode()) return 'Error: not node environment'
+
+  const { getRealPath, folderExists, createFolder } = require('@sasjs/utils/file')
+  const path = require('path')
   const tmpFolderPath = path.join(__dirname, '..', 'tmp')
 
   if (!(await folderExists(tmpFolderPath))) await createFolder(tmpFolderPath)
@@ -9,8 +12,20 @@ export const getTmpFolderPath = async () => {
   return tmpFolderPath
 }
 
-export const getTmpFilesFolderPath = async () =>
-  path.join(await getTmpFolderPath(), 'files')
+export const getTmpFilesFolderPath = async () => {
+  if (!isNode()) return 'Error: not node environment'
 
-export const getTmpLogFolderPath = async () =>
-  path.join(await getTmpFolderPath(), 'log')
+  const { getRealPath, folderExists, createFolder } = require('@sasjs/utils/file')
+  const path = require('path')
+  
+  return path.join(await getTmpFolderPath(), 'files')
+}
+
+export const getTmpLogFolderPath = async () => {
+  if (!isNode()) return 'Error: not node environment'
+
+  const { getRealPath, folderExists, createFolder } = require('@sasjs/utils/file')
+  const path = require('path')
+
+  return path.join(await getTmpFolderPath(), 'log')
+}
