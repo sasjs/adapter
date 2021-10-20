@@ -21,7 +21,7 @@ export class SASjsConfig {
    * will use '/SASJobExecution' on SAS Viya.
    */
   pathSASViya: string = ''
-  pathSASBase: string = ''
+  pathSASjs: string = ''
   /**
    * The appLoc is the parent folder under which the SAS services (STPs or Job
    * Execution Services) are stored.  We recommend that each app is stored in

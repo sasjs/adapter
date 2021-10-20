@@ -1,7 +1,7 @@
 import { FolderMember, ServiceMember, ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 
-export class SASBaseApiClient {
+export class SASjsApiClient {
   constructor(
     private serverUrl: string,
     private requestClient: RequestClient
@@ -11,12 +11,12 @@ export class SASBaseApiClient {
     if (serverUrl) this.serverUrl = serverUrl
   }
 
-  public async deploy(members: [FolderMember, ServiceMember]) {
+  public async deploy(members: [FolderMember, ServiceMember], appLoc: string) {
     const { result } = await this.requestClient.post<{
       status: string
       message: string
       example?: {}
-    }>('/deploy', members, undefined)
+    }>('/deploy', { members: members, appLoc: appLoc }, undefined)
 
     return Promise.resolve(result)
   }

@@ -11,7 +11,7 @@ import {
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
-import { SASBaseApiClient } from './SASBaseApiClient'
+import { SASjsApiClient } from './SASjsApiClient'
 import { AuthManager } from './auth'
 import {
   ServerType,
@@ -33,7 +33,7 @@ import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
-  pathSASBase: '',
+  pathSASjs: '',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -54,7 +54,7 @@ export default class SASjs {
   private jobsPath: string = ''
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
-  private sasBaseApiClient: SASBaseApiClient | null = null
+  private SASjsApiClient: SASjsApiClient | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
@@ -830,12 +830,15 @@ export default class SASjs {
     )
   }
 
-  public async deployToSASBase(members: [FolderMember, ServiceMember]) {
-    return await this.sasBaseApiClient?.deploy(members)
+  public async deployToSASjs(members: [FolderMember, ServiceMember]) {
+    return await this.SASjsApiClient?.deploy(
+      members,
+      this.sasjsConfig.appLoc
+    )
   }
 
-  public async executeJobSASBase(query: ExecutionQuery) {
-    return await this.sasBaseApiClient?.executeJob(query)
+  public async executeJobSASjs(query: ExecutionQuery) {
+    return await this.SASjsApiClient?.executeJob(query)
   }
 
   /**
@@ -1017,10 +1020,10 @@ export default class SASjs {
     }
 
     if (this.sasjsConfig.serverType === ServerType.Sasjs) {
-      if (this.sasBaseApiClient) {
-        this.sasBaseApiClient.setConfig(this.sasjsConfig.serverUrl)
+      if (this.SASjsApiClient) {
+        this.SASjsApiClient.setConfig(this.sasjsConfig.serverUrl)
       } else {
-        this.sasBaseApiClient = new SASBaseApiClient(
+        this.SASjsApiClient = new SASjsApiClient(
           this.sasjsConfig.serverUrl,
           this.requestClient
         )
