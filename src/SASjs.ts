@@ -33,7 +33,6 @@ import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
-  pathSASjs: '',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -831,10 +830,7 @@ export default class SASjs {
   }
 
   public async deployToSASjs(members: [FolderMember, ServiceMember]) {
-    return await this.SASjsApiClient?.deploy(
-      members,
-      this.sasjsConfig.appLoc
-    )
+    return await this.SASjsApiClient?.deploy(members, this.sasjsConfig.appLoc)
   }
 
   public async executeJobSASjs(query: ExecutionQuery) {
