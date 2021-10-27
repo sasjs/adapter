@@ -256,8 +256,10 @@ export class AuthManager {
           .split(' ')
           .map((name: string) => name.slice(0, 3).toLowerCase())
           .join('')
+
       default:
-        return ''
+        console.error("Server Type not found in extractUserName function")
+        return '' 
     }
   }
 
