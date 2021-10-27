@@ -1,8 +1,5 @@
 export interface ExecutionQuery {
   _program: string
-}
-
-export interface ExecutionResult {
-  log: string
-  logPath: string
+  _debug?: number
+  _log?: boolean
 }

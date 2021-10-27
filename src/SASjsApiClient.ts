@@ -16,7 +16,7 @@ export class SASjsApiClient {
       status: string
       message: string
       example?: {}
-    }>('/deploy', { members: members, appLoc: appLoc }, undefined)
+    }>('/deploy', { fileTree: members, appLoc: appLoc }, undefined)
 
     return Promise.resolve(result)
   }
@@ -28,7 +28,7 @@ export class SASjsApiClient {
       log?: string
       logPath?: string
       error?: {}
-    }>('/execute', query, undefined)
+    }>('/files/files/execute', query, undefined)
 
     return Promise.resolve(result)
   }
