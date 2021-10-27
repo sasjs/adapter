@@ -258,8 +258,8 @@ export class AuthManager {
           .join('')
 
       default:
-        console.error("Server Type not found in extractUserName function")
-        return '' 
+        console.error('Server Type not found in extractUserName function')
+        return ''
     }
   }
 
