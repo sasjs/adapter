@@ -527,7 +527,7 @@ export class RequestClient implements HttpClient {
     }
 
     this.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status < 305
+      status >= 200 && status < 401
   }
 }
 
