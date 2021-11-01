@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
 import {
@@ -12,7 +13,11 @@ import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { parseGeneratedCode, parseSourceCode } from '../utils'
+import {
+  parseGeneratedCode,
+  parseSourceCode,
+  createAxiosInstance
+} from '../utils'
 
 export interface HttpClient {
   get<T>(
@@ -54,12 +59,15 @@ export class RequestClient implements HttpClient {
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
 
-  constructor(protected baseUrl: string, allowInsecure = false) {
-    this.createHttpClient(baseUrl, allowInsecure)
+  constructor(
+    protected baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions
+  ) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
-  public setConfig(baseUrl: string, allowInsecure = false) {
-    this.createHttpClient(baseUrl, allowInsecure)
+  public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -511,20 +519,15 @@ export class RequestClient implements HttpClient {
     return responseToReturn
   }
 
-  private createHttpClient(baseUrl: string, allowInsecure = false) {
-    const https = require('https')
-    if (allowInsecure && https.Agent) {
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: !allowInsecure
-        })
-      })
-    } else {
-      this.httpClient = axios.create({
-        baseURL: baseUrl
-      })
-    }
+  private createHttpClient(
+    baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions
+  ) {
+    const httpsAgent = httpsAgentOptions
+      ? new https.Agent(httpsAgentOptions)
+      : undefined
+
+    this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 
     this.httpClient.defaults.validateStatus = (status) =>
       status >= 200 && status < 401

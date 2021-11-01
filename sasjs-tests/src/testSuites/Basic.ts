@@ -13,7 +13,6 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false,
-  allowInsecureRequests: false,
   loginMechanism: LoginMechanism.Default
 }
 

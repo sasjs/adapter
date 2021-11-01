@@ -1,3 +1,4 @@
+import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
 import * as NodeFormData from 'form-data'
 import { ErrorResponse } from '../types/errors'
@@ -17,10 +18,10 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
-    allowInsecureRequests: boolean
+    httpsAgentOptions?: https.AgentOptions
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
+    this.requestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
   }
 
   async execute(sasJob: string, data: any, config: any) {

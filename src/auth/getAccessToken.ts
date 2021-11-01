@@ -46,7 +46,7 @@ export async function getAccessToken(
     )
     .then((res) => res.result as SasAuthResponse)
     .catch((err) => {
-      throw prefixMessage(err, 'Error while getting access token')
+      throw prefixMessage(err, 'Error while getting access token. ')
     })
 
   return authResponse
