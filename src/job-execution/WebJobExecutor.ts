@@ -158,7 +158,7 @@ export class WebJobExecutor extends BaseJobExecutor {
             this.requestClient!.appendRequest(res, sasJob, config.debug)
           }
 
-          if (this.serverType === ServerType.Sasjs && !config.debug) {
+          if (this.serverType === ServerType.Sasjs) {
             jsonResponse = JSON.parse(jsonResponse._webout)
           }
 
