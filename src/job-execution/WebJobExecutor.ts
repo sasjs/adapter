@@ -113,6 +113,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.Sas9 ||
+        config.serverType === ServerType.Sasjs ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';')
       ) {
@@ -144,9 +145,22 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, undefined)
         .then(async (res: any) => {
-          this.requestClient!.appendRequest(res, sasJob, config.debug)
-
           let jsonResponse = res.result
+
+          if (this.serverType === ServerType.Sasjs && config.debug) {
+            this.requestClient!.appendRequest(
+              jsonResponse,
+              sasJob,
+              config.debug
+            )
+            jsonResponse = JSON.parse(parseWeboutResponse(jsonResponse._webout))
+          } else {
+            this.requestClient!.appendRequest(res, sasJob, config.debug)
+          }
+
+          if (this.serverType === ServerType.Sasjs && !config.debug) {
+            jsonResponse = JSON.parse(jsonResponse._webout)
+          }
 
           if (config.debug) {
             switch (this.serverType) {
