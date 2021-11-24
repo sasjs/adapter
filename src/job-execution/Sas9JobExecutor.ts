@@ -5,6 +5,7 @@ import { ErrorResponse } from '../types/errors'
 import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { Sas9RequestClient } from '../request/Sas9RequestClient'
+import { RequestClient } from '../request/RequestClient'
 
 /**
  * Job executor for SAS9 servers for use in Node.js environments.
@@ -18,6 +19,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
+    private requestClientSingle: RequestClient,
     httpsAgentOptions?: https.AgentOptions
   ) {
     super(serverUrl, serverType)
@@ -36,6 +38,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         ? '&_username=' + config.username + '&_password=' + config.password
         : ''
     }`
+
+    apiUrl = `${apiUrl}${config.debug ? '&_debug=131' : ''}`
 
     let requestParams = {
       ...this.getRequestParams(config)
@@ -66,6 +70,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       data && Object.keys(data).length
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
         : 'text/plain'
+
     return await this.requestClient!.post(
       apiUrl,
       formData,
@@ -76,6 +81,24 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         Connection: 'Keep-Alive'
       }
     )
+      .then((res: any) => {
+        let resString = res
+
+        if (typeof res === 'object') {
+          resString = JSON.stringify(res)
+        }
+
+        this.requestClientSingle!.appendRequest(resString, sasJob, config.debug)
+      })
+      .catch((err: any) => {
+        let errString = err
+
+        if (typeof err === 'object') {
+          errString = JSON.stringify(errString)
+        }
+
+        this.requestClientSingle!.appendRequest(errString, sasJob, config.debug)
+      })
   }
 
   private getRequestParams(config: any): any {

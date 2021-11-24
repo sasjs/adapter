@@ -1044,6 +1044,7 @@ export default class SASjs {
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
       this.jobsPath,
+      this.requestClient,
       this.sasjsConfig.httpsAgentOptions
     )
 
