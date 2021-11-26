@@ -7,6 +7,7 @@
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async src="../assets/js/search.js" id="search-script"></script>
 </head>
 <body>
 <header>
@@ -65,7 +66,7 @@
 	<div class="row">
 		<div class="col-3 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation outline primary">
-				<a style="margin-left:0em" href="../globals.html">Globals</a>
+				<a style="margin-left:0em" href="../modules.html">Modules</a>
 				<ul style="display:none">
 					{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}
 				</ul>
@@ -79,17 +80,24 @@
 						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#appendextraresponseattributes" class="tsd-kind-icon">append<wbr>Extra<wbr>Response<wbr>Attributes</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#asyncforeach" class="tsd-kind-icon">async<wbr>For<wbr>Each</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#comparetimestamps" class="tsd-kind-icon">compare<wbr>Timestamps</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#converttocsv" class="tsd-kind-icon">convert<wbr>ToCSV</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#createaxiosinstance" class="tsd-kind-icon">create<wbr>Axios<wbr>Instance</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#delay" class="tsd-kind-icon">delay</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#fetchlog" class="tsd-kind-icon">fetch<wbr>Log</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#fetchlogbychunks" class="tsd-kind-icon">fetch<wbr>Log<wbr>ByChunks</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#formatdataforrequest" class="tsd-kind-icon">format<wbr>Data<wbr>For<wbr>Request</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#getvalidjson" class="tsd-kind-icon">get<wbr>Valid<wbr>Json</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#isieoredgeoroldfirefox" class="tsd-kind-icon">isIEor<wbr>Edge<wbr>OrOld<wbr>Firefox</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#isnode" class="tsd-kind-icon">is<wbr>Node</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#isrelativepath" class="tsd-kind-icon">is<wbr>Relative<wbr>Path</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#isuri" class="tsd-kind-icon">is<wbr>Uri</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#isurl" class="tsd-kind-icon">is<wbr>Url</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#needsretry" class="tsd-kind-icon">needs<wbr>Retry</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#parsegeneratedcode" class="tsd-kind-icon">parse<wbr>Generated<wbr>Code</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#parsesasviyadebugresponse" class="tsd-kind-icon">parse<wbr>Sas<wbr>Viya<wbr>Debug<wbr>Response</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#parsesasviyalog" class="tsd-kind-icon">parse<wbr>Sas<wbr>Viya<wbr>Log</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#parsesourcecode" class="tsd-kind-icon">parse<wbr>Source<wbr>Code</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="utils.html#parseweboutresponse" class="tsd-kind-icon">parse<wbr>Webout<wbr>Response</a></li>
@@ -102,6 +110,36 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="appendextraresponseattributes" class="tsd-anchor"></a>
+					<h3>append<wbr>Extra<wbr>Response<wbr>Attributes</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">append<wbr>Extra<wbr>Response<wbr>Attributes<span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, extraResponseAttributes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ExtraResponseAttributes</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/appendExtraResponseAttributes.ts#L3">
+											src/utils/appendExtraResponseAttributes.ts:3
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>response: <span class="tsd-signature-type">any</span></h5>
+								</li>
+								<li>
+									<h5>extraResponseAttributes: <span class="tsd-signature-type">ExtraResponseAttributes</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="asyncforeach" class="tsd-anchor"></a>
 					<h3>async<wbr>For<wbr>Each</h3>
@@ -186,7 +224,7 @@
 							</aside>
 							<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 								<div class="lead">
-									<p>Converts the given JSON object to a CSV string.</p>
+									<p>Converts the given JSON object array to a CSV string.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -195,12 +233,139 @@
 									<h5>data: <span class="tsd-signature-type">any</span></h5>
 									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 										<div class="lead">
-											<p>the JSON object to convert.</p>
+											<p>the array of JSON objects to convert.</p>
 										</div>
 									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="createaxiosinstance" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> create<wbr>Axios<wbr>Instance</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Axios<wbr>Instance<span class="tsd-signature-symbol">(</span>baseURL<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, httpsAgent<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">https.Agent</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">AxiosInstance</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/createAxiosInstance.ts#L4">
+											src/utils/createAxiosInstance.ts:4
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>baseURL: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> httpsAgent: <span class="tsd-signature-type">https.Agent</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AxiosInstance</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="delay" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> delay</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">delay<span class="tsd-signature-symbol">(</span>ms<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/delay.ts#L1">
+											src/utils/delay.ts:1
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>ms: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="fetchlog" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> fetch<wbr>Log</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">fetch<wbr>Log<span class="tsd-signature-symbol">(</span>requestClient<span class="tsd-signature-symbol">: </span><a href="../classes/request.requestclient.html" class="tsd-signature-type">RequestClient</a>, accessToken<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, logUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, start<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, end<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/fetchLogByChunks.ts#L30">
+											src/utils/fetchLogByChunks.ts:30
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+								<div class="lead">
+									<p>Fetches a section of the log file delineated by start and end lines</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>requestClient: <a href="../classes/request.requestclient.html" class="tsd-signature-type">RequestClient</a></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>client object of Request Client.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>accessToken: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>an access token for an authorized user.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>logUrl: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>url of the log file.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>start: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>the line at which to start fetching the log.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>end: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>the line at which to stop fetching the log.</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>an string containing log lines.</p>
 						</li>
 					</ul>
 				</section>
@@ -289,6 +454,43 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="getvalidjson" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> get<wbr>Valid<wbr>Json</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Valid<wbr>Json<span class="tsd-signature-symbol">(</span>str<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/getValidJson.ts#L7">
+											src/utils/getValidJson.ts:7
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+								<div class="lead">
+									<p>if string passed then parse the string to json else if throw error for all other types unless it is not a valid json object.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>str: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>string to check.</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="isieoredgeoroldfirefox" class="tsd-anchor"></a>
 					<h3>isIEor<wbr>Edge<wbr>OrOld<wbr>Firefox</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
@@ -301,6 +503,27 @@
 									<li>Defined in
 										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/isIeOrEdge.ts#L1">
 											src/utils/isIeOrEdge.ts:1
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="isnode" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> is<wbr>Node</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Node<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/isNode.ts#L1">
+											src/utils/isNode.ts:1
 										</a>
 									</li>
 								</ul>
@@ -377,7 +600,7 @@
 					<a name="isurl" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> is<wbr>Url</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">is<wbr>Url<span class="tsd-signature-symbol">(</span>url<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Url<span class="tsd-signature-symbol">(</span>str<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
@@ -398,7 +621,7 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>url: <span class="tsd-signature-type">string</span></h5>
+									<h5>str: <span class="tsd-signature-type">string</span></h5>
 									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 										<div class="lead">
 											<p>string to check.</p>
@@ -461,6 +684,52 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="parsesasviyadebugresponse" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> parse<wbr>Sas<wbr>Viya<wbr>Debug<wbr>Response</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">parse<wbr>Sas<wbr>Viya<wbr>Debug<wbr>Response<span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, requestClient<span class="tsd-signature-symbol">: </span><a href="../classes/request.requestclient.html" class="tsd-signature-type">RequestClient</a>, serverUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/parseViyaDebugResponse.ts#L14">
+											src/utils/parseViyaDebugResponse.ts:14
+										</a>
+									</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+								<div class="lead">
+									<p>When querying a Viya job using the Web approach (as opposed to using the APIs) with _DEBUG enabled,
+										the first response contains the log with the content in an iframe. Therefore when debug is enabled,
+										and the serverType is VIYA, and useComputeApi is null (WEB), we call this function to extract the
+									(_webout) content from the iframe.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>response: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+										<div class="lead">
+											<p>first response from viya job</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>requestClient: <a href="../classes/request.requestclient.html" class="tsd-signature-type">RequestClient</a></h5>
+								</li>
+								<li>
+									<h5>serverUrl: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -530,15 +799,15 @@
 					<a name="parseweboutresponse" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> parse<wbr>Webout<wbr>Response</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">parse<wbr>Webout<wbr>Response<span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon">parse<wbr>Webout<wbr>Response<span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, url<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
 									<li>Defined in
-										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/parseWeboutResponse.ts#L1">
-											src/utils/parseWeboutResponse.ts:1
+										<a href="https://github.com/sasjs/adapter/blob/master/src/src/utils/parseWeboutResponse.ts#L3">
+											src/utils/parseWeboutResponse.ts:3
 										</a>
 									</li>
 								</ul>
@@ -547,6 +816,9 @@
 							<ul class="tsd-parameters">
 								<li>
 									<h5>response: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> url: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -608,11 +880,14 @@
 					</ul>
 				</section>
 			</section>
-			<!--{&quot;options&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/LogStatistics.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/AuthorizeError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ComputeJobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ErrorResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/InternalServerError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/JobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/LoginRequiredError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/NotFoundError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/fetchLogByChunks.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
+			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASViyaApiClient.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASjsApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/executeScript.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/getFileStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/pollJobState.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/saveLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/uploadTables.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/writeStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/executeScript.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/getFileStream.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/mockResponses.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/pollJobState.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/saveLog.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/uploadTables.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/writeStream.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/getAccessToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/getTokens.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/openWebPage.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/refreshTokens.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/verifySas9Login.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/verifySasViyaLogin.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/AuthManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/getAccessToken.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/getTokens.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/openWebPage.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/refreshTokens.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/verifySas9Login.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/verifySasViyaLogin.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/Sas9JobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/request/Sas9RequestClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/ContextManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/FileUploader.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/FolderOperations.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/RequestClient.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/SAS_server_app.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/SessionManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/getValidJson.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/isUrl.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/parseGeneratedCode.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/parseSourceCode.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/ExecuteScript.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/File.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/FileTree.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/LogStatistics.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Login.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Process.d.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/WriteStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/AuthorizeError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/ComputeJobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/ErrorResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/InternalServerError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/InvalidJsonError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JobStatePollError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JsonParseArrayError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/LoginRequiredError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/NoSessionStateError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/NotFoundError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/RootFolderNotFoundError.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/RootFolderNotFoundError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/SAS9AuthError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/WeboutResponseError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/appendExtraResponseAttributes.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/convertToCsv.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/createAxiosInstance.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/delay.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/fetchLogByChunks.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/getValidJson.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isNode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseViyaDebugResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/splitChunks.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/loginPrompt/index.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
 		</div>
 		<div class="col-2 col-menu secondary-menu">
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#appendextraresponseattributes" class="tsd-kind-icon">append<wbr>Extra<wbr>Response<wbr>Attributes</a>
+					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#asyncforeach" class="tsd-kind-icon">async<wbr>For<wbr>Each</a>
 					</li>
@@ -623,13 +898,28 @@
 						<a href="utils.html#converttocsv" class="tsd-kind-icon">convert<wbr>ToCSV</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#createaxiosinstance" class="tsd-kind-icon">create<wbr>Axios<wbr>Instance</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#delay" class="tsd-kind-icon">delay</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#fetchlog" class="tsd-kind-icon">fetch<wbr>Log</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#fetchlogbychunks" class="tsd-kind-icon">fetch<wbr>Log<wbr>ByChunks</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#formatdataforrequest" class="tsd-kind-icon">format<wbr>Data<wbr>For<wbr>Request</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#getvalidjson" class="tsd-kind-icon">get<wbr>Valid<wbr>Json</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#isieoredgeoroldfirefox" class="tsd-kind-icon">isIEor<wbr>Edge<wbr>OrOld<wbr>Firefox</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#isnode" class="tsd-kind-icon">is<wbr>Node</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#isrelativepath" class="tsd-kind-icon">is<wbr>Relative<wbr>Path</a>
@@ -645,6 +935,9 @@
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#parsegeneratedcode" class="tsd-kind-icon">parse<wbr>Generated<wbr>Code</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="utils.html#parsesasviyadebugresponse" class="tsd-kind-icon">parse<wbr>Sas<wbr>Viya<wbr>Debug<wbr>Response</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module root">
 						<a href="utils.html#parsesasviyalog" class="tsd-kind-icon">parse<wbr>Sas<wbr>Viya<wbr>Log</a>

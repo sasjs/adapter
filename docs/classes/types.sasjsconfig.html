@@ -7,6 +7,7 @@
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async src="../assets/js/search.js" id="search-script"></script>
 </head>
 <body>
 <header>
@@ -68,7 +69,7 @@
 	<div class="row">
 		<div class="col-3 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation outline primary">
-				<a style="margin-left:0em" href="../globals.html">Globals</a>
+				<a style="margin-left:0em" href="../modules.html">Modules</a>
 				<ul style="display:none">
 					{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}
 				</ul>
@@ -96,10 +97,11 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#allowinsecurerequests" class="tsd-kind-icon">allow<wbr>Insecure<wbr>Requests</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">app<wbr>Loc</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#contextname" class="tsd-kind-icon">context<wbr>Name</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#httpsagentoptions" class="tsd-kind-icon">https<wbr>Agent<wbr>Options</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#loginmechanism" class="tsd-kind-icon">login<wbr>Mechanism</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#pathsasviya" class="tsd-kind-icon">pathSASViya</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="types.sasjsconfig.html#servertype" class="tsd-kind-icon">server<wbr>Type</a></li>
@@ -113,35 +115,14 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="allowinsecurerequests" class="tsd-anchor"></a>
-					<h3>allow<wbr>Insecure<wbr>Requests</h3>
-					<div class="tsd-signature tsd-kind-icon">allow<wbr>Insecure<wbr>Requests<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L65">
-									src/types/SASjsConfig.ts:65
-								</a>
-							</li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
-						<div class="lead">
-							<p>Defaults to <code>false</code>.
-								When set to <code>true</code>, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
-							Changing this setting is not recommended.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="apploc" class="tsd-anchor"></a>
 					<h3>app<wbr>Loc</h3>
 					<div class="tsd-signature tsd-kind-icon">app<wbr>Loc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L33">
-									src/types/SASjsConfig.ts:33
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L34">
+									src/types/SASjsConfig.ts:34
 								</a>
 							</li>
 						</ul>
@@ -165,19 +146,16 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L49">
-									src/types/SASjsConfig.ts:49
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L47">
+									src/types/SASjsConfig.ts:47
 								</a>
 							</li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 						<div class="lead">
-							<p>The name of the compute context to use when calling the Viya APIs directly.
-								Example value: &#39;SAS Job Execution compute context&#39;
-								If set to missing or empty, and useComputeApi is true, the adapter will use
-								the JES APIs.  If provided, the Job Code will be executed in pooled
-							compute sessions on this named context.</p>
+							<p>The name of the compute context to use when calling the Viya services directly.
+							Example value: &#39;SAS Job Execution compute context&#39;</p>
 						</div>
 					</div>
 				</section>
@@ -188,8 +166,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L41">
-									src/types/SASjsConfig.ts:41
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L42">
+									src/types/SASjsConfig.ts:42
 								</a>
 							</li>
 						</ul>
@@ -201,14 +179,54 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="httpsagentoptions" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> https<wbr>Agent<wbr>Options</h3>
+					<div class="tsd-signature tsd-kind-icon">https<wbr>Agent<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">https.AgentOptions</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L62">
+									src/types/SASjsConfig.ts:62
+								</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>Optional settings to configure HTTPS Agent.
+								By providing <code>key</code>, <code>cert</code>, <code>ca</code> to connect with server
+							Other options can be set <code>rejectUnauthorized</code> and <code>requestCert</code></p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="loginmechanism" class="tsd-anchor"></a>
+					<h3>login<wbr>Mechanism</h3>
+					<div class="tsd-signature tsd-kind-icon">login<wbr>Mechanism<span class="tsd-signature-symbol">:</span> <a href="../enums/types.loginmechanism.html" class="tsd-signature-type">LoginMechanism</a><span class="tsd-signature-symbol"> = LoginMechanism.Default</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L66">
+									src/types/SASjsConfig.ts:66
+								</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
+						<div class="lead">
+							<p>Supported login mechanisms are - Redirected and Default</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="pathsas9" class="tsd-anchor"></a>
 					<h3>pathSAS9</h3>
 					<div class="tsd-signature tsd-kind-icon">pathSAS9<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L18">
-									src/types/SASjsConfig.ts:18
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L19">
+									src/types/SASjsConfig.ts:19
 								</a>
 							</li>
 						</ul>
@@ -227,8 +245,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L23">
-									src/types/SASjsConfig.ts:23
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L24">
+									src/types/SASjsConfig.ts:24
 								</a>
 							</li>
 						</ul>
@@ -247,8 +265,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L37">
-									src/types/SASjsConfig.ts:37
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L38">
+									src/types/SASjsConfig.ts:38
 								</a>
 							</li>
 						</ul>
@@ -266,8 +284,8 @@
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L13">
-									src/types/SASjsConfig.ts:13
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L14">
+									src/types/SASjsConfig.ts:14
 								</a>
 							</li>
 						</ul>
@@ -283,42 +301,44 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="usecomputeapi" class="tsd-anchor"></a>
 					<h3>use<wbr>Compute<wbr>Api</h3>
-					<div class="tsd-signature tsd-kind-icon">use<wbr>Compute<wbr>Api<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
+					<div class="tsd-signature tsd-kind-icon">use<wbr>Compute<wbr>Api<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in
-								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L59">
-									src/types/SASjsConfig.ts:59
+								<a href="https://github.com/sasjs/adapter/blob/master/src/src/types/SASjsConfig.ts#L56">
+									src/types/SASjsConfig.ts:56
 								</a>
 							</li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography tsd-comment-shorttext">
 						<div class="lead">
-							<p>Set to <code>false</code> to use the Job Execution Web Service.  To enhance VIYA
+							<p>If it&#39;s <code>false</code> adapter will use the JES API as connection approach.  To enhance VIYA
 								performance, set to <code>true</code> and provide a <code>contextName</code> on which to run
 								the code.  When running on a named context, the code executes under the
 								user identity.  When running as a Job Execution service, the code runs
-								under the identity in the JES context.  If no <code>contextName</code> is provided,
-								and <code>useComputeApi</code> is <code>true</code>, then the service will run as a Job, except
+								under the identity in the JES context.  If <code>useComputeApi</code> is <code>null</code> or <code>undefined</code>, the service will run as a Job, except
 							triggered using the APIs instead of the Job Execution Web Service broker.</p>
 						</div>
 					</div>
 				</section>
 			</section>
-			<!--{&quot;options&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/FileUploader.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/LogStatistics.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/AuthorizeError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ComputeJobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/ErrorResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/InternalServerError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/JobExecutionError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/LoginRequiredError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/NotFoundError.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/types/errors/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/fetchLogByChunks.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/kacondy/Code/MacroPeople/sasjs/adapter/src/utils/splitChunks.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
+			<!--{&quot;options&quot;:&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter&quot;,&quot;tsconfig&quot;:&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter&quot;,&quot;inputFiles&quot;:[&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/ContextManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SAS9ApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASViyaApiClient.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASViyaApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASjs.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SASjsApiClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/SessionManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/__mocks__/axios.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/executeScript.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/getFileStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/pollJobState.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/saveLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/uploadTables.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/writeStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/executeScript.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/getFileStream.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/mockResponses.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/pollJobState.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/saveLog.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/uploadTables.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/api/viya/spec/writeStream.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/AuthManager.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/getAccessToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/getTokens.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/isAuthorizeFormRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/isLoginRequired.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/openWebPage.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/refreshTokens.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/verifySas9Login.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/verifySasViyaLogin.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/AuthManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/getAccessToken.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/getTokens.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/mockResponses.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/openWebPage.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/refreshTokens.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/verifySas9Login.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/auth/spec/verifySasViyaLogin.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/file/generateFileUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/file/generateTableUploadForm.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/ComputeJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/FileUploader.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/JesJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/JobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/Sas9JobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/WebJobExecutor.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/job-execution/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/request/RequestClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/request/Sas9RequestClient.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/ContextManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/FileUploader.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/FolderOperations.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/RequestClient.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/SAS_server_app.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/SessionManager.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/getValidJson.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/isUrl.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/parseGeneratedCode.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/test/utils/parseSourceCode.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Context.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/CsrfToken.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/ExecuteScript.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/File.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/FileTree.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Folder.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Job.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/JobDefinition.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/JobResult.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Link.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/LogStatistics.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Login.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/PollOptions.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Process.d.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/SASjsConfig.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/SASjsRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/Session.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/UploadFile.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/WriteStream.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/AuthorizeError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/ComputeJobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/ErrorResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/InternalServerError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/InvalidJsonError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JobExecutionError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JobStatePollError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/JsonParseArrayError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/LoginRequiredError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/NoSessionStateError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/NotFoundError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/RootFolderNotFoundError.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/RootFolderNotFoundError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/SAS9AuthError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/WeboutResponseError.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/types/errors/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/appendExtraResponseAttributes.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/asyncForEach.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/compareTimestamps.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/convertToCsv.spec.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/convertToCsv.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/createAxiosInstance.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/delay.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/fetchLogByChunks.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/formatDataForRequest.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/getValidJson.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/index.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isIeOrEdge.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isNode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isRelativePath.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isUri.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/isUrl.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/needsRetry.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseGeneratedCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseSasViyaLog.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseSourceCode.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseViyaDebugResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/parseWeboutResponse.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/serialize.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/splitChunks.ts&quot;,&quot;/Users/yurec/Documents/analytium/projects/sasjs/adapter/src/utils/loginPrompt/index.ts&quot;],&quot;mode&quot;:1,&quot;includeDeclarations&quot;:true,&quot;entryPoint&quot;:&quot;&quot;,&quot;exclude&quot;:[&quot;**/*+(index|.spec|.e2e).ts&quot;],&quot;externalPattern&quot;:[],&quot;excludeExternals&quot;:true,&quot;excludeNotExported&quot;:true,&quot;excludeNotDocumented&quot;:false,&quot;excludePrivate&quot;:true,&quot;excludeProtected&quot;:false,&quot;ignoreCompilerErrors&quot;:true,&quot;disableSources&quot;:false,&quot;includes&quot;:&quot;&quot;,&quot;media&quot;:&quot;&quot;,&quot;out&quot;:&quot;docs&quot;,&quot;json&quot;:&quot;&quot;,&quot;theme&quot;:&quot;./node_modules/typedoc-neo-theme/bin/default&quot;,&quot;name&quot;:&quot;&quot;,&quot;includeVersion&quot;:false,&quot;excludeTags&quot;:[],&quot;readme&quot;:&quot;&quot;,&quot;defaultCategory&quot;:&quot;Other&quot;,&quot;categoryOrder&quot;:[],&quot;categorizeByGroup&quot;:true,&quot;gitRevision&quot;:&quot;&quot;,&quot;gitRemote&quot;:&quot;origin&quot;,&quot;gaID&quot;:&quot;&quot;,&quot;gaSite&quot;:&quot;auto&quot;,&quot;hideGenerator&quot;:false,&quot;toc&quot;:[],&quot;disableOutputCheck&quot;:true,&quot;help&quot;:false,&quot;version&quot;:false,&quot;plugin&quot;:[],&quot;logger&quot;:&quot;console&quot;,&quot;listInvalidSymbolLinks&quot;:false,&quot;links&quot;:[{&quot;label&quot;:&quot;SASjs on Github&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/adapter&quot;},{&quot;label&quot;:&quot;SASjs.io&quot;,&quot;url&quot;:&quot;https://sasjs.io&quot;},{&quot;label&quot;:&quot;SASjs CLI&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/cli&quot;},{&quot;label&quot;:&quot;React Seed App&quot;,&quot;url&quot;:&quot;https://github.com/sasjs/react-seed-app&quot;}],&quot;outline&quot;:[{&quot;SAS Adapter&quot;:{&quot;SASjs&quot;:&quot;classes/reflection-717.reflection-180.sasjs&quot;,&quot;Types&quot;:&quot;modules/types&quot;},&quot;SAS Viya API Client&quot;:&quot;classes/reflection-717.reflection-180.sasviyaapiclient&quot;,&quot;SAS 9 API Client&quot;:&quot;classes/reflection-717.reflection-180.sas9apiclient&quot;}],&quot;source&quot;:[{&quot;path&quot;:&quot;https://github.com/sasjs/adapter/blob/master/src/&quot;,&quot;line&quot;:&quot;L&quot;}],&quot;disableAutoModuleName&quot;:&quot;false&quot;}-->
 		</div>
 		<div class="col-2 col-menu secondary-menu">
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-module root">
+						<a href="../enums/types.loginmechanism.html" class="tsd-kind-icon">Login<wbr>Mechanism</a>
+					</li>
+					<li class=" tsd-kind-enum tsd-parent-kind-module root">
+						<a href="../enums/types.membertype.html" class="tsd-kind-icon">Member<wbr>Type</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class tsd-parent-kind-module root">
 						<a href="types.sasjsconfig.html" class="tsd-kind-icon">SASjs<wbr>Config</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="types.sasjsconfig.html#allowinsecurerequests" class="tsd-kind-icon">allow<wbr>Insecure<wbr>Requests</a>
-							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="types.sasjsconfig.html#apploc" class="tsd-kind-icon">app<wbr>Loc</a>
 							</li>
@@ -327,6 +347,12 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="types.sasjsconfig.html#debug" class="tsd-kind-icon">debug</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="types.sasjsconfig.html#httpsagentoptions" class="tsd-kind-icon">https<wbr>Agent<wbr>Options</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="types.sasjsconfig.html#loginmechanism" class="tsd-kind-icon">login<wbr>Mechanism</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="types.sasjsconfig.html#pathsas9" class="tsd-kind-icon">pathSAS9</a>
@@ -360,7 +386,19 @@
 						<a href="../interfaces/types.editcontextinput.html" class="tsd-kind-icon">Edit<wbr>Context<wbr>Input</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.executionquery.html" class="tsd-kind-icon">Execution<wbr>Query</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.file.html" class="tsd-kind-icon">File</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.filetree.html" class="tsd-kind-icon">File<wbr>Tree</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.folder.html" class="tsd-kind-icon">Folder</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.foldermember.html" class="tsd-kind-icon">Folder<wbr>Member</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.job.html" class="tsd-kind-icon">Job</a>
@@ -378,10 +416,19 @@
 						<a href="../interfaces/types.logstatistics.html" class="tsd-kind-icon">Log<wbr>Statistics</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.loginoptions.html" class="tsd-kind-icon">Login<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.loginresult.html" class="tsd-kind-icon">Login<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.polloptions.html" class="tsd-kind-icon">Poll<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.sasjsrequest.html" class="tsd-kind-icon">SASjs<wbr>Request</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.servicemember.html" class="tsd-kind-icon">Service<wbr>Member</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.session.html" class="tsd-kind-icon">Session</a>
@@ -391,6 +438,12 @@
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module root">
 						<a href="../interfaces/types.uploadfile.html" class="tsd-kind-icon">Upload<wbr>File</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module root">
+						<a href="../interfaces/types.writestream.html" class="tsd-kind-icon">Write<wbr>Stream</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module root">
+						<a href="../modules/types.html#isfiletree" class="tsd-kind-icon">is<wbr>File<wbr>Tree</a>
 					</li>
 				</ul>
 			</nav>
