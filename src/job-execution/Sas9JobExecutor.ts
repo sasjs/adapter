@@ -53,6 +53,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       } catch (e: any) {
         return Promise.reject(new ErrorResponse(e?.message, e))
       }
+    } else {
+      data = ''
     }
 
     for (const key in requestParams) {
@@ -66,6 +68,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       config.password,
       this.jobsPath
     )
+
     const contentType =
       data && Object.keys(data).length
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
@@ -89,6 +92,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         }
 
         this.requestClientSingle!.appendRequest(resString, sasJob, config.debug)
+
+        return res
       })
       .catch((err: any) => {
         let errString = err
@@ -98,6 +103,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         }
 
         this.requestClientSingle!.appendRequest(errString, sasJob, config.debug)
+
+        return err
       })
   }
 
