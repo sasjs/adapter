@@ -14,16 +14,16 @@ import { RequestClient } from '../request/RequestClient'
  * job execution requests.
  */
 export class Sas9JobExecutor extends BaseJobExecutor {
-  private requestClient: Sas9RequestClient
+  private sas9RequestClient: Sas9RequestClient
   constructor(
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
-    private requestClientSingle: RequestClient,
+    private requestClient: RequestClient,
     httpsAgentOptions?: https.AgentOptions
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
+    this.sas9RequestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
   }
 
   async execute(sasJob: string, data: any, config: any) {
@@ -63,7 +63,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     }
 
-    await this.requestClient.login(
+    await this.sas9RequestClient.login(
       config.username,
       config.password,
       this.jobsPath
@@ -74,7 +74,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
         : 'text/plain'
 
-    return await this.requestClient!.post(
+    return await this.sas9RequestClient!.post(
       apiUrl,
       formData,
       undefined,
@@ -91,7 +91,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
           resString = JSON.stringify(res)
         }
 
-        this.requestClientSingle!.appendRequest(resString, sasJob, config.debug)
+        this.requestClient!.appendRequest(resString, sasJob, config.debug)
 
         return res
       })
@@ -102,7 +102,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
           errString = JSON.stringify(errString)
         }
 
-        this.requestClientSingle!.appendRequest(errString, sasJob, config.debug)
+        this.requestClient!.appendRequest(errString, sasJob, config.debug)
 
         return err
       })
