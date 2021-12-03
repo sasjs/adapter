@@ -5,6 +5,7 @@ import { ErrorResponse } from '../types/errors'
 import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { Sas9RequestClient } from '../request/Sas9RequestClient'
+import { RequestClient } from '../request/RequestClient'
 
 /**
  * Job executor for SAS9 servers for use in Node.js environments.
@@ -13,15 +14,16 @@ import { Sas9RequestClient } from '../request/Sas9RequestClient'
  * job execution requests.
  */
 export class Sas9JobExecutor extends BaseJobExecutor {
-  private requestClient: Sas9RequestClient
+  private sas9RequestClient: Sas9RequestClient
   constructor(
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
+    private requestClient: RequestClient,
     httpsAgentOptions?: https.AgentOptions
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
+    this.sas9RequestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
   }
 
   async execute(sasJob: string, data: any, config: any) {
@@ -37,6 +39,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         : ''
     }`
 
+    apiUrl = `${apiUrl}${config.debug ? '&_debug=131' : ''}`
+
     let requestParams = {
       ...this.getRequestParams(config)
     }
@@ -49,6 +53,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       } catch (e: any) {
         return Promise.reject(new ErrorResponse(e?.message, e))
       }
+    } else {
+      data = ''
     }
 
     for (const key in requestParams) {
@@ -57,16 +63,18 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     }
 
-    await this.requestClient.login(
+    await this.sas9RequestClient.login(
       config.username,
       config.password,
       this.jobsPath
     )
+
     const contentType =
       data && Object.keys(data).length
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
         : 'text/plain'
-    return await this.requestClient!.post(
+
+    return await this.sas9RequestClient!.post(
       apiUrl,
       formData,
       undefined,
@@ -76,6 +84,28 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         Connection: 'Keep-Alive'
       }
     )
+      .then((res: any) => {
+        let resString = res
+
+        if (typeof res === 'object') {
+          resString = JSON.stringify(res)
+        }
+
+        this.requestClient!.appendRequest(resString, sasJob, config.debug)
+
+        return res
+      })
+      .catch((err: any) => {
+        let errString = err
+
+        if (typeof err === 'object') {
+          errString = JSON.stringify(errString)
+        }
+
+        this.requestClient!.appendRequest(errString, sasJob, config.debug)
+
+        return err
+      })
   }
 
   private getRequestParams(config: any): any {
