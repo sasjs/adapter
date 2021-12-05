@@ -182,6 +182,7 @@ export class AuthManager {
 
   /**
    * Checks whether a session is active, or login is required.
+   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing three values
    *  - a boolean `isLoggedIn`
    *  - a string `userName` and
@@ -231,6 +232,7 @@ export class AuthManager {
         ? `${this.serverUrl}/SASStoredProcess`
         : `${this.serverUrl}/SASjsApi/session`
 
+    // Access token is required for server type `SASjs`
     const { result: loginResponse } = await this.requestClient
       .get<string>(url, accessToken, 'text/plain')
       .catch((err: any) => {
@@ -311,6 +313,7 @@ export class AuthManager {
 
   /**
    * Logs out of the configured SAS server.
+   * @param accessToken - an optional access token is required for SASjs server type.
    */
   public logOut(accessToken?: string) {
     if (this.serverType === ServerType.Sasjs) {

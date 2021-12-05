@@ -528,6 +528,7 @@ export default class SASjs {
 
   /**
    * Checks whether a session is active, or login is required.
+   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
   public async checkSession(accessToken?: string) {
@@ -564,6 +565,7 @@ export default class SASjs {
 
   /**
    * Logs out of the configured SAS server.
+   * @param accessToken - an optional access token is required for SASjs server type.
    */
   public logOut(accessToken?: string) {
     return this.authManager!.logOut(accessToken)
