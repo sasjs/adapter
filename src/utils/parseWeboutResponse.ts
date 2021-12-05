@@ -1,6 +1,6 @@
 import { WeboutResponseError } from '../types/errors'
 
-export const parseWeboutResponse = (response: string, url?: string) => {
+export const parseWeboutResponse = (response: string, url?: string): string => {
   let sasResponse = ''
 
   if (response.includes('>>weboutBEGIN<<')) {

@@ -13,6 +13,11 @@ export class SASjsConfig {
    */
   serverUrl: string = ''
   /**
+   * The location of the STP Process Web Application.  By default the adapter
+   * will use '/SASjsApi/stp/execute' on SAS JS.
+   */
+  pathSASJS: string = ''
+  /**
    * The location of the Stored Process Web Application.  By default the adapter
    * will use '/SASStoredProcess/do' on SAS 9.
    */

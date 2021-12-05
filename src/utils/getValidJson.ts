@@ -4,7 +4,7 @@ import { JsonParseArrayError, InvalidJsonError } from '../types/errors'
  * if string passed then parse the string to json else if throw error for all other types unless it is not a valid json object.
  * @param str - string to check.
  */
-export const getValidJson = (str: string | object) => {
+export const getValidJson = (str: string | object): object => {
   try {
     if (str === null || str === undefined) throw new InvalidJsonError()
 

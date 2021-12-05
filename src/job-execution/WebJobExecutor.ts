@@ -15,7 +15,8 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
-  appendExtraResponseAttributes
+  appendExtraResponseAttributes,
+  getValidJson
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -143,23 +144,22 @@ export class WebJobExecutor extends BaseJobExecutor {
     }
 
     const requestPromise = new Promise((resolve, reject) => {
-      this.requestClient!.post(apiUrl, formData, undefined)
+      this.requestClient!.post(apiUrl, formData, authConfig?.access_token)
         .then(async (res: any) => {
+          const resObj =
+            this.serverType === ServerType.Sasjs
+              ? {
+                  result: res.result._webout,
+                  log: res.result.log
+                }
+              : res
+          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
+
           let jsonResponse = res.result
 
-          if (this.serverType === ServerType.Sasjs && config.debug) {
-            this.requestClient!.appendRequest(
-              jsonResponse,
-              sasJob,
-              config.debug
-            )
-            jsonResponse = JSON.parse(parseWeboutResponse(jsonResponse._webout))
-          } else {
-            this.requestClient!.appendRequest(res, sasJob, config.debug)
-          }
-
           if (this.serverType === ServerType.Sasjs) {
-            jsonResponse = JSON.parse(jsonResponse._webout)
+            const webout = parseWeboutResponse(res.result._webout, apiUrl)
+            jsonResponse = getValidJson(webout)
           }
 
           if (config.debug) {
