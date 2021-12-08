@@ -21,7 +21,9 @@ export class AuthManager {
     this.logoutUrl =
       this.serverType === ServerType.Sas9
         ? '/SASLogon/logout?'
-        : '/SASLogon/logout.do?'
+        : this.serverType === ServerType.SasViya
+        ? '/SASLogon/logout.do?'
+        : '/SASjsApi/auth/logout'
   }
 
   /**
@@ -180,20 +182,21 @@ export class AuthManager {
 
   /**
    * Checks whether a session is active, or login is required.
+   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing three values
    *  - a boolean `isLoggedIn`
    *  - a string `userName` and
    *  - a form `loginForm` if not loggedin.
    */
-  public async checkSession(): Promise<{
+  public async checkSession(accessToken?: string): Promise<{
     isLoggedIn: boolean
     userName: string
     loginForm?: any
   }> {
-    const { isLoggedIn, userName } = await this.fetchUserName()
+    const { isLoggedIn, userName } = await this.fetchUserName(accessToken)
     let loginForm = null
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn && this.serverType !== ServerType.Sasjs) {
       //We will logout to make sure cookies are removed and login form is presented
       //Residue can happen in case of session expiration
       await this.logOut()
@@ -218,19 +221,20 @@ export class AuthManager {
     return await this.getLoginForm(formResponse)
   }
 
-  private async fetchUserName(): Promise<{
+  private async fetchUserName(accessToken?: string): Promise<{
     isLoggedIn: boolean
     userName: string
   }> {
-    //For VIYA we will send request on API endpoint. Which is faster then pinging SASJobExecution.
-    //For SAS9 we will send request on SASStoredProcess
     const url =
       this.serverType === ServerType.SasViya
         ? `${this.serverUrl}/identities/users/@currentUser`
-        : `${this.serverUrl}/SASStoredProcess`
+        : this.serverType === ServerType.Sas9
+        ? `${this.serverUrl}/SASStoredProcess`
+        : `${this.serverUrl}/SASjsApi/session`
 
+    // Access token is required for server type `SASjs`
     const { result: loginResponse } = await this.requestClient
-      .get<string>(url, undefined, 'text/plain')
+      .get<string>(url, accessToken, 'text/plain')
       .catch((err: any) => {
         return { result: 'authErr' }
       })
@@ -256,6 +260,9 @@ export class AuthManager {
           .split(' ')
           .map((name: string) => name.slice(0, 3).toLowerCase())
           .join('')
+
+      case ServerType.Sasjs:
+        return response?.username
 
       default:
         console.error('Server Type not found in extractUserName function')
@@ -306,8 +313,12 @@ export class AuthManager {
 
   /**
    * Logs out of the configured SAS server.
+   * @param accessToken - an optional access token is required for SASjs server type.
    */
-  public logOut() {
+  public logOut(accessToken?: string) {
+    if (this.serverType === ServerType.Sasjs) {
+      return this.requestClient.post(this.logoutUrl, undefined, accessToken)
+    }
     this.requestClient.clearCsrfTokens()
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }

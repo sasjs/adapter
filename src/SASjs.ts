@@ -33,6 +33,7 @@ import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
+  pathSASJS: '/SASjsApi/stp/execute',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -527,10 +528,11 @@ export default class SASjs {
 
   /**
    * Checks whether a session is active, or login is required.
+   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
-  public async checkSession() {
-    return this.authManager!.checkSession()
+  public async checkSession(accessToken?: string) {
+    return this.authManager!.checkSession(accessToken)
   }
 
   /**
@@ -563,9 +565,10 @@ export default class SASjs {
 
   /**
    * Logs out of the configured SAS server.
+   * @param accessToken - an optional access token is required for SASjs server type.
    */
-  public logOut() {
-    return this.authManager!.logOut()
+  public logOut(accessToken?: string) {
+    return this.authManager!.logOut(accessToken)
   }
 
   /**
@@ -975,7 +978,9 @@ export default class SASjs {
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
-        : this.sasjsConfig.pathSAS9
+        : this.sasjsConfig.serverType === ServerType.Sas9
+        ? this.sasjsConfig.pathSAS9
+        : this.sasjsConfig.pathSASJS || ''
 
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,

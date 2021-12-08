@@ -15,7 +15,8 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
-  appendExtraResponseAttributes
+  appendExtraResponseAttributes,
+  getValidJson
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -113,6 +114,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.Sas9 ||
+        config.serverType === ServerType.Sasjs ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';')
       ) {
@@ -142,11 +144,24 @@ export class WebJobExecutor extends BaseJobExecutor {
     }
 
     const requestPromise = new Promise((resolve, reject) => {
-      this.requestClient!.post(apiUrl, formData, undefined)
+      // Access token is required for server type `SASjs`
+      this.requestClient!.post(apiUrl, formData, authConfig?.access_token)
         .then(async (res: any) => {
-          this.requestClient!.appendRequest(res, sasJob, config.debug)
+          const resObj =
+            this.serverType === ServerType.Sasjs
+              ? {
+                  result: res.result._webout,
+                  log: res.result.log
+                }
+              : res
+          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
 
           let jsonResponse = res.result
+
+          if (this.serverType === ServerType.Sasjs) {
+            const webout = parseWeboutResponse(res.result._webout, apiUrl)
+            jsonResponse = getValidJson(webout)
+          }
 
           if (config.debug) {
             switch (this.serverType) {
