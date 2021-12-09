@@ -10,7 +10,7 @@ import { RequestClient } from '../request/RequestClient'
  * @param clientSecret - the client secret to authenticate with.
  * @param authCode - the auth code received from the server.
  */
-export async function getAccessToken(
+export async function getAccessTokenForViya(
   requestClient: RequestClient,
   clientId: string,
   clientSecret: string,

@@ -8,9 +8,9 @@ import { RequestClient } from '../request/RequestClient'
  * @param requestClient - the pre-configured HTTP request client
  * @param clientId - the client ID to authenticate with.
  * @param clientSecret - the client secret to authenticate with.
- * @param authCode - the refresh token received from the server.
+ * @param refreshToken - the refresh token received from the server.
  */
-export async function refreshTokens(
+export async function refreshTokensForViya(
   requestClient: RequestClient,
   clientId: string,
   clientSecret: string,
