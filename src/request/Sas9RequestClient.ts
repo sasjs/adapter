@@ -87,7 +87,7 @@ export class Sas9RequestClient extends RequestClient {
       })
   }
 
-  public post<T>(
+  public async post<T>(
     url: string,
     data: any,
     accessToken: string | undefined,

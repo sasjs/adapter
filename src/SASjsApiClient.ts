@@ -2,6 +2,7 @@ import { FolderMember, ServiceMember, ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
+import { getAuthCodeForSasjs } from './auth/getAuthCodeForSasjs'
 
 export class SASjsApiClient {
   constructor(
@@ -57,6 +58,20 @@ export class SASjsApiClient {
    */
   public async refreshTokens(refreshToken: string): Promise<SASjsAuthResponse> {
     return refreshTokensForSasjs(this.requestClient, refreshToken)
+  }
+
+  /**
+   * Performs a login authenticate and returns an auth code for the given client.
+   * @param username - a string representing the username.
+   * @param password - a string representing the password.
+   * @param clientId - the client ID to authenticate with.
+   */
+  public async getAuthCode(
+    username: string,
+    password: string,
+    clientId: string
+  ) {
+    return getAuthCodeForSasjs(this.requestClient, username, password, clientId)
   }
 }
 

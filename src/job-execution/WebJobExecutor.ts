@@ -144,7 +144,6 @@ export class WebJobExecutor extends BaseJobExecutor {
     }
 
     const requestPromise = new Promise((resolve, reject) => {
-      // Access token is required for server type `SASjs`
       this.requestClient!.post(apiUrl, formData, authConfig?.access_token)
         .then(async (res: any) => {
           const resObj =

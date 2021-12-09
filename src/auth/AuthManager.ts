@@ -2,6 +2,8 @@ import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
 import { LoginOptions, LoginResult } from '../types/Login'
 import { serialize } from '../utils'
+import { getAccessTokenForSasjs } from './getAccessTokenForSasjs'
+import { getAuthCodeForSasjs } from './getAuthCodeForSasjs'
 import { openWebPage } from './openWebPage'
 import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
@@ -79,6 +81,39 @@ export class AuthManager {
     }
 
     return { isLoggedIn: false, userName: '' }
+  }
+
+  /**
+   * Logs into the SAS server with the supplied credentials.
+   * @param userName - a string representing the username.
+   * @param password - a string representing the password.
+   * @param clientId - a string representing the client ID.
+   * @returns - a boolean `isLoggedin` and a string `username`
+   */
+  public async logInSasjs(
+    username: string,
+    password: string,
+    clientId: string
+  ): Promise<LoginResult> {
+    const isLoggedIn = await this.sendLoginRequestSasjs(
+      username,
+      password,
+      clientId
+    )
+      .then((res) => {
+        this.userName = username
+        this.requestClient.saveLocalStorageToken(
+          res.access_token,
+          res.refresh_token
+        )
+        return true
+      })
+      .catch(() => false)
+
+    return {
+      isLoggedIn,
+      userName: this.userName
+    }
   }
 
   /**
@@ -180,28 +215,41 @@ export class AuthManager {
     return loginResponse
   }
 
+  private async sendLoginRequestSasjs(
+    username: string,
+    password: string,
+    clientId: string
+  ) {
+    const authCode = await getAuthCodeForSasjs(
+      this.requestClient,
+      username,
+      password,
+      clientId
+    )
+    return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
+  }
   /**
    * Checks whether a session is active, or login is required.
-   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing three values
    *  - a boolean `isLoggedIn`
    *  - a string `userName` and
    *  - a form `loginForm` if not loggedin.
    */
-  public async checkSession(accessToken?: string): Promise<{
+  public async checkSession(): Promise<{
     isLoggedIn: boolean
     userName: string
     loginForm?: any
   }> {
-    const { isLoggedIn, userName } = await this.fetchUserName(accessToken)
+    const { isLoggedIn, userName } = await this.fetchUserName()
     let loginForm = null
 
-    if (!isLoggedIn && this.serverType !== ServerType.Sasjs) {
+    if (!isLoggedIn) {
       //We will logout to make sure cookies are removed and login form is presented
       //Residue can happen in case of session expiration
       await this.logOut()
 
-      loginForm = await this.getNewLoginForm()
+      if (this.serverType !== ServerType.Sasjs)
+        loginForm = await this.getNewLoginForm()
     }
 
     return Promise.resolve({
@@ -221,7 +269,7 @@ export class AuthManager {
     return await this.getLoginForm(formResponse)
   }
 
-  private async fetchUserName(accessToken?: string): Promise<{
+  private async fetchUserName(): Promise<{
     isLoggedIn: boolean
     userName: string
   }> {
@@ -232,9 +280,8 @@ export class AuthManager {
         ? `${this.serverUrl}/SASStoredProcess`
         : `${this.serverUrl}/SASjsApi/session`
 
-    // Access token is required for server type `SASjs`
     const { result: loginResponse } = await this.requestClient
-      .get<string>(url, accessToken, 'text/plain')
+      .get<string>(url, undefined, 'text/plain')
       .catch((err: any) => {
         return { result: 'authErr' }
       })
@@ -315,11 +362,19 @@ export class AuthManager {
    * Logs out of the configured SAS server.
    * @param accessToken - an optional access token is required for SASjs server type.
    */
-  public logOut(accessToken?: string) {
+  public async logOut() {
     if (this.serverType === ServerType.Sasjs) {
-      return this.requestClient.post(this.logoutUrl, undefined, accessToken)
+      return this.requestClient
+        .delete(this.logoutUrl)
+        .catch(() => true)
+        .finally(() => {
+          this.requestClient.clearLocalStorageTokens()
+          return true
+        })
     }
+
     this.requestClient.clearCsrfTokens()
+
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }
 }

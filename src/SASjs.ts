@@ -21,6 +21,7 @@ import {
   SasAuthResponse
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
+import { SasjsRequestClient } from './request/SasjsRequestClient'
 import {
   JobExecutor,
   WebJobExecutor,
@@ -547,29 +548,39 @@ export default class SASjs {
 
   /**
    * Checks whether a session is active, or login is required.
-   * @param accessToken - an optional access token is required for SASjs server type.
    * @returns - a promise which resolves with an object containing two values - a boolean `isLoggedIn`, and a string `userName`.
    */
-  public async checkSession(accessToken?: string) {
-    return this.authManager!.checkSession(accessToken)
+  public async checkSession() {
+    return this.authManager!.checkSession()
   }
 
   /**
    * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
+   * @param clientId - a string representing the client ID.
    */
   public async logIn(
     username?: string,
     password?: string,
+    clientId?: string,
     options: LoginOptions = {}
   ): Promise<LoginResult> {
     if (this.sasjsConfig.loginMechanism === LoginMechanism.Default) {
-      if (!username || !password) {
+      if (!username || !password)
         throw new Error(
           'A username and password are required when using the default login mechanism.'
         )
+
+      if (this.sasjsConfig.serverType === ServerType.Sasjs) {
+        if (!clientId)
+          throw new Error(
+            'A username, password and clientId are required when using the default login mechanism with server type SASJS.'
+          )
+
+        return this.authManager!.logInSasjs(username, password, clientId)
       }
+
       return this.authManager!.logIn(username, password)
     }
 
@@ -584,10 +595,9 @@ export default class SASjs {
 
   /**
    * Logs out of the configured SAS server.
-   * @param accessToken - an optional access token is required for SASjs server type.
    */
-  public logOut(accessToken?: string) {
-    return this.authManager!.logOut(accessToken)
+  public logOut() {
+    return this.authManager!.logOut()
   }
 
   /**
@@ -983,7 +993,11 @@ export default class SASjs {
     }
 
     if (!this.requestClient) {
-      this.requestClient = new RequestClient(
+      const RequestClientClass =
+        this.sasjsConfig.serverType === ServerType.Sasjs
+          ? SasjsRequestClient
+          : RequestClient
+      this.requestClient = new RequestClientClass(
         this.sasjsConfig.serverUrl,
         this.sasjsConfig.httpsAgentOptions
       )
