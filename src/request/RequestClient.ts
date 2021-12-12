@@ -627,7 +627,7 @@ const parseError = (data: string) => {
       if (parts.length > 1) {
         const log = parts[1].split('<pre>')[1].split('</pre>')[0]
         const message = `This request completed with errors.`
-        return new JobExecutionError(404, message, log)
+        return new JobExecutionError(500, message, log)
       }
     }
   } catch (_) {}
