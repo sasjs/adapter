@@ -22,8 +22,8 @@ import { pollJobState } from './api/viya/pollJobState'
 import { getTokens } from './auth/getTokens'
 import { uploadTables } from './api/viya/uploadTables'
 import { executeScript } from './api/viya/executeScript'
-import { getAccessToken } from './auth/getAccessToken'
-import { refreshTokens } from './auth/refreshTokens'
+import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
+import { refreshTokensForViya } from './auth/refreshTokensForViya'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -534,21 +534,26 @@ export class SASViyaApiClient {
     clientSecret: string,
     authCode: string
   ): Promise<SasAuthResponse> {
-    return getAccessToken(this.requestClient, clientId, clientSecret, authCode)
+    return getAccessTokenForViya(
+      this.requestClient,
+      clientId,
+      clientSecret,
+      authCode
+    )
   }
 
   /**
    * Exchanges the refresh token for an access token for the given client.
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
-   * @param authCode - the refresh token received from the server.
+   * @param refreshToken - the refresh token received from the server.
    */
   public async refreshTokens(
     clientId: string,
     clientSecret: string,
     refreshToken: string
   ) {
-    return refreshTokens(
+    return refreshTokensForViya(
       this.requestClient,
       clientId,
       clientSecret,

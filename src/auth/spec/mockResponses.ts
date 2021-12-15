@@ -13,6 +13,11 @@ export const mockAuthResponse: SasAuthResponse = {
   jti: 'test'
 }
 
+export const mockSasjsAuthResponse = {
+  access_token: 'acc355',
+  refresh_token: 'r3fr35h'
+}
+
 export const generateToken = (timeToLiveSeconds: number): string => {
   const exp =
     new Date(new Date().getTime() + timeToLiveSeconds * 1000).getTime() / 1000

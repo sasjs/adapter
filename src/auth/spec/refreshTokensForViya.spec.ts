@@ -2,11 +2,11 @@ import { AuthConfig } from '@sasjs/utils'
 import * as NodeFormData from 'form-data'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
-import { getAccessToken } from '../getAccessToken'
+import { refreshTokensForViya } from '../refreshTokensForViya'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
-describe('getAccessToken', () => {
+describe('refreshTokensForViya', () => {
   it('should attempt to refresh tokens', async () => {
     setupMocks()
     const access_token = generateToken(30)
@@ -26,7 +26,7 @@ describe('getAccessToken', () => {
       authConfig.client + ':' + authConfig.secret
     ).toString('base64')
 
-    await getAccessToken(
+    await refreshTokensForViya(
       requestClient,
       authConfig.client,
       authConfig.secret,
@@ -58,14 +58,14 @@ describe('getAccessToken', () => {
       .spyOn(requestClient, 'post')
       .mockImplementation(() => Promise.reject('Token Error'))
 
-    const error = await getAccessToken(
+    const error = await refreshTokensForViya(
       requestClient,
       authConfig.client,
       authConfig.secret,
       authConfig.refresh_token
     ).catch((e) => e)
 
-    expect(error).toContain('Error while getting access token')
+    expect(error).toContain('Error while refreshing tokens')
   })
 })
 

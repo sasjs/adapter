@@ -1,5 +1,5 @@
 import { AuthConfig } from '@sasjs/utils'
-import * as refreshTokensModule from '../refreshTokens'
+import * as refreshTokensModule from '../refreshTokensForViya'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { getTokens } from '../getTokens'
 import { RequestClient } from '../../request/RequestClient'
@@ -20,7 +20,7 @@ describe('getTokens', () => {
 
     await getTokens(requestClient, authConfig)
 
-    expect(refreshTokensModule.refreshTokens).toHaveBeenCalledWith(
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenCalledWith(
       requestClient,
       authConfig.client,
       authConfig.secret,
@@ -41,7 +41,7 @@ describe('getTokens', () => {
 
     await getTokens(requestClient, authConfig)
 
-    expect(refreshTokensModule.refreshTokens).toHaveBeenCalledWith(
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenCalledWith(
       requestClient,
       authConfig.client,
       authConfig.secret,
@@ -71,9 +71,9 @@ describe('getTokens', () => {
 const setupMocks = () => {
   jest.restoreAllMocks()
   jest.mock('../../request/RequestClient')
-  jest.mock('../refreshTokens')
+  jest.mock('../refreshTokensForViya')
 
   jest
-    .spyOn(refreshTokensModule, 'refreshTokens')
+    .spyOn(refreshTokensModule, 'refreshTokensForViya')
     .mockImplementation(() => Promise.resolve(mockAuthResponse))
 }

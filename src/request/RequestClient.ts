@@ -48,7 +48,9 @@ export interface HttpClient {
   ): Promise<{ result: T; etag: string }>
 
   getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
+  saveLocalStorageToken(accessToken: string, refreshToken: string): void
   clearCsrfTokens(): void
+  clearLocalStorageTokens(): void
   getBaseUrl(): string
 }
 
@@ -70,6 +72,11 @@ export class RequestClient implements HttpClient {
     this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
+  public saveLocalStorageToken(accessToken: string, refreshToken: string) {
+    localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('refreshToken', refreshToken)
+  }
+
   public getCsrfToken(type: 'general' | 'file' = 'general') {
     return type === 'file' ? this.fileUploadCsrfToken : this.csrfToken
   }
@@ -77,6 +84,10 @@ export class RequestClient implements HttpClient {
   public clearCsrfTokens() {
     this.csrfToken = { headerName: '', value: '' }
     this.fileUploadCsrfToken = { headerName: '', value: '' }
+  }
+  public clearLocalStorageTokens() {
+    localStorage.setItem('accessToken', '')
+    localStorage.setItem('refreshToken', '')
   }
 
   public getBaseUrl() {

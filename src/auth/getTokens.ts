@@ -3,18 +3,21 @@ import {
   isRefreshTokenExpiring,
   hasTokenExpired
 } from '@sasjs/utils/auth'
-import { AuthConfig } from '@sasjs/utils/types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { refreshTokens } from './refreshTokens'
+import { refreshTokensForViya } from './refreshTokensForViya'
+import { refreshTokensForSasjs } from './refreshTokensForSasjs'
 
 /**
  * Returns the auth configuration, refreshing the tokens if necessary.
  * @param requestClient - the pre-configured HTTP request client
  * @param authConfig - an object containing a client ID, secret, access token and refresh token
+ * @param serverType - server type for which refreshing the tokens, defaults to SASVIYA
  */
 export async function getTokens(
   requestClient: RequestClient,
-  authConfig: AuthConfig
+  authConfig: AuthConfig,
+  serverType: ServerType = ServerType.SasViya
 ): Promise<AuthConfig> {
   const logger = process.logger || console
   let { access_token, refresh_token, client, secret } = authConfig
@@ -29,12 +32,16 @@ export async function getTokens(
       throw new Error(error)
     }
     logger.info('Refreshing access and refresh tokens.')
-    ;({ access_token, refresh_token } = await refreshTokens(
-      requestClient,
-      client,
-      secret,
-      refresh_token
-    ))
+    const tokens =
+      serverType === ServerType.SasViya
+        ? await refreshTokensForViya(
+            requestClient,
+            client,
+            secret,
+            refresh_token
+          )
+        : await refreshTokensForSasjs(requestClient, refresh_token)
+    ;({ access_token, refresh_token } = tokens)
   }
   return { access_token, refresh_token, client, secret }
 }

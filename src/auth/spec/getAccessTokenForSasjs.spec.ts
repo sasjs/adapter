@@ -1,12 +1,11 @@
 import { AuthConfig } from '@sasjs/utils'
-import * as NodeFormData from 'form-data'
-import { generateToken, mockAuthResponse } from './mockResponses'
+import { generateToken, mockSasjsAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
-import { refreshTokens } from '../refreshTokens'
+import { getAccessTokenForSasjs } from '../getAccessTokenForSasjs'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
-describe('refreshTokens', () => {
+describe('getAccessTokenForSasjs', () => {
   it('should attempt to refresh tokens', async () => {
     setupMocks()
     const access_token = generateToken(30)
@@ -20,27 +19,19 @@ describe('refreshTokens', () => {
     jest
       .spyOn(requestClient, 'post')
       .mockImplementation(() =>
-        Promise.resolve({ result: mockAuthResponse, etag: '' })
+        Promise.resolve({ result: mockSasjsAuthResponse, etag: '' })
       )
-    const token = Buffer.from(
-      authConfig.client + ':' + authConfig.secret
-    ).toString('base64')
 
-    await refreshTokens(
+    await getAccessTokenForSasjs(
       requestClient,
       authConfig.client,
-      authConfig.secret,
       authConfig.refresh_token
     )
 
     expect(requestClient.post).toHaveBeenCalledWith(
-      '/SASLogon/oauth/token',
-      expect.any(NodeFormData),
-      undefined,
-      expect.stringContaining('multipart/form-data; boundary='),
-      {
-        Authorization: 'Basic ' + token
-      }
+      '/SASjsApi/auth/token',
+      { clientId: authConfig.client, code: authConfig.refresh_token },
+      undefined
     )
   })
 
@@ -58,14 +49,13 @@ describe('refreshTokens', () => {
       .spyOn(requestClient, 'post')
       .mockImplementation(() => Promise.reject('Token Error'))
 
-    const error = await refreshTokens(
+    const error = await getAccessTokenForSasjs(
       requestClient,
       authConfig.client,
-      authConfig.secret,
       authConfig.refresh_token
     ).catch((e) => e)
 
-    expect(error).toContain('Error while refreshing tokens')
+    expect(error).toContain('Error while getting access token')
   })
 })
 
