@@ -157,11 +157,6 @@ export class WebJobExecutor extends BaseJobExecutor {
 
           let jsonResponse = res.result
 
-          if (this.serverType === ServerType.Sasjs) {
-            const webout = parseWeboutResponse(res.result._webout, apiUrl)
-            jsonResponse = getValidJson(webout)
-          }
-
           if (config.debug) {
             switch (this.serverType) {
               case ServerType.SasViya:
@@ -177,7 +172,13 @@ export class WebJobExecutor extends BaseJobExecutor {
                     ? parseWeboutResponse(res.result, apiUrl)
                     : res.result
                 break
+              case ServerType.Sasjs:
+                const webout = parseWeboutResponse(res.result._webout, apiUrl)
+                jsonResponse = getValidJson(webout)
+                break
             }
+          } else if (this.serverType === ServerType.Sasjs) {
+            jsonResponse = getValidJson(res.result._webout)
           }
 
           const responseObject = appendExtraResponseAttributes(
