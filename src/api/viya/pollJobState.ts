@@ -206,10 +206,11 @@ const doPoll = async (
 
     pollCount++
 
+    const jobHref = postedJob.links.find((l: Link) => l.rel === 'self')!.href
+
     if (pollOptions?.streamLog) {
-      const jobUrl = postedJob.links.find((l: Link) => l.rel === 'self')
       const { result: job } = await requestClient.get<Job>(
-        jobUrl!.href,
+        jobHref,
         authConfig?.access_token
       )
 
@@ -231,7 +232,7 @@ const doPoll = async (
     }
 
     if (debug && printedState !== state) {
-      logger.info('Polling job status...')
+      logger.info(`Polling: ${requestClient.getBaseUrl() + jobHref}/state`)
       logger.info(`Current job state: ${state}`)
 
       printedState = state
