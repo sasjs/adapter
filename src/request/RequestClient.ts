@@ -195,9 +195,7 @@ export class RequestClient implements HttpClient {
               }
             ),
           debug
-        ).catch((err) => {
-          throw prefixMessage(err, 'Error while handling error. ')
-        })
+        )
       })
   }
 
@@ -488,7 +486,7 @@ export class RequestClient implements HttpClient {
       else return
     }
 
-    throw e
+    throw prefixMessage(e, 'Error while handling error. ')
   }
 
   protected parseResponse<T>(response: AxiosResponse<any>) {
