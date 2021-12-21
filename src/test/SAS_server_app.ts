@@ -18,6 +18,7 @@ app.get('/', function (req: any, res: any) {
 
 app.post('/SASLogon/oauth/token', function (req: any, res: any) {
   let valid = true
+
   // capture the encoded form data
   req.on('data', (data: any) => {
     const resData = data.toString()

@@ -5,6 +5,8 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
+import { LoginRequiredError } from '../types/errors'
+import { prefixMessage } from '@sasjs/utils/error'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -55,8 +57,11 @@ describe('RequestClient', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toThrow(
-      'Error while getting access token. Request failed with status code 401'
+    ).rejects.toEqual(
+      prefixMessage(
+        new LoginRequiredError(),
+        'Error while getting access token. '
+      )
     )
   })
 })
@@ -132,8 +137,11 @@ describe('RequestClient - Self Signed Server', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toThrow(
-      'Error while getting access token. Request failed with status code 401'
+    ).rejects.toEqual(
+      prefixMessage(
+        new LoginRequiredError(),
+        'Error while getting access token. '
+      )
     )
   })
 })
