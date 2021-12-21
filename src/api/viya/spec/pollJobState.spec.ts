@@ -195,7 +195,7 @@ describe('pollJobState', () => {
     expect((process as any).logger.info).toHaveBeenCalledTimes(4)
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       1,
-      'Polling job status...'
+      'Polling: /job/state'
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       2,
@@ -203,7 +203,7 @@ describe('pollJobState', () => {
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       3,
-      'Polling job status...'
+      'Polling: /job/state'
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       4,
