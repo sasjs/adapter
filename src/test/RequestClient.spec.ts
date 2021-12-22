@@ -5,6 +5,14 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
+import {
+  LoginRequiredError,
+  AuthorizeError,
+  NotFoundError,
+  InternalServerError
+} from '../types/errors'
+import { prefixMessage } from '@sasjs/utils/error'
+import { RequestClient } from '../request/RequestClient'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -55,9 +63,113 @@ describe('RequestClient', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toThrow(
-      'Error while getting access token. Request failed with status code 401'
+    ).rejects.toEqual(
+      prefixMessage(
+        new LoginRequiredError(),
+        'Error while getting access token. '
+      )
     )
+  })
+
+  describe('handleError', () => {
+    const requestClient = new RequestClient('https://localhost:8009')
+    const randomError = 'some error'
+
+    it('should throw an error if could not get confirmUrl', async () => {
+      const authError = new AuthorizeError('message', 'confirm_url')
+
+      jest
+        .spyOn(requestClient['httpClient'], 'get')
+        .mockImplementation(() => Promise.reject(randomError))
+
+      await expect(
+        requestClient['handleError'](authError, () => {})
+      ).rejects.toEqual(`Error while getting error confirmUrl. ${randomError}`)
+    })
+
+    it('should throw an error if authorize form is required', async () => {
+      const authError = new AuthorizeError('message', 'confirm_url')
+
+      jest
+        .spyOn(requestClient['httpClient'], 'get')
+        .mockImplementation(() =>
+          Promise.resolve({ data: '<form action="(Logon/oauth/authorize")>' })
+        )
+
+      jest
+        .spyOn(requestClient, 'authorize')
+        .mockImplementation(() => Promise.reject(randomError))
+
+      await expect(
+        requestClient['handleError'](authError, () => {})
+      ).rejects.toEqual(`Error while authorizing request. ${randomError}`)
+    })
+
+    it('should throw an error from callback function', async () => {
+      const authError = new AuthorizeError('message', 'confirm_url')
+
+      jest
+        .spyOn(requestClient['httpClient'], 'get')
+        .mockImplementation(() => Promise.resolve({ data: '' }))
+
+      await expect(
+        requestClient['handleError'](authError, () =>
+          Promise.reject(randomError)
+        )
+      ).rejects.toEqual(
+        `Error while executing callback in handleError. ${randomError}`
+      )
+    })
+
+    it('should handle error with 403 response status', async () => {
+      const error = {
+        response: {
+          status: 403,
+          headers: { 'x-csrf-header': 'x-csrf-header' }
+        }
+      }
+
+      await expect(
+        requestClient['handleError'](error, () => Promise.reject(randomError))
+      ).rejects.toEqual(
+        `Error while executing callback in handleError. ${randomError}`
+      )
+
+      error.response.headers = {} as unknown as { 'x-csrf-header': string }
+      requestClient['csrfToken'].headerName = ''
+
+      await expect(
+        requestClient['handleError'](error, () => Promise.reject(randomError))
+      ).rejects.toEqual(error)
+    })
+
+    it('should handle error with 404 response status', async () => {
+      const error = {
+        response: {
+          status: 404,
+          config: { url: 'test url' }
+        }
+      }
+
+      await expect(
+        requestClient['handleError'](error, () => {})
+      ).rejects.toEqual(new NotFoundError(error.response.config.url))
+    })
+
+    it('should handle error with 502 response status', async () => {
+      const error = {
+        response: {
+          status: 502
+        }
+      }
+
+      await expect(
+        requestClient['handleError'](error, () => {}, true)
+      ).rejects.toEqual(new InternalServerError())
+      await expect(
+        requestClient['handleError'](error, () => {}, false)
+      ).resolves.toEqual(undefined)
+    })
   })
 })
 
@@ -132,8 +244,11 @@ describe('RequestClient - Self Signed Server', () => {
   it('should response the POST method with Unauthorized', async () => {
     await expect(
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toThrow(
-      'Error while getting access token. Request failed with status code 401'
+    ).rejects.toEqual(
+      prefixMessage(
+        new LoginRequiredError(),
+        'Error while getting access token. '
+      )
     )
   })
 })

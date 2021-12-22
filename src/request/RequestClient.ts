@@ -195,9 +195,7 @@ export class RequestClient implements HttpClient {
               }
             ),
           debug
-        ).catch((err) => {
-          throw prefixMessage(err, 'Error while handling error. ')
-        })
+        )
       })
   }
 
@@ -217,6 +215,7 @@ export class RequestClient implements HttpClient {
       .post<T>(url, data, { headers, withCredentials: true })
       .then((response) => {
         throwIfError(response)
+
         return this.parseResponse<T>(response)
       })
       .catch(async (e) => {
@@ -466,6 +465,8 @@ export class RequestClient implements HttpClient {
 
     if (e instanceof LoginRequiredError) {
       this.clearCsrfTokens()
+
+      throw e
     }
 
     if (response?.status === 403 || response?.status === 449) {
@@ -488,7 +489,8 @@ export class RequestClient implements HttpClient {
       else return
     }
 
-    throw e
+    if (e.message) throw e
+    else throw prefixMessage(e, 'Error while handling error. ')
   }
 
   protected parseResponse<T>(response: AxiosResponse<any>) {
@@ -540,8 +542,9 @@ export class RequestClient implements HttpClient {
 
     this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 
-    this.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status < 401
+    this.httpClient.defaults.validateStatus = (status) => {
+      return status >= 200 && status <= 401
+    }
   }
 }
 

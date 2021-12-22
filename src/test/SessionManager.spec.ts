@@ -89,7 +89,7 @@ describe('SessionManager', () => {
       expect((process as any).logger.info).toHaveBeenCalledTimes(3)
       expect((process as any).logger.info).toHaveBeenNthCalledWith(
         1,
-        'Polling session status...'
+        `Polling: ${process.env.SERVER_URL}`
       )
       expect((process as any).logger.info).toHaveBeenNthCalledWith(
         2,
