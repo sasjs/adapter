@@ -47,7 +47,7 @@ npm i -g copyfiles
 ```
 and then run to build:
 ```bash
-npm run update:adapter && npm run build 
+npm run update:adapter && npm run build
 ```
 when it finishes run to deploy:
 ```bash
@@ -70,7 +70,7 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i) %end;
+  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i,missing=STRING) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
@@ -79,7 +79,7 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i) %end;
+  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i,missing=STRING) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
@@ -111,7 +111,7 @@ parmcards4;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(OBJ,&table)
+    %webout(OBJ,&table,missing=STRING)
   %end;
   %mend;
   %x()
@@ -125,7 +125,7 @@ parmcards4;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(ARR,&table)
+    %webout(ARR,&table,missing=STRING)
   %end;
   %mend;
   %x()
