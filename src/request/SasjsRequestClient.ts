@@ -13,7 +13,7 @@ export class SasjsRequestClient extends RequestClient {
 
     headers.Accept = contentType === 'application/json' ? contentType : '*/*'
 
-    if (!accessToken)
+    if (!accessToken && typeof window !== 'undefined')
       accessToken = localStorage.getItem('accessToken') ?? undefined
 
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`
