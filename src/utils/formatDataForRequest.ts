@@ -7,9 +7,17 @@ export const formatDataForRequest = (data: any) => {
   const result: any = {}
 
   for (const tableName in data) {
+    if (
+      tableName.match(/^\$.*/) &&
+      Object.keys(data).includes(tableName.replace(/^\$/, ''))
+    ) {
+      continue
+    }
+
     tableCounter++
     sasjsTables.push(tableName)
-    const csv = convertToCSV(data[tableName])
+    const csv = convertToCSV(data[tableName], data[`$${tableName}`])
+
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(
         'The max length of a string value in SASjs is 32765 characters.'
@@ -27,6 +35,7 @@ export const formatDataForRequest = (data: any) => {
       result[`sasjs${tableCounter}data`] = csv
     }
   }
+
   result['sasjs_tables'] = sasjsTables.join(' ')
 
   return result

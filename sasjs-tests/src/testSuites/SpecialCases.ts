@@ -79,6 +79,19 @@ const errorAndCsrfData: any = {
   _csrf: [{ col1: 'q', col2: 'w', col3: 'e', col4: 'r' }]
 }
 
+const testTable = 'sometable'
+const testTableWithNullVars = {
+  [testTable]: [
+    { var1: 'string', var2: 232, nullvar: 'A' },
+    { var1: 'string', var2: 232, nullvar: 'B' },
+    { var1: 'string', var2: 232, nullvar: '_' },
+    { var1: 'string', var2: 232, nullvar: 0 },
+    { var1: 'string', var2: 232, nullvar: 'z' },
+    { var1: 'string', var2: 232, nullvar: null }
+  ],
+  [`$${testTable}`]: { formats: { var1: '$char12.', nullvar: 'best.' } }
+}
+
 export const specialCaseTests = (adapter: SASjs): TestSuite => ({
   name: 'Special Cases',
   tests: [
@@ -246,6 +259,26 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
           res._csrf[0].COL3 === errorAndCsrfData._csrf[0].col3 &&
           res._csrf[0].COL4 === errorAndCsrfData._csrf[0].col4
         )
+      }
+    },
+    {
+      title: 'Special missing values',
+      description: 'Should support special missing values',
+      test: () => {
+        return adapter.request('common/sendObj', testTableWithNullVars)
+      },
+      assertion: (res: any) => {
+        let assertionRes = true
+
+        testTableWithNullVars[testTable].forEach((row: {}, i: number) =>
+          Object.keys(row).forEach((col: string) => {
+            if (col !== res[testTable][i][col.toUpperCase()]) {
+              assertionRes = false
+            }
+          })
+        )
+
+        return assertionRes
       }
     }
   ]
