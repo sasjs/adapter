@@ -168,31 +168,6 @@ describe('convertToCsv', () => {
     ).toEqual(`slashWithSpecialExtra:$char13.\r\n\"\\\ts\tl\ta\ts\t\th\t\"`)
   })
 
-  it('should convert not null values', () => {
-    const data = [
-      { var1: 'string', nullvar: 'A', var2: 232 },
-      { var1: 'string', nullvar: 'B', var2: 232 },
-      { var1: 'string', nullvar: '_', var2: 232 },
-      { var1: 'string', nullvar: 0, var2: 232 },
-      { var1: 'string', nullvar: 'z', var2: 232 },
-      { var1: 'string', nullvar: null, var2: 232 }
-    ]
-
-    const expectedOutput = `var1:$char6. nullvar:best. var2:best.\r\nstring,.a,232\r\nstring,.b,232\r\nstring,._,232\r\nstring,0,232\r\nstring,.z,232\r\nstring,.,232`
-
-    expect(
-      convertToCSV(data, {
-        formats: { var1: '$char6.', nullvar: 'best.' }
-      })
-    ).toEqual(expectedOutput)
-  })
-
-  it('should return error if string is more than maxFieldValue', () => {
-    const data = [{ var1: 'z'.repeat(32765 + 1) }]
-
-    expect(convertToCSV(data)).toEqual('ERROR: LARGE STRING LENGTH')
-  })
-
   it('should console log error if data has mixed types', () => {
     const colName = 'var1'
     const data = [{ [colName]: 'string' }, { [colName]: 232 }]
