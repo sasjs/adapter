@@ -80,7 +80,7 @@ const errorAndCsrfData: any = {
 }
 
 const testTable = 'sometable'
-const testTableWithNullVars = {
+const testTableWithNullVars: { [key: string]: any } = {
   [testTable]: [
     { var1: 'string', var2: 232, nullvar: 'A' },
     { var1: 'string', var2: 232, nullvar: 'B' },
@@ -270,12 +270,25 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       assertion: (res: any) => {
         let assertionRes = true
 
-        testTableWithNullVars[testTable].forEach((row: {}, i: number) =>
-          Object.keys(row).forEach((col: string) => {
-            if (col !== res[testTable][i][col.toUpperCase()]) {
-              assertionRes = false
-            }
-          })
+        testTableWithNullVars[testTable].forEach(
+          (row: { [key: string]: any }, i: number) =>
+            Object.keys(row).forEach((col: string) => {
+              const resValue = res[testTable][i][col.toUpperCase()]
+
+              if (
+                typeof row[col] === 'string' &&
+                testTableWithNullVars[`$${testTable}`].formats[col] ===
+                  'best.' &&
+                row[col].toUpperCase() !== resValue
+              ) {
+                assertionRes = false
+              } else if (
+                typeof row[col] !== 'string' &&
+                row[col] !== resValue
+              ) {
+                assertionRes = false
+              }
+            })
         )
 
         return assertionRes

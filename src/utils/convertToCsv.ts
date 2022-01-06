@@ -6,75 +6,98 @@ export const convertToCSV = (
   data: any,
   sasFormats?: { formats: { [key: string]: string } }
 ) => {
-  const formats = sasFormats?.formats
+  let formats = sasFormats?.formats
   let headers: string[] = []
   let csvTest
   let invalidString = false
+  const specialMissingValueRegExp = /^[a-z_]{1}$/i
 
   if (formats) {
-    headers = Object.keys(formats).map((key) => `${key}:${formats[key]}`)
+    headers = Object.keys(formats).map((key) => `${key}:${formats![key]}`)
   }
 
   const headerFields = Object.keys(data[0])
 
   headerFields.forEach((field) => {
     if (!formats || !Object.keys(formats).includes(field)) {
-      let firstFoundType: string | null = null
-      let hasMixedTypes: boolean = false
-      let rowNumError: number = -1
+      let hasNullOrNumber = false
+      let hasSpecialMissingString = false
 
-      const longestValueForField = data
-        .map((row: any, index: number) => {
-          if (row[field] || row[field] === '') {
-            if (firstFoundType) {
-              let currentFieldType =
-                row[field] === '' || typeof row[field] === 'string'
-                  ? 'chars'
-                  : 'number'
+      data.forEach((row: { [key: string]: any }) => {
+        if (row[field] === null || typeof row[field] === 'number') {
+          hasNullOrNumber = true
+        } else if (
+          typeof row[field] === 'string' &&
+          specialMissingValueRegExp.test(row[field])
+        ) {
+          hasSpecialMissingString = true
+        }
+      })
 
-              if (!hasMixedTypes) {
-                hasMixedTypes = currentFieldType !== firstFoundType
-                rowNumError = hasMixedTypes ? index + 1 : -1
-              }
-            } else {
-              if (row[field] === '') {
-                firstFoundType = 'chars'
+      if (hasNullOrNumber && hasSpecialMissingString) {
+        headers.push(`${field}:best.`)
+
+        if (!formats) formats = {}
+
+        formats[field] = 'best.'
+      } else {
+        let firstFoundType: string | null = null
+        let hasMixedTypes: boolean = false
+        let rowNumError: number = -1
+
+        const longestValueForField = data
+          .map((row: any, index: number) => {
+            if (row[field] || row[field] === '') {
+              if (firstFoundType) {
+                let currentFieldType =
+                  row[field] === '' || typeof row[field] === 'string'
+                    ? 'chars'
+                    : 'number'
+
+                if (!hasMixedTypes) {
+                  hasMixedTypes = currentFieldType !== firstFoundType
+                  rowNumError = hasMixedTypes ? index + 1 : -1
+                }
               } else {
-                firstFoundType =
-                  typeof row[field] === 'string' ? 'chars' : 'number'
+                if (row[field] === '') {
+                  firstFoundType = 'chars'
+                } else {
+                  firstFoundType =
+                    typeof row[field] === 'string' ? 'chars' : 'number'
+                }
               }
+
+              let byteSize
+
+              if (typeof row[field] === 'string') {
+                byteSize = getByteSize(row[field])
+              }
+
+              return byteSize
             }
+          })
+          .sort((a: number, b: number) => b - a)[0]
 
-            let byteSize
+        if (longestValueForField && longestValueForField > 32765) {
+          invalidString = true
+        }
 
-            if (typeof row[field] === 'string') {
-              byteSize = getByteSize(row[field])
-            }
+        if (hasMixedTypes) {
+          console.error(
+            `Row (${rowNumError}), Column (${field}) has mixed types: ERROR`
+          )
+        }
 
-            return byteSize
-          }
-        })
-        .sort((a: number, b: number) => b - a)[0]
-
-      if (longestValueForField && longestValueForField > 32765) {
-        invalidString = true
-      }
-
-      if (hasMixedTypes) {
-        console.error(
-          `Row (${rowNumError}), Column (${field}) has mixed types: ERROR`
+        headers.push(
+          `${field}:${firstFoundType === 'chars' ? '$char' : ''}${
+            longestValueForField
+              ? longestValueForField
+              : firstFoundType === 'chars'
+              ? '1'
+              : 'best'
+          }.`
         )
       }
-
-      headers.push(
-        `${field}:${firstFoundType === 'chars' ? '$char' : ''}${
-          longestValueForField
-            ? longestValueForField
-            : firstFoundType === 'chars'
-            ? '1'
-            : 'best'
-        }.`
-      )
     }
   })
 
@@ -99,6 +122,13 @@ export const convertToCSV = (
       value = currentCell === null ? '' : currentCell
 
       if (formats && formats[fieldName] === 'best.') {
+        if (value && !specialMissingValueRegExp.test(value)) {
+          console.log(`🤖[value]🤖`, value)
+          throw new Error(
+            'Special missing value can only be a single character from A to Z or _'
+          )
+        }
+
         return `.${value.toLowerCase()}`
       }
 

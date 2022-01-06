@@ -3,8 +3,8 @@ import { formatDataForRequest } from '../../utils/formatDataForRequest'
 describe('formatDataForRequest', () => {
   const testTable = 'sometable'
 
-  it('should', () => {
-    const testTableWithNullVars = {
+  it('should format table with special missing values', () => {
+    const tableWithMissingValues = {
       [testTable]: [
         { var1: 'string', var2: 232, nullvar: 'A' },
         { var1: 'string', var2: 232, nullvar: 'B' },
@@ -21,7 +21,7 @@ describe('formatDataForRequest', () => {
       sasjs_tables: testTable
     }
 
-    expect(formatDataForRequest(testTableWithNullVars)).toEqual(expectedOutput)
+    expect(formatDataForRequest(tableWithMissingValues)).toEqual(expectedOutput)
   })
 
   it('should return error if string is more than 32765 characters', () => {
@@ -52,5 +52,44 @@ describe('formatDataForRequest', () => {
     }
 
     expect(formatDataForRequest(data)).toEqual(expectedOutput)
+  })
+
+  it('should throw an error if special missing values is not valid', () => {
+    let tableWithMissingValues = {
+      [testTable]: [{ var: 'AA' }, { var: 0 }],
+      [`$${testTable}`]: { formats: { var: 'best.' } }
+    }
+
+    expect(() => formatDataForRequest(tableWithMissingValues)).toThrow(
+      new Error(
+        'Special missing value can only be a single character from A to Z or _'
+      )
+    )
+  })
+
+  it('should auto-detect special missing values type as best.', () => {
+    const tableWithMissingValues = {
+      [testTable]: [{ var: 'a' }, { var: 'A' }, { var: '_' }, { var: 0 }]
+    }
+
+    const expectedOutput = {
+      sasjs1data: `var:best.\r\n.a\r\n.a\r\n._\r\n0`,
+      sasjs_tables: testTable
+    }
+
+    expect(formatDataForRequest(tableWithMissingValues)).toEqual(expectedOutput)
+  })
+
+  it('should auto-detect values type as $char1.', () => {
+    const tableWithMissingValues = {
+      [testTable]: [{ var: 'a' }, { var: 'A' }, { var: '_' }]
+    }
+
+    const expectedOutput = {
+      sasjs1data: `var:$char1.\r\na\r\nA\r\n_`,
+      sasjs_tables: testTable
+    }
+
+    expect(formatDataForRequest(tableWithMissingValues)).toEqual(expectedOutput)
   })
 })
