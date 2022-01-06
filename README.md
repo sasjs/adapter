@@ -230,10 +230,10 @@ run;
 %webout(CLOSE) /* Close the JSON and add default variables */
 ```
 
-By default, special SAS numeric missings (_a-Z) are converted to `null` in the JSON.  If you'd like to preserve these, use the `nullify=NO` option as follows:
+By default, special SAS numeric missings (_a-Z) are converted to `null` in the JSON.  If you'd like to preserve these, use the `missing=STRING` option as follows:
 
 ```sas
-%webout(OBJ,a,nullify=NO)
+%webout(OBJ,a,missing=STRING)
 ```
 In this case, special missings (such as `.a`, `.b`) are converted to javascript string values (`'A', 'B'`).
 
