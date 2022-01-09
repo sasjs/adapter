@@ -248,7 +248,7 @@ Where an entire column is made up of special missing numerics, there would be no
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
 
 * `appLoc` - this is the folder under which the SAS services will be created.
-* `serverType` - either `SAS9` or `SASVIYA`.
+* `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
 * `LoginMechanism` - either `Default` or `Redirected`.  If `Redirected` then authentication occurs through the injection of an additional screen, which contains the SASLogon prompt.  This allows for more complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the redirect flow can also be modified.  If left at "Default" then the developer must capture the username and password and use these with the `.login()` method.
