@@ -237,6 +237,12 @@ By default, special SAS numeric missings (_a-Z) are converted to `null` in the J
 ```
 In this case, special missings (such as `.a`, `.b`) are converted to javascript string values (`'A', 'B'`).
 
+Where an entire column is made up of special missing numerics, there would be no way to distinguish it from a single-character column by looking at the values.  To cater for this scenario, it is possible to export the variable types (and other attributes such as label and format) by adding a `showmeta` param to the `webout()` macro as follows:
+
+```sas
+%webout(OBJ,a,missing=STRING,showmeta=YES)
+```
+
 ## Configuration
 
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
