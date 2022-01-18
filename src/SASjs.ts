@@ -736,15 +736,19 @@ export default class SASjs {
     msg: string
   } {
     if (data === null) return { status: true, msg: '' }
+
+    const isSasFormatsTable = (key: string) =>
+      key.match(/^\$.*/) && Object.keys(data).includes(key.replace(/^\$/, ''))
+
     for (const key in data) {
-      if (!key.match(/^[a-zA-Z_]/)) {
+      if (!key.match(/^[a-zA-Z_]/) && !isSasFormatsTable(key)) {
         return {
           status: false,
           msg: 'First letter of table should be alphabet or underscore.'
         }
       }
 
-      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/) && !isSasFormatsTable(key)) {
         return { status: false, msg: 'Table name should be alphanumeric.' }
       }
 
@@ -755,7 +759,7 @@ export default class SASjs {
         }
       }
 
-      if (this.getType(data[key]) !== 'Array') {
+      if (this.getType(data[key]) !== 'Array' && !isSasFormatsTable(key)) {
         return {
           status: false,
           msg: 'Parameter data contains invalid table structure.'
@@ -771,6 +775,7 @@ export default class SASjs {
         }
       }
     }
+
     return { status: true, msg: '' }
   }
 

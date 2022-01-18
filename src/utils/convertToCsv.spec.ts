@@ -167,4 +167,17 @@ describe('convertToCsv', () => {
       convertToCSV([{ slashWithSpecialExtra: '\\\ts\tl\ta\ts\t\th\t' }])
     ).toEqual(`slashWithSpecialExtra:$char13.\r\n\"\\\ts\tl\ta\ts\t\th\t\"`)
   })
+
+  it('should console log error if data has mixed types', () => {
+    const colName = 'var1'
+    const data = [{ [colName]: 'string' }, { [colName]: 232 }]
+
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    convertToCSV(data)
+
+    expect(console.error).toHaveBeenCalledWith(
+      `Row (2), Column (${colName}) has mixed types: ERROR`
+    )
+  })
 })

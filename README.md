@@ -142,6 +142,71 @@ The response object will contain returned tables and columns.  Table names are a
 
 The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.
 
+### Variable Types
+
+The SAS type (char/numeric) of the values is determined according to a set of rules:
+
+* If the values are numeric, the SAS type is numeric
+* If the values are all string, the SAS type is character
+* If the values contain a single character (a-Z + underscore) AND a numeric, then the SAS type is numeric (with special missing values).  
+* `null` is set to either '.' or '' depending on the assigned or derived type per the above rules.  If entire column is `null` then the type will be numeric.
+
+The following table illustrates the formats applied to columns under various scenarios:
+
+|JS Values |SAS Format|
+|---|---|
+|'a', 'a' |$char1.|
+|0, '_' |best.|
+|'Z', 0 |best.|
+|'a', 'aaa' |$char3.|
+|null, 'a', 'aaa' | $char3.|
+|null, 'a', 0 | best.|
+|null, null | best.|
+|null, '' | $char1.|
+|null, 'a' | $char1.|
+|'a' | $char1.|
+|'a', null | $char1.|
+|'a', null, 0 | best.|
+
+Validation is also performed on the values.  The following combinations will throw errors:
+
+|JS Values |SAS Format|
+|---|---|
+|null, 'aaaa', 0 | Error: mixed types. 'aaaa' is not a special missing value.|
+|0, 'a', '!' | Error: mixed types. '!' is not a special missing value|
+|1.1, '.', 0| Error: mixed types.  For regular nulls, use `null`|
+
+### Variable Format Override
+The auto-detect functionality above is thwarted in the following scenarios:
+
+* A character column containing only `null` values (is considered numeric)
+* A numeric column containing only special missing values (is considered character)
+
+To cater for these scenarios, an optional array of formats can be passed along with the data to ensure that SAS will read them in correctly.
+
+To understand these formats, it should be noted that the JSON data is NOT passed directly (as JSON) to SAS. It is first converted into CSV, and the header row is actually an `infile` statement in disguise.  It looks a bit like this:
+
+```csv
+CHARVAR1:$char4. CHARVAR2:$char1. NUMVAR:best.
+LOAD,,0
+ABCD,X,.
+```
+
+To provide overrides to this header row, the tables object can be constructed as follows (with a leading '$' in the table name):
+
+```javascript
+let specialData={
+  "tablewith2cols2rows": [
+    {"col1": "val1","specialMissingsCol": "A"},
+    {"col1": "val2","specialMissingsCol": "_"}
+  ],
+  "$tablewith2cols2rows":{"formats":{"specialMissingsCol":"best."}
+  }
+};
+```
+
+It is not necessary to provide formats for ALL the columns, only the ones that need to be overridden.
+
 ## SAS Inputs / Outputs
 
 The SAS side is handled by a number of macros in the [macro core](https://github.com/sasjs/core) library.
@@ -153,16 +218,29 @@ The following snippet shows the process of SAS tables arriving / leaving:
 %webout(FETCH)
 
 /* some sas code */
-data some sas tables;
+data a b c;
   set from js;
 run;
 
-%webout(OPEN)  /* open the JSON to be returned */
-%webout(OBJ,some) /* `some` table is sent in object format */
-%webout(ARR,sas) /* `sas` table is sent in array format, smaller filesize */
-%webout(OBJ,tables,fmt=N) /* unformatted (raw) data */
-%webout(OBJ,tables,label=newtable) /* rename tables on export */
-%webout(CLOSE) /* close the JSON and send some extra useful variables too */
+%webout(OPEN)  /* Open the JSON to be returned */
+%webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */
+%webout(ARR,b) /* Rows in table `b` are arrays (compact) */
+%webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */
+%webout(OBJ,c,label=d) /* Rename as `d` on JS side */
+%webout(CLOSE) /* Close the JSON and add default variables */
+```
+
+By default, special SAS numeric missings (_a-Z) are converted to `null` in the JSON.  If you'd like to preserve these, use the `missing=STRING` option as follows:
+
+```sas
+%webout(OBJ,a,missing=STRING)
+```
+In this case, special missings (such as `.a`, `.b`) are converted to javascript string values (`'A', 'B'`).
+
+Where an entire column is made up of special missing numerics, there would be no way to distinguish it from a single-character column by looking at the values.  To cater for this scenario, it is possible to export the variable types (and other attributes such as label and format) by adding a `showmeta` param to the `webout()` macro as follows:
+
+```sas
+%webout(OBJ,a,missing=STRING,showmeta=YES)
 ```
 
 ## Configuration
@@ -170,7 +248,7 @@ run;
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
 
 * `appLoc` - this is the folder under which the SAS services will be created.
-* `serverType` - either `SAS9` or `SASVIYA`.
+* `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
 * `LoginMechanism` - either `Default` or `Redirected`.  If `Redirected` then authentication occurs through the injection of an additional screen, which contains the SASLogon prompt.  This allows for more complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the redirect flow can also be modified.  If left at "Default" then the developer must capture the username and password and use these with the `.login()` method.
