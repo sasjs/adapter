@@ -6,7 +6,8 @@
     "declaration": true,
     "outDir": "./build",
     "strict": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "typeRoots": ["./node_modules/@types", "./src/types/system"]
   },
   "include": ["src"],
   "exclude": ["node_modules"]
