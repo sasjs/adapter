@@ -423,7 +423,7 @@ describe('ContextManager', () => {
           true
         )
       } catch (error) {
-        editError = error
+        editError = error as Error
       }
 
       await expect(
@@ -542,7 +542,7 @@ describe('ContextManager', () => {
           true
         )
       } catch (error) {
-        deleteError = error
+        deleteError = error as Error
       }
 
       await expect(
