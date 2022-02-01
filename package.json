@@ -55,7 +55,7 @@
     "jest-extended": "2.0.0",
     "node-polyfill-webpack-plugin": "1.1.4",
     "path": "0.12.7",
-    "pem": "1.14.4",
+    "pem": "1.14.6",
     "process": "0.11.10",
     "rimraf": "3.0.2",
     "semantic-release": "18.0.0",
