@@ -3,6 +3,7 @@ import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
 import { getAuthCodeForSasjs } from './auth/getAuthCodeForSasjs'
+import { parseWeboutResponse } from './utils'
 
 export class SASjsApiClient {
   constructor(
@@ -35,7 +36,12 @@ export class SASjsApiClient {
       log?: string
       logPath?: string
       error?: {}
+      _webout?: string
     }>('SASjsApi/stp/execute', query, undefined)
+
+    if (Object.keys(result).includes('_webout')) {
+      result._webout = parseWeboutResponse(result._webout!)
+    }
 
     return Promise.resolve(result)
   }
