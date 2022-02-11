@@ -5,9 +5,8 @@ import {
   EditContextInput,
   PollOptions,
   LoginMechanism,
-  FolderMember,
-  ServiceMember,
-  ExecutionQuery
+  ExecutionQuery,
+  FileTree
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -865,15 +864,22 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
+   * @param members - the JSON specifying the folders and services to be created.
+   * @param appLoc - the base folder in which to create the new folders and
+   * services.  If not provided, is taken from SASjsConfig.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   */
   public async deployToSASjs(
-    members: [FolderMember, ServiceMember],
+    members: FileTree,
+    appLoc?: string,
     authConfig?: AuthConfig
   ) {
-    return await this.sasJSApiClient?.deploy(
-      members,
-      this.sasjsConfig.appLoc,
-      authConfig
-    )
+    if (!appLoc) {
+      appLoc = this.sasjsConfig.appLoc
+    }
+    return await this.sasJSApiClient?.deploy(members, appLoc, authConfig)
   }
 
   public async executeJobSASjs(query: ExecutionQuery) {

@@ -1,5 +1,5 @@
 import { AuthConfig, ServerType } from '@sasjs/utils/types'
-import { FolderMember, ServiceMember, ExecutionQuery } from './types'
+import { FileTree, ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
@@ -17,7 +17,7 @@ export class SASjsApiClient {
   }
 
   public async deploy(
-    members: [FolderMember, ServiceMember],
+    members: FileTree,
     appLoc: string,
     authConfig?: AuthConfig
   ) {
