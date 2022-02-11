@@ -865,8 +865,15 @@ export default class SASjs {
     )
   }
 
-  public async deployToSASjs(members: [FolderMember, ServiceMember]) {
-    return await this.sasJSApiClient?.deploy(members, this.sasjsConfig.appLoc)
+  public async deployToSASjs(
+    members: [FolderMember, ServiceMember],
+    authConfig?: AuthConfig
+  ) {
+    return await this.sasJSApiClient?.deploy(
+      members,
+      this.sasjsConfig.appLoc,
+      authConfig
+    )
   }
 
   public async executeJobSASjs(query: ExecutionQuery) {
