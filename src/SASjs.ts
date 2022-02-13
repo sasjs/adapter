@@ -1018,7 +1018,7 @@ export default class SASjs {
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.serverType === ServerType.Sas9
         ? this.sasjsConfig.pathSAS9
-        : this.sasjsConfig.pathSASJS || ''
+        : this.sasjsConfig.pathSASJS
 
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,
