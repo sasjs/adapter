@@ -10,6 +10,7 @@ export const parseWeboutResponse = (response: string, url?: string): string => {
         .split('>>weboutEND<<')[0]
     } catch (e) {
       if (url) throw new WeboutResponseError(url)
+
       sasResponse = ''
       console.error(e)
     }
