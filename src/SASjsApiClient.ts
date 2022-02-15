@@ -1,9 +1,11 @@
-import { FolderMember, ServiceMember, ExecutionQuery } from './types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
+import { FileTree, ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
 import { getAuthCodeForSasjs } from './auth/getAuthCodeForSasjs'
 import { parseWeboutResponse } from './utils'
+import { getTokens } from './auth/getTokens'
 
 export class SASjsApiClient {
   constructor(
@@ -15,7 +17,19 @@ export class SASjsApiClient {
     if (serverUrl) this.serverUrl = serverUrl
   }
 
-  public async deploy(members: [FolderMember, ServiceMember], appLoc: string) {
+  public async deploy(
+    members: FileTree,
+    appLoc: string,
+    authConfig?: AuthConfig
+  ) {
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await getTokens(
+        this.requestClient,
+        authConfig,
+        ServerType.Sasjs
+      ))
+    }
     const { result } = await this.requestClient.post<{
       status: string
       message: string
@@ -23,7 +37,7 @@ export class SASjsApiClient {
     }>(
       'SASjsApi/drive/deploy',
       { fileTree: members, appLoc: appLoc },
-      undefined
+      access_token
     )
 
     return Promise.resolve(result)
