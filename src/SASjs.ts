@@ -27,6 +27,7 @@ import {
   ComputeJobExecutor,
   JesJobExecutor,
   Sas9JobExecutor,
+  SasJsJobExecutor,
   FileUploader
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
@@ -62,6 +63,7 @@ export default class SASjs {
   private computeJobExecutor: JobExecutor | null = null
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
+  private sasJsJobExecutor: JobExecutor | null = null
 
   constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
@@ -76,6 +78,12 @@ export default class SASjs {
     return this.requestClient?.getCsrfToken(type)
   }
 
+  /**
+   * Executes the sas code against SAS9 server
+   * @param linesOfCode - lines of sas code from the file to run.
+   * @param username - a string representing the username.
+   * @param password - a string representing the password.
+   */
   public async executeScriptSAS9(
     linesOfCode: string[],
     userName: string,
@@ -87,6 +95,38 @@ export default class SASjs {
       linesOfCode,
       userName,
       password
+    )
+  }
+
+  /**
+   * Executes the sas code against SASViya server
+   * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
+   * @param linesOfCode - lines of sas code from the file to run.
+   * @param contextName - context name on which code will be run on the server.
+   * @param authConfig - (optional) the access token, refresh token, client and secret for authorizing the request.
+   * @param debug - (optional) if true, global debug config will be overriden
+   */
+  public async executeScriptSASViya(
+    fileName: string,
+    linesOfCode: string[],
+    contextName: string,
+    authConfig?: AuthConfig,
+    debug?: boolean
+  ) {
+    this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
+    if (!contextName) {
+      throw new Error(
+        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+      )
+    }
+
+    return await this.sasViyaApiClient!.executeScript(
+      fileName,
+      linesOfCode,
+      contextName,
+      authConfig,
+      null,
+      debug ? debug : this.sasjsConfig.debug
     )
   }
 
@@ -251,38 +291,6 @@ export default class SASjs {
     this.isMethodSupported('createSession', [ServerType.SasViya])
 
     return await this.sasViyaApiClient!.createSession(contextName, accessToken)
-  }
-
-  /**
-   * Executes the sas code against given sas server
-   * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
-   * @param linesOfCode - lines of sas code from the file to run.
-   * @param contextName - context name on which code will be run on the server.
-   * @param authConfig - (optional) the access token, refresh token, client and secret for authorizing the request.
-   * @param debug - (optional) if true, global debug config will be overriden
-   */
-  public async executeScriptSASViya(
-    fileName: string,
-    linesOfCode: string[],
-    contextName: string,
-    authConfig?: AuthConfig,
-    debug?: boolean
-  ) {
-    this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
-    if (!contextName) {
-      throw new Error(
-        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
-      )
-    }
-
-    return await this.sasViyaApiClient!.executeScript(
-      fileName,
-      linesOfCode,
-      contextName,
-      authConfig,
-      null,
-      debug ? debug : this.sasjsConfig.debug
-    )
   }
 
   /**
@@ -675,7 +683,16 @@ export default class SASjs {
     const validationResult = this.validateInput(data)
 
     if (validationResult.status) {
-      if (
+      if (config.serverType === ServerType.Sasjs) {
+        return await this.sasJsJobExecutor!.execute(
+          sasJob,
+          data,
+          config,
+          loginRequiredCallback,
+          authConfig,
+          extraResponseAttributes
+        )
+      } else if (
         config.serverType !== ServerType.Sas9 &&
         config.useComputeApi !== undefined &&
         config.useComputeApi !== null
@@ -1094,6 +1111,13 @@ export default class SASjs {
       this.jobsPath,
       this.requestClient,
       this.sasViyaApiClient!
+    )
+
+    this.sasJsJobExecutor = new SasJsJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
+      this.jobsPath,
+      this.requestClient
     )
 
     this.sas9JobExecutor = new Sas9JobExecutor(
