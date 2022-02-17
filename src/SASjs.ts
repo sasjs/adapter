@@ -1034,7 +1034,8 @@ export default class SASjs {
           : RequestClient
       this.requestClient = new RequestClientClass(
         this.sasjsConfig.serverUrl,
-        this.sasjsConfig.httpsAgentOptions
+        this.sasjsConfig.httpsAgentOptions,
+        this.sasjsConfig.requestHistoryLimit
       )
     } else {
       this.requestClient.setConfig(

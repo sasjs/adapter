@@ -69,6 +69,10 @@ export class SASjsConfig {
    * Supported login mechanisms are - Redirected and Default
    */
   loginMechanism: LoginMechanism = LoginMechanism.Default
+  /**
+   * Optional settings to configure limit for requests history
+   */
+  requestHistoryLimit?: number = 10
 }
 
 export enum LoginMechanism {
