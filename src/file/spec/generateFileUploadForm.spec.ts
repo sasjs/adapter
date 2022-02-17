@@ -1,5 +1,4 @@
 import { generateFileUploadForm } from '../generateFileUploadForm'
-import { testTableWithNullVars } from '../../../sasjs-tests/src/testSuites/SpecialCases'
 
 describe('generateFileUploadForm', () => {
   beforeAll(() => {
@@ -15,6 +14,18 @@ describe('generateFileUploadForm', () => {
 
   it('should generate file upload form from data', () => {
     const formData = new FormData()
+    const testTable = 'sometable'
+    const testTableWithNullVars: { [key: string]: any } = {
+      [testTable]: [
+        { var1: 'string', var2: 232, nullvar: 'A' },
+        { var1: 'string', var2: 232, nullvar: 'B' },
+        { var1: 'string', var2: 232, nullvar: '_' },
+        { var1: 'string', var2: 232, nullvar: 0 },
+        { var1: 'string', var2: 232, nullvar: 'z' },
+        { var1: 'string', var2: 232, nullvar: null }
+      ],
+      [`$${testTable}`]: { formats: { var1: '$char12.', nullvar: 'best.' } }
+    }
     const tableName = Object.keys(testTableWithNullVars).filter((key: string) =>
       Array.isArray(testTableWithNullVars[key])
     )[0]
