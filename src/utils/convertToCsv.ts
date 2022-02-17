@@ -3,7 +3,7 @@
  * @param data - the array of JSON objects to convert.
  */
 export const convertToCSV = (
-  data: any,
+  data: any[],
   sasFormats?: { formats: { [key: string]: string } }
 ) => {
   let formats = sasFormats?.formats
@@ -76,7 +76,7 @@ export const convertToCSV = (
               return byteSize
             }
           })
-          .sort((a: number, b: number) => b - a)[0]
+          .sort((a: any, b: any) => b - a)[0]
 
         if (longestValueForField && longestValueForField > 32765) {
           invalidString = true
