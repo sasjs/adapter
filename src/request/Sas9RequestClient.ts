@@ -1,6 +1,6 @@
 import * as https from 'https'
 import { AxiosRequestConfig } from 'axios'
-import * as axiosCookieJarSupport from 'axios-cookiejar-support'
+import axiosCookieJarSupport from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
@@ -17,7 +17,7 @@ export class Sas9RequestClient extends RequestClient {
       status >= 200 && status < 303
 
     if (axiosCookieJarSupport) {
-      axiosCookieJarSupport.wrapper(this.httpClient)
+      axiosCookieJarSupport(this.httpClient)
       this.httpClient.defaults.jar = new tough.CookieJar()
     }
   }
