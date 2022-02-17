@@ -3,7 +3,7 @@
  * @param data - the array of JSON objects to convert.
  */
 export const convertToCSV = (
-  data: Array<any>,
+  data: any[],
   sasFormats?: { formats: { [key: string]: string } }
 ) => {
   let formats = sasFormats?.formats

@@ -80,7 +80,7 @@ const errorAndCsrfData: any = {
 }
 
 const testTable = 'sometable'
-const testTableWithNullVars: { [key: string]: any } = {
+export const testTableWithNullVars: { [key: string]: any } = {
   [testTable]: [
     { var1: 'string', var2: 232, nullvar: 'A' },
     { var1: 'string', var2: 232, nullvar: 'B' },
