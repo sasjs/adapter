@@ -70,7 +70,7 @@ export class SASjsConfig {
    */
   loginMechanism: LoginMechanism = LoginMechanism.Default
   /**
-   * Optional setting to configure request history limit. Increasing this limit 
+   * Optional setting to configure request history limit. Increasing this limit
    * may affect browser performance, especially with debug (logs) enabled.
    */
   requestHistoryLimit?: number = 10
