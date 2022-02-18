@@ -56,6 +56,7 @@ export interface HttpClient {
 
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
+  private requestsLimit: number = 10
 
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
@@ -63,9 +64,11 @@ export class RequestClient implements HttpClient {
 
   constructor(
     protected baseUrl: string,
-    httpsAgentOptions?: https.AgentOptions
+    httpsAgentOptions?: https.AgentOptions,
+    requestsLimit?: number
   ) {
     this.createHttpClient(baseUrl, httpsAgentOptions)
+    if (requestsLimit) this.requestsLimit = requestsLimit
   }
 
   public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
@@ -149,7 +152,7 @@ export class RequestClient implements HttpClient {
       SASWORK: sasWork
     })
 
-    if (this.requests.length > 20) {
+    if (this.requests.length > this.requestsLimit) {
       this.requests.splice(0, 1)
     }
   }

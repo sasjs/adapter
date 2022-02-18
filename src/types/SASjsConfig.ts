@@ -60,7 +60,7 @@ export class SASjsConfig {
    */
   useComputeApi: boolean | null = null
   /**
-   * Optional settings to configure HTTPS Agent.
+   * Optional setting to configure HTTPS Agent.
    * By providing `key`, `cert`, `ca` to connect with server
    * Other options can be set `rejectUnauthorized` and `requestCert`
    */
@@ -69,6 +69,11 @@ export class SASjsConfig {
    * Supported login mechanisms are - Redirected and Default
    */
   loginMechanism: LoginMechanism = LoginMechanism.Default
+  /**
+   * Optional setting to configure request history limit. Increasing this limit
+   * may affect browser performance, especially with debug (logs) enabled.
+   */
+  requestHistoryLimit?: number = 10
 }
 
 export enum LoginMechanism {
