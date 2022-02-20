@@ -52,9 +52,13 @@ export class SasJsJobExecutor extends BaseJobExecutor {
         authConfig?.access_token
       )
         .then(async (res: any) => {
+          const parsedSasjsServerLog = res.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
+
           const resObj = {
             result: res.result._webout,
-            log: res.result.log
+            log: parsedSasjsServerLog
           }
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
 

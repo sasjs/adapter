@@ -146,11 +146,16 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(apiUrl, formData, authConfig?.access_token)
         .then(async (res: any) => {
+          const parsedSasjsServerLog =
+            this.serverType === ServerType.Sasjs
+              ? res.result.log.map((logLine: any) => logLine.line).join('\n')
+              : res.result.log
+
           const resObj =
             this.serverType === ServerType.Sasjs
               ? {
                   result: res.result._webout,
-                  log: res.result.log
+                  log: parsedSasjsServerLog
                 }
               : res
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
