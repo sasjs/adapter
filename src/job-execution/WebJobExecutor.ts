@@ -109,6 +109,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     }
 
     // FormData is only valid in browser
+    // FormData is a part of JS web API (not included in native NodeJS).
     let formData = new FormData()
 
     if (data) {
