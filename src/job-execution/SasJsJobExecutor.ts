@@ -65,8 +65,12 @@ export class SasJsJobExecutor extends BaseJobExecutor {
           let jsonResponse = res.result
 
           if (config.debug) {
-            const webout = parseWeboutResponse(res.result._webout, apiUrl)
-            jsonResponse = getValidJson(webout)
+            if (typeof res.result._webout === 'object') {
+              jsonResponse = res.result._webout
+            } else {
+              const webout = parseWeboutResponse(res.result._webout, apiUrl)
+              jsonResponse = getValidJson(webout)
+            }
           } else {
             jsonResponse = getValidJson(res.result._webout)
           }

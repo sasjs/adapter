@@ -178,8 +178,12 @@ export class WebJobExecutor extends BaseJobExecutor {
                     : res.result
                 break
               case ServerType.Sasjs:
-                const webout = parseWeboutResponse(res.result._webout, apiUrl)
-                jsonResponse = getValidJson(webout)
+                if (typeof res.result._webout === 'object') {
+                  jsonResponse = res.result._webout
+                } else {
+                  const webout = parseWeboutResponse(res.result._webout, apiUrl)
+                  jsonResponse = getValidJson(webout)
+                }
                 break
             }
           } else if (this.serverType === ServerType.Sasjs) {
