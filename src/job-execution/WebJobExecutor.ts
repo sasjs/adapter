@@ -108,6 +108,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
+    // FormData is only valid in browser
     let formData = new FormData()
 
     if (data) {

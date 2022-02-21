@@ -683,7 +683,10 @@ export default class SASjs {
     const validationResult = this.validateInput(data)
 
     if (validationResult.status) {
-      if (config.serverType === ServerType.Sasjs) {
+      if (
+        config.serverType === ServerType.Sasjs &&
+        typeof FormData === 'undefined'
+      ) {
         return await this.sasJsJobExecutor!.execute(
           sasJob,
           data,
@@ -693,7 +696,7 @@ export default class SASjs {
           extraResponseAttributes
         )
       } else if (
-        config.serverType !== ServerType.Sas9 &&
+        config.serverType === ServerType.SasViya &&
         config.useComputeApi !== undefined &&
         config.useComputeApi !== null
       ) {
