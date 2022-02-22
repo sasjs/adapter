@@ -1,9 +1,19 @@
+import * as NodeFormData from 'form-data'
 import { convertToCSV } from '../utils/convertToCsv'
 
+/**
+ * One of the approaches SASjs takes to send tables-formatted JSON (see README)
+ * to SAS is as multipart form data, where each table is provided as a specially
+ * formatted CSV file.
+ * @param formData Different objects are used depending on whether the adapter is
+ *  running in the browser, or in the CLI
+ * @param data Special, tables-formatted JSON (see README)
+ * @returns Populated formData
+ */
 export const generateFileUploadForm = (
-  formData: FormData,
+  formData: FormData | NodeFormData,
   data: any
-): FormData => {
+): FormData | NodeFormData => {
   for (const tableName in data) {
     if (!Array.isArray(data[tableName])) continue
 
