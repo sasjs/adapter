@@ -77,7 +77,8 @@ export default class SASjs {
   }
 
   /**
-   * Executes the sas code against SAS9 server
+   * Executes code against a SAS 9 server.  Requires a runner to be present in
+   * the users home directory in metadata.
    * @param linesOfCode - lines of sas code from the file to run.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
@@ -97,7 +98,7 @@ export default class SASjs {
   }
 
   /**
-   * Executes the sas code against SASViya server
+   * Executes sas code in a SAS Viya compute session.
    * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
    * @param linesOfCode - lines of sas code from the file to run.
    * @param contextName - context name on which code will be run on the server.
@@ -641,7 +642,8 @@ export default class SASjs {
   }
 
   /**
-   * Makes a request to the SAS Service specified in `SASjob`. The response
+   * Makes a request to program specified in `SASjob` (could be a Viya Job, a
+   * SAS 9 Stored Process, or a SASjs Server Stored Program). The response
    * object will always contain table names in lowercase, and column names in
    * uppercase. Values are returned formatted by default, unformatted
    * values can be configured as an option in the `%webout` macro.
@@ -650,7 +652,8 @@ export default class SASjs {
    *  the SAS `_program` parameter to run a Job Definition or SAS 9 Stored
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param data - a JSON object containing one or more tables to be sent to
-   * SAS. Can be `null` if no inputs required.
+   * SAS.  For an example of the table structure, see the project README. This
+   * value can be `null` if no inputs are required.
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
@@ -680,9 +683,19 @@ export default class SASjs {
 
     const validationResult = this.validateInput(data)
 
+    // status is true if the data passes validation checks above
     if (validationResult.status) {
-      if (
-        config.serverType !== ServerType.Sas9 &&
+      if (config.serverType === ServerType.Sasjs) {
+        return await this.webJobExecutor!.execute(
+          sasJob,
+          data,
+          config,
+          loginRequiredCallback,
+          authConfig,
+          extraResponseAttributes
+        )
+      } else if (
+        config.serverType === ServerType.SasViya &&
         config.useComputeApi !== undefined &&
         config.useComputeApi !== null
       ) {

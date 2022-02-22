@@ -109,6 +109,10 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
+    /**
+     * Use the available form data object (FormData in Browser, NodeFormData in
+     *  Node)
+     */
     let formData =
       typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
 
@@ -145,6 +149,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
+    /* The NodeFormData object does not set the request header - so, set it */
     const contentType =
       formData instanceof NodeFormData
         ? `multipart/form-data; boundary=${formData.getBoundary()}`
