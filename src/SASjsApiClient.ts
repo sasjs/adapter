@@ -37,7 +37,10 @@ export class SASjsApiClient {
     }>(
       'SASjsApi/drive/deploy',
       { fileTree: members, appLoc: appLoc },
-      access_token
+      access_token,
+      undefined,
+      {},
+      { maxContentLength: Infinity, maxBodyLength: Infinity }
     )
 
     return Promise.resolve(result)

@@ -207,7 +207,8 @@ export class RequestClient implements HttpClient {
     data: any,
     accessToken: string | undefined,
     contentType = 'application/json',
-    overrideHeaders: { [key: string]: string | number } = {}
+    overrideHeaders: { [key: string]: string | number } = {},
+    additionalSettings: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
@@ -215,7 +216,11 @@ export class RequestClient implements HttpClient {
     }
 
     return this.httpClient
-      .post<T>(url, data, { headers, withCredentials: true })
+      .post<T>(url, data, {
+        headers,
+        withCredentials: true,
+        ...additionalSettings
+      })
       .then((response) => {
         throwIfError(response)
 
