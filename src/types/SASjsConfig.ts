@@ -1,5 +1,6 @@
 import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
+import { HttpsAgentOptions } from '@sasjs/utils/types'
 
 /**
  * Specifies the configuration for the SASjs instance - eg where and how to
@@ -64,7 +65,7 @@ export class SASjsConfig {
    * By providing `key`, `cert`, `ca` to connect with server
    * Other options can be set `rejectUnauthorized` and `requestCert`
    */
-  httpsAgentOptions?: https.AgentOptions
+  httpsAgentOptions?: HttpsAgentOptions
   /**
    * Supported login mechanisms are - Redirected and Default
    */
