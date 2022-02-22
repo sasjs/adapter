@@ -1,7 +1,11 @@
+import * as NodeFormData from 'form-data'
 import { convertToCSV } from '../utils/convertToCsv'
 import { splitChunks } from '../utils/splitChunks'
 
-export const generateTableUploadForm = (formData: FormData, data: any) => {
+export const generateTableUploadForm = (
+  formData: FormData | NodeFormData,
+  data: any
+) => {
   const sasjsTables = []
   const requestParams: any = {}
   let tableCounter = 0

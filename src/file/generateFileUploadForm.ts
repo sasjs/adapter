@@ -1,9 +1,10 @@
+import * as NodeFormData from 'form-data'
 import { convertToCSV } from '../utils/convertToCsv'
 
 export const generateFileUploadForm = (
-  formData: FormData,
+  formData: FormData | NodeFormData,
   data: any
-): FormData => {
+): FormData | NodeFormData => {
   for (const tableName in data) {
     if (!Array.isArray(data[tableName])) continue
 

@@ -27,7 +27,6 @@ import {
   ComputeJobExecutor,
   JesJobExecutor,
   Sas9JobExecutor,
-  SasJsJobExecutor,
   FileUploader
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
@@ -63,7 +62,6 @@ export default class SASjs {
   private computeJobExecutor: JobExecutor | null = null
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
-  private sasJsJobExecutor: JobExecutor | null = null
 
   constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
@@ -683,16 +681,7 @@ export default class SASjs {
     const validationResult = this.validateInput(data)
 
     if (validationResult.status) {
-      if (config.serverType === ServerType.Sasjs) {
-        return await this.sasJsJobExecutor!.execute(
-          sasJob,
-          data,
-          config,
-          loginRequiredCallback,
-          authConfig,
-          extraResponseAttributes
-        )
-      } else if (
+      if (
         config.serverType !== ServerType.Sas9 &&
         config.useComputeApi !== undefined &&
         config.useComputeApi !== null
@@ -1112,13 +1101,6 @@ export default class SASjs {
       this.jobsPath,
       this.requestClient,
       this.sasViyaApiClient!
-    )
-
-    this.sasJsJobExecutor = new SasJsJobExecutor(
-      this.sasjsConfig.serverUrl,
-      this.sasjsConfig.serverType!,
-      this.jobsPath,
-      this.requestClient
     )
 
     this.sas9JobExecutor = new Sas9JobExecutor(

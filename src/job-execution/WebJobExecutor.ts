@@ -1,3 +1,4 @@
+import * as NodeFormData from 'form-data'
 import {
   AuthConfig,
   ExtraResponseAttributes,
@@ -108,7 +109,8 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
-    let formData = new FormData()
+    let formData =
+      typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
@@ -143,8 +145,18 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
+    const contentType =
+      formData instanceof NodeFormData
+        ? `multipart/form-data; boundary=${formData.getBoundary()}`
+        : undefined
+
     const requestPromise = new Promise((resolve, reject) => {
-      this.requestClient!.post(apiUrl, formData, authConfig?.access_token)
+      this.requestClient!.post(
+        apiUrl,
+        formData,
+        authConfig?.access_token,
+        contentType
+      )
         .then(async (res: any) => {
           const parsedSasjsServerLog =
             this.serverType === ServerType.Sasjs
