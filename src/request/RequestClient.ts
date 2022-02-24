@@ -635,7 +635,7 @@ const parseError = (data: string) => {
       if (parts.length > 1) {
         const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
         const message = `Stored process not found: ${storedProcessPath}`
-        return new JobExecutionError(404, message, '')
+        return new JobExecutionError(500, message, '')
       }
     }
   } catch (_) {}
@@ -649,7 +649,7 @@ const parseError = (data: string) => {
       if (parts.length > 1) {
         const log = parts[1].split('<pre>')[1].split('</pre>')[0]
         const message = `This request completed with errors.`
-        return new JobExecutionError(404, message, log)
+        return new JobExecutionError(500, message, log)
       }
     }
   } catch (_) {}
