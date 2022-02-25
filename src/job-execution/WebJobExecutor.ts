@@ -208,7 +208,7 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           const responseObject = appendExtraResponseAttributes(
-            { result: jsonResponse },
+            { result: jsonResponse, log: parsedSasjsServerLog },
             extraResponseAttributes
           )
           resolve(responseObject)
