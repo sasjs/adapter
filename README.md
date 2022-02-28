@@ -20,9 +20,9 @@
 
 SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:
 
-1 - `npm install @sasjs/adapter` - for use in a node project
+1 - `npm install @sasjs/adapter` - for use in a nodeJS project (recommended)
 
-2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@2/index.js) and use a copy of the latest JS file
+2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@3/index.min.js) and use a copy of the latest JS file
 
 3 - Reference directly from the CDN - in which case click [here](https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection) and select "SRI" to get the script tag with the integrity hash.
 
@@ -96,7 +96,12 @@ const sasJs = new SASjs({your config})
 More on the config later.
 
 ### SAS Logon
-The login process can be handled directly, as below, or as a callback function to a SAS request.
+All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the `LoginMechanism` attribute of the sasJs config object (above):
+
+* `LoginMechanism:'Redirected'` - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.
+* `LoginMechanism:'Default'` - this approach requires that the username and password are captured, and used within the `.login()` method.  This can be helpful for development, or automated testing.
+
+Sample code for logging in with the `Default` approach:
 
 ```javascript
 sasJs.logIn('USERNAME','PASSWORD'
@@ -108,6 +113,8 @@ sasJs.logIn('USERNAME','PASSWORD'
   }
 }
 ```
+
+More examples of using authentication, and more, can be found in the [SASjs Seed Apps](https://github.com/search?q=topic%3Asasjs-app+org%3Asasjs+fork%3Atrue) on github.
 
 ###  Request / Response
 A simple request can be sent to SAS in the following fashion:
@@ -247,11 +254,11 @@ Where an entire column is made up of special missing numerics, there would be no
 
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
 
-* `appLoc` - this is the folder under which the SAS services will be created.
+* `appLoc` - this is the folder (eg in metadata or SAS Drive) under which the SAS services are created.
 * `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
-* `LoginMechanism` - either `Default` or `Redirected`.  If `Redirected` then authentication occurs through the injection of an additional screen, which contains the SASLogon prompt.  This allows for more complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the redirect flow can also be modified.  If left at "Default" then the developer must capture the username and password and use these with the `.login()` method.
+* `LoginMechanism` - either `Default` or `Redirected`.  See [SAS Logon](#sas-logon) section.
 * `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.
 * `requestHistoryLimit` - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled.  Default is 10.
