@@ -80,16 +80,22 @@ const errorAndCsrfData: any = {
 }
 
 const testTable = 'sometable'
-export const testTableWithNullVars: { [key: string]: any } = {
+export const testTableWithSpecialNumeric: { [key: string]: any } = {
   [testTable]: [
-    { var1: 'string', var2: 232, nullvar: 'A' },
-    { var1: 'string', var2: 232, nullvar: 'B' },
-    { var1: 'string', var2: 232, nullvar: '_' },
-    { var1: 'string', var2: 232, nullvar: 0 },
-    { var1: 'string', var2: 232, nullvar: 'z' },
-    { var1: 'string', var2: 232, nullvar: null }
+    { var1: 'string', var2: 232, specialnumeric: 'A' },
+    { var1: 'string', var2: 232, specialnumeric: 'B' },
+    { var1: 'string', var2: 232, specialnumeric: '_' },
+    { var1: 'string', var2: 232, specialnumeric: 0 },
+    { var1: 'string', var2: 232, specialnumeric: 'z' },
+    { var1: 'string', var2: 232, specialnumeric: null }
   ],
-  [`$${testTable}`]: { formats: { var1: '$char12.', nullvar: 'best.' } }
+  [`$${testTable}`]: { formats: { var1: '$char12.', specialnumeric: 'best.' } }
+}
+export const testTableWithSpecialNumericOneRow: { [key: string]: any } = {
+  [testTable]: [
+    { var1: 'string', var2: 232, specialnumeric: 'S' }
+  ],
+  [`$${testTable}`]: { formats: { var1: '$char12.', specialnumeric: 'best.' } }
 }
 
 export const specialCaseTests = (adapter: SASjs): TestSuite => ({
@@ -265,31 +271,48 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Special missing values',
       description: 'Should support special missing values',
       test: () => {
-        return adapter.request('common/sendObj', testTableWithNullVars)
+        return adapter.request('common/sendObj', testTableWithSpecialNumeric)
       },
       assertion: (res: any) => {
         let assertionRes = true
 
-        testTableWithNullVars[testTable].forEach(
-          (row: { [key: string]: any }, i: number) =>
-            Object.keys(row).forEach((col: string) => {
-              const resValue = res[testTable][i][col.toUpperCase()]
+        //We check the $ formats values that come from sas are in right order
+        const resVars = res[`$${testTable}`].vars
 
-              if (
-                typeof row[col] === 'string' &&
-                testTableWithNullVars[`$${testTable}`].formats[col] ===
-                  'best.' &&
-                row[col].toUpperCase() !== resValue
-              ) {
-                assertionRes = false
-              } else if (
-                typeof row[col] !== 'string' &&
-                row[col] !== resValue
-              ) {
-                assertionRes = false
-              }
-            })
-        )
+        Object.keys(resVars).forEach(
+          (key: any, i: number) => {
+            let formatValue = testTableWithSpecialNumeric[`$${testTable}`].formats[key.toLowerCase()]
+            //If it is char, we change id to $ to pass the test
+            //If it is number, it will already be compatible to comapre
+            formatValue = formatValue?.includes('$') ? '$' : formatValue
+
+            if (formatValue !== undefined && !resVars[key].format.includes(formatValue)) assertionRes = false
+        })
+
+        return assertionRes
+      }
+    },
+    {
+      title: 'Special missing values (ONE ROW)',
+      description: 'Should support special missing values, when one row is send',
+      test: () => {
+        return adapter.request('common/sendObj', testTableWithSpecialNumericOneRow,)
+      },
+      assertion: (res: any) => {
+        let assertionRes = true
+
+        //We check the $ formats values that come from sas are in right order
+        const resVars = res[`$${testTable}`].vars
+
+        Object.keys(resVars).forEach(
+          (key: any, i: number) => {
+            let formatValue = testTableWithSpecialNumeric[`$${testTable}`].formats[key.toLowerCase()]
+            //If it is char, we change id to $ to pass the test
+            //If it is number, it will already be compatible to comapre
+            formatValue = formatValue?.includes('$') ? '$' : formatValue
+
+            if (formatValue !== undefined && !resVars[key].format.includes(formatValue)) assertionRes = false
+        })
 
         return assertionRes
       }

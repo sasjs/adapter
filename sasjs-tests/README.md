@@ -70,7 +70,7 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i,missing=STRING) %end;
+  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
@@ -79,7 +79,7 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i,missing=STRING) %end;
+  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
@@ -111,7 +111,7 @@ parmcards4;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(OBJ,&table,missing=STRING)
+    %webout(OBJ,&table,missing=STRING,showmeta=YES)
   %end;
   %mend;
   %x()
@@ -125,7 +125,7 @@ parmcards4;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(ARR,&table,missing=STRING)
+    %webout(ARR,&table,missing=STRING,showmeta=YES)
   %end;
   %mend;
   %x()
