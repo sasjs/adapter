@@ -1,6 +1,5 @@
 import { SasAuthResponse } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
-import * as NodeFormData from 'form-data'
 import { RequestClient } from '../request/RequestClient'
 
 /**
@@ -24,26 +23,17 @@ export async function getAccessTokenForViya(
     token = Buffer.from(clientId + ':' + clientSecret).toString('base64')
   }
   const headers = {
-    Authorization: 'Basic ' + token
+    Authorization: 'Basic ' + token,
+    Accept: 'application/json'
   }
 
-  let formData
-  if (typeof FormData === 'undefined') {
-    formData = new NodeFormData()
-  } else {
-    formData = new FormData()
-  }
-  formData.append('grant_type', 'authorization_code')
-  formData.append('code', authCode)
+  const data = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: authCode
+  })
 
   const authResponse = await requestClient
-    .post(
-      url,
-      formData,
-      undefined,
-      'multipart/form-data; boundary=' + (formData as any)._boundary,
-      headers
-    )
+    .post(url, data, undefined, 'application/x-www-form-urlencoded', headers)
     .then((res) => res.result as SasAuthResponse)
     .catch((err) => {
       throw prefixMessage(err, 'Error while getting access token. ')
