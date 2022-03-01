@@ -86,7 +86,7 @@ export const testTableWithSpecialNumeric: { [key: string]: any } = {
     { var1: 'string', var2: 232, specialnumeric: 'B' },
     { var1: 'string', var2: 232, specialnumeric: '_' },
     { var1: 'string', var2: 232, specialnumeric: 0 },
-    { var1: 'string', var2: 232, specialnumeric: 'z' },
+    { var1: 'string', var2: 232, specialnumeric: 'Z' },
     { var1: 'string', var2: 232, specialnumeric: null }
   ],
   [`$${testTable}`]: { formats: { var1: '$char12.', specialnumeric: 'best.' } }
@@ -94,6 +94,12 @@ export const testTableWithSpecialNumeric: { [key: string]: any } = {
 export const testTableWithSpecialNumericOneRow: { [key: string]: any } = {
   [testTable]: [
     { var1: 'string', var2: 232, specialnumeric: 'S' }
+  ],
+  [`$${testTable}`]: { formats: { var1: '$char12.', specialnumeric: 'best.' } }
+}
+export const testTableWithSpecialNumericLowercase: { [key: string]: any } = {
+  [testTable]: [
+    { var1: 'string', var2: 232, specialnumeric: 's' }
   ],
   [`$${testTable}`]: { formats: { var1: '$char12.', specialnumeric: 'best.' } }
 }
@@ -276,18 +282,28 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       assertion: (res: any) => {
         let assertionRes = true
 
-        //We check the $ formats values that come from sas are in right order
+        //We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
         Object.keys(resVars).forEach(
           (key: any, i: number) => {
             let formatValue = testTableWithSpecialNumeric[`$${testTable}`].formats[key.toLowerCase()]
-            //If it is char, we change id to $ to pass the test
-            //If it is number, it will already be compatible to comapre
+            //If it is char, we change it to $ to be compatible for comparsion
+            //If it is number, it will already be compatible to comapre (best.)
             formatValue = formatValue?.includes('$') ? '$' : formatValue
 
             if (formatValue !== undefined && !resVars[key].format.includes(formatValue)) assertionRes = false
         })
+
+        //Here we will compare the response values with values we send
+        const resVals = res[testTable]
+
+        testTableWithSpecialNumeric[testTable].forEach(
+          (row: { [key: string]: any }, i: number) =>
+            Object.keys(row).forEach((col: string) => {
+              if (resVals[i][col.toUpperCase()] !== row[col]) assertionRes = false
+            })
+        )
 
         return assertionRes
       }
@@ -301,18 +317,67 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       assertion: (res: any) => {
         let assertionRes = true
 
-        //We check the $ formats values that come from sas are in right order
+        //We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
         Object.keys(resVars).forEach(
           (key: any, i: number) => {
             let formatValue = testTableWithSpecialNumeric[`$${testTable}`].formats[key.toLowerCase()]
-            //If it is char, we change id to $ to pass the test
-            //If it is number, it will already be compatible to comapre
+            //If it is char, we change it to $ to be compatible for comparsion
+            //If it is number, it will already be compatible to comapre (best.)
             formatValue = formatValue?.includes('$') ? '$' : formatValue
 
             if (formatValue !== undefined && !resVars[key].format.includes(formatValue)) assertionRes = false
         })
+
+        //Here we will compare the response values with values we send
+        const resVals = res[testTable]
+
+        testTableWithSpecialNumericOneRow[testTable].forEach(
+          (row: { [key: string]: any }, i: number) =>
+            Object.keys(row).forEach((col: string) => {
+              if (resVals[i][col.toUpperCase()] !== row[col]) assertionRes = false
+            })
+        )
+
+        return assertionRes
+      }
+    },
+    {
+      title: 'Special missing values (LOWERCASE)',
+      description: 'Should support special missing values, when LOWERCASE value is send',
+      test: () => {
+        return adapter.request('common/sendObj', testTableWithSpecialNumericLowercase,)
+      },
+      assertion: (res: any) => {
+        let assertionRes = true
+
+        //We receive formats in response. We compare it with formats that we included in request to make sure they are equal
+        const resVars = res[`$${testTable}`].vars
+
+        Object.keys(resVars).forEach(
+          (key: any, i: number) => {
+            let formatValue = testTableWithSpecialNumericLowercase[`$${testTable}`].formats[key.toLowerCase()]
+            //If it is char, we change it to $ to be compatible for comparsion
+            //If it is number, it will already be compatible to comapre (best.)
+            formatValue = formatValue?.includes('$') ? '$' : formatValue
+
+            if (formatValue !== undefined && !resVars[key].format.includes(formatValue)) assertionRes = false
+        })
+
+        //Here we will compare the response values with values we send
+        const resVals = res[testTable]
+
+        testTableWithSpecialNumericLowercase[testTable].forEach(
+          (row: { [key: string]: any }, i: number) =>
+            Object.keys(row).forEach((col: string) => {
+              if (col === 'specialnumeric') {
+                if (resVals[i][col.toUpperCase()] !== row[col].toUpperCase()) assertionRes = false
+              } else {
+                if (resVals[i][col.toUpperCase()] !== row[col]) assertionRes = false
+              }
+            })
+        )
 
         return assertionRes
       }
