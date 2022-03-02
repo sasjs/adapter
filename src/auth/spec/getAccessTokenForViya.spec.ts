@@ -35,11 +35,12 @@ describe('getAccessTokenForViya', () => {
 
     expect(requestClient.post).toHaveBeenCalledWith(
       '/SASLogon/oauth/token',
-      expect.any(NodeFormData),
+      expect.any(URLSearchParams),
       undefined,
-      expect.stringContaining('multipart/form-data; boundary='),
+      'application/x-www-form-urlencoded',
       {
-        Authorization: 'Basic ' + token
+        Authorization: 'Basic ' + token,
+        Accept: 'application/json'
       }
     )
   })
