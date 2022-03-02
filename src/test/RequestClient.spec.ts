@@ -30,6 +30,11 @@ const ERROR_MESSAGES = {
   CCA: 'unable to verify the first certificate'
 }
 
+const incorrectAuthCodeErr = {
+  error: 'unauthorized',
+  error_description: 'Bad credentials'
+}
+
 describe('RequestClient', () => {
   let server: http.Server
 
@@ -65,7 +70,7 @@ describe('RequestClient', () => {
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
     ).rejects.toEqual(
       prefixMessage(
-        new LoginRequiredError(),
+        new LoginRequiredError(incorrectAuthCodeErr),
         'Error while getting access token. '
       )
     )
@@ -246,7 +251,7 @@ describe('RequestClient - Self Signed Server', () => {
       adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
     ).rejects.toEqual(
       prefixMessage(
-        new LoginRequiredError(),
+        new LoginRequiredError(incorrectAuthCodeErr),
         'Error while getting access token. '
       )
     )
