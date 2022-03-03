@@ -416,6 +416,55 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
 
         return assertionRes
       }
-    }
+    },
+    {
+      title: 'Special missing values (ONE ROW) useComputeApi undefined',
+      description:
+        'Should support special missing values, when one row is send (On VIYA Web Approach)',
+      test: () => {
+        return adapter.request(
+          'common/sendObj',
+          testTableWithSpecialNumericOneRow,
+          { useComputeApi: undefined }
+        )
+      },
+      assertion: (res: any) => {
+        let assertionRes = true
+
+        // We receive formats in response. We compare it with formats that we included in request to make sure they are equal
+        const resVars = res[`$${testTable}`].vars
+
+        Object.keys(resVars).forEach((key: any, i: number) => {
+          let formatValue =
+            testTableWithSpecialNumeric[`$${testTable}`].formats[
+              key.toLowerCase()
+            ]
+          // If it is char, we change it to $ to be compatible for comparsion
+          // If it is number, it will already be compatible to comapre (best.)
+          formatValue = formatValue?.includes('$') ? '$' : formatValue
+
+          if (
+            formatValue !== undefined &&
+            !resVars[key].format.includes(formatValue)
+          ) {
+            assertionRes = false
+          }
+        })
+
+        // Here we will compare the response values with values we send
+        const resValues = res[testTable]
+
+        testTableWithSpecialNumericOneRow[testTable].forEach(
+          (row: { [key: string]: any }, i: number) =>
+            Object.keys(row).forEach((col: string) => {
+              if (resValues[i][col.toUpperCase()] !== row[col]) {
+                assertionRes = false
+              }
+            })
+        )
+
+        return assertionRes
+      }
+    },
   ]
 })
