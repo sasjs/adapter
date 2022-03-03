@@ -465,6 +465,6 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
 
         return assertionRes
       }
-    },
+    }
   ]
 })

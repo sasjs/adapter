@@ -219,4 +219,10 @@ describe('convertToCsv', () => {
       new Error('No table provided to be converted to CSV')
     )
   })
+
+  it('should empty string if table is not an array', () => {
+    const data = { [tableName]: true }
+
+    expect(convertToCSV(data, tableName)).toEqual('')
+  })
 })

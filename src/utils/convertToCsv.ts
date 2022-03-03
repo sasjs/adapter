@@ -11,6 +11,9 @@ export const convertToCSV = (
   }
 
   const table = data[tableName]
+
+  if (!Array.isArray(table)) return ''
+
   let formats = data[`$${tableName}`]?.formats
   let headers: string[] = []
   let csvTest
