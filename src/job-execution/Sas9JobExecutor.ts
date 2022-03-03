@@ -125,7 +125,8 @@ const generateFileUploadForm = (
 ): NodeFormData => {
   for (const tableName in data) {
     const name = tableName
-    const csv = convertToCSV(data[tableName])
+    const csv = convertToCSV(data, tableName)
+
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(
         'The max length of a string value in SASjs is 32765 characters.'
