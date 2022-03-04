@@ -18,7 +18,7 @@ export const generateFileUploadForm = (
     if (!Array.isArray(data[tableName])) continue
 
     const name = tableName
-    const csv = convertToCSV(data[tableName])
+    const csv = convertToCSV(data, tableName)
 
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(

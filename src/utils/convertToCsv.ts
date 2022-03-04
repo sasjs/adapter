@@ -3,10 +3,18 @@
  * @param data - the array of JSON objects to convert.
  */
 export const convertToCSV = (
-  data: any[],
-  sasFormats?: { formats: { [key: string]: string } }
+  data: { [key: string]: any },
+  tableName: string
 ) => {
-  let formats = sasFormats?.formats
+  if (!data[tableName]) {
+    throw new Error('No table provided to be converted to CSV')
+  }
+
+  const table = data[tableName]
+
+  if (!Array.isArray(table)) return ''
+
+  let formats = data[`$${tableName}`]?.formats
   let headers: string[] = []
   let csvTest
   let invalidString = false
@@ -16,14 +24,14 @@ export const convertToCSV = (
     headers = Object.keys(formats).map((key) => `${key}:${formats![key]}`)
   }
 
-  const headerFields = Object.keys(data[0])
+  const headerFields = Object.keys(table[0])
 
   headerFields.forEach((field) => {
     if (!formats || !Object.keys(formats).includes(field)) {
       let hasNullOrNumber = false
       let hasSpecialMissingString = false
 
-      data.forEach((row: { [key: string]: any }) => {
+      table.forEach((row: { [key: string]: any }) => {
         if (row[field] === null || typeof row[field] === 'number') {
           hasNullOrNumber = true
         } else if (
@@ -45,7 +53,7 @@ export const convertToCSV = (
         let hasMixedTypes: boolean = false
         let rowNumError: number = -1
 
-        const longestValueForField = data
+        const longestValueForField = table
           .map((row: any, index: number) => {
             if (row[field] || row[field] === '') {
               if (firstFoundType) {
@@ -101,7 +109,7 @@ export const convertToCSV = (
     }
   })
 
-  if (sasFormats) {
+  if (formats) {
     headers = headers.sort(
       (a, b) =>
         headerFields.indexOf(a.replace(/:.*/, '')) -
@@ -111,7 +119,7 @@ export const convertToCSV = (
 
   if (invalidString) return 'ERROR: LARGE STRING LENGTH'
 
-  csvTest = data.map((row: any) => {
+  csvTest = table.map((row: any) => {
     const fields = Object.keys(row).map((fieldName, index) => {
       let value
       const currentCell = row[fieldName]
