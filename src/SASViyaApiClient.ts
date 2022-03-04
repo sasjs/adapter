@@ -838,7 +838,7 @@ export class SASViyaApiClient {
       .get<{ items: any[] }>(
         `/folders/folders/${folder.id}/members?limit=${
           folder.memberCount < 500 ? 500 : folder.memberCount
-        }`, // this is temporary fix for https://github.com/sasjs/adapter/issues/669
+        }`, // this is a fix for https://github.com/sasjs/adapter/issues/669
         accessToken
       )
       .catch((err) => {
