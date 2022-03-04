@@ -836,7 +836,9 @@ export class SASViyaApiClient {
 
     const { result: members } = await this.requestClient
       .get<{ items: any[] }>(
-        `/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
+        `/folders/folders/${folder.id}/members?limit=${
+          folder.memberCount < 500 ? 500 : folder.memberCount
+        }`, // this is temporary fix for https://github.com/sasjs/adapter/issues/669
         accessToken
       )
       .catch((err) => {
