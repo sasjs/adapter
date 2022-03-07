@@ -113,6 +113,9 @@ export default class SASjs {
     debug?: boolean
   ) {
     this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
+    
+    contextName = contextName || this.sasjsConfig.contextName
+
     if (!contextName) {
       throw new Error(
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
