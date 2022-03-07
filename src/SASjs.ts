@@ -113,7 +113,7 @@ export default class SASjs {
     debug?: boolean
   ) {
     this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
-    
+
     contextName = contextName || this.sasjsConfig.contextName
 
     if (!contextName) {
