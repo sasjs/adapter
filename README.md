@@ -155,7 +155,7 @@ The SAS type (char/numeric) of the values is determined according to a set of ru
 
 * If the values are numeric, the SAS type is numeric
 * If the values are all string, the SAS type is character
-* If the values contain a single character (a-Z + underscore) AND a numeric, then the SAS type is numeric (with special missing values).  
+* If the values contain a single character (a-Z + underscore + .) AND a numeric, then the SAS type is numeric (with special missing values).  
 * `null` is set to either '.' or '' depending on the assigned or derived type per the above rules.  If entire column is `null` then the type will be numeric.
 
 The following table illustrates the formats applied to columns under various scenarios:

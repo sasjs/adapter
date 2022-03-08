@@ -125,7 +125,7 @@ export const convertToCSV = (
         if (value && !specialMissingValueRegExp.test(value)) {
           console.log(`🤖[value]🤖`, value)
           throw new Error(
-            'Special missing value can only be a single character from A to Z or _'
+            'Special missing value can only be a single character from A to Z or _ or .'
           )
         }
 
