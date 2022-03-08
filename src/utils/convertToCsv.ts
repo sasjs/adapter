@@ -10,7 +10,7 @@ export const convertToCSV = (
   let headers: string[] = []
   let csvTest
   let invalidString = false
-  const specialMissingValueRegExp = /^[a-z_]{1}$/i
+  const specialMissingValueRegExp = /^[a-z_.]{1}$/i
 
   if (formats) {
     headers = Object.keys(formats).map((key) => `${key}:${formats![key]}`)
