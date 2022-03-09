@@ -557,8 +557,18 @@ export class RequestClient implements HttpClient {
 }
 
 export const throwIfError = (response: AxiosResponse) => {
-  if (response.status === 401) {
-    throw new LoginRequiredError()
+  switch (response.status) {
+    case 400:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      }
+      break
+    case 401:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      } else {
+        throw new LoginRequiredError()
+      }
   }
 
   if (response.data?.entityID?.includes('login')) {
