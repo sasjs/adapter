@@ -85,25 +85,13 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     )
       .then((res: any) => {
-        let resString = res
-
-        if (typeof res === 'object') {
-          resString = JSON.stringify(res)
-        }
-
-        this.requestClient!.appendRequest(resString, sasJob, config.debug)
-
+        //appending response to requests array that will be used for requests history reference
+        this.requestClient!.appendRequest(res, sasJob, config.debug)
         return res
       })
       .catch((err: any) => {
-        let errString = err
-
-        if (typeof err === 'object') {
-          errString = JSON.stringify(errString)
-        }
-
-        this.requestClient!.appendRequest(errString, sasJob, config.debug)
-
+        //appending error to requests array that will be used for requests history reference
+        this.requestClient!.appendRequest(err, sasJob, config.debug)
         return err
       })
   }
