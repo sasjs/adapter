@@ -85,10 +85,12 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     )
       .then((res: any) => {
+        //appending response to requests array that will be used for requests history reference
         this.requestClient!.appendRequest(res, sasJob, config.debug)
         return res
       })
       .catch((err: any) => {
+        //appending error to requests array that will be used for requests history reference
         this.requestClient!.appendRequest(err, sasJob, config.debug)
         return err
       })
