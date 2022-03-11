@@ -80,7 +80,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         Connection: 'Keep-Alive'
       })
         .then((res: any) => {
-          //appending response to requests array that will be used for requests history reference
+          // appending response to requests array that will be used for requests history reference
           this.requestClient!.appendRequest(res, sasJob, config.debug)
           resolve(res)
         })
@@ -88,12 +88,12 @@ export class Sas9JobExecutor extends BaseJobExecutor {
           // by default error string is equal to actual error object
           let errString = err
 
-          // if error object contains non empty result attribute, set errString to result
+          // if error object contains non empty result attribute, set result to errString
           if (err.result && err.result !== '') errString = err.result
-          // if there's no result but error message then set errString to error message
+          // if there's no result but error message, set error message to errString
           else if (err.message) errString = err.message
 
-          //appending error to requests array that will be used for requests history reference
+          // appending error to requests array that will be used for requests history reference
           this.requestClient!.appendRequest(errString, sasJob, config.debug)
           reject(new ErrorResponse(err?.message, err))
         })
