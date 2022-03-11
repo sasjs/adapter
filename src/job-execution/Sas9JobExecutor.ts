@@ -74,26 +74,32 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
         : 'text/plain'
 
-    return await this.sas9RequestClient!.post(
-      apiUrl,
-      formData,
-      undefined,
-      contentType,
-      {
+    const requestPromise = new Promise((resolve, reject) =>
+      this.sas9RequestClient!.post(apiUrl, formData, undefined, contentType, {
         Accept: '*/*',
         Connection: 'Keep-Alive'
-      }
+      })
+        .then((res: any) => {
+          //appending response to requests array that will be used for requests history reference
+          this.requestClient!.appendRequest(res, sasJob, config.debug)
+          resolve(res)
+        })
+        .catch((err: any) => {
+          // by default error string is equal to actual error object
+          let errString = err
+
+          // if error object contains non empty result attribute, set errString to result
+          if (err.result && err.result !== '') errString = err.result
+          // if there's no result but error message then set errString to error message
+          else if (err.message) errString = err.message
+
+          //appending error to requests array that will be used for requests history reference
+          this.requestClient!.appendRequest(errString, sasJob, config.debug)
+          reject(new ErrorResponse(err?.message, err))
+        })
     )
-      .then((res: any) => {
-        //appending response to requests array that will be used for requests history reference
-        this.requestClient!.appendRequest(res, sasJob, config.debug)
-        return res
-      })
-      .catch((err: any) => {
-        //appending error to requests array that will be used for requests history reference
-        this.requestClient!.appendRequest(err, sasJob, config.debug)
-        return err
-      })
+
+    return requestPromise
   }
 
   private getRequestParams(config: any): any {
