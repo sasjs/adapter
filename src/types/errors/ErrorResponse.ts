@@ -21,7 +21,7 @@ export class ErrorResponse {
   }
 }
 
-interface ErrorBody {
+export interface ErrorBody {
   message: string
   details: string
   raw: any
