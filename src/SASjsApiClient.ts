@@ -34,6 +34,7 @@ export class SASjsApiClient {
     const { result } = await this.requestClient.post<{
       status: string
       message: string
+      streamServiceName?: string
       example?: {}
     }>(
       'SASjsApi/drive/deploy',
