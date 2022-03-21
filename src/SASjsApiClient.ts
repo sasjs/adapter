@@ -1,4 +1,4 @@
-import { AuthConfig, ServerType } from '@sasjs/utils/types'
+import { AuthConfig, ServerType, StreamConfig } from '@sasjs/utils/types'
 import { FileTree, ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
@@ -20,6 +20,7 @@ export class SASjsApiClient {
   public async deploy(
     members: FileTree,
     appLoc: string,
+    streamConfig?: StreamConfig,
     authConfig?: AuthConfig
   ) {
     let access_token = (authConfig || {}).access_token
@@ -36,7 +37,13 @@ export class SASjsApiClient {
       example?: {}
     }>(
       'SASjsApi/drive/deploy',
-      { fileTree: members, appLoc: appLoc },
+      {
+        fileTree: members,
+        appLoc: appLoc,
+        streamServiceName: streamConfig?.streamServiceName,
+        streamWebFolder: streamConfig?.streamWebFolder,
+        streamLogo: streamConfig?.streamLogo
+      },
       access_token,
       undefined,
       {},

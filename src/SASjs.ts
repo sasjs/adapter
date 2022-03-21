@@ -17,7 +17,8 @@ import {
   MacroVar,
   AuthConfig,
   ExtraResponseAttributes,
-  SasAuthResponse
+  SasAuthResponse,
+  StreamConfig
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import { SasjsRequestClient } from './request/SasjsRequestClient'
@@ -891,17 +892,24 @@ export default class SASjs {
    * @param members - the JSON specifying the folders and services to be created.
    * @param appLoc - the base folder in which to create the new folders and
    * services.  If not provided, is taken from SASjsConfig.
-   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   * @param streamConfig - optional configuration object of StreamConfig for deploying streaming app.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorized to execute compute jobs.
    */
   public async deployToSASjs(
     members: FileTree,
     appLoc?: string,
+    streamConfig?: StreamConfig,
     authConfig?: AuthConfig
   ) {
     if (!appLoc) {
       appLoc = this.sasjsConfig.appLoc
     }
-    return await this.sasJSApiClient?.deploy(members, appLoc, authConfig)
+    return await this.sasJSApiClient?.deploy(
+      members,
+      appLoc,
+      streamConfig,
+      authConfig
+    )
   }
 
   public async executeJobSASjs(query: ExecutionQuery) {
@@ -919,7 +927,7 @@ export default class SASjs {
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
-   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorized to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
