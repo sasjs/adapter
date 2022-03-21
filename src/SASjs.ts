@@ -135,7 +135,7 @@ export default class SASjs {
 
   /**
    * Gets compute contexts.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async getComputeContexts(accessToken: string) {
     this.isMethodSupported('getComputeContexts', [ServerType.SasViya])
@@ -145,7 +145,7 @@ export default class SASjs {
 
   /**
    * Gets launcher contexts.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async getLauncherContexts(accessToken: string) {
     this.isMethodSupported('getLauncherContexts', [ServerType.SasViya])
@@ -164,7 +164,7 @@ export default class SASjs {
 
   /**
    * Gets executable compute contexts.
-   * @param authConfig - an access token, refresh token, client and secret for an authorized user.
+   * @param authConfig - an access token, refresh token, client and secret for an authorised user.
    */
   public async getExecutableContexts(authConfig: AuthConfig) {
     this.isMethodSupported('getExecutableContexts', [ServerType.SasViya])
@@ -178,8 +178,8 @@ export default class SASjs {
    * @param launchContextName - the name of the launcher context used by the compute service.
    * @param sharedAccountId - the ID of the account to run the servers for this context as.
    * @param autoExecLines - the lines of code to execute during session initialization.
-   * @param accessToken - an access token for an authorized user.
-   * @param authorizedUsers - an optional list of authorized user IDs.
+   * @param accessToken - an access token for an authorised user.
+   * @param authorisedUsers - an optional list of authorised user IDs.
    */
   public async createComputeContext(
     contextName: string,
@@ -187,7 +187,7 @@ export default class SASjs {
     sharedAccountId: string,
     autoExecLines: string[],
     accessToken: string,
-    authorizedUsers?: string[]
+    authorisedUsers?: string[]
   ) {
     this.isMethodSupported('createComputeContext', [ServerType.SasViya])
 
@@ -197,7 +197,7 @@ export default class SASjs {
       sharedAccountId,
       autoExecLines,
       accessToken,
-      authorizedUsers
+      authorisedUsers
     )
   }
 
@@ -206,7 +206,7 @@ export default class SASjs {
    * @param contextName - the name of the context to be created.
    * @param description - the description of the context to be created.
    * @param launchType - launch type of the context to be created.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async createLauncherContext(
     contextName: string,
@@ -228,7 +228,7 @@ export default class SASjs {
    * Updates a compute context on the given server.
    * @param contextName - the original name of the context to be deleted.
    * @param editedContext - an object with the properties to be updated.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async editComputeContext(
     contextName: string,
@@ -247,7 +247,7 @@ export default class SASjs {
   /**
    * Deletes a compute context on the given server.
    * @param contextName - the name of the context to be deleted.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async deleteComputeContext(contextName: string, accessToken?: string) {
     this.isMethodSupported('deleteComputeContext', [ServerType.SasViya])
@@ -262,7 +262,7 @@ export default class SASjs {
    * Returns a JSON representation of a compute context.
    * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
    * @param contextName - the name of the context to return.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async getComputeContextByName(
     contextName: string,
@@ -279,7 +279,7 @@ export default class SASjs {
   /**
    * Returns a JSON representation of a compute context.
    * @param contextId - an id of the context to return.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async getComputeContextById(contextId: string, accessToken?: string) {
     this.isMethodSupported('getComputeContextById', [ServerType.SasViya])
@@ -893,7 +893,7 @@ export default class SASjs {
    * @param appLoc - the base folder in which to create the new folders and
    * services.  If not provided, is taken from SASjsConfig.
    * @param streamConfig - optional configuration object of StreamConfig for deploying streaming app.
-   * @param authConfig - a valid client, secret, refresh and access tokens that are authorized to execute compute jobs.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    */
   public async deployToSASjs(
     members: FileTree,
@@ -927,7 +927,7 @@ export default class SASjs {
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
-   * @param authConfig - a valid client, secret, refresh and access tokens that are authorized to execute compute jobs.
+   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
@@ -980,7 +980,7 @@ export default class SASjs {
   /**
    * Fetches content of the log file
    * @param logUrl - url of the log file.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async fetchLogFileContent(logUrl: string, accessToken?: string) {
     return await this.requestClient!.get(logUrl, accessToken).then((res) => {
