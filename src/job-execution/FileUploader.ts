@@ -103,7 +103,10 @@ export class FileUploader extends BaseJobExecutor {
                 if (typeof res.result._webout === 'object') {
                   jsonResponse = res.result._webout
                 } else {
-                  const webout = parseWeboutResponse(res.result._webout, uploadUrl)
+                  const webout = parseWeboutResponse(
+                    res.result._webout,
+                    uploadUrl
+                  )
                   jsonResponse = getValidJson(webout)
                 }
                 break

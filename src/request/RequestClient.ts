@@ -138,7 +138,9 @@ export class RequestClient implements HttpClient {
         let log: string = ''
 
         if (typeof log !== 'string') {
-          log = response.result.log.map((logLine: any) => logLine.line).join('\n')
+          log = response.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
         }
 
         sourceCode = parseSourceCode(log)
