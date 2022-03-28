@@ -85,6 +85,15 @@ parmcards4;
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=sendArr)
 parmcards4;
+  data work.macvars;
+    set sashelp.vmacro;
+  run;
+  %webout(OPEN)
+  %webout(OBJ,macvars) 
+  %webout(CLOSE)
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=sendMacVars)
+parmcards4;
 let he who hath understanding, reckon the number of the beast
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=makeErr)
@@ -118,7 +127,6 @@ parmcards4;
   %webout(CLOSE)
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=sendObj)
-filename ft15f001 temp;
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
@@ -132,7 +140,15 @@ parmcards4;
   %webout(CLOSE)
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=sendArr)
-filename ft15f001 temp;
+parmcards4;
+  data work.macvars;
+    set sashelp.vmacro;
+  run;
+  %webout(OPEN)
+  %webout(OBJ,macvars) 
+  %webout(CLOSE)
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=sendMacVars)
 parmcards4;
 If you can keep your head when all about you
     Are losing theirs and blaming it on you,
