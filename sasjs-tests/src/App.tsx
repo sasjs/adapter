@@ -6,6 +6,7 @@ import { specialCaseTests } from './testSuites/SpecialCases'
 import { sasjsRequestTests } from './testSuites/SasjsRequests'
 import '@sasjs/test-framework/dist/index.css'
 import { computeTests } from './testSuites/Compute'
+import { fileUploadTests } from './testSuites/FileUpload'
 
 const App = (): ReactElement<{}> => {
   const { adapter, config } = useContext(AppContext)
@@ -18,7 +19,8 @@ const App = (): ReactElement<{}> => {
         sendArrTests(adapter),
         sendObjTests(adapter),
         specialCaseTests(adapter),
-        sasjsRequestTests(adapter)
+        sasjsRequestTests(adapter),
+        fileUploadTests(adapter)
       ]
 
       if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
