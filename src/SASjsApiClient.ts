@@ -1,5 +1,5 @@
-import { AuthConfig, ServerType, StreamConfig } from '@sasjs/utils/types'
-import { FileTree, ExecutionQuery } from './types'
+import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
+import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
@@ -8,19 +8,11 @@ import { parseWeboutResponse } from './utils'
 import { getTokens } from './auth/getTokens'
 
 export class SASjsApiClient {
-  constructor(
-    private serverUrl: string,
-    private requestClient: RequestClient
-  ) {}
-
-  public setConfig(serverUrl: string) {
-    if (serverUrl) this.serverUrl = serverUrl
-  }
+  constructor(private requestClient: RequestClient) {}
 
   public async deploy(
-    members: FileTree,
+    dataJson: ServicePackSASjs,
     appLoc: string,
-    streamConfig?: StreamConfig,
     authConfig?: AuthConfig
   ) {
     let access_token = (authConfig || {}).access_token
@@ -31,6 +23,9 @@ export class SASjsApiClient {
         ServerType.Sasjs
       ))
     }
+
+    dataJson.appLoc = dataJson.appLoc || appLoc
+
     const { result } = await this.requestClient.post<{
       status: string
       message: string
@@ -38,13 +33,7 @@ export class SASjsApiClient {
       example?: {}
     }>(
       'SASjsApi/drive/deploy',
-      {
-        fileTree: members,
-        appLoc: appLoc,
-        streamServiceName: streamConfig?.streamServiceName,
-        streamWebFolder: streamConfig?.streamWebFolder,
-        streamLogo: streamConfig?.streamLogo
-      },
+      dataJson,
       access_token,
       undefined,
       {},
