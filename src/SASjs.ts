@@ -5,8 +5,7 @@ import {
   EditContextInput,
   PollOptions,
   LoginMechanism,
-  ExecutionQuery,
-  FileTree
+  ExecutionQuery
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -18,7 +17,7 @@ import {
   AuthConfig,
   ExtraResponseAttributes,
   SasAuthResponse,
-  StreamConfig
+  ServicePackSASjs
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import { SasjsRequestClient } from './request/SasjsRequestClient'
@@ -889,27 +888,21 @@ export default class SASjs {
 
   /**
    * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
-   * @param members - the JSON specifying the folders and services to be created.
-   * @param appLoc - the base folder in which to create the new folders and
-   * services.  If not provided, is taken from SASjsConfig.
-   * @param streamConfig - optional configuration object of StreamConfig for deploying streaming app.
-   * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   * @param dataJson - the JSON specifying the folders and files to be created, can also includes
+   * appLoc, streamServiceName, streamWebFolder, streamLogo
+   * @param appLoc - (optional) the base folder in which to create the new folders and
+   * services.  If not provided, is taken from SASjsConfig. Precedence will be of appLoc present in dataJson.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    */
   public async deployToSASjs(
-    members: FileTree,
+    dataJson: ServicePackSASjs,
     appLoc?: string,
-    streamConfig?: StreamConfig,
     authConfig?: AuthConfig
   ) {
     if (!appLoc) {
       appLoc = this.sasjsConfig.appLoc
     }
-    return await this.sasJSApiClient?.deploy(
-      members,
-      appLoc,
-      streamConfig,
-      authConfig
-    )
+    return await this.sasJSApiClient?.deploy(dataJson, appLoc, authConfig)
   }
 
   public async executeJobSASjs(query: ExecutionQuery) {
@@ -1102,13 +1095,8 @@ export default class SASjs {
     }
 
     if (this.sasjsConfig.serverType === ServerType.Sasjs) {
-      if (this.sasJSApiClient) {
-        this.sasJSApiClient.setConfig(this.sasjsConfig.serverUrl)
-      } else {
-        this.sasJSApiClient = new SASjsApiClient(
-          this.sasjsConfig.serverUrl,
-          this.requestClient
-        )
+      if (!this.sasJSApiClient) {
+        this.sasJSApiClient = new SASjsApiClient(this.requestClient)
       }
     }
 
