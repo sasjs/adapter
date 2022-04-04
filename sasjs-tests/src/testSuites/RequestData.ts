@@ -218,6 +218,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: [{ col1: 42 }]
         }
+
         return adapter.request('common/sendObj', invalidData).catch((e) => e)
       },
       assertion: (error: any) =>
