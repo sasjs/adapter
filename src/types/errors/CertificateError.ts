@@ -4,7 +4,7 @@ const instructionsToFix =
 export class CertificateError extends Error {
   constructor(message: string) {
     super(
-      `Error: ${message}\nPlease visit below link to resolve this issue:\n- ${instructionsToFix}\n`
+      `Error: ${message}\nPlease visit the link below for further information on this issue:\n- ${instructionsToFix}\n`
     )
     this.name = 'CertificateError'
     Object.setPrototypeOf(this, CertificateError.prototype)
