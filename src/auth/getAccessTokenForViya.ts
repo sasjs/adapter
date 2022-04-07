@@ -1,6 +1,7 @@
 import { SasAuthResponse } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
+import { CertificateError } from '../types/errors'
 
 /**
  * Exchanges the auth code for an access token for the given client.
@@ -36,6 +37,7 @@ export async function getAccessTokenForViya(
     .post(url, data, undefined, 'application/x-www-form-urlencoded', headers)
     .then((res) => res.result as SasAuthResponse)
     .catch((err) => {
+      if (err instanceof CertificateError) throw err
       throw prefixMessage(err, 'Error while getting access token. ')
     })
 

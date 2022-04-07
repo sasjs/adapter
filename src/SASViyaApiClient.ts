@@ -11,7 +11,11 @@ import {
   JobDefinition,
   PollOptions
 } from './types'
-import { JobExecutionError, RootFolderNotFoundError } from './types/errors'
+import {
+  CertificateError,
+  JobExecutionError,
+  RootFolderNotFoundError
+} from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
@@ -878,7 +882,8 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof CertificateError) throw err
         return { result: null }
       })
 
@@ -899,7 +904,8 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof CertificateError) throw err
         return { result: null }
       })
 
