@@ -7,7 +7,8 @@ import {
   LoginRequiredError,
   NotFoundError,
   InternalServerError,
-  JobExecutionError
+  JobExecutionError,
+  CertificateError
 } from '../types/errors'
 import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -515,6 +516,10 @@ export class RequestClient implements HttpClient {
     } else if (response?.status === 502) {
       if (debug) throw new InternalServerError()
       else return
+    }
+
+    if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+      throw new CertificateError(e.message)
     }
 
     if (e.message) throw e
