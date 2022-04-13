@@ -77,7 +77,7 @@ export default class SASjs {
   }
 
   /**
-   * Executes code against a SAS 9 server.  Requires a runner to be present in
+   * Executes SAS code on a SAS 9 server.  Requires a runner to be present in
    * the users home directory in metadata.
    * @param linesOfCode - lines of sas code from the file to run.
    * @param username - a string representing the username.
@@ -95,6 +95,17 @@ export default class SASjs {
       userName,
       password
     )
+  }
+
+  /**
+   * Executes SAS code on a SASJS server
+   * @param code - a string of code from the file to run.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
+   */
+  public async executeScriptSASjs(code: string, authConfig?: AuthConfig) {
+    this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
+
+    return await this.sasJSApiClient?.executeScript(code, authConfig)
   }
 
   /**
