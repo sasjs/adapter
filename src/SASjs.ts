@@ -98,6 +98,17 @@ export default class SASjs {
   }
 
   /**
+   * Executes code against a SAS JS server
+   * @param code - a string of code from the file to run.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
+   */
+  public async executeScriptSASjs(code: string, authConfig?: AuthConfig) {
+    this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
+
+    return await this.sasJSApiClient?.executeScript(code, authConfig)
+  }
+
+  /**
    * Executes sas code in a SAS Viya compute session.
    * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
    * @param linesOfCode - lines of sas code from the file to run.

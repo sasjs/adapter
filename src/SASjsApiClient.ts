@@ -61,6 +61,28 @@ export class SASjsApiClient {
   }
 
   /**
+   * Executes code on a SASJS server.
+   * @param serverUrl - a server url to execute code.
+   * @param code - a string of code to execute.
+   */
+  public async executeScript(code: string, authConfig?: AuthConfig) {
+    let access_token = (authConfig || {}).access_token
+    if (authConfig) {
+      ;({ access_token } = await getTokens(
+        this.requestClient,
+        authConfig,
+        ServerType.Sasjs
+      ))
+    }
+    const response = await this.requestClient.post(
+      'SASjsApi/code/execute',
+      { code },
+      access_token
+    )
+    return response.result as string
+  }
+
+  /**
    * Exchanges the auth code for an access token for the given client.
    * @param clientId - the client ID to authenticate with.
    * @param authCode - the auth code received from the server.
