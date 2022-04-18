@@ -62,8 +62,8 @@ export class SASjsApiClient {
 
   /**
    * Executes code on a SASJS server.
-   * @param serverUrl - a server url to execute code.
    * @param code - a string of code to execute.
+   * @param authConfig - an object for authentication.
    */
   public async executeScript(code: string, authConfig?: AuthConfig) {
     let access_token = (authConfig || {}).access_token
@@ -74,12 +74,23 @@ export class SASjsApiClient {
         ServerType.Sasjs
       ))
     }
-    const response = await this.requestClient.post(
-      'SASjsApi/code/execute',
-      { code },
-      access_token
-    )
-    return response.result as string
+
+    let parsedSasjsServerLog = ''
+
+    await this.requestClient
+      .post('SASjsApi/code/execute', { code }, access_token)
+      .then((res: any) => {
+        if (res.result?.log) {
+          parsedSasjsServerLog = res.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
+        }
+      })
+      .catch((err) => {
+        parsedSasjsServerLog = err
+      })
+
+    return parsedSasjsServerLog
   }
 
   /**
