@@ -80,9 +80,11 @@ export class SASjsApiClient {
     await this.requestClient
       .post('SASjsApi/code/execute', { code }, access_token)
       .then((res: any) => {
-        parsedSasjsServerLog = res.result.log
-          .map((logLine: any) => logLine.line)
-          .join('\n')
+        if (res.result?.log) {
+          parsedSasjsServerLog = res.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
+        }
       })
       .catch((err) => {
         parsedSasjsServerLog = err
