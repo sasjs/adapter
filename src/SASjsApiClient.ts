@@ -74,12 +74,21 @@ export class SASjsApiClient {
         ServerType.Sasjs
       ))
     }
-    const response = await this.requestClient.post(
-      'SASjsApi/code/execute',
-      { code },
-      access_token
-    )
-    return response.result as string
+
+    let parsedSasjsServerLog = ''
+
+    await this.requestClient
+      .post('SASjsApi/code/execute', { code }, access_token)
+      .then((res: any) => {
+        parsedSasjsServerLog = res.result.log
+          .map((logLine: any) => logLine.line)
+          .join('\n')
+      })
+      .catch((err) => {
+        parsedSasjsServerLog = err
+      })
+
+    return parsedSasjsServerLog
   }
 
   /**
