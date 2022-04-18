@@ -62,8 +62,8 @@ export class SASjsApiClient {
 
   /**
    * Executes code on a SASJS server.
-   * @param serverUrl - a server url to execute code.
    * @param code - a string of code to execute.
+   * @param authConfig - an object for authentication.
    */
   public async executeScript(code: string, authConfig?: AuthConfig) {
     let access_token = (authConfig || {}).access_token
