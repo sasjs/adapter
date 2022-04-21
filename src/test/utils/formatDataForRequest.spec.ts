@@ -62,7 +62,7 @@ describe('formatDataForRequest', () => {
 
     expect(() => formatDataForRequest(tableWithMissingValues)).toThrow(
       new Error(
-        'A Special missing value can only be a single character from A to Z or _ or .[a-z] or ._'
+        'A Special missing value can only be a single character from \'A\' to \'Z\', \'_\', \'.[a-z]\', \'._\''
       )
     )
   })
