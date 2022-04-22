@@ -134,7 +134,7 @@ export const convertToCSV = (
         if (value && !isSpecialMissing(value)) {
           console.log(`🤖[value]🤖`, value)
           throw new Error(
-            'A Special missing value can only be a single character from \'A\' to \'Z\', \'_\', \'.[a-z]\', \'._\''
+            `A Special missing value can only be a single character from 'A' to 'Z', '_', '.[a-z]', '._'`
           )
         }
 
