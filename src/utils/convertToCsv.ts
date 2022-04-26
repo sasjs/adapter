@@ -1,3 +1,5 @@
+import { isSpecialMissing } from '@sasjs/utils'
+
 /**
  * Converts the given JSON object array to a CSV string.
  * @param data - the array of JSON objects to convert.
@@ -18,7 +20,6 @@ export const convertToCSV = (
   let headers: string[] = []
   let csvTest
   let invalidString = false
-  const specialMissingValueRegExp = /^[a-z_]{1}$/i
 
   if (formats) {
     headers = Object.keys(formats).map((key) => `${key}:${formats![key]}`)
@@ -36,7 +37,7 @@ export const convertToCSV = (
           hasNullOrNumber = true
         } else if (
           typeof row[field] === 'string' &&
-          specialMissingValueRegExp.test(row[field])
+          isSpecialMissing(row[field])
         ) {
           hasSpecialMissingString = true
         }
@@ -130,10 +131,10 @@ export const convertToCSV = (
       value = currentCell === null ? '' : currentCell
 
       if (formats && formats[fieldName] === 'best.') {
-        if (value && !specialMissingValueRegExp.test(value)) {
+        if (value && !isSpecialMissing(value)) {
           console.log(`🤖[value]🤖`, value)
           throw new Error(
-            'Special missing value can only be a single character from A to Z or _'
+            `A Special missing value can only be a single character from 'A' to 'Z', '_', '.[a-z]', '._'`
           )
         }
 
