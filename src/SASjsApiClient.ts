@@ -43,7 +43,9 @@ export class SASjsApiClient {
     return Promise.resolve(result)
   }
 
-  public async executeJob(query: ExecutionQuery) {
+  public async executeJob(query: ExecutionQuery, authConfig?: AuthConfig) {
+    const access_token = authConfig ? authConfig.access_token : undefined
+
     const { result } = await this.requestClient.post<{
       status: string
       message: string
@@ -51,7 +53,7 @@ export class SASjsApiClient {
       logPath?: string
       error?: {}
       _webout?: string
-    }>('SASjsApi/stp/execute', query, undefined)
+    }>('SASjsApi/stp/execute', query, access_token)
 
     if (Object.keys(result).includes('_webout')) {
       result._webout = parseWeboutResponse(result._webout!)

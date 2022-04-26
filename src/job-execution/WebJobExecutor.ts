@@ -21,6 +21,7 @@ import {
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import { Server } from 'https'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -220,25 +221,36 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
-            this.appendWaitingRequest(() => {
-              return this.execute(
-                sasJob,
-                data,
-                config,
-                loginRequiredCallback,
-                authConfig,
-                extraResponseAttributes
-              ).then(
-                (res: any) => {
-                  resolve(res)
-                },
-                (err: any) => {
-                  reject(err)
-                }
-              )
-            })
+            switch (this.serverType) {
+              case ServerType.Sasjs:
+                reject(
+                  new ErrorResponse(
+                    'Request is not authenticated. Make sure .env file exists with valid credentials.',
+                    e
+                  )
+                )
+                break
+              default:
+                this.appendWaitingRequest(() => {
+                  return this.execute(
+                    sasJob,
+                    data,
+                    config,
+                    loginRequiredCallback,
+                    authConfig,
+                    extraResponseAttributes
+                  ).then(
+                    (res: any) => {
+                      resolve(res)
+                    },
+                    (err: any) => {
+                      reject(err)
+                    }
+                  )
+                })
 
-            await loginCallback()
+                await loginCallback()
+            }
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
