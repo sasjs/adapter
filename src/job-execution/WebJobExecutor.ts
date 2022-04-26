@@ -47,7 +47,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     authConfig?: AuthConfig,
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
-    const loginCallback = loginRequiredCallback || (() => Promise.resolve())
+    const loginCallback = loginRequiredCallback
     const program = isRelativePath(sasJob)
       ? config.appLoc
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
@@ -80,7 +80,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             })
 
-            await loginCallback()
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
@@ -221,36 +221,34 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
-            switch (this.serverType) {
-              case ServerType.Sasjs:
-                reject(
-                  new ErrorResponse(
-                    'Request is not authenticated. Make sure .env file exists with valid credentials.',
-                    e
-                  )
+            if (!loginRequiredCallback) {
+              reject(
+                new ErrorResponse(
+                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
+                  e
                 )
-                break
-              default:
-                this.appendWaitingRequest(() => {
-                  return this.execute(
-                    sasJob,
-                    data,
-                    config,
-                    loginRequiredCallback,
-                    authConfig,
-                    extraResponseAttributes
-                  ).then(
-                    (res: any) => {
-                      resolve(res)
-                    },
-                    (err: any) => {
-                      reject(err)
-                    }
-                  )
-                })
-
-                await loginCallback()
+              )
             }
+            
+            this.appendWaitingRequest(() => {
+              return this.execute(
+                sasJob,
+                data,
+                config,
+                loginRequiredCallback,
+                authConfig,
+                extraResponseAttributes
+              ).then(
+                (res: any) => {
+                  resolve(res)
+                },
+                (err: any) => {
+                  reject(err)
+                }
+              )
+            })
+
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
