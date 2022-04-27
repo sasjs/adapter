@@ -9,7 +9,10 @@ import * as isNodeModule from '../../../utils/isNode'
 import { PollOptions } from '../../../types'
 import { WriteStream } from 'fs'
 
+const baseUrl = 'http://localhost'
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
+requestClient['httpClient'].defaults.baseURL = baseUrl
+
 const defaultPollOptions: PollOptions = {
   maxPollCount: 100,
   pollInterval: 500,
@@ -195,7 +198,7 @@ describe('pollJobState', () => {
     expect((process as any).logger.info).toHaveBeenCalledTimes(4)
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       1,
-      'Polling job status...'
+      `Polling: ${baseUrl}/job/state`
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       2,
@@ -203,7 +206,7 @@ describe('pollJobState', () => {
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       3,
-      'Polling job status...'
+      `Polling: ${baseUrl}/job/state`
     )
     expect((process as any).logger.info).toHaveBeenNthCalledWith(
       4,

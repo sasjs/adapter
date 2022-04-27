@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { FileUploader } from '../FileUploader'
+import { FileUploader } from '../job-execution/FileUploader'
 import { SASjsConfig, UploadFile } from '../types'
 import { RequestClient } from '../request/RequestClient'
 import axios from 'axios'
@@ -34,25 +34,50 @@ const prepareFilesAndParams = () => {
 describe('FileUploader', () => {
   const config: SASjsConfig = {
     ...new SASjsConfig(),
-    appLoc: '/sample/apploc'
+    appLoc: '/sample/apploc',
+    debug: false
   }
 
   const fileUploader = new FileUploader(
-    config,
+    config.serverUrl,
+    config.serverType!,
     '/jobs/path',
     new RequestClient('https://sample.server.com')
   )
 
   it('should upload successfully', async () => {
     const sasJob = 'test/upload'
-    const { files, params } = prepareFilesAndParams()
+    const data = prepareFilesAndParams()
     mockedAxios.post.mockImplementation(() =>
       Promise.resolve({ data: sampleResponse })
     )
 
-    const res = await fileUploader.uploadFile(sasJob, files, params)
+    const res = await fileUploader.execute(sasJob, data, config)
 
     expect(res).toEqual(JSON.parse(sampleResponse))
+  })
+
+  it('should upload successfully when login is required', async () => {
+    mockedAxios.post
+      .mockImplementationOnce(() =>
+        Promise.resolve({ data: '<form action="Logon">' })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ data: sampleResponse }))
+
+    const loginCallback = jest.fn().mockImplementation(async () => {
+      await fileUploader.resendWaitingRequests()
+      Promise.resolve()
+    })
+
+    const sasJob = 'test'
+    const data = prepareFilesAndParams()
+
+    const res = await fileUploader.execute(sasJob, data, config, loginCallback)
+
+    expect(res).toEqual(JSON.parse(sampleResponse))
+
+    expect(mockedAxios.post).toHaveBeenCalledTimes(2)
+    expect(loginCallback).toHaveBeenCalled()
   })
 
   it('should an error when no files are provided', async () => {
@@ -60,34 +85,20 @@ describe('FileUploader', () => {
     const files: UploadFile[] = []
     const params = { table: 'libtable' }
 
-    const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+    const res: any = await fileUploader
+      .execute(sasJob, files, params, config)
       .catch((err: any) => err)
-    expect(err.error.message).toEqual('At least one file must be provided.')
+    expect(res.error.message).toEqual('At least one file must be provided.')
   })
 
   it('should throw an error when no sasJob is provided', async () => {
     const sasJob = ''
-    const { files, params } = prepareFilesAndParams()
+    const data = prepareFilesAndParams()
 
-    const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+    const res: any = await fileUploader
+      .execute(sasJob, data, config)
       .catch((err: any) => err)
-    expect(err.error.message).toEqual('sasJob must be provided.')
-  })
-
-  it('should throw an error when login is required', async () => {
-    mockedAxios.post.mockImplementation(() =>
-      Promise.resolve({ data: '<form action="Logon">' })
-    )
-
-    const sasJob = 'test'
-    const { files, params } = prepareFilesAndParams()
-
-    const err = await fileUploader
-      .uploadFile(sasJob, files, params)
-      .catch((err: any) => err)
-    expect(err.error.message).toEqual('You must be logged in to upload a file.')
+    expect(res.error.message).toEqual('sasJob must be provided.')
   })
 
   it('should throw an error when invalid JSON is returned by the server', async () => {
@@ -96,12 +107,13 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test'
-    const { files, params } = prepareFilesAndParams()
+    const data = prepareFilesAndParams()
 
-    const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+    const res: any = await fileUploader
+      .execute(sasJob, data, config)
       .catch((err: any) => err)
-    expect(err.error.message).toEqual('File upload request failed.')
+
+    expect(res.error.message).toEqual('File upload request failed.')
   })
 
   it('should throw an error when the server request fails', async () => {
@@ -110,11 +122,11 @@ describe('FileUploader', () => {
     )
 
     const sasJob = 'test'
-    const { files, params } = prepareFilesAndParams()
+    const data = prepareFilesAndParams()
 
-    const err = await fileUploader
-      .uploadFile(sasJob, files, params)
+    const res: any = await fileUploader
+      .execute(sasJob, data, config)
       .catch((err: any) => err)
-    expect(err.error.message).toEqual('File upload request failed.')
+    expect(res.error.message).toEqual('File upload request failed.')
   })
 })

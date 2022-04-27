@@ -4,7 +4,7 @@ import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
 import { Link, WriteStream } from '../../types'
-import { isNode } from '../../utils'
+import { delay, isNode } from '../../utils'
 
 export async function pollJobState(
   requestClient: RequestClient,
@@ -206,10 +206,11 @@ const doPoll = async (
 
     pollCount++
 
+    const jobHref = postedJob.links.find((l: Link) => l.rel === 'self')!.href
+
     if (pollOptions?.streamLog) {
-      const jobUrl = postedJob.links.find((l: Link) => l.rel === 'self')
       const { result: job } = await requestClient.get<Job>(
-        jobUrl!.href,
+        jobHref,
         authConfig?.access_token
       )
 
@@ -231,7 +232,7 @@ const doPoll = async (
     }
 
     if (debug && printedState !== state) {
-      logger.info('Polling job status...')
+      logger.info(`Polling: ${requestClient.getBaseUrl() + jobHref}/state`)
       logger.info(`Current job state: ${state}`)
 
       printedState = state
@@ -246,5 +247,3 @@ const doPoll = async (
 
   return { state, pollCount }
 }
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

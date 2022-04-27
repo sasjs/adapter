@@ -13,6 +13,11 @@ export const mockAuthResponse: SasAuthResponse = {
   jti: 'test'
 }
 
+export const mockSasjsAuthResponse = {
+  access_token: 'acc355',
+  refresh_token: 'r3fr35h'
+}
+
 export const generateToken = (timeToLiveSeconds: number): string => {
   const exp =
     new Date(new Date().getTime() + timeToLiveSeconds * 1000).getTime() / 1000
@@ -22,3 +27,28 @@ export const generateToken = (timeToLiveSeconds: number): string => {
   const token = `${header}.${payload}.${signature}`
   return token
 }
+
+export const mockedCurrentUserApi = (username: string) => ({
+  creationTimeStamp: '2021-04-17T14:13:14.000Z',
+  modifiedTimeStamp: '2021-08-31T22:08:07.000Z',
+  id: username,
+  type: 'user',
+  name: 'Full User Name',
+  links: [
+    {
+      method: 'GET',
+      rel: 'self',
+      href: `/identities/users/${username}`,
+      uri: `/identities/users/${username}`,
+      type: 'user'
+    },
+    {
+      method: 'GET',
+      rel: 'alternate',
+      href: `/identities/users/${username}`,
+      uri: `/identities/users/${username}`,
+      type: 'application/vnd.sas.summary'
+    }
+  ],
+  version: 2
+})

@@ -1,45 +1,13 @@
 {
   "out": "docs",
-  "includeDeclarations": true,
-  "exclude": "**/*+(index|.spec|.e2e).ts",
-  "ignoreCompilerErrors": true,
-  "disableOutputCheck": true,
+  "exclude": ["**/*+(index|.spec|.e2e).ts"],
   "excludeExternals": true,
   "excludePrivate": true,
-  "excludeNotExported": true,
-  "theme": "./node_modules/typedoc-neo-theme/bin/default",
-  "outline": [
-    {
-      "SAS Adapter": {
-        "SASjs": "classes/reflection-717.reflection-180.sasjs",
-        "Types": "modules/types"
-      },
-      "SAS Viya API Client": "classes/reflection-717.reflection-180.sasviyaapiclient",
-      "SAS 9 API Client": "classes/reflection-717.reflection-180.sas9apiclient"
-    }
-  ],
-  "links": [
-    {
-      "label": "SASjs on Github",
-      "url": "https://github.com/sasjs/adapter"
-    },
-    {
-      "label": "SASjs.io",
-      "url": "https://sasjs.io"
-    },
-    {
-      "label": "SASjs CLI",
-      "url": "https://github.com/sasjs/cli"
-    },
-    {
-      "label": "React Seed App",
-      "url": "https://github.com/sasjs/react-seed-app"
-    }
-  ],
-  "source": [
-    {
-      "path": "https://github.com/sasjs/adapter/blob/master/src/",
-      "line": "L"
-    }
+  "entryPoints": [
+    "src/SASjs.ts",
+    "src/SAS9ApiClient.ts",
+    "src/SASjsApiClient.ts",
+    "src/SASViyaApiClient.ts",
+    "src/types"
   ]
 }

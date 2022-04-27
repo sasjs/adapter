@@ -47,7 +47,7 @@ npm i -g copyfiles
 ```
 and then run to build:
 ```bash
-npm run update:adapter && npm run build 
+npm run update:adapter && npm run build
 ```
 when it finishes run to deploy:
 ```bash
@@ -70,7 +70,7 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i) %end;
+  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
@@ -79,11 +79,20 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i) %end;
+  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
 %mm_createwebservice(path=/Public/app/common,name=sendArr)
+parmcards4;
+  data work.macvars;
+    set sashelp.vmacro;
+  run;
+  %webout(OPEN)
+  %webout(OBJ,macvars) 
+  %webout(CLOSE)
+;;;;
+%mm_createwebservice(path=/Public/app/common,name=sendMacVars)
 parmcards4;
 let he who hath understanding, reckon the number of the beast
 ;;;;
@@ -111,28 +120,35 @@ parmcards4;
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(OBJ,&table)
+    %webout(OBJ,&table,missing=STRING,showmeta=YES)
   %end;
   %mend;
   %x()
   %webout(CLOSE)
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=sendObj)
-filename ft15f001 temp;
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
-    %webout(ARR,&table)
+    %webout(ARR,&table,missing=STRING,showmeta=YES)
   %end;
   %mend;
   %x()
   %webout(CLOSE)
 ;;;;
 %mp_createwebservice(path=/Public/app/common,name=sendArr)
-filename ft15f001 temp;
+parmcards4;
+  data work.macvars;
+    set sashelp.vmacro;
+  run;
+  %webout(OPEN)
+  %webout(OBJ,macvars) 
+  %webout(CLOSE)
+;;;;
+%mp_createwebservice(path=/Public/app/common,name=sendMacVars)
 parmcards4;
 If you can keep your head when all about you
     Are losing theirs and blaming it on you,

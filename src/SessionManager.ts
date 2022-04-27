@@ -168,7 +168,7 @@ export class SessionManager {
     ) {
       if (stateLink) {
         if (this.debug && !this.printedSessionState.printed) {
-          logger.info('Polling session status...')
+          logger.info(`Polling: ${this.serverUrl + stateLink.href}`)
 
           this.printedSessionState.printed = true
         }

@@ -1,3 +1,4 @@
+import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
 
 /**
@@ -11,6 +12,11 @@ export class SASjsConfig {
    * streamed.
    */
   serverUrl: string = ''
+  /**
+   * The location of the STP Process Web Application.  By default the adapter
+   * will use '/SASjsApi/stp/execute' on SAS JS.
+   */
+  pathSASJS: string = ''
   /**
    * The location of the Stored Process Web Application.  By default the adapter
    * will use '/SASStoredProcess/do' on SAS 9.
@@ -54,9 +60,23 @@ export class SASjsConfig {
    */
   useComputeApi: boolean | null = null
   /**
-   * Defaults to `false`.
-   * When set to `true`, the adapter will allow requests to SAS servers that use a self-signed SSL certificate.
-   * Changing this setting is not recommended.
+   * Optional setting to configure HTTPS Agent.
+   * By providing `key`, `cert`, `ca` to connect with server
+   * Other options can be set `rejectUnauthorized` and `requestCert`
    */
-  allowInsecureRequests = false
+  httpsAgentOptions?: https.AgentOptions
+  /**
+   * Supported login mechanisms are - Redirected and Default
+   */
+  loginMechanism: LoginMechanism = LoginMechanism.Default
+  /**
+   * Optional setting to configure request history limit. Increasing this limit
+   * may affect browser performance, especially with debug (logs) enabled.
+   */
+  requestHistoryLimit?: number = 10
+}
+
+export enum LoginMechanism {
+  Default = 'Default',
+  Redirected = 'Redirected'
 }

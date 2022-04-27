@@ -11,7 +11,11 @@ import {
   JobDefinition,
   PollOptions
 } from './types'
-import { JobExecutionError, RootFolderNotFoundError } from './types/errors'
+import {
+  CertificateError,
+  JobExecutionError,
+  RootFolderNotFoundError
+} from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
 import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
@@ -22,8 +26,8 @@ import { pollJobState } from './api/viya/pollJobState'
 import { getTokens } from './auth/getTokens'
 import { uploadTables } from './api/viya/uploadTables'
 import { executeScript } from './api/viya/executeScript'
-import { getAccessToken } from './auth/getAccessToken'
-import { refreshTokens } from './auth/refreshTokens'
+import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
+import { refreshTokensForViya } from './auth/refreshTokensForViya'
 
 /**
  * A client for interfacing with the SAS Viya REST API.
@@ -50,6 +54,16 @@ export class SASViyaApiClient {
     this.requestClient
   )
   private folderMap = new Map<string, Job[]>()
+
+  /**
+   * A helper method used to call appendRequest method of RequestClient
+   * @param response - response from sasjs request
+   * @param program - name of program
+   * @param debug - a boolean that indicates whether debug was enabled or not
+   */
+  public appendRequest(response: any, program: string, debug: boolean) {
+    this.requestClient!.appendRequest(response, program, debug)
+  }
 
   public get debug() {
     return this._debug
@@ -524,21 +538,26 @@ export class SASViyaApiClient {
     clientSecret: string,
     authCode: string
   ): Promise<SasAuthResponse> {
-    return getAccessToken(this.requestClient, clientId, clientSecret, authCode)
+    return getAccessTokenForViya(
+      this.requestClient,
+      clientId,
+      clientSecret,
+      authCode
+    )
   }
 
   /**
    * Exchanges the refresh token for an access token for the given client.
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
-   * @param authCode - the refresh token received from the server.
+   * @param refreshToken - the refresh token received from the server.
    */
   public async refreshTokens(
     clientId: string,
     clientSecret: string,
     refreshToken: string
   ) {
-    return refreshTokens(
+    return refreshTokensForViya(
       this.requestClient,
       clientId,
       clientSecret,
@@ -821,7 +840,9 @@ export class SASViyaApiClient {
 
     const { result: members } = await this.requestClient
       .get<{ items: any[] }>(
-        `/folders/folders/${folder.id}/members?limit=${folder.memberCount}`,
+        `/folders/folders/${folder.id}/members?limit=${
+          folder.memberCount < 500 ? 500 : folder.memberCount
+        }`, // this is a fix for https://github.com/sasjs/adapter/issues/669
         accessToken
       )
       .catch((err) => {
@@ -861,7 +882,8 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof CertificateError) throw err
         return { result: null }
       })
 
@@ -882,7 +904,8 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof CertificateError) throw err
         return { result: null }
       })
 

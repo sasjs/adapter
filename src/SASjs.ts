@@ -1,27 +1,40 @@
 import { compareTimestamps, asyncForEach } from './utils'
-import { SASjsConfig, UploadFile, EditContextInput, PollOptions } from './types'
+import {
+  SASjsConfig,
+  UploadFile,
+  EditContextInput,
+  PollOptions,
+  LoginMechanism,
+  ExecutionQuery
+} from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
-import { FileUploader } from './FileUploader'
+import { SASjsApiClient, SASjsAuthResponse } from './SASjsApiClient'
 import { AuthManager } from './auth'
 import {
   ServerType,
   MacroVar,
   AuthConfig,
-  ExtraResponseAttributes
+  ExtraResponseAttributes,
+  SasAuthResponse,
+  ServicePackSASjs
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
+import { SasjsRequestClient } from './request/SasjsRequestClient'
 import {
   JobExecutor,
   WebJobExecutor,
   ComputeJobExecutor,
   JesJobExecutor,
-  Sas9JobExecutor
+  Sas9JobExecutor,
+  FileUploader
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
+import { LoginOptions, LoginResult } from './types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
+  pathSASJS: '/SASjsApi/stp/execute',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -29,7 +42,7 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: null,
-  allowInsecureRequests: false
+  loginMechanism: LoginMechanism.Default
 }
 
 /**
@@ -41,6 +54,7 @@ export default class SASjs {
   private jobsPath: string = ''
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
+  private sasJSApiClient: SASjsApiClient | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
@@ -49,7 +63,7 @@ export default class SASjs {
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
 
-  constructor(config?: any) {
+  constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
       ...defaultConfig,
       ...config
@@ -62,12 +76,19 @@ export default class SASjs {
     return this.requestClient?.getCsrfToken(type)
   }
 
+  /**
+   * Executes SAS code on a SAS 9 server.  Requires a runner to be present in
+   * the users home directory in metadata.
+   * @param linesOfCode - lines of sas code from the file to run.
+   * @param username - a string representing the username.
+   * @param password - a string representing the password.
+   */
   public async executeScriptSAS9(
     linesOfCode: string[],
     userName: string,
     password: string
   ) {
-    this.isMethodSupported('executeScriptSAS9', ServerType.Sas9)
+    this.isMethodSupported('executeScriptSAS9', [ServerType.Sas9])
 
     return await this.sas9ApiClient?.executeScript(
       linesOfCode,
@@ -77,170 +98,18 @@ export default class SASjs {
   }
 
   /**
-   * Gets compute contexts.
-   * @param accessToken - an access token for an authorized user.
+   * Executes SAS code on a SASJS server
+   * @param code - a string of code from the file to run.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
    */
-  public async getComputeContexts(accessToken: string) {
-    this.isMethodSupported('getComputeContexts', ServerType.SasViya)
+  public async executeScriptSASjs(code: string, authConfig?: AuthConfig) {
+    this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
 
-    return await this.sasViyaApiClient!.getComputeContexts(accessToken)
+    return await this.sasJSApiClient?.executeScript(code, authConfig)
   }
 
   /**
-   * Gets launcher contexts.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async getLauncherContexts(accessToken: string) {
-    this.isMethodSupported('getLauncherContexts', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
-  }
-
-  /**
-   * Gets default(system) launcher contexts.
-   */
-  public getDefaultComputeContexts() {
-    this.isMethodSupported('getDefaultComputeContexts', ServerType.SasViya)
-
-    return this.sasViyaApiClient!.getDefaultComputeContexts()
-  }
-
-  /**
-   * Gets executable compute contexts.
-   * @param authConfig - an access token, refresh token, client and secret for an authorized user.
-   */
-  public async getExecutableContexts(authConfig: AuthConfig) {
-    this.isMethodSupported('getExecutableContexts', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.getExecutableContexts(authConfig)
-  }
-
-  /**
-   * Creates a compute context on the given server.
-   * @param contextName - the name of the context to be created.
-   * @param launchContextName - the name of the launcher context used by the compute service.
-   * @param sharedAccountId - the ID of the account to run the servers for this context as.
-   * @param autoExecLines - the lines of code to execute during session initialization.
-   * @param accessToken - an access token for an authorized user.
-   * @param authorizedUsers - an optional list of authorized user IDs.
-   */
-  public async createComputeContext(
-    contextName: string,
-    launchContextName: string,
-    sharedAccountId: string,
-    autoExecLines: string[],
-    accessToken: string,
-    authorizedUsers?: string[]
-  ) {
-    this.isMethodSupported('createComputeContext', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.createComputeContext(
-      contextName,
-      launchContextName,
-      sharedAccountId,
-      autoExecLines,
-      accessToken,
-      authorizedUsers
-    )
-  }
-
-  /**
-   * Creates a launcher context on the given server.
-   * @param contextName - the name of the context to be created.
-   * @param description - the description of the context to be created.
-   * @param launchType - launch type of the context to be created.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async createLauncherContext(
-    contextName: string,
-    description: string,
-    launchType: string,
-    accessToken: string
-  ) {
-    this.isMethodSupported('createLauncherContext', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.createLauncherContext(
-      contextName,
-      description,
-      launchType,
-      accessToken
-    )
-  }
-
-  /**
-   * Updates a compute context on the given server.
-   * @param contextName - the original name of the context to be deleted.
-   * @param editedContext - an object with the properties to be updated.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async editComputeContext(
-    contextName: string,
-    editedContext: EditContextInput,
-    accessToken?: string
-  ) {
-    this.isMethodSupported('editComputeContext', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.editComputeContext(
-      contextName,
-      editedContext,
-      accessToken
-    )
-  }
-
-  /**
-   * Deletes a compute context on the given server.
-   * @param contextName - the name of the context to be deleted.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async deleteComputeContext(contextName: string, accessToken?: string) {
-    this.isMethodSupported('deleteComputeContext', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.deleteComputeContext(
-      contextName,
-      accessToken
-    )
-  }
-
-  /**
-   * Returns a JSON representation of a compute context.
-   * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
-   * @param contextName - the name of the context to return.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async getComputeContextByName(
-    contextName: string,
-    accessToken?: string
-  ) {
-    this.isMethodSupported('getComputeContextByName', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.getComputeContextByName(
-      contextName,
-      accessToken
-    )
-  }
-
-  /**
-   * Returns a JSON representation of a compute context.
-   * @param contextId - an id of the context to return.
-   * @param accessToken - an access token for an authorized user.
-   */
-  public async getComputeContextById(contextId: string, accessToken?: string) {
-    this.isMethodSupported('getComputeContextById', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.getComputeContextById(
-      contextId,
-      accessToken
-    )
-  }
-
-  public async createSession(contextName: string, accessToken: string) {
-    this.isMethodSupported('createSession', ServerType.SasViya)
-
-    return await this.sasViyaApiClient!.createSession(contextName, accessToken)
-  }
-
-  /**
-   * Executes the sas code against given sas server
+   * Executes sas code in a SAS Viya compute session.
    * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
    * @param linesOfCode - lines of sas code from the file to run.
    * @param contextName - context name on which code will be run on the server.
@@ -254,7 +123,10 @@ export default class SASjs {
     authConfig?: AuthConfig,
     debug?: boolean
   ) {
-    this.isMethodSupported('executeScriptSASViya', ServerType.SasViya)
+    this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
+
+    contextName = contextName || this.sasjsConfig.contextName
+
     if (!contextName) {
       throw new Error(
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
@@ -269,6 +141,169 @@ export default class SASjs {
       null,
       debug ? debug : this.sasjsConfig.debug
     )
+  }
+
+  /**
+   * Gets compute contexts.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async getComputeContexts(accessToken: string) {
+    this.isMethodSupported('getComputeContexts', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getComputeContexts(accessToken)
+  }
+
+  /**
+   * Gets launcher contexts.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async getLauncherContexts(accessToken: string) {
+    this.isMethodSupported('getLauncherContexts', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getLauncherContexts(accessToken)
+  }
+
+  /**
+   * Gets default(system) launcher contexts.
+   */
+  public getDefaultComputeContexts() {
+    this.isMethodSupported('getDefaultComputeContexts', [ServerType.SasViya])
+
+    return this.sasViyaApiClient!.getDefaultComputeContexts()
+  }
+
+  /**
+   * Gets executable compute contexts.
+   * @param authConfig - an access token, refresh token, client and secret for an authorised user.
+   */
+  public async getExecutableContexts(authConfig: AuthConfig) {
+    this.isMethodSupported('getExecutableContexts', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getExecutableContexts(authConfig)
+  }
+
+  /**
+   * Creates a compute context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param launchContextName - the name of the launcher context used by the compute service.
+   * @param sharedAccountId - the ID of the account to run the servers for this context as.
+   * @param autoExecLines - the lines of code to execute during session initialization.
+   * @param accessToken - an access token for an authorised user.
+   * @param authorisedUsers - an optional list of authorised user IDs.
+   */
+  public async createComputeContext(
+    contextName: string,
+    launchContextName: string,
+    sharedAccountId: string,
+    autoExecLines: string[],
+    accessToken: string,
+    authorisedUsers?: string[]
+  ) {
+    this.isMethodSupported('createComputeContext', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.createComputeContext(
+      contextName,
+      launchContextName,
+      sharedAccountId,
+      autoExecLines,
+      accessToken,
+      authorisedUsers
+    )
+  }
+
+  /**
+   * Creates a launcher context on the given server.
+   * @param contextName - the name of the context to be created.
+   * @param description - the description of the context to be created.
+   * @param launchType - launch type of the context to be created.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async createLauncherContext(
+    contextName: string,
+    description: string,
+    launchType: string,
+    accessToken: string
+  ) {
+    this.isMethodSupported('createLauncherContext', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.createLauncherContext(
+      contextName,
+      description,
+      launchType,
+      accessToken
+    )
+  }
+
+  /**
+   * Updates a compute context on the given server.
+   * @param contextName - the original name of the context to be deleted.
+   * @param editedContext - an object with the properties to be updated.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async editComputeContext(
+    contextName: string,
+    editedContext: EditContextInput,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('editComputeContext', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.editComputeContext(
+      contextName,
+      editedContext,
+      accessToken
+    )
+  }
+
+  /**
+   * Deletes a compute context on the given server.
+   * @param contextName - the name of the context to be deleted.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async deleteComputeContext(contextName: string, accessToken?: string) {
+    this.isMethodSupported('deleteComputeContext', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.deleteComputeContext(
+      contextName,
+      accessToken
+    )
+  }
+
+  /**
+   * Returns a JSON representation of a compute context.
+   * @example: { "createdBy": "admin", "links": [...], "id": "ID", "version": 2, "name": "context1" }
+   * @param contextName - the name of the context to return.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async getComputeContextByName(
+    contextName: string,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('getComputeContextByName', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getComputeContextByName(
+      contextName,
+      accessToken
+    )
+  }
+
+  /**
+   * Returns a JSON representation of a compute context.
+   * @param contextId - an id of the context to return.
+   * @param accessToken - an access token for an authorised user.
+   */
+  public async getComputeContextById(contextId: string, accessToken?: string) {
+    this.isMethodSupported('getComputeContextById', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getComputeContextById(
+      contextId,
+      accessToken
+    )
+  }
+
+  public async createSession(contextName: string, accessToken: string) {
+    this.isMethodSupported('createSession', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.createSession(contextName, accessToken)
   }
 
   /**
@@ -344,7 +379,7 @@ export default class SASjs {
    * @param accessToken - the access token to authorize the request.
    */
   public async getFolder(folderPath: string, accessToken?: string) {
-    this.isMethodSupported('getFolder', ServerType.SasViya)
+    this.isMethodSupported('getFolder', [ServerType.SasViya])
     return await this.sasViyaApiClient!.getFolder(folderPath, accessToken)
   }
 
@@ -354,7 +389,7 @@ export default class SASjs {
    * @param accessToken - an access token for authorizing the request.
    */
   public async deleteFolder(folderPath: string, accessToken: string) {
-    this.isMethodSupported('deleteFolder', ServerType.SasViya)
+    this.isMethodSupported('deleteFolder', [ServerType.SasViya])
 
     return await this.sasViyaApiClient?.deleteFolder(folderPath, accessToken)
   }
@@ -369,7 +404,7 @@ export default class SASjs {
     accessToken?: string,
     limit?: number
   ) {
-    this.isMethodSupported('listFolder', ServerType.SasViya)
+    this.isMethodSupported('listFolder', [ServerType.SasViya])
 
     return await this.sasViyaApiClient?.listFolder(
       sourceFolder,
@@ -391,7 +426,7 @@ export default class SASjs {
     targetFolderName: string,
     accessToken: string
   ) {
-    this.isMethodSupported('moveFolder', ServerType.SasViya)
+    this.isMethodSupported('moveFolder', [ServerType.SasViya])
 
     return await this.sasViyaApiClient?.moveFolder(
       sourceFolder,
@@ -409,7 +444,7 @@ export default class SASjs {
     accessToken?: string,
     sasApiClient?: SASViyaApiClient
   ) {
-    this.isMethodSupported('createJobDefinition', ServerType.SasViya)
+    this.isMethodSupported('createJobDefinition', [ServerType.SasViya])
 
     if (sasApiClient)
       return await sasApiClient!.createJobDefinition(
@@ -429,7 +464,7 @@ export default class SASjs {
   }
 
   public async getAuthCode(clientId: string) {
-    this.isMethodSupported('getAuthCode', ServerType.SasViya)
+    this.isMethodSupported('getAuthCode', [ServerType.SasViya])
 
     return await this.sasViyaApiClient!.getAuthCode(clientId)
   }
@@ -444,8 +479,14 @@ export default class SASjs {
     clientId: string,
     clientSecret: string,
     authCode: string
-  ) {
-    this.isMethodSupported('getAccessToken', ServerType.SasViya)
+  ): Promise<SasAuthResponse | SASjsAuthResponse> {
+    this.isMethodSupported('getAccessToken', [
+      ServerType.SasViya,
+      ServerType.Sasjs
+    ])
+
+    if (this.sasjsConfig.serverType === ServerType.Sasjs)
+      return await this.sasJSApiClient!.getAccessToken(clientId, authCode)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,
@@ -454,12 +495,24 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Exchanges the refresh token for an access token for the given client.
+   * @param clientId - the client ID to authenticate with.
+   * @param clientSecret - the client secret to authenticate with.
+   * @param refreshToken - the refresh token received from the server.
+   */
   public async refreshTokens(
     clientId: string,
     clientSecret: string,
     refreshToken: string
-  ) {
-    this.isMethodSupported('refreshTokens', ServerType.SasViya)
+  ): Promise<SasAuthResponse | SASjsAuthResponse> {
+    this.isMethodSupported('refreshTokens', [
+      ServerType.SasViya,
+      ServerType.Sasjs
+    ])
+
+    if (this.sasjsConfig.serverType === ServerType.Sasjs)
+      return await this.sasJSApiClient!.refreshTokens(refreshToken)
 
     return await this.sasViyaApiClient!.refreshTokens(
       clientId,
@@ -469,7 +522,7 @@ export default class SASjs {
   }
 
   public async deleteClient(clientId: string, accessToken: string) {
-    this.isMethodSupported('deleteClient', ServerType.SasViya)
+    this.isMethodSupported('deleteClient', [ServerType.SasViya])
 
     return await this.sasViyaApiClient!.deleteClient(clientId, accessToken)
   }
@@ -499,7 +552,7 @@ export default class SASjs {
       ...this.sasjsConfig,
       ...config
     }
-    await this.setupConfiguration()
+    this.setupConfiguration()
   }
 
   /**
@@ -525,9 +578,39 @@ export default class SASjs {
    * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
+   * @param clientId - a string representing the client ID.
    */
-  public async logIn(username: string, password: string) {
-    return this.authManager!.logIn(username, password)
+  public async logIn(
+    username?: string,
+    password?: string,
+    clientId?: string,
+    options: LoginOptions = {}
+  ): Promise<LoginResult> {
+    if (this.sasjsConfig.loginMechanism === LoginMechanism.Default) {
+      if (!username || !password)
+        throw new Error(
+          'A username and password are required when using the default login mechanism.'
+        )
+
+      if (this.sasjsConfig.serverType === ServerType.Sasjs) {
+        if (!clientId)
+          throw new Error(
+            'A username, password and clientId are required when using the default login mechanism with server type SASJS.'
+          )
+
+        return this.authManager!.logInSasjs(username, password, clientId)
+      }
+
+      return this.authManager!.logIn(username, password)
+    }
+
+    if (typeof window === typeof undefined) {
+      throw new Error(
+        'The redirected login mechanism is only available for use in the browser.'
+      )
+    }
+
+    return this.authManager!.redirectedLogIn(options)
   }
 
   /**
@@ -544,28 +627,37 @@ export default class SASjs {
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param files - array of files to be uploaded, including File object and file name.
    * @param params - request URL parameters.
-   * @param overrideSasjsConfig - object to override existing config (optional)
+   * @param config - provide any changes to the config here, for instance to
+   * enable/disable `debug`. Any change provided will override the global config,
+   * for that particular function call.
+   * @param loginRequiredCallback - a function that is called if the
+   * user is not logged in (eg to display a login form). The request will be
+   * resubmitted after successful login.
    */
-  public uploadFile(
+  public async uploadFile(
     sasJob: string,
     files: UploadFile[],
-    params: any,
-    overrideSasjsConfig?: any
+    params: { [key: string]: any } | null,
+    config: { [key: string]: any } = {},
+    loginRequiredCallback?: () => any
   ) {
-    const fileUploader = overrideSasjsConfig
-      ? new FileUploader(
-          { ...this.sasjsConfig, ...overrideSasjsConfig },
-          this.jobsPath,
-          this.requestClient!
-        )
-      : this.fileUploader ||
-        new FileUploader(this.sasjsConfig, this.jobsPath, this.requestClient!)
+    config = {
+      ...this.sasjsConfig,
+      ...config
+    }
+    const data = { files, params }
 
-    return fileUploader.uploadFile(sasJob, files, params)
+    return await this.fileUploader!.execute(
+      sasJob,
+      data,
+      config,
+      loginRequiredCallback
+    )
   }
 
   /**
-   * Makes a request to the SAS Service specified in `SASjob`. The response
+   * Makes a request to program specified in `SASjob` (could be a Viya Job, a
+   * SAS 9 Stored Process, or a SASjs Server Stored Program). The response
    * object will always contain table names in lowercase, and column names in
    * uppercase. Values are returned formatted by default, unformatted
    * values can be configured as an option in the `%webout` macro.
@@ -574,7 +666,8 @@ export default class SASjs {
    *  the SAS `_program` parameter to run a Job Definition or SAS 9 Stored
    *  Process). Is prepended at runtime with the value of `appLoc`.
    * @param data - a JSON object containing one or more tables to be sent to
-   * SAS. Can be `null` if no inputs required.
+   * SAS.  For an example of the table structure, see the project README. This
+   * value can be `null` if no inputs are required.
    * @param config - provide any changes to the config here, for instance to
    * enable/disable `debug`. Any change provided will override the global config,
    * for that particular function call.
@@ -604,9 +697,19 @@ export default class SASjs {
 
     const validationResult = this.validateInput(data)
 
+    // status is true if the data passes validation checks above
     if (validationResult.status) {
-      if (
-        config.serverType !== ServerType.Sas9 &&
+      if (config.serverType === ServerType.Sasjs) {
+        return await this.webJobExecutor!.execute(
+          sasJob,
+          data,
+          config,
+          loginRequiredCallback,
+          authConfig,
+          extraResponseAttributes
+        )
+      } else if (
+        config.serverType === ServerType.SasViya &&
         config.useComputeApi !== undefined &&
         config.useComputeApi !== null
       ) {
@@ -665,15 +768,19 @@ export default class SASjs {
     msg: string
   } {
     if (data === null) return { status: true, msg: '' }
+
+    const isSasFormatsTable = (key: string) =>
+      key.match(/^\$.*/) && Object.keys(data).includes(key.replace(/^\$/, ''))
+
     for (const key in data) {
-      if (!key.match(/^[a-zA-Z_]/)) {
+      if (!key.match(/^[a-zA-Z_]/) && !isSasFormatsTable(key)) {
         return {
           status: false,
           msg: 'First letter of table should be alphabet or underscore.'
         }
       }
 
-      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/) && !isSasFormatsTable(key)) {
         return { status: false, msg: 'Table name should be alphanumeric.' }
       }
 
@@ -684,7 +791,7 @@ export default class SASjs {
         }
       }
 
-      if (this.getType(data[key]) !== 'Array') {
+      if (this.getType(data[key]) !== 'Array' && !isSasFormatsTable(key)) {
         return {
           status: false,
           msg: 'Parameter data contains invalid table structure.'
@@ -700,6 +807,7 @@ export default class SASjs {
         }
       }
     }
+
     return { status: true, msg: '' }
   }
 
@@ -735,7 +843,7 @@ export default class SASjs {
     accessToken?: string,
     isForced = false
   ) {
-    this.isMethodSupported('deployServicePack', ServerType.SasViya)
+    this.isMethodSupported('deployServicePack', [ServerType.SasViya])
 
     let sasApiClient: any = null
     if (serverUrl || appLoc) {
@@ -757,7 +865,7 @@ export default class SASjs {
         sasApiClient = new SAS9ApiClient(
           serverUrl,
           this.jobsPath,
-          this.sasjsConfig.allowInsecureRequests
+          this.sasjsConfig.httpsAgentOptions
         )
       }
     } else {
@@ -787,6 +895,29 @@ export default class SASjs {
       sasApiClient,
       isForced
     )
+  }
+
+  /**
+   * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
+   * @param dataJson - the JSON specifying the folders and files to be created, can also includes
+   * appLoc, streamServiceName, streamWebFolder, streamLogo
+   * @param appLoc - (optional) the base folder in which to create the new folders and
+   * services.  If not provided, is taken from SASjsConfig. Precedence will be of appLoc present in dataJson.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   */
+  public async deployToSASjs(
+    dataJson: ServicePackSASjs,
+    appLoc?: string,
+    authConfig?: AuthConfig
+  ) {
+    if (!appLoc) {
+      appLoc = this.sasjsConfig.appLoc
+    }
+    return await this.sasJSApiClient?.deploy(dataJson, appLoc, authConfig)
+  }
+
+  public async executeJobSASjs(query: ExecutionQuery) {
+    return await this.sasJSApiClient?.executeJob(query)
   }
 
   /**
@@ -822,7 +953,7 @@ export default class SASjs {
       ...config
     }
 
-    this.isMethodSupported('startComputeJob', ServerType.SasViya)
+    this.isMethodSupported('startComputeJob', [ServerType.SasViya])
     if (!config.contextName) {
       throw new Error(
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
@@ -847,12 +978,13 @@ export default class SASjs {
     await this.webJobExecutor?.resendWaitingRequests()
     await this.computeJobExecutor?.resendWaitingRequests()
     await this.jesJobExecutor?.resendWaitingRequests()
+    await this.fileUploader?.resendWaitingRequests()
   }
 
   /**
    * Fetches content of the log file
    * @param logUrl - url of the log file.
-   * @param accessToken - an access token for an authorized user.
+   * @param accessToken - an access token for an authorised user.
    */
   public async fetchLogFileContent(logUrl: string, accessToken?: string) {
     return await this.requestClient!.get(logUrl, accessToken).then((res) => {
@@ -878,20 +1010,18 @@ export default class SASjs {
     })
   }
 
+  /**
+   * this method returns an array of SASjsRequest
+   * @returns SASjsRequest[]
+   */
   public getSasRequests() {
-    const requests = [
-      ...this.webJobExecutor!.getRequests(),
-      ...this.computeJobExecutor!.getRequests(),
-      ...this.jesJobExecutor!.getRequests()
-    ]
+    const requests = [...this.requestClient!.getRequests()]
     const sortedRequests = requests.sort(compareTimestamps)
     return sortedRequests
   }
 
   public clearSasRequests() {
-    this.webJobExecutor!.clearRequests()
-    this.computeJobExecutor!.clearRequests()
-    this.jesJobExecutor!.clearRequests()
+    this.requestClient!.clearRequests()
   }
 
   private setupConfiguration() {
@@ -914,15 +1044,29 @@ export default class SASjs {
       this.sasjsConfig.serverUrl = this.sasjsConfig.serverUrl.slice(0, -1)
     }
 
-    this.requestClient = new RequestClient(
-      this.sasjsConfig.serverUrl,
-      this.sasjsConfig.allowInsecureRequests
-    )
+    if (!this.requestClient) {
+      const RequestClientClass =
+        this.sasjsConfig.serverType === ServerType.Sasjs
+          ? SasjsRequestClient
+          : RequestClient
+      this.requestClient = new RequestClientClass(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.httpsAgentOptions,
+        this.sasjsConfig.requestHistoryLimit
+      )
+    } else {
+      this.requestClient.setConfig(
+        this.sasjsConfig.serverUrl,
+        this.sasjsConfig.httpsAgentOptions
+      )
+    }
 
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
-        : this.sasjsConfig.pathSAS9
+        : this.sasjsConfig.serverType === ServerType.Sas9
+        ? this.sasjsConfig.pathSAS9
+        : this.sasjsConfig.pathSASJS
 
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,
@@ -932,34 +1076,44 @@ export default class SASjs {
     )
 
     if (this.sasjsConfig.serverType === ServerType.SasViya) {
-      if (this.sasViyaApiClient)
+      if (this.sasViyaApiClient) {
         this.sasViyaApiClient!.setConfig(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc
         )
-      else
+      } else {
         this.sasViyaApiClient = new SASViyaApiClient(
           this.sasjsConfig.serverUrl,
           this.sasjsConfig.appLoc,
           this.sasjsConfig.contextName,
           this.requestClient
         )
+      }
 
       this.sasViyaApiClient.debug = this.sasjsConfig.debug
     }
+
     if (this.sasjsConfig.serverType === ServerType.Sas9) {
-      if (this.sas9ApiClient)
+      if (this.sas9ApiClient) {
         this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
-      else
+      } else {
         this.sas9ApiClient = new SAS9ApiClient(
           this.sasjsConfig.serverUrl,
           this.jobsPath,
-          this.sasjsConfig.allowInsecureRequests
+          this.sasjsConfig.httpsAgentOptions
         )
+      }
+    }
+
+    if (this.sasjsConfig.serverType === ServerType.Sasjs) {
+      if (!this.sasJSApiClient) {
+        this.sasJSApiClient = new SASjsApiClient(this.requestClient)
+      }
     }
 
     this.fileUploader = new FileUploader(
-      this.sasjsConfig,
+      this.sasjsConfig.serverUrl,
+      this.sasjsConfig.serverType!,
       this.jobsPath,
       this.requestClient
     )
@@ -976,7 +1130,8 @@ export default class SASjs {
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
       this.jobsPath,
-      this.sasjsConfig.allowInsecureRequests
+      this.requestClient,
+      this.sasjsConfig.httpsAgentOptions
     )
 
     this.computeJobExecutor = new ComputeJobExecutor(
@@ -1043,12 +1198,15 @@ export default class SASjs {
     })
   }
 
-  private isMethodSupported(method: string, serverType: string) {
-    if (this.sasjsConfig.serverType !== serverType) {
+  private isMethodSupported(method: string, serverTypes: ServerType[]) {
+    if (
+      !this.sasjsConfig.serverType ||
+      !serverTypes.includes(this.sasjsConfig.serverType)
+    ) {
       throw new Error(
-        `Method '${method}' is only supported on ${
-          serverType === ServerType.Sas9 ? 'SAS9' : 'SAS Viya'
-        } servers.`
+        `Method '${method}' is only supported on ${serverTypes.join(
+          ', '
+        )} servers.`
       )
     }
   }

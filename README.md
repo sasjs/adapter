@@ -20,9 +20,9 @@
 
 SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:
 
-1 - `npm install @sasjs/adapter` - for use in a node project
+1 - `npm install @sasjs/adapter` - for use in a nodeJS project (recommended)
 
-2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@2/index.js) and use a copy of the latest JS file
+2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@3/index.min.js) and use a copy of the latest JS file
 
 3 - Reference directly from the CDN - in which case click [here](https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection) and select "SRI" to get the script tag with the integrity hash.
 
@@ -36,7 +36,7 @@ Ok ok. Deploy this [example.html](https://raw.githubusercontent.com/sasjs/adapte
 
 The backend part can be deployed as follows:
 
-```
+```sas
 %let appLoc=/Public/app/readme;  /* Metadata or Viya Folder per SASjs config */
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc; /* compile macros (can also be downloaded & compiled seperately) */
@@ -85,18 +85,23 @@ let sasJs = new SASjs.default(
 );
 ```
 If you've installed it via NPM, you can import it as a default import like so:
-```
+```js
   import SASjs from '@sasjs/adapter';
 ```
 You can then instantiate it with:
-```
+```js
 const sasJs = new SASjs({your config})
 ```
 
 More on the config later.
 
 ### SAS Logon
-The login process can be handled directly, as below, or as a callback function to a SAS request.
+All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the `LoginMechanism` attribute of the sasJs config object (above):
+
+* `LoginMechanism:'Redirected'` - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.
+* `LoginMechanism:'Default'` - this approach requires that the username and password are captured, and used within the `.login()` method.  This can be helpful for development, or automated testing.
+
+Sample code for logging in with the `Default` approach:
 
 ```javascript
 sasJs.logIn('USERNAME','PASSWORD'
@@ -109,6 +114,8 @@ sasJs.logIn('USERNAME','PASSWORD'
 }
 ```
 
+More examples of using authentication, and more, can be found in the [SASjs Seed Apps](https://github.com/search?q=topic%3Asasjs-app+org%3Asasjs+fork%3Atrue) on github.
+
 ###  Request / Response
 A simple request can be sent to SAS in the following fashion:
 
@@ -119,6 +126,7 @@ sasJs.request("/path/to/my/service", dataObject)
     console.log(response.tablewith2cols1row[0].COL1.value)
   })
 ```
+
 We supply the path to the SAS service, and a data object.  The data object can be null (for services with no input), or can contain one or more tables in the following format:
 
 ```javascript
@@ -141,39 +149,119 @@ The response object will contain returned tables and columns.  Table names are a
 
 The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.
 
+### Variable Types
+
+The SAS type (char/numeric) of the values is determined according to a set of rules:
+
+* If the values are numeric, the SAS type is numeric
+* If the values are all string, the SAS type is character
+* If the values contain a single character (a-Z + underscore) AND a numeric, then the SAS type is numeric (with special missing values).  
+* `null` is set to either '.' or '' depending on the assigned or derived type per the above rules.  If entire column is `null` then the type will be numeric.
+
+The following table illustrates the formats applied to columns under various scenarios:
+
+|JS Values |SAS Format|
+|---|---|
+|'a', 'a' |$char1.|
+|0, '_' |best.|
+|'Z', 0 |best.|
+|'a', 'aaa' |$char3.|
+|null, 'a', 'aaa' | $char3.|
+|null, 'a', 0 | best.|
+|null, null | best.|
+|null, '' | $char1.|
+|null, 'a' | $char1.|
+|'a' | $char1.|
+|'a', null | $char1.|
+|'a', null, 0 | best.|
+
+Validation is also performed on the values.  The following combinations will throw errors:
+
+|JS Values |SAS Format|
+|---|---|
+|null, 'aaaa', 0 | Error: mixed types. 'aaaa' is not a special missing value.|
+|0, 'a', '!' | Error: mixed types. '!' is not a special missing value|
+|1.1, '.', 0| Error: mixed types.  For regular nulls, use `null`|
+
+### Variable Format Override
+The auto-detect functionality above is thwarted in the following scenarios:
+
+* A character column containing only `null` values (is considered numeric)
+* A numeric column containing only special missing values (is considered character)
+
+To cater for these scenarios, an optional array of formats can be passed along with the data to ensure that SAS will read them in correctly.
+
+To understand these formats, it should be noted that the JSON data is NOT passed directly (as JSON) to SAS. It is first converted into CSV, and the header row is actually an `infile` statement in disguise.  It looks a bit like this:
+
+```csv
+CHARVAR1:$char4. CHARVAR2:$char1. NUMVAR:best.
+LOAD,,0
+ABCD,X,.
+```
+
+To provide overrides to this header row, the tables object can be constructed as follows (with a leading '$' in the table name):
+
+```javascript
+let specialData={
+  "tablewith2cols2rows": [
+    {"col1": "val1","specialMissingsCol": "A"},
+    {"col1": "val2","specialMissingsCol": "_"}
+  ],
+  "$tablewith2cols2rows":{"formats":{"specialMissingsCol":"best."}
+  }
+};
+```
+
+It is not necessary to provide formats for ALL the columns, only the ones that need to be overridden.
+
 ## SAS Inputs / Outputs
 
 The SAS side is handled by a number of macros in the [macro core](https://github.com/sasjs/core) library.
 
 The following snippet shows the process of SAS tables arriving / leaving:
+
 ```sas
 /* fetch all input tables sent from frontend - they arrive as work tables */
 %webout(FETCH)
 
 /* some sas code */
-data some sas tables;
+data a b c;
   set from js;
 run;
 
-%webout(OPEN)  /* open the JSON to be returned */
-%webout(OBJ,some) /* `some` table is sent in object format */
-%webout(ARR,sas) /* `sas` table is sent in array format, smaller filesize */
-%webout(OBJ,tables,fmt=N) /* unformatted (raw) data */
-%webout(OBJ,tables,label=newtable) /* rename tables on export */
-%webout(CLOSE) /* close the JSON and send some extra useful variables too */
+%webout(OPEN)  /* Open the JSON to be returned */
+%webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */
+%webout(ARR,b) /* Rows in table `b` are arrays (compact) */
+%webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */
+%webout(OBJ,c,label=d) /* Rename as `d` on JS side */
+%webout(CLOSE) /* Close the JSON and add default variables */
+```
 
+By default, special SAS numeric missings (_a-Z) are converted to `null` in the JSON.  If you'd like to preserve these, use the `missing=STRING` option as follows:
+
+```sas
+%webout(OBJ,a,missing=STRING)
+```
+In this case, special missings (such as `.a`, `.b`) are converted to javascript string values (`'A', 'B'`).
+
+Where an entire column is made up of special missing numerics, there would be no way to distinguish it from a single-character column by looking at the values.  To cater for this scenario, it is possible to export the variable types (and other attributes such as label and format) by adding a `showmeta` param to the `webout()` macro as follows:
+
+```sas
+%webout(OBJ,a,missing=STRING,showmeta=YES)
 ```
 
 ## Configuration
 
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
 
-* `appLoc` - this is the folder under which the SAS services will be created.
-* `serverType` - either `SAS9` or `SASVIYA`.
+* `appLoc` - this is the folder (eg in metadata or SAS Drive) under which the SAS services are created.
+* `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
+* `LoginMechanism` - either `Default` or `Redirected`.  See [SAS Logon](#sas-logon) section.
 * `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.
+* `requestHistoryLimit` - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled.  Default is 10.
 
 The adapter supports a number of approaches for interfacing with Viya (`serverType` is `SASVIYA`).  For maximum performance, be sure to [configure your compute context](https://sasjs.io/guide-viya/#shared-account-and-server-re-use) with `reuseServerProcesses` as `true` and a system account in `runServerAs`.  This functionality is available since Viya 3.5.  This configuration is supported when [creating contexts using the CLI](https://sasjs.io/sasjs-cli-context/#sasjs-context-create).
 
@@ -196,7 +284,7 @@ Here we are running Jobs using the Job Execution Service except this time we are
 
 This approach (`useComputeApi: false`) also ensures that jobs are displayed in Environment Manager.
 
-```
+```json
 {
   appLoc:"/Your/Path",
   serverType:"SASVIYA",
@@ -210,12 +298,12 @@ This approach is by far the fastest, as a result of the optimisations we have bu
 
 With this approach (`useComputeApi: true`), the requests/logs will _not_ appear in the list in Environment manager.
 
-```
+```json
 {
   appLoc:"/Your/Path",
   serverType:"SASVIYA",
   useComputeApi: true,
-  contextName: 'yourComputeContext'
+  contextName: "yourComputeContext"
 }
 ```
 

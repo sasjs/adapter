@@ -1,4 +1,4 @@
-import SASjs, { SASjsConfig } from '@sasjs/adapter'
+import SASjs, { LoginMechanism, SASjsConfig } from '@sasjs/adapter'
 import { TestSuite } from '@sasjs/test-framework'
 import { ServerType } from '@sasjs/utils/types'
 
@@ -6,6 +6,7 @@ const stringData: any = { table1: [{ col1: 'first col value' }] }
 
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,
+  pathSASJS: '/SASjsApi/stp/execute',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -13,7 +14,7 @@ const defaultConfig: SASjsConfig = {
   debug: false,
   contextName: 'SAS Job Execution compute context',
   useComputeApi: false,
-  allowInsecureRequests: false
+  loginMechanism: LoginMechanism.Default
 }
 
 const customConfig = {
@@ -42,13 +43,26 @@ export const basicTests = (
         response && response.isLoggedIn && response.userName === userName
     },
     {
+      title: 'Fetch username for already logged in user',
+      description: 'Should log the user in',
+      test: async () => {
+        await adapter.logIn(userName, password)
+
+        const newAdapterIns = new SASjs(adapter.getSasjsConfig())
+
+        return await newAdapterIns.checkSession()
+      },
+      assertion: (response: any) =>
+        response?.isLoggedIn && response?.userName === userName
+    },
+    {
       title: 'Multiple Log in attempts',
       description:
         'Should fail on first attempt and should log the user in on second attempt',
       test: async () => {
         await adapter.logOut()
         await adapter.logIn('invalid', 'invalid')
-        return adapter.logIn(userName, password)
+        return await adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
@@ -64,8 +78,8 @@ export const basicTests = (
           'common/sendArr',
           stringData,
           undefined,
-          () => {
-            adapter.logIn(userName, password)
+          async () => {
+            await adapter.logIn(userName, password)
           }
         )
       },
@@ -150,8 +164,8 @@ export const basicTests = (
       title: 'Web request',
       description: 'Should run the request with old web approach',
       test: async () => {
-        const config = {
-          useComputeApi: undefined
+        const config: Partial<SASjsConfig> = {
+          useComputeApi: false
         }
 
         return await adapter.request('common/sendArr', stringData, config)

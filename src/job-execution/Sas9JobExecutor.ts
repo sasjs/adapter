@@ -1,9 +1,11 @@
+import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
 import * as NodeFormData from 'form-data'
 import { ErrorResponse } from '../types/errors'
 import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { Sas9RequestClient } from '../request/Sas9RequestClient'
+import { RequestClient } from '../request/RequestClient'
 
 /**
  * Job executor for SAS9 servers for use in Node.js environments.
@@ -12,15 +14,16 @@ import { Sas9RequestClient } from '../request/Sas9RequestClient'
  * job execution requests.
  */
 export class Sas9JobExecutor extends BaseJobExecutor {
-  private requestClient: Sas9RequestClient
+  private sas9RequestClient: Sas9RequestClient
   constructor(
     serverUrl: string,
     serverType: ServerType,
     private jobsPath: string,
-    allowInsecureRequests: boolean
+    private requestClient: RequestClient,
+    httpsAgentOptions?: https.AgentOptions
   ) {
     super(serverUrl, serverType)
-    this.requestClient = new Sas9RequestClient(serverUrl, allowInsecureRequests)
+    this.sas9RequestClient = new Sas9RequestClient(serverUrl, httpsAgentOptions)
   }
 
   async execute(sasJob: string, data: any, config: any) {
@@ -36,6 +39,8 @@ export class Sas9JobExecutor extends BaseJobExecutor {
         : ''
     }`
 
+    apiUrl = `${apiUrl}${config.debug ? '&_debug=131' : ''}`
+
     let requestParams = {
       ...this.getRequestParams(config)
     }
@@ -45,9 +50,11 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     if (data) {
       try {
         formData = generateFileUploadForm(formData, data)
-      } catch (e) {
+      } catch (e: any) {
         return Promise.reject(new ErrorResponse(e?.message, e))
       }
+    } else {
+      data = ''
     }
 
     for (const key in requestParams) {
@@ -56,25 +63,43 @@ export class Sas9JobExecutor extends BaseJobExecutor {
       }
     }
 
-    await this.requestClient.login(
+    await this.sas9RequestClient.login(
       config.username,
       config.password,
       this.jobsPath
     )
+
     const contentType =
       data && Object.keys(data).length
         ? 'multipart/form-data; boundary=' + (formData as any)._boundary
         : 'text/plain'
-    return await this.requestClient!.post(
-      apiUrl,
-      formData,
-      undefined,
-      contentType,
-      {
+
+    const requestPromise = new Promise((resolve, reject) =>
+      this.sas9RequestClient!.post(apiUrl, formData, undefined, contentType, {
         Accept: '*/*',
         Connection: 'Keep-Alive'
-      }
+      })
+        .then((res: any) => {
+          // appending response to requests array that will be used for requests history reference
+          this.requestClient!.appendRequest(res, sasJob, config.debug)
+          resolve(res)
+        })
+        .catch((err: any) => {
+          // by default error string is equal to actual error object
+          let errString = err
+
+          // if error object contains non empty result attribute, set result to errString
+          if (err.result && err.result !== '') errString = err.result
+          // if there's no result but error message, set error message to errString
+          else if (err.message) errString = err.message
+
+          // appending error to requests array that will be used for requests history reference
+          this.requestClient!.appendRequest(errString, sasJob, config.debug)
+          reject(new ErrorResponse(err?.message, err))
+        })
     )
+
+    return requestPromise
   }
 
   private getRequestParams(config: any): any {
@@ -94,7 +119,8 @@ const generateFileUploadForm = (
 ): NodeFormData => {
   for (const tableName in data) {
     const name = tableName
-    const csv = convertToCSV(data[tableName])
+    const csv = convertToCSV(data, tableName)
+
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(
         'The max length of a string value in SASjs is 32765 characters.'

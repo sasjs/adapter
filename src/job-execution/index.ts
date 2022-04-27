@@ -1,4 +1,5 @@
 export * from './ComputeJobExecutor'
+export * from './FileUploader'
 export * from './JesJobExecutor'
 export * from './JobExecutor'
 export * from './Sas9JobExecutor'

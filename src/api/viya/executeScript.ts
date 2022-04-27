@@ -272,7 +272,13 @@ export async function executeScript(
 
     return { result: jobResult?.result, log }
   } catch (e) {
-    if (e && e.status === 404) {
+    interface HttpError {
+      status: number
+    }
+
+    const error = e as HttpError
+
+    if (error.status === 404) {
       return executeScript(
         requestClient,
         sessionManager,
@@ -287,7 +293,7 @@ export async function executeScript(
         true
       )
     } else {
-      throw prefixMessage(e, 'Error while executing script. ')
+      throw prefixMessage(e as Error, 'Error while executing script. ')
     }
   }
 }

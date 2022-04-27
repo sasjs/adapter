@@ -1,4 +1,5 @@
 import { getValidJson } from '../../utils'
+import { JsonParseArrayError, InvalidJsonError } from '../../types/errors'
 
 describe('jsonValidator', () => {
   it('should not throw an error with a valid json', () => {
@@ -19,23 +20,31 @@ describe('jsonValidator', () => {
 
   it('should throw an error with an invalid json', () => {
     const json = `{\"test\":\"test\"\"test2\":\"test\"}`
-    let errorThrown = false
-    try {
+    const test = () => {
       getValidJson(json)
-    } catch (error) {
-      errorThrown = true
     }
-    expect(errorThrown).toBe(true)
+    expect(test).toThrowError(InvalidJsonError)
   })
 
   it('should throw an error when an array is passed', () => {
     const array = ['hello', 'world']
-    let errorThrown = false
-    try {
+    const test = () => {
       getValidJson(array)
-    } catch (error) {
-      errorThrown = true
     }
-    expect(errorThrown).toBe(true)
+    expect(test).toThrow(JsonParseArrayError)
+  })
+
+  it('should throw an error when null is passed', () => {
+    const test = () => {
+      getValidJson(null as any)
+    }
+    expect(test).toThrow(InvalidJsonError)
+  })
+
+  it('should throw an error when undefined is passed', () => {
+    const test = () => {
+      getValidJson(undefined as any)
+    }
+    expect(test).toThrow(InvalidJsonError)
   })
 })

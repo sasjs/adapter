@@ -1,4 +1,9 @@
-import { ServerType } from '@sasjs/utils/types'
+import * as NodeFormData from 'form-data'
+import {
+  AuthConfig,
+  ExtraResponseAttributes,
+  ServerType
+} from '@sasjs/utils/types'
 import {
   ErrorResponse,
   JobExecutionError,
@@ -10,8 +15,9 @@ import { RequestClient } from '../request/RequestClient'
 import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
-  getValidJson,
-  parseSasViyaDebugResponse
+  parseSasViyaDebugResponse,
+  appendExtraResponseAttributes,
+  getValidJson
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -36,7 +42,9 @@ export class WebJobExecutor extends BaseJobExecutor {
     sasJob: string,
     data: any,
     config: any,
-    loginRequiredCallback?: any
+    loginRequiredCallback?: any,
+    authConfig?: AuthConfig,
+    extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
     const loginCallback = loginRequiredCallback || (() => Promise.resolve())
     const program = isRelativePath(sasJob)
@@ -47,10 +55,36 @@ export class WebJobExecutor extends BaseJobExecutor {
     let apiUrl = `${config.serverUrl}${this.jobsPath}/?${'_program=' + program}`
 
     if (config.serverType === ServerType.SasViya) {
-      const jobUri =
-        config.serverType === ServerType.SasViya
-          ? await this.getJobUri(sasJob)
-          : ''
+      let jobUri
+      try {
+        jobUri = await this.getJobUri(sasJob)
+      } catch (e: any) {
+        return new Promise(async (resolve, reject) => {
+          if (e instanceof LoginRequiredError) {
+            this.appendWaitingRequest(() => {
+              return this.execute(
+                sasJob,
+                data,
+                config,
+                loginRequiredCallback,
+                authConfig,
+                extraResponseAttributes
+              ).then(
+                (res: any) => {
+                  resolve(res)
+                },
+                (err: any) => {
+                  reject(err)
+                }
+              )
+            })
+
+            await loginCallback()
+          } else {
+            reject(new ErrorResponse(e?.message, e))
+          }
+        })
+      }
 
       apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
 
@@ -75,19 +109,25 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
-    let formData = new FormData()
+    /**
+     * Use the available form data object (FormData in Browser, NodeFormData in
+     *  Node)
+     */
+    let formData =
+      typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.Sas9 ||
+        config.serverType === ServerType.Sasjs ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';')
       ) {
         // file upload approach
         try {
           formData = generateFileUploadForm(formData, data)
-        } catch (e) {
+        } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       } else {
@@ -97,7 +137,7 @@ export class WebJobExecutor extends BaseJobExecutor {
             generateTableUploadForm(formData, data)
           formData = newFormData
           requestParams = { ...requestParams, ...params }
-        } catch (e) {
+        } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       }
@@ -109,39 +149,85 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
+    /* The NodeFormData object does not set the request header - so, set it */
+    const contentType =
+      formData instanceof NodeFormData && typeof FormData === 'undefined'
+        ? `multipart/form-data; boundary=${formData.getBoundary()}`
+        : undefined
+
     const requestPromise = new Promise((resolve, reject) => {
-      this.requestClient!.post(apiUrl, formData, undefined)
-        .then(async (res) => {
-          if (this.serverType === ServerType.SasViya && config.debug) {
-            const jsonResponse = await parseSasViyaDebugResponse(
-              res.result as string,
-              this.requestClient,
-              this.serverUrl
-            )
-            this.appendRequest(res, sasJob, config.debug)
-            resolve(jsonResponse)
+      this.requestClient!.post(
+        apiUrl,
+        formData,
+        authConfig?.access_token,
+        contentType
+      )
+        .then(async (res: any) => {
+          const parsedSasjsServerLog =
+            this.serverType === ServerType.Sasjs
+              ? res.result.log.map((logLine: any) => logLine.line).join('\n')
+              : res.result.log
+
+          const resObj =
+            this.serverType === ServerType.Sasjs
+              ? {
+                  result: res.result._webout,
+                  log: parsedSasjsServerLog
+                }
+              : res
+          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
+
+          let jsonResponse = res.result
+
+          if (config.debug) {
+            switch (this.serverType) {
+              case ServerType.SasViya:
+                jsonResponse = await parseSasViyaDebugResponse(
+                  res.result,
+                  this.requestClient,
+                  this.serverUrl
+                )
+                break
+              case ServerType.Sas9:
+                jsonResponse =
+                  typeof res.result === 'string'
+                    ? parseWeboutResponse(res.result, apiUrl)
+                    : res.result
+                break
+              case ServerType.Sasjs:
+                if (typeof res.result._webout === 'object') {
+                  jsonResponse = res.result._webout
+                } else {
+                  const webout = parseWeboutResponse(res.result._webout, apiUrl)
+                  jsonResponse = getValidJson(webout)
+                }
+                break
+            }
+          } else if (this.serverType === ServerType.Sasjs) {
+            jsonResponse = getValidJson(res.result._webout)
           }
 
-          this.appendRequest(res, sasJob, config.debug)
-          getValidJson(res.result as string)
-          resolve(res.result)
+          const responseObject = appendExtraResponseAttributes(
+            { result: jsonResponse, log: parsedSasjsServerLog },
+            extraResponseAttributes
+          )
+          resolve(responseObject)
         })
         .catch(async (e: Error) => {
           if (e instanceof JobExecutionError) {
-            this.appendRequest(e, sasJob, config.debug)
-
+            this.requestClient!.appendRequest(e, sasJob, config.debug)
             reject(new ErrorResponse(e?.message, e))
           }
 
           if (e instanceof LoginRequiredError) {
-            await loginCallback()
-
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
                 data,
                 config,
-                loginRequiredCallback
+                loginRequiredCallback,
+                authConfig,
+                extraResponseAttributes
               ).then(
                 (res: any) => {
                   resolve(res)
@@ -151,6 +237,8 @@ export class WebJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+
+            await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }

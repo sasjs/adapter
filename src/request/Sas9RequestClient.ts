@@ -1,3 +1,4 @@
+import * as https from 'https'
 import { AxiosRequestConfig } from 'axios'
 import axiosCookieJarSupport from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
@@ -9,8 +10,8 @@ import { RequestClient, throwIfError } from './RequestClient'
  * Handles redirects and cookie management.
  */
 export class Sas9RequestClient extends RequestClient {
-  constructor(baseUrl: string, allowInsecure = false) {
-    super(baseUrl, allowInsecure)
+  constructor(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
+    super(baseUrl, httpsAgentOptions)
     this.httpClient.defaults.maxRedirects = 0
     this.httpClient.defaults.validateStatus = (status) =>
       status >= 200 && status < 303
@@ -86,7 +87,7 @@ export class Sas9RequestClient extends RequestClient {
       })
   }
 
-  public post<T>(
+  public async post<T>(
     url: string,
     data: any,
     accessToken: string | undefined,

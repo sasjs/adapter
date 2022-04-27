@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
 import {
@@ -6,12 +7,18 @@ import {
   LoginRequiredError,
   NotFoundError,
   InternalServerError,
-  JobExecutionError
+  JobExecutionError,
+  CertificateError
 } from '../types/errors'
+import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
-import { getValidJson } from '../utils'
+import {
+  parseGeneratedCode,
+  parseSourceCode,
+  createAxiosInstance
+} from '../utils'
 
 export interface HttpClient {
   get<T>(
@@ -42,32 +49,36 @@ export interface HttpClient {
   ): Promise<{ result: T; etag: string }>
 
   getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
+  saveLocalStorageToken(accessToken: string, refreshToken: string): void
   clearCsrfTokens(): void
+  clearLocalStorageTokens(): void
   getBaseUrl(): string
 }
 
 export class RequestClient implements HttpClient {
+  private requests: SASjsRequest[] = []
+  private requestsLimit: number = 10
+
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
-  protected httpClient: AxiosInstance
+  protected httpClient!: AxiosInstance
 
-  constructor(protected baseUrl: string, allowInsecure = false) {
-    const https = require('https')
-    if (allowInsecure && https.Agent) {
-      this.httpClient = axios.create({
-        baseURL: baseUrl,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: !allowInsecure
-        })
-      })
-    } else {
-      this.httpClient = axios.create({
-        baseURL: baseUrl
-      })
-    }
+  constructor(
+    protected baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions,
+    requestsLimit?: number
+  ) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
+    if (requestsLimit) this.requestsLimit = requestsLimit
+  }
 
-    this.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status < 305
+  public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
+    this.createHttpClient(baseUrl, httpsAgentOptions)
+  }
+
+  public saveLocalStorageToken(accessToken: string, refreshToken: string) {
+    localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('refreshToken', refreshToken)
   }
 
   public getCsrfToken(type: 'general' | 'file' = 'general') {
@@ -78,9 +89,93 @@ export class RequestClient implements HttpClient {
     this.csrfToken = { headerName: '', value: '' }
     this.fileUploadCsrfToken = { headerName: '', value: '' }
   }
+  public clearLocalStorageTokens() {
+    localStorage.setItem('accessToken', '')
+    localStorage.setItem('refreshToken', '')
+  }
 
   public getBaseUrl() {
     return this.httpClient.defaults.baseURL || ''
+  }
+
+  /**
+   * this method returns all requests, an array of SASjsRequest type
+   * @returns SASjsRequest[]
+   */
+  public getRequests = () => this.requests
+
+  /**
+   * this method clears the requests array, i.e set to empty
+   */
+  public clearRequests = () => {
+    this.requests = []
+  }
+
+  /**
+   * this method appends the response from sasjs request to requests array
+   * @param response - response from sasjs request
+   * @param program - name of program
+   * @param debug - a boolean that indicates whether debug was enabled or not
+   */
+  public appendRequest(response: any, program: string, debug: boolean) {
+    let sourceCode = ''
+    let generatedCode = ''
+    let sasWork = null
+
+    if (debug) {
+      if (response?.log) {
+        sourceCode = parseSourceCode(response.log)
+        generatedCode = parseGeneratedCode(response.log)
+
+        if (response?.result) {
+          sasWork = response.result.WORK
+        } else {
+          sasWork = response.log
+        }
+      } else if (response?.result?.log) {
+        //In this scenario we know we got the response from SASJS server
+        //Log is array of `{ line: '' }` so we need to convert it back to text
+        //To be able to parse it with current functions.
+        let log: string = ''
+
+        if (typeof log !== 'string') {
+          log = response.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
+        }
+
+        sourceCode = parseSourceCode(log)
+        generatedCode = parseGeneratedCode(log)
+
+        if (response?.result?._webout) {
+          sasWork = response.result._webout.WORK
+        } else {
+          sasWork = log
+        }
+      } else if (response?.result) {
+        sourceCode = parseSourceCode(response.result)
+        generatedCode = parseGeneratedCode(response.result)
+        sasWork = response.result.WORK
+      }
+    }
+
+    const stringifiedResult =
+      typeof response?.result === 'string'
+        ? response?.result
+        : JSON.stringify(response?.result, null, 2)
+
+    this.requests.push({
+      logFile: response?.log || stringifiedResult || response,
+      serviceLink: program,
+      timestamp: new Date(),
+      sourceCode,
+      generatedCode,
+      SASWORK: sasWork
+    })
+
+    if (this.requests.length > this.requestsLimit) {
+      this.requests.splice(0, 1)
+    }
   }
 
   public async get<T>(
@@ -124,18 +219,17 @@ export class RequestClient implements HttpClient {
               }
             ),
           debug
-        ).catch((err) => {
-          throw prefixMessage(err, 'Error while handling error. ')
-        })
+        )
       })
   }
 
-  public post<T>(
+  public async post<T>(
     url: string,
     data: any,
     accessToken: string | undefined,
     contentType = 'application/json',
-    overrideHeaders: { [key: string]: string | number } = {}
+    overrideHeaders: { [key: string]: string | number } = {},
+    additionalSettings: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
@@ -143,9 +237,14 @@ export class RequestClient implements HttpClient {
     }
 
     return this.httpClient
-      .post<T>(url, data, { headers, withCredentials: true })
+      .post<T>(url, data, {
+        headers,
+        withCredentials: true,
+        ...additionalSettings
+      })
       .then((response) => {
         throwIfError(response)
+
         return this.parseResponse<T>(response)
       })
       .catch(async (e) => {
@@ -229,12 +328,16 @@ export class RequestClient implements HttpClient {
     }
 
     try {
-      const response = await this.httpClient.post(url, content, { headers })
+      const response = await this.httpClient.post(url, content, {
+        headers,
+        transformRequest: (requestBody) => requestBody
+      })
+
       return {
         result: response.data,
         etag: response.headers['etag'] as string
       }
-    } catch (e) {
+    } catch (e: any) {
       const response = e.response as AxiosResponse
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetFileUploadCsrfToken(response)
@@ -391,6 +494,8 @@ export class RequestClient implements HttpClient {
 
     if (e instanceof LoginRequiredError) {
       this.clearCsrfTokens()
+
+      throw e
     }
 
     if (response?.status === 403 || response?.status === 449) {
@@ -413,7 +518,12 @@ export class RequestClient implements HttpClient {
       else return
     }
 
-    throw e
+    if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+      throw new CertificateError(e.message)
+    }
+
+    if (e.message) throw e
+    else throw prefixMessage(e, 'Error while handling error. ')
   }
 
   protected parseResponse<T>(response: AxiosResponse<any>) {
@@ -429,13 +539,7 @@ export class RequestClient implements HttpClient {
       }
     } catch {
       try {
-        const weboutResponse = parseWeboutResponse(response.data)
-        if (weboutResponse === '') {
-          throw new Error('Valid JSON could not be extracted from response.')
-        }
-
-        const jsonResponse = getValidJson(weboutResponse)
-        parsedResponse = jsonResponse
+        parsedResponse = JSON.parse(parseWeboutResponse(response.data))
       } catch {
         parsedResponse = response.data
       }
@@ -460,11 +564,36 @@ export class RequestClient implements HttpClient {
 
     return responseToReturn
   }
+
+  private createHttpClient(
+    baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions
+  ) {
+    const httpsAgent = httpsAgentOptions
+      ? new https.Agent(httpsAgentOptions)
+      : undefined
+
+    this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
+
+    this.httpClient.defaults.validateStatus = (status) => {
+      return status >= 200 && status <= 401
+    }
+  }
 }
 
 export const throwIfError = (response: AxiosResponse) => {
-  if (response.status === 401) {
-    throw new LoginRequiredError()
+  switch (response.status) {
+    case 400:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      }
+      break
+    case 401:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      } else {
+        throw new LoginRequiredError()
+      }
   }
 
   if (response.data?.entityID?.includes('login')) {
@@ -505,46 +634,60 @@ export const throwIfError = (response: AxiosResponse) => {
 }
 
 const parseError = (data: string) => {
+  if (!data) return null
+
   try {
     const responseJson = JSON.parse(data?.replace(/[\n\r]/g, ' '))
-    return responseJson.errorCode && responseJson.message
-      ? new JobExecutionError(
-          responseJson.errorCode,
-          responseJson.message,
-          data?.replace(/[\n\r]/g, ' ')
-        )
-      : null
-  } catch (_) {
-    try {
-      const hasError = data?.includes('{"errorCode')
-      if (hasError) {
-        const parts = data.split('{"errorCode')
-        if (parts.length > 1) {
-          const error = '{"errorCode' + parts[1].split('"}')[0] + '"}'
-          const errorJson = JSON.parse(error.replace(/[\n\r]/g, ' '))
-          return new JobExecutionError(
-            errorJson.errorCode,
-            errorJson.message,
-            data?.replace(/[\n\r]/g, '\n')
-          )
-        }
-        return null
-      }
-      try {
-        const hasError = !!data?.match(/stored process not found: /i)
-        if (hasError) {
-          const parts = data.split(/stored process not found: /i)
-          if (parts.length > 1) {
-            const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
-            const message = `Stored process not found: ${storedProcessPath}`
-            return new JobExecutionError(404, message, '')
-          }
-        }
-      } catch (_) {
-        return null
-      }
-    } catch (_) {
-      return null
+    if (responseJson.errorCode && responseJson.message) {
+      return new JobExecutionError(
+        responseJson.errorCode,
+        responseJson.message,
+        data?.replace(/[\n\r]/g, ' ')
+      )
     }
-  }
+  } catch (_) {}
+
+  try {
+    const hasError = data?.includes('{"errorCode')
+    if (hasError) {
+      const parts = data.split('{"errorCode')
+      if (parts.length > 1) {
+        const error = '{"errorCode' + parts[1].split('"}')[0] + '"}'
+        const errorJson = JSON.parse(error.replace(/[\n\r]/g, ' '))
+        return new JobExecutionError(
+          errorJson.errorCode,
+          errorJson.message,
+          data?.replace(/[\n\r]/g, '\n')
+        )
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const hasError = !!data?.match(/stored process not found: /i)
+    if (hasError) {
+      const parts = data.split(/stored process not found: /i)
+      if (parts.length > 1) {
+        const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
+        const message = `Stored process not found: ${storedProcessPath}`
+        return new JobExecutionError(500, message, '')
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const hasError =
+      !!data?.match(/Stored Process Error/i) &&
+      !!data?.match(/This request completed with errors./i)
+    if (hasError) {
+      const parts = data.split('<h2>SAS Log</h2>')
+      if (parts.length > 1) {
+        const log = parts[1].split('<pre>')[1].split('</pre>')[0]
+        const message = `This request completed with errors.`
+        return new JobExecutionError(500, message, log)
+      }
+    }
+  } catch (_) {}
+
+  return null
 }

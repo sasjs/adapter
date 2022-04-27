@@ -35,19 +35,16 @@ export class ComputeJobExecutor extends BaseJobExecutor {
           expectWebout
         )
         .then((response) => {
-          this.appendRequest(response, sasJob, config.debug)
-
+          this.sasViyaApiClient.appendRequest(response, sasJob, config.debug)
           resolve(response.result)
         })
         .catch(async (e: Error) => {
           if (e instanceof ComputeJobExecutionError) {
-            this.appendRequest(e, sasJob, config.debug)
-
+            this.sasViyaApiClient.appendRequest(e, sasJob, config.debug)
             reject(new ErrorResponse(e?.message, e))
           }
 
           if (e instanceof LoginRequiredError) {
-            await loginCallback()
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -63,6 +60,8 @@ export class ComputeJobExecutor extends BaseJobExecutor {
                 }
               )
             })
+
+            await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
