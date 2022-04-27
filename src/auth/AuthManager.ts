@@ -294,7 +294,7 @@ export class AuthManager {
       //Residue can happen in case of session expiration
       await this.logOut()
     }
-    
+
     return { isLoggedIn, userName }
   }
 
