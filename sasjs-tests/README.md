@@ -65,7 +65,7 @@ The below services need to be created on your SAS server, at the location specif
 ```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
-filename ft15f001 temp;
+filename ft15f001 temp lrecl=1000;
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
@@ -113,7 +113,7 @@ data _null_;
 ```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
-filename ft15f001 temp;
+filename ft15f001 temp lrecl=1000;
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
