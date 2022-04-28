@@ -63,23 +63,13 @@ jobs:
           npm i
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SAS_USERNAME }}",' ./public/config.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./public/config.json
-          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASVIYA",' ./public/config.json
+          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
           npm run update:adapter && npm run build
           scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
-          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SAS9",' ./public/config.json
-          npm run build
-          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_SAS9 }}
 
-      - name: Run cypress on viya
+      - name: Run cypress on sasjs
         run: |
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
-          replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
-          sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Run cypress on sas9
-        run: |
-          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_SAS9 }}",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SAS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SAS_PASSWORD }}",' ./cypress.json
           sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
