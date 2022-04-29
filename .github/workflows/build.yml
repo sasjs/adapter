@@ -22,35 +22,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
-      # - name: Check npm audit
-      #   run: npm audit --production --audit-level=low
-      
-      # - name: Install Dependencies
-      #   run: npm ci
-      
-      # - name: Check code style
-      #   run: npm run lint
-      
-      # - name: Run unit tests
-      #   run: npm test
-      
-      # - name: Generate coverage report
-      #   uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      
-      # - name: Build Package
-      #   run: npm run package:lib
-      #   env:
-      #     CI: true
-
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with: 
-          key: ${{ secrets.DCGITLAB_KEY }}
-          known_hosts: 'placeholder'
-      - name: Test LS
-        run: ls -a
       - name: Write VPN Files
         run: |
           echo "$CA_CRT" > .github/vpn/ca.crt
@@ -63,6 +34,34 @@ jobs:
           USER_CRT: ${{ secrets.USER_CRT }}
           USER_KEY: ${{ secrets.USER_KEY }}
           TLS_KEY: ${{ secrets.TLS_KEY }}
+
+      - name: Check npm audit
+        run: npm audit --production --audit-level=low
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: Check code style
+        run: npm run lint
+      
+      - name: Run unit tests
+        run: npm test
+      
+      - name: Generate coverage report
+        uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build Package
+        run: npm run package:lib
+        env:
+          CI: true
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with: 
+          key: ${{ secrets.DCGITLAB_KEY }}
+          known_hosts: 'placeholder'
 
       - name: Install Open VPN
         run: |
