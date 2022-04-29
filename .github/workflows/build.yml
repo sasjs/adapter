@@ -44,6 +44,9 @@ jobs:
           sudo apt update
           sudo apt install openvpn3=16~beta+focal
 
+      - name: Start Open VPN 3
+        run: openvpn3 session-start --config .github/vpn/config.ovpn
+
       - name: Check npm audit
         run: npm audit --production --audit-level=low
       
@@ -71,9 +74,6 @@ jobs:
         with: 
           key: ${{ secrets.DCGITLAB_KEY }}
           known_hosts: 'placeholder'
-
-      - name: Start Open VPN 3
-        run: openvpn3 session-start --config .github/vpn/config.ovpn
 
       - name: Deploy sasjs-tests
         run: |
