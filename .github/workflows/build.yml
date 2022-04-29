@@ -4,7 +4,6 @@
 name: SASjs Build
 
 on:
-  push:
   pull_request:
 
 jobs:
@@ -93,4 +92,4 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
-          sh ./sasjs-cypress-run.sh ${{ secrets.SLACK_WEBHOOK }}
+          sh ./sasjs-cypress-run.sh ${{ secrets.DISCORD_WEBHOOK }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
