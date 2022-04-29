@@ -59,11 +59,6 @@ jobs:
       - name: Run unit tests
         run: npm test
       
-      - name: Generate coverage report
-        uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      
       - name: Build Package
         run: npm run package:lib
         env:
@@ -93,3 +88,8 @@ jobs:
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
           sh ./sasjs-cypress-run.sh ${{ secrets.DISCORD_WEBHOOK }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
+
+      - name: Generate coverage report
+        uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
