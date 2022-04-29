@@ -100,12 +100,15 @@ export class AuthManager {
       password,
       clientId
     )
-      .then((res) => {
+      .then(async (res) => {
         this.userName = username
         this.requestClient.saveLocalStorageToken(
           res.access_token,
           res.refresh_token
         )
+
+        await this.loginCallback()
+
         return true
       })
       .catch(() => false)
