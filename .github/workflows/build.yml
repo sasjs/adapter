@@ -22,6 +22,29 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: Check npm audit
+        run: npm audit --production --audit-level=low
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: Check code style
+        run: npm run lint
+      
+      - name: Run unit tests
+        run: npm test
+      
+      - name: Build Package
+        run: npm run package:lib
+        env:
+          CI: true
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with: 
+          key: ${{ secrets.DCGITLAB_KEY }}
+          known_hosts: 'placeholder'
+
       - name: Write VPN Files
         run: |
           echo "$CA_CRT" > .github/vpn/ca.crt
@@ -46,29 +69,6 @@ jobs:
 
       - name: Start Open VPN 3
         run: openvpn3 session-start --config .github/vpn/config.ovpn
-
-      - name: Check npm audit
-        run: npm audit --production --audit-level=low
-      
-      - name: Install Dependencies
-        run: npm ci
-      
-      - name: Check code style
-        run: npm run lint
-      
-      - name: Run unit tests
-        run: npm test
-      
-      - name: Build Package
-        run: npm run package:lib
-        env:
-          CI: true
-
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with: 
-          key: ${{ secrets.DCGITLAB_KEY }}
-          known_hosts: 'placeholder'
 
       - name: Deploy sasjs-tests
         run: |
