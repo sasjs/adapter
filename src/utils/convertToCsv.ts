@@ -1,4 +1,4 @@
-import { isSpecialMissing } from '@sasjs/utils'
+import { isSpecialMissing } from '@sasjs/utils/input/validators'
 
 /**
  * Converts the given JSON object array to a CSV string.
