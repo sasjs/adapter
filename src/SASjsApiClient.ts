@@ -100,9 +100,7 @@ export class SASjsApiClient {
    * @param clientId - the client ID to authenticate with.
    * @param authCode - the auth code received from the server.
    */
-  public async getAccessToken(
-    authCode: string
-  ): Promise<SASjsAuthResponse> {
+  public async getAccessToken(authCode: string): Promise<SASjsAuthResponse> {
     return getAccessTokenForSasjs(this.requestClient, authCode)
   }
 
@@ -120,10 +118,7 @@ export class SASjsApiClient {
    * @param password - a string representing the password.
    * @param clientId - the client ID to authenticate with.
    */
-  public async getAuthCode(
-    username: string,
-    password: string,
-  ) {
+  public async getAuthCode(username: string, password: string) {
     return getAuthCodeForSasjs(this.requestClient, username, password)
   }
 }
