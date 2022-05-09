@@ -104,7 +104,7 @@ export class SASjsApiClient {
     clientId: string,
     authCode: string
   ): Promise<SASjsAuthResponse> {
-    return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
+    return getAccessTokenForSasjs(this.requestClient, authCode)
   }
 
   /**
@@ -126,7 +126,7 @@ export class SASjsApiClient {
     password: string,
     clientId: string
   ) {
-    return getAuthCodeForSasjs(this.requestClient, username, password, clientId)
+    return getAuthCodeForSasjs(this.requestClient, username, password)
   }
 }
 

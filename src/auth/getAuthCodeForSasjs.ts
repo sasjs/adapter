@@ -11,11 +11,10 @@ import { RequestClient } from '../request/RequestClient'
 export const getAuthCodeForSasjs = async (
   requestClient: RequestClient,
   username: string,
-  password: string,
-  clientId: string
+  password: string
 ) => {
   const url = '/SASjsApi/auth/authorize'
-  const data = { username, password, clientId }
+  const data = { username, password }
 
   const { code: authCode } = await requestClient
     .post<{ code: string }>(url, data, undefined)

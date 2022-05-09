@@ -92,14 +92,9 @@ export class AuthManager {
    */
   public async logInSasjs(
     username: string,
-    password: string,
-    clientId: string
+    password: string
   ): Promise<LoginResult> {
-    const isLoggedIn = await this.sendLoginRequestSasjs(
-      username,
-      password,
-      clientId
-    )
+    const isLoggedIn = await this.sendLoginRequestSasjs(username, password)
       .then((res) => {
         this.userName = username
         this.requestClient.saveLocalStorageToken(
@@ -215,18 +210,13 @@ export class AuthManager {
     return loginResponse
   }
 
-  private async sendLoginRequestSasjs(
-    username: string,
-    password: string,
-    clientId: string
-  ) {
+  private async sendLoginRequestSasjs(username: string, password: string) {
     const authCode = await getAuthCodeForSasjs(
       this.requestClient,
       username,
-      password,
-      clientId
+      password
     )
-    return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
+    return getAccessTokenForSasjs(this.requestClient, authCode)
   }
   /**
    * Checks whether a session is active, or login is required.

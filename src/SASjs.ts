@@ -598,7 +598,7 @@ export default class SASjs {
             'A username, password and clientId are required when using the default login mechanism with server type SASJS.'
           )
 
-        return this.authManager!.logInSasjs(username, password, clientId)
+        return this.authManager!.logInSasjs(username, password)
       }
 
       return this.authManager!.logIn(username, password)
