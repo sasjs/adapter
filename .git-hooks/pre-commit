@@ -1,0 +1,5 @@
+#!/bin/sh
+
+npm run --silent lint:fix
+
+exit 0
