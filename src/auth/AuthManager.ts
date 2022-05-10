@@ -171,7 +171,7 @@ export class AuthManager {
 
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
-        await this.performCASSecurityCheck()
+        await this.performCASSecurityCheck();
       }
 
       this.loginCallback()
