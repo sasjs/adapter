@@ -21,6 +21,7 @@ import {
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import { Server } from 'https'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -46,7 +47,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     authConfig?: AuthConfig,
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
-    const loginCallback = loginRequiredCallback || (() => Promise.resolve())
+    const loginCallback = loginRequiredCallback
     const program = isRelativePath(sasJob)
       ? config.appLoc
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
@@ -79,7 +80,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             })
 
-            await loginCallback()
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
@@ -220,6 +221,15 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
+            if (!loginRequiredCallback) {
+              reject(
+                new ErrorResponse(
+                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
+                  e
+                )
+              )
+            }
+
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -238,7 +248,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             })
 
-            await loginCallback()
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }

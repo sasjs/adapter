@@ -916,8 +916,8 @@ export default class SASjs {
     return await this.sasJSApiClient?.deploy(dataJson, appLoc, authConfig)
   }
 
-  public async executeJobSASjs(query: ExecutionQuery) {
-    return await this.sasJSApiClient?.executeJob(query)
+  public async executeJobSASjs(query: ExecutionQuery, authConfig?: AuthConfig) {
+    return await this.sasJSApiClient?.executeJob(query, authConfig)
   }
 
   /**
