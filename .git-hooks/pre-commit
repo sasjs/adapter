@@ -1,7 +1,6 @@
 #!/bin/sh
 
-# We make this command run without printing to console, because if it does, it prevents `commit-msg` error to be shown when commiting
-# trough VS Code
+# Silent mode prevents `commit-msg` err in log window
 npm run --silent lint:fix
 
 exit 0
