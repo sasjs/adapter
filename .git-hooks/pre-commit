@@ -6,6 +6,7 @@
 if npm run --silent lint:silent ; then
     exit 0
 else
-    echo "❌ Prettier check failed! Please run lint:fix."
+    npm run --silent lint:fix
+    echo "❌ Prettier check failed! We ran lint:fix for you. Please add & commit again."
     exit 1
 fi
