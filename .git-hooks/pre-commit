@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# Silent mode prevents `commit-msg` err in log window
+# Using `--silent` helps for showing any errs in the first line of the response
+# The first line is picked up by the VS Code GIT UI popup when rc is not 0
+
 npm run --silent lint:fix
 
 exit 0
