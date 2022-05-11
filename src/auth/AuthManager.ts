@@ -85,34 +85,6 @@ export class AuthManager {
 
   /**
    * Logs into the SAS server with the supplied credentials.
-   * @param userName - a string representing the username.
-   * @param password - a string representing the password.
-   * @param clientId - a string representing the client ID.
-   * @returns - a boolean `isLoggedin` and a string `username`
-   */
-  public async logInSasjs(
-    username: string,
-    password: string
-  ): Promise<LoginResult> {
-    const isLoggedIn = await this.sendLoginRequestSasjs(username, password)
-      .then((res) => {
-        this.userName = username
-        this.requestClient.saveLocalStorageToken(
-          res.access_token,
-          res.refresh_token
-        )
-        return true
-      })
-      .catch(() => false)
-
-    return {
-      isLoggedIn,
-      userName: this.userName
-    }
-  }
-
-  /**
-   * Logs into the SAS server with the supplied credentials.
    * @param username - a string representing the username.
    * @param password - a string representing the password.
    * @returns - a boolean `isLoggedin` and a string `username`
@@ -147,7 +119,7 @@ export class AuthManager {
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    let isLoggedIn = isLogInSuccess(loginResponse)
+    let isLoggedIn = isLogInSuccess(this.serverType, loginResponse)
 
     if (!isLoggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
@@ -191,6 +163,17 @@ export class AuthManager {
     loginForm: { [key: string]: any },
     loginParams: { [key: string]: any }
   ) {
+    if (this.serverType === ServerType.Sasjs) {
+      const { username, password } = loginParams
+      const { result: loginResponse } = await this.requestClient.post<string>(
+        this.loginUrl,
+        { username, password },
+        undefined
+      )
+
+      return loginResponse
+    }
+
     for (const key in loginForm) {
       loginParams[key] = loginForm[key]
     }
@@ -210,14 +193,6 @@ export class AuthManager {
     return loginResponse
   }
 
-  private async sendLoginRequestSasjs(username: string, password: string) {
-    const authCode = await getAuthCodeForSasjs(
-      this.requestClient,
-      username,
-      password
-    )
-    return getAccessTokenForSasjs(this.requestClient, authCode)
-  }
   /**
    * Checks whether a session is active, or login is required.
    * @returns - a promise which resolves with an object containing three values
@@ -238,8 +213,7 @@ export class AuthManager {
       //Residue can happen in case of session expiration
       await this.logOut()
 
-      if (this.serverType !== ServerType.Sasjs)
-        loginForm = await this.getNewLoginForm()
+      loginForm = await this.getNewLoginForm()
     }
 
     return Promise.resolve({
@@ -250,6 +224,12 @@ export class AuthManager {
   }
 
   private async getNewLoginForm() {
+    if (this.serverType === ServerType.Sasjs) {
+      // server will be sending CSRF cookie,
+      // http client will use it automatically
+      return this.requestClient.get('/', undefined)
+    }
+
     const { result: formResponse } = await this.requestClient.get<string>(
       this.loginUrl.replace('.do', ''),
       undefined,
@@ -374,5 +354,8 @@ const isCredentialsVerifyError = (response: string): boolean =>
     response
   )
 
-const isLogInSuccess = (response: string): boolean =>
-  /You have signed in/gm.test(response)
+const isLogInSuccess = (serverType: ServerType, response: any): boolean => {
+  if (serverType === ServerType.Sasjs) return response?.loggedin
+
+  return /You have signed in/gm.test(response)
+}
