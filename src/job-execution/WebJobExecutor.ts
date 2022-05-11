@@ -172,13 +172,12 @@ export class WebJobExecutor extends BaseJobExecutor {
           let resObj = res
 
           if (this.serverType === ServerType.Sasjs) {
-            resObj = {
-              result: res.result._webout,
-              log: parsedSasjsServerLog
-            }
-
-            if (resObj.result.length < 1)
-              throw new JobExecutionError(0, 'Job execution failed', resObj)
+            if (res.result._webout < 1)
+              throw new JobExecutionError(
+                0,
+                'Job execution failed',
+                parsedSasjsServerLog
+              )
           }
 
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
