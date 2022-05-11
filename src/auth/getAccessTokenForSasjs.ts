@@ -9,10 +9,12 @@ import { RequestClient } from '../request/RequestClient'
  */
 export async function getAccessTokenForSasjs(
   requestClient: RequestClient,
+  clientId: string,
   authCode: string
 ) {
   const url = '/SASjsApi/auth/token'
   const data = {
+    clientId,
     code: authCode
   }
 

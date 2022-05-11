@@ -3,7 +3,6 @@ import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
-import { getAuthCodeForSasjs } from './auth/getAuthCodeForSasjs'
 import { parseWeboutResponse } from './utils'
 import { getTokens } from './auth/getTokens'
 
@@ -100,8 +99,11 @@ export class SASjsApiClient {
    * @param clientId - the client ID to authenticate with.
    * @param authCode - the auth code received from the server.
    */
-  public async getAccessToken(authCode: string): Promise<SASjsAuthResponse> {
-    return getAccessTokenForSasjs(this.requestClient, authCode)
+  public async getAccessToken(
+    clientId: string,
+    authCode: string
+  ): Promise<SASjsAuthResponse> {
+    return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
   }
 
   /**
@@ -110,16 +112,6 @@ export class SASjsApiClient {
    */
   public async refreshTokens(refreshToken: string): Promise<SASjsAuthResponse> {
     return refreshTokensForSasjs(this.requestClient, refreshToken)
-  }
-
-  /**
-   * Performs a login authenticate and returns an auth code for the given client.
-   * @param username - a string representing the username.
-   * @param password - a string representing the password.
-   * @param clientId - the client ID to authenticate with.
-   */
-  public async getAuthCode(username: string, password: string) {
-    return getAuthCodeForSasjs(this.requestClient, username, password)
   }
 }
 

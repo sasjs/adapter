@@ -486,7 +486,7 @@ export default class SASjs {
     ])
 
     if (this.sasjsConfig.serverType === ServerType.Sasjs)
-      return await this.sasJSApiClient!.getAccessToken(authCode)
+      return await this.sasJSApiClient!.getAccessToken(clientId, authCode)
 
     return await this.sasViyaApiClient!.getAccessToken(
       clientId,

@@ -22,11 +22,15 @@ describe('getAccessTokenForSasjs', () => {
         Promise.resolve({ result: mockSasjsAuthResponse, etag: '' })
       )
 
-    await getAccessTokenForSasjs(requestClient, authConfig.refresh_token)
+    await getAccessTokenForSasjs(
+      requestClient,
+      authConfig.client,
+      authConfig.refresh_token
+    )
 
     expect(requestClient.post).toHaveBeenCalledWith(
       '/SASjsApi/auth/token',
-      { code: authConfig.refresh_token },
+      { clientId: authConfig.client, code: authConfig.refresh_token },
       undefined
     )
   })
@@ -47,6 +51,7 @@ describe('getAccessTokenForSasjs', () => {
 
     const error = await getAccessTokenForSasjs(
       requestClient,
+      authConfig.client,
       authConfig.refresh_token
     ).catch((e) => e)
 
