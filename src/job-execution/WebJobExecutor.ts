@@ -92,7 +92,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       if (jobUri.length > 0) {
         apiUrl += '&_job=' + jobUri
         /**
-         * Using both _job and _program parameters will cause a conflict in the JES web app, as it’s not clear whether or not the server should make the extra fetch for the job uri.
+         * Using both _job and _program parameters will cause a conflict in the JES web app, as it's not clear whether or not the server should make the extra fetch for the job uri.
          * To handle this, we add the extra underscore and recreate the _program variable in the SAS side of the SASjs adapter so it remains available for backend developers.
          */
         apiUrl = apiUrl.replace('_program=', '__program=')
@@ -169,7 +169,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               ? res.result.log.map((logLine: any) => logLine.line).join('\n')
               : res.result.log
 
-          let resObj = res
+          const resObj = res
 
           if (this.serverType === ServerType.Sasjs) {
             if (res.result._webout < 1)
