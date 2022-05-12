@@ -12,7 +12,7 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
-const wp = require("@cypress/webpack-preprocessor");
+const wp = require('@cypress/webpack-preprocessor')
 
 /**
  * @type {Cypress.PluginConfig}
@@ -22,21 +22,21 @@ module.exports = (on, config) => {
   // `config` is the resolved Cypress config
 
   const options = {
-    webpackOptions: require("../webpack.config.js")
-  };
-  on("file:preprocessor", wp(options));
+    webpackOptions: require('../webpack.config.js')
+  }
+  on('file:preprocessor', wp(options))
 
-  on("before:browser:launch", (browser = {}, launchOptions) => {
-    if (browser.name === "chrome") {
-      launchOptions.args.push("--disable-site-isolation-trials");
-      launchOptions.args.push("--auto-open-devtools-for-tabs");
-      launchOptions.args.push("--aggressive-cache-discard")
-      launchOptions.args.push("--disable-cache")
-      launchOptions.args.push("--disable-application-cache")
-      launchOptions.args.push("--disable-offline-load-stale-cache")
-      launchOptions.args.push("--disk-cache-size=0")
-      
-      return launchOptions;
+  on('before:browser:launch', (browser = {}, launchOptions) => {
+    if (browser.name === 'chrome') {
+      launchOptions.args.push('--disable-site-isolation-trials')
+      launchOptions.args.push('--auto-open-devtools-for-tabs')
+      launchOptions.args.push('--aggressive-cache-discard')
+      launchOptions.args.push('--disable-cache')
+      launchOptions.args.push('--disable-application-cache')
+      launchOptions.args.push('--disable-offline-load-stale-cache')
+      launchOptions.args.push('--disk-cache-size=0')
+
+      return launchOptions
     }
-  });
+  })
 }
