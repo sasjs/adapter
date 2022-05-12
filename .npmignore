@@ -4,3 +4,13 @@ docs/
 *.md
 *.spec.ts
 .all-contributorsrc
+cypress/
+.gitpod.yml
+.prettierrc
+cypress.json
+jest.config.js
+sasjs-cypress-run.sh
+tsconfig.json
+tslint.json
+typedoc.json
+webpack.config.js
