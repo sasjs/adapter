@@ -37,7 +37,7 @@ export const basicTests = (
       title: 'Log in',
       description: 'Should log the user in',
       test: async () => {
-        return adapter.logIn(userName, password, 'clientID1')
+        return adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
@@ -46,7 +46,7 @@ export const basicTests = (
       title: 'Fetch username for already logged in user',
       description: 'Should log the user in',
       test: async () => {
-        await adapter.logIn(userName, password, 'clientID1')
+        await adapter.logIn(userName, password)
 
         const newAdapterIns = new SASjs(adapter.getSasjsConfig())
 
@@ -61,8 +61,8 @@ export const basicTests = (
         'Should fail on first attempt and should log the user in on second attempt',
       test: async () => {
         await adapter.logOut()
-        await adapter.logIn('invalid', 'invalid', 'clientID1')
-        return await adapter.logIn(userName, password, 'clientID1')
+        await adapter.logIn('invalid', 'invalid').catch((err: any) => {})
+        return await adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
@@ -79,7 +79,7 @@ export const basicTests = (
           stringData,
           undefined,
           async () => {
-            await adapter.logIn(userName, password, 'clientID1')
+            await adapter.logIn(userName, password)
           }
         )
       },
