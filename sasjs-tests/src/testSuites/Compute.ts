@@ -1,9 +1,35 @@
 import SASjs from '@sasjs/adapter'
 import { TestSuite } from '@sasjs/test-framework'
 
+const stringData: any = { table1: [{ col1: 'first col value' }] }
+
 export const computeTests = (adapter: SASjs): TestSuite => ({
   name: 'Compute',
   tests: [
+    {
+      title: 'Compute API request',
+      description: 'Should run the request with compute API approach',
+      test: async () => {
+        return await adapter.request('common/sendArr', stringData)
+      },
+      assertion: (response: any) => {
+        return response.table1[0][0] === stringData.table1[0].col1
+      }
+    },
+    {
+      title: 'JES API request',
+      description: 'Should run the request with JES API approach',
+      test: async () => {
+        const config = {
+          useComputeApi: false
+        }
+
+        return await adapter.request('common/sendArr', stringData, config)
+      },
+      assertion: (response: any) => {
+        return response.table1[0][0] === stringData.table1[0].col1
+      }
+    },
     {
       title: 'Start Compute Job - not waiting for result',
       description: 'Should start a compute job and return the session',

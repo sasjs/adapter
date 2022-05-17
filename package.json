@@ -8,15 +8,17 @@
     "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
     "package:lib": "npm run build && copyfiles ./package.json ./checkNodeVersion.js build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
-    "lint:fix": "npx prettier --loglevel silent --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
-    "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
-    "lint:silent": "npx prettier --loglevel silent --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
+    "lint:fix": "npx prettier --loglevel silent --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --write \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
+    "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
+    "lint:silent": "npx prettier --loglevel silent --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --check \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "test": "jest --silent --coverage",
     "prepublishOnly": "cp -r ./build/* . && rm -rf ./build",
     "postpublish": "git clean -fd",
     "semantic-release": "semantic-release",
     "typedoc": "node createTSDocs",
-    "prepare": "git rev-parse --git-dir && git config core.hooksPath ./.git-hooks && git config core.autocrlf false || true"
+    "prepare": "git rev-parse --git-dir && git config core.hooksPath ./.git-hooks && git config core.autocrlf false || true",
+    "cypress": "cypress open",
+    "cy:run": "cypress run"
   },
   "publishConfig": {
     "access": "public"
@@ -41,9 +43,13 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@cypress/webpack-preprocessor": "5.9.1",
+    "@types/form-data": "2.5.0",
+    "cypress": "7.7.0",
+    "typedoc-neo-theme": "1.1.1",
+    "typedoc-plugin-external-module-name": "4.0.6",
     "@types/axios": "0.14.0",
     "@types/express": "4.17.13",
-    "@types/form-data": "2.5.0",
     "@types/jest": "27.4.0",
     "@types/mime": "2.0.3",
     "@types/pem": "1.9.6",

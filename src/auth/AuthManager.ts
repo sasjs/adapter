@@ -257,6 +257,12 @@ export class AuthManager {
     const isLoggedIn = loginResponse !== 'authErr'
     const userName = isLoggedIn ? this.extractUserName(loginResponse) : ''
 
+    if (!isLoggedIn) {
+      //We will logout to make sure cookies are removed and login form is presented
+      //Residue can happen in case of session expiration
+      await this.logOut()
+    }
+
     return { isLoggedIn, userName }
   }
 
