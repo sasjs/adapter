@@ -19,6 +19,7 @@ import {
   parseSourceCode,
   createAxiosInstance
 } from '../utils'
+import { InvalidCsrfError } from '../types/errors/InvalidCsrfError'
 
 export interface HttpClient {
   get<T>(
@@ -498,6 +499,24 @@ export class RequestClient implements HttpClient {
       throw e
     }
 
+    if (e instanceof InvalidCsrfError) {
+      // Fetching root will inject CSRF token in cookie
+      await this.httpClient
+        .get('/', {
+          withCredentials: true
+        })
+        .catch((err) => {
+          throw prefixMessage(err, 'Error while re-fetching CSRF token.')
+        })
+
+      return await callback().catch((err: any) => {
+        throw prefixMessage(
+          err,
+          'Error while executing callback in handleError. '
+        )
+      })
+    }
+
     if (response?.status === 403 || response?.status === 449) {
       this.parseAndSetCsrfToken(response)
 
@@ -584,8 +603,16 @@ export class RequestClient implements HttpClient {
 export const throwIfError = (response: AxiosResponse) => {
   switch (response.status) {
     case 400:
-      if (typeof response.data === 'object') {
+      if (
+        typeof response.data === 'object' &&
+        response.data.error === 'invalid_grant'
+      ) {
+        // In SASVIYA when trying to get access token, if auth code is wrong status code will be 400 so in such case we return login required error.
         throw new LoginRequiredError(response.data)
+      }
+
+      if (response.data.toLowerCase() === 'invalid csrf token!') {
+        throw new InvalidCsrfError()
       }
       break
     case 401:
