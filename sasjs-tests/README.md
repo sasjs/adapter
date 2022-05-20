@@ -60,7 +60,7 @@ If you'd like to deploy just `sasjs-tests` without changing the adapter version,
 
 The below services need to be created on your SAS server, at the location specified as the `appLoc` in the SASjs configuration.
 
-### SAS 9
+The code below will work on ALL SAS platforms (Viya, SAS 9 EBI, SASjs Server).
 
 ```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
@@ -70,76 +70,32 @@ parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to &_webin_file_count; %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
-  %mend; %x()
-  %webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=sendObj)
-parmcards4;
-  %webout(FETCH)
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to &_webin_file_count; %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES) %end;
-  %mend; %x()
-  %webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=sendArr)
-parmcards4;
-  data work.macvars;
-    set sashelp.vmacro;
-  run;
-  %webout(OPEN)
-  %webout(OBJ,macvars) 
-  %webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=sendMacVars)
-parmcards4;
-let he who hath understanding, reckon the number of the beast
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=makeErr)
-parmcards4;
-%webout(OPEN)
-data _null_;
-  file _webout;
-  put ' the discovery channel ';
- run;
-%webout(CLOSE)
-;;;;
-%mm_createwebservice(path=/Public/app/common,name=invalidJSON)
-```
-
-### SAS Viya
-
-```sas
-filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
-%inc mc;
-filename ft15f001 temp lrecl=1000;
-parmcards4;
-  %webout(FETCH)
-  %webout(OPEN)
-  %macro x();
-  %do i=1 %to %sysfunc(countw(&sasjs_tables));
+  %if %symexist(sasjs_tables) %then %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
     %webout(OBJ,&table,missing=STRING,showmeta=YES)
   %end;
-  %mend;
-  %x()
+  %else %do i=1 %to &_webin_file_count; 
+    %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES) 
+  %end;
+  %mend; %x()
   %webout(CLOSE)
 ;;;;
-%mp_createwebservice(path=/Public/app/common,name=sendObj)
+%mx_createwebservice(path=/Public/app/common,name=sendObj)
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
   %macro x();
-  %do i=1 %to %sysfunc(countw(&sasjs_tables));
+  %if %symexist(sasjs_tables) %then %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
     %webout(ARR,&table,missing=STRING,showmeta=YES)
   %end;
-  %mend;
-  %x()
+  %else %do i=1 %to &_webin_file_count; 
+    %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES) 
+  %end;
+  %mend; %x()
   %webout(CLOSE)
 ;;;;
-%mp_createwebservice(path=/Public/app/common,name=sendArr)
+%mx_createwebservice(path=/Public/app/common,name=sendArr)
 parmcards4;
   data work.macvars;
     set sashelp.vmacro;
@@ -148,14 +104,14 @@ parmcards4;
   %webout(OBJ,macvars) 
   %webout(CLOSE)
 ;;;;
-%mp_createwebservice(path=/Public/app/common,name=sendMacVars)
+%mx_createwebservice(path=/Public/app/common,name=sendMacVars)
 parmcards4;
 If you can keep your head when all about you
     Are losing theirs and blaming it on you,
 If you can trust yourself when all men doubt you,
     But make allowance for their doubting too;
 ;;;;
-%mp_createwebservice(path=/Public/app/common,name=makeErr)
+%mx_createwebservice(path=/Public/app/common,name=makeErr)
 parmcards4;
 %webout(OPEN)
 data _null_;
@@ -164,7 +120,7 @@ data _null_;
  run;
 %webout(CLOSE)
 ;;;;
-%mp_createwebservice(path=/Public/app/common,name=invalidJSON)
+%mx_createwebservice(path=/Public/app/common,name=invalidJSON)
 ```
 
 You should now be able to access the tests in your browser at the deployed path on your server.
