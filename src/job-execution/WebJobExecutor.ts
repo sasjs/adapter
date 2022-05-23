@@ -21,6 +21,7 @@ import {
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
+import { Server } from 'https'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -46,7 +47,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     authConfig?: AuthConfig,
     extraResponseAttributes: ExtraResponseAttributes[] = []
   ) {
-    const loginCallback = loginRequiredCallback || (() => Promise.resolve())
+    const loginCallback = loginRequiredCallback
     const program = isRelativePath(sasJob)
       ? config.appLoc
         ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
@@ -79,7 +80,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             })
 
-            await loginCallback()
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }
@@ -91,7 +92,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       if (jobUri.length > 0) {
         apiUrl += '&_job=' + jobUri
         /**
-         * Using both _job and _program parameters will cause a conflict in the JES web app, as it’s not clear whether or not the server should make the extra fetch for the job uri.
+         * Using both _job and _program parameters will cause a conflict in the JES web app, as it's not clear whether or not the server should make the extra fetch for the job uri.
          * To handle this, we add the extra underscore and recreate the _program variable in the SAS side of the SASjs adapter so it remains available for backend developers.
          */
         apiUrl = apiUrl.replace('_program=', '__program=')
@@ -168,13 +169,17 @@ export class WebJobExecutor extends BaseJobExecutor {
               ? res.result.log.map((logLine: any) => logLine.line).join('\n')
               : res.result.log
 
-          const resObj =
-            this.serverType === ServerType.Sasjs
-              ? {
-                  result: res.result._webout,
-                  log: parsedSasjsServerLog
-                }
-              : res
+          const resObj = res
+
+          if (this.serverType === ServerType.Sasjs) {
+            if (res.result._webout < 1)
+              throw new JobExecutionError(
+                0,
+                'Job execution failed',
+                parsedSasjsServerLog
+              )
+          }
+
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
 
           let jsonResponse = res.result
@@ -220,6 +225,15 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
+            if (!loginRequiredCallback) {
+              reject(
+                new ErrorResponse(
+                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
+                  e
+                )
+              )
+            }
+
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -238,7 +252,7 @@ export class WebJobExecutor extends BaseJobExecutor {
               )
             })
 
-            await loginCallback()
+            if (loginCallback) await loginCallback()
           } else {
             reject(new ErrorResponse(e?.message, e))
           }

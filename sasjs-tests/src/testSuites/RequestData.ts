@@ -138,7 +138,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index][3] ===
-              (multipleRowsWithNulls.table1[index].col4 || ' ')
+              (multipleRowsWithNulls.table1[index].col4 || '')
         })
         return result
       }
@@ -164,7 +164,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index][3] ===
-              (multipleColumnsWithNulls.table1[index].col4 || ' ')
+              (multipleColumnsWithNulls.table1[index].col4 || '')
         })
         return result
       }
@@ -218,6 +218,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: [{ col1: 42 }]
         }
+
         return adapter.request('common/sendObj', invalidData).catch((e) => e)
       },
       assertion: (error: any) =>
@@ -328,7 +329,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index].COL4 ===
-              (multipleRowsWithNulls.table1[index].col4 || ' ')
+              (multipleRowsWithNulls.table1[index].col4 || '')
         })
         return result
       }
@@ -357,7 +358,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           result =
             result &&
             res.table1[index].COL4 ===
-              (multipleColumnsWithNulls.table1[index].col4 || ' ')
+              (multipleColumnsWithNulls.table1[index].col4 || '')
         })
         return result
       }

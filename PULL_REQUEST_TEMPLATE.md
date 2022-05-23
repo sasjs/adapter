@@ -16,5 +16,5 @@ No PR (that involves a non-trivial code change) should be merged, unless all ite
 
 
 - [ ] All `sasjs-cli` unit tests are passing (`npm test`).
-- [ ] All `sasjs-tests` are passing (instructions available [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md)).
+- (CI Runs this) All `sasjs-tests` are passing. If you want to run it manually (instructions available [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md)).
 - [ ] [Data Controller](https://datacontroller.io) builds and is functional on both SAS 9 and Viya

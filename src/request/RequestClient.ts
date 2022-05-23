@@ -7,7 +7,8 @@ import {
   LoginRequiredError,
   NotFoundError,
   InternalServerError,
-  JobExecutionError
+  JobExecutionError,
+  CertificateError
 } from '../types/errors'
 import { SASjsRequest } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -130,6 +131,26 @@ export class RequestClient implements HttpClient {
           sasWork = response.result.WORK
         } else {
           sasWork = response.log
+        }
+      } else if (response?.result?.log) {
+        //In this scenario we know we got the response from SASJS server
+        //Log is array of `{ line: '' }` so we need to convert it back to text
+        //To be able to parse it with current functions.
+        let log: string = ''
+
+        if (typeof log !== 'string') {
+          log = response.result.log
+            .map((logLine: any) => logLine.line)
+            .join('\n')
+        }
+
+        sourceCode = parseSourceCode(log)
+        generatedCode = parseGeneratedCode(log)
+
+        if (response?.result?._webout) {
+          sasWork = response.result._webout.WORK
+        } else {
+          sasWork = log
         }
       } else if (response?.result) {
         sourceCode = parseSourceCode(response.result)
@@ -497,6 +518,10 @@ export class RequestClient implements HttpClient {
       else return
     }
 
+    if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+      throw new CertificateError(e.message)
+    }
+
     if (e.message) throw e
     else throw prefixMessage(e, 'Error while handling error. ')
   }
@@ -557,8 +582,18 @@ export class RequestClient implements HttpClient {
 }
 
 export const throwIfError = (response: AxiosResponse) => {
-  if (response.status === 401) {
-    throw new LoginRequiredError()
+  switch (response.status) {
+    case 400:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      }
+      break
+    case 401:
+      if (typeof response.data === 'object') {
+        throw new LoginRequiredError(response.data)
+      } else {
+        throw new LoginRequiredError()
+      }
   }
 
   if (response.data?.entityID?.includes('login')) {

@@ -15,19 +15,24 @@ export const formatDataForRequest = (data: any) => {
     }
 
     tableCounter++
+
     sasjsTables.push(tableName)
-    const csv = convertToCSV(data[tableName], data[`$${tableName}`])
+
+    const csv = convertToCSV(data, tableName)
 
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(
         'The max length of a string value in SASjs is 32765 characters.'
       )
     }
+
     // if csv has length more then 16k, send in chunks
     if (csv.length > 16000) {
       const csvChunks = splitChunks(csv)
+
       // append chunks to form data with same key
       result[`sasjs${tableCounter}data0`] = csvChunks.length
+
       csvChunks.forEach((chunk, index) => {
         result[`sasjs${tableCounter}data${index + 1}`] = chunk
       })

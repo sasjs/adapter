@@ -18,7 +18,7 @@ export const generateFileUploadForm = (
     if (!Array.isArray(data[tableName])) continue
 
     const name = tableName
-    const csv = convertToCSV(data[tableName])
+    const csv = convertToCSV(data, tableName)
 
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(
@@ -26,11 +26,18 @@ export const generateFileUploadForm = (
       )
     }
 
-    const file = new Blob([csv], {
-      type: 'application/csv'
-    })
+    if (typeof FormData === 'undefined' && formData instanceof NodeFormData) {
+      formData.append(name, csv, {
+        filename: `${name}.csv`,
+        contentType: 'application/csv'
+      })
+    } else {
+      const file = new Blob([csv], {
+        type: 'application/csv'
+      })
 
-    formData.append(name, file, `${name}.csv`)
+      formData.append(name, file, `${name}.csv`)
+    }
   }
 
   return formData

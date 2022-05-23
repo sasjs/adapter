@@ -61,7 +61,7 @@ export const basicTests = (
         'Should fail on first attempt and should log the user in on second attempt',
       test: async () => {
         await adapter.logOut()
-        await adapter.logIn('invalid', 'invalid')
+        await adapter.logIn('invalid', 'invalid').catch((err: any) => {})
         return await adapter.logIn(userName, password)
       },
       assertion: (response: any) =>
@@ -161,26 +161,17 @@ export const basicTests = (
       }
     },
     {
-      title: 'Request with extra attributes on JES approach',
-      description:
-        'Should complete successful request with extra attributes present in response',
+      title: 'Web request',
+      description: 'Should run the request with old web approach',
       test: async () => {
         const config: Partial<SASjsConfig> = {
           useComputeApi: false
         }
 
-        return await adapter.request(
-          'common/sendArr',
-          stringData,
-          config,
-          undefined,
-          undefined,
-          ['file', 'data']
-        )
+        return await adapter.request('common/sendArr', stringData, config)
       },
       assertion: (response: any) => {
-        const responseKeys: any = Object.keys(response)
-        return responseKeys.includes('file') && responseKeys.includes('data')
+        return response.table1[0][0] === stringData.table1[0].col1
       }
     }
   ]
