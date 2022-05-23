@@ -54,6 +54,17 @@ describe('formatDataForRequest', () => {
     expect(formatDataForRequest(data)).toEqual(expectedOutput)
   })
 
+  it('should accept . as special missing value', () => {
+    let tableWithMissingValues = {
+      [testTable]: [{ var: '.' }, { var: 0 }],
+      [`$${testTable}`]: { formats: { var: 'best.' } }
+    }
+
+    expect(() =>
+      formatDataForRequest(tableWithMissingValues)
+    ).not.toThrowError()
+  })
+
   it('should throw an error if special missing values is not valid', () => {
     let tableWithMissingValues = {
       [testTable]: [{ var: 'AA' }, { var: 0 }],
