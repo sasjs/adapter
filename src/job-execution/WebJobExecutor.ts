@@ -172,7 +172,7 @@ export class WebJobExecutor extends BaseJobExecutor {
           const resObj = res
 
           if (this.serverType === ServerType.Sasjs) {
-            if (res.result._webout < 1)
+            if (res.result._webout.length < 1)
               throw new JobExecutionError(
                 0,
                 'Job execution failed',
