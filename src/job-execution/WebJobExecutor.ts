@@ -169,18 +169,26 @@ export class WebJobExecutor extends BaseJobExecutor {
               ? res.result.log.map((logLine: any) => logLine.line).join('\n')
               : res.result.log
 
-          const resObj = res
-
-          if (this.serverType === ServerType.Sasjs) {
-            if (res.result._webout.length < 1)
-              throw new JobExecutionError(
-                0,
-                'Job execution failed',
-                parsedSasjsServerLog
-              )
-          }
+          const resObj =
+            this.serverType === ServerType.Sasjs
+              ? {
+                  result: res.result._webout,
+                  log: parsedSasjsServerLog
+                }
+              : res
 
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
+
+          if (
+            this.serverType === ServerType.Sasjs &&
+            res.result._webout.length < 1
+          ) {
+            throw new JobExecutionError(
+              0,
+              'Job execution failed',
+              parsedSasjsServerLog
+            )
+          }
 
           let jsonResponse = res.result
 
