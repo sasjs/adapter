@@ -185,7 +185,7 @@ export class WebJobExecutor extends BaseJobExecutor {
           ) {
             throw new JobExecutionError(
               0,
-              'Job execution failed',
+              `No webout was returned by job ${program}. Server type is SASJS and the calling function is WebJobExecutor. Please check the SAS log for more info.`,
               parsedSasjsServerLog
             )
           }
