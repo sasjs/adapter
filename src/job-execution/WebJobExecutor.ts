@@ -177,8 +177,6 @@ export class WebJobExecutor extends BaseJobExecutor {
                 }
               : res
 
-          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
-
           if (
             this.serverType === ServerType.Sasjs &&
             res.result._webout.length < 1
@@ -189,6 +187,8 @@ export class WebJobExecutor extends BaseJobExecutor {
               parsedSasjsServerLog
             )
           }
+
+          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
 
           let jsonResponse = res.result
 
