@@ -3,7 +3,7 @@ const username = Cypress.env('username')
 const password = Cypress.env('password')
 const testingFinishTimeout = Cypress.env('testingFinishTimeout')
 
-context('sasjs-tests', function () {
+context('sasjs-tests', function() {
   this.beforeAll(() => {
     cy.visit(sasjsTestsUrl)
   })
@@ -12,8 +12,8 @@ context('sasjs-tests', function () {
     cy.reload()
   })
 
-  it('Should have all tests successfull', (done) => {
-    cy.get('body').then(($body) => {
+  it('Should have all tests successfull', done => {
+    cy.get('body').then($body => {
       if ($body.find('input[placeholder="User Name"]').length > 0) {
         cy.get('input[placeholder="User Name"]').type(username)
         cy.get('input[placeholder="Password"]').type(password)
@@ -42,8 +42,8 @@ context('sasjs-tests', function () {
     })
   })
 
-  it('Should have all tests successfull with debug on', (done) => {
-    cy.get('body').then(($body) => {
+  it('Should have all tests successfull with debug on', done => {
+    cy.get('body').then($body => {
       if ($body.find('input[placeholder="User Name"]').length > 0) {
         cy.get('input[placeholder="User Name"]').type(username)
         cy.get('input[placeholder="Password"]').type(password)

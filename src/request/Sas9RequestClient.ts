@@ -13,7 +13,7 @@ export class Sas9RequestClient extends RequestClient {
   constructor(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
     super(baseUrl, httpsAgentOptions)
     this.httpClient.defaults.maxRedirects = 0
-    this.httpClient.defaults.validateStatus = (status) =>
+    this.httpClient.defaults.validateStatus = status =>
       status >= 200 && status < 303
 
     if (axiosCookieJarSupport) {
@@ -57,7 +57,7 @@ export class Sas9RequestClient extends RequestClient {
 
     return this.httpClient
       .get<T>(url, requestConfig)
-      .then((response) => {
+      .then(response => {
         if (response.status === 302) {
           return this.get(
             response.headers['location'],
@@ -68,12 +68,12 @@ export class Sas9RequestClient extends RequestClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(
           e,
           () =>
             this.get<T>(url, accessToken, contentType, overrideHeaders).catch(
-              (err) => {
+              err => {
                 throw prefixMessage(
                   err,
                   'Error while executing handle error callback. '
@@ -81,7 +81,7 @@ export class Sas9RequestClient extends RequestClient {
               }
             ),
           debug
-        ).catch((err) => {
+        ).catch(err => {
           throw prefixMessage(err, 'Error while handling error. ')
         })
       })
@@ -101,7 +101,7 @@ export class Sas9RequestClient extends RequestClient {
 
     return this.httpClient
       .post<T>(url, data, { headers, withCredentials: true })
-      .then(async (response) => {
+      .then(async response => {
         if (response.status === 302) {
           return await this.get(
             response.headers['location'],
@@ -113,7 +113,7 @@ export class Sas9RequestClient extends RequestClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(e, () =>
           this.post<T>(url, data, accessToken, contentType, overrideHeaders)
         )

@@ -35,7 +35,7 @@ describe('refreshTokensForSasjs', () => {
     const error = await refreshTokensForSasjs(
       requestClient,
       refresh_token
-    ).catch((e) => e)
+    ).catch(e => e)
 
     expect(error).toContain('Error while refreshing tokens')
   })

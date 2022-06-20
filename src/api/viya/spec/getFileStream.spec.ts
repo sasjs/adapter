@@ -37,5 +37,5 @@ const setupMocks = () => {
   jest.mock('@sasjs/utils/file/file')
   jest
     .spyOn(fileModule, 'createWriteStream')
-    .mockImplementation(() => Promise.resolve({} as unknown as WriteStream))
+    .mockImplementation(() => Promise.resolve(({} as unknown) as WriteStream))
 }

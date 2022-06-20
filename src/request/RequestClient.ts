@@ -202,17 +202,17 @@ export class RequestClient implements HttpClient {
 
     return this.httpClient
       .get<T>(url, requestConfig)
-      .then((response) => {
+      .then(response => {
         throwIfError(response)
 
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(
           e,
           () =>
             this.get<T>(url, accessToken, contentType, overrideHeaders).catch(
-              (err) => {
+              err => {
                 throw prefixMessage(
                   err,
                   'Error while executing handle error callback. '
@@ -243,12 +243,12 @@ export class RequestClient implements HttpClient {
         withCredentials: true,
         ...additionalSettings
       })
-      .then((response) => {
+      .then(response => {
         throwIfError(response)
 
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(e, () =>
           this.post<T>(url, data, accessToken, contentType, overrideHeaders)
         )
@@ -268,11 +268,11 @@ export class RequestClient implements HttpClient {
 
     return this.httpClient
       .put<T>(url, data, { headers, withCredentials: true })
-      .then((response) => {
+      .then(response => {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(e, () =>
           this.put<T>(url, data, accessToken, overrideHeaders)
         )
@@ -287,11 +287,11 @@ export class RequestClient implements HttpClient {
 
     return this.httpClient
       .delete<T>(url, { headers, withCredentials: true })
-      .then((response) => {
+      .then(response => {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(e, () => this.delete<T>(url, accessToken))
       })
   }
@@ -305,11 +305,11 @@ export class RequestClient implements HttpClient {
 
     return this.httpClient
       .patch<T>(url, data, { headers, withCredentials: true })
-      .then((response) => {
+      .then(response => {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async e => {
         return await this.handleError(e, () =>
           this.patch<T>(url, data, accessToken)
         )
@@ -324,21 +324,22 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     if (this.fileUploadCsrfToken?.value) {
-      headers[this.fileUploadCsrfToken.headerName] =
-        this.fileUploadCsrfToken.value
+      headers[
+        this.fileUploadCsrfToken.headerName
+      ] = this.fileUploadCsrfToken.value
     }
 
     try {
       const response = await this.httpClient.post(url, content, {
         headers,
-        transformRequest: (requestBody) => requestBody
+        transformRequest: requestBody => requestBody
       })
 
       return {
         result: response.data,
         etag: response.headers['etag'] as string
       }
-    } catch (e: any) {
+    } catch (e) {
       const response = e.response as AxiosResponse
       if (response?.status === 403 || response?.status === 449) {
         this.parseAndSetFileUploadCsrfToken(response)
@@ -373,7 +374,7 @@ export class RequestClient implements HttpClient {
       params[input.name] = input.value
     }
 
-    const csrfTokenKey = Object.keys(params).find((k) =>
+    const csrfTokenKey = Object.keys(params).find(k =>
       k?.toLowerCase().includes('csrf')
     )
     if (csrfTokenKey) {
@@ -398,8 +399,8 @@ export class RequestClient implements HttpClient {
         responseType: 'text',
         headers: { Accept: '*/*', 'Content-Type': 'text/plain' }
       })
-      .then((res) => res.data)
-      .catch((error) => {
+      .then(res => res.data)
+      .catch(error => {
         const logger = process.logger || console
         logger.error(error)
       })
@@ -447,9 +448,9 @@ export class RequestClient implements HttpClient {
   }
 
   private parseCsrfToken = (response: AxiosResponse): CsrfToken | undefined => {
-    const tokenHeader = (
-      response.headers['x-csrf-header'] as string
-    )?.toLowerCase()
+    const tokenHeader = (response.headers[
+      'x-csrf-header'
+    ] as string)?.toLowerCase()
 
     if (tokenHeader) {
       const token = response.headers[tokenHeader]
@@ -475,12 +476,12 @@ export class RequestClient implements HttpClient {
           responseType: 'text',
           headers: { 'Content-Type': 'text/plain', Accept: '*/*' }
         })
-        .catch((err) => {
+        .catch(err => {
           throw prefixMessage(err, 'Error while getting error confirmUrl. ')
         })
 
       if (isAuthorizeFormRequired(res?.data as string)) {
-        await this.authorize(res.data as string).catch((err) => {
+        await this.authorize(res.data as string).catch(err => {
           throw prefixMessage(err, 'Error while authorizing request. ')
         })
       }
@@ -505,7 +506,7 @@ export class RequestClient implements HttpClient {
         .get('/', {
           withCredentials: true
         })
-        .catch((err) => {
+        .catch(err => {
           throw prefixMessage(err, 'Error while re-fetching CSRF token.')
         })
 
@@ -594,7 +595,7 @@ export class RequestClient implements HttpClient {
 
     this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 
-    this.httpClient.defaults.validateStatus = (status) => {
+    this.httpClient.defaults.validateStatus = status => {
       return status >= 200 && status <= 401
     }
   }

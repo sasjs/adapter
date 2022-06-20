@@ -55,24 +55,25 @@ export async function executeScript(
   try {
     let executionSessionId: string
 
-    const session = await sessionManager
-      .getSession(access_token)
-      .catch((err) => {
-        throw prefixMessage(err, 'Error while getting session. ')
-      })
+    const session = await sessionManager.getSession(access_token).catch(err => {
+      throw prefixMessage(err, 'Error while getting session. ')
+    })
 
     executionSessionId = session!.id
 
     if (printPid) {
       const { result: jobIdVariable } = await sessionManager
         .getVariable(executionSessionId, 'SYSJOBID', access_token)
-        .catch((err) => {
+        .catch(err => {
           throw prefixMessage(err, 'Error while getting session variable. ')
         })
 
       if (jobIdVariable && jobIdVariable.value) {
         const relativeJobPath = rootFolderName
-          ? jobPath.split(rootFolderName).join('').replace(/^\//, '')
+          ? jobPath
+              .split(rootFolderName)
+              .join('')
+              .replace(/^\//, '')
           : jobPath
 
         const logger = process.logger || console
@@ -126,7 +127,7 @@ export async function executeScript(
     if (data) {
       if (JSON.stringify(data).includes(';')) {
         files = await uploadTables(requestClient, data, access_token).catch(
-          (err) => {
+          err => {
             throw prefixMessage(err, 'Error while uploading tables. ')
           }
         )
@@ -159,7 +160,7 @@ export async function executeScript(
         jobRequestBody,
         access_token
       )
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(err, 'Error while posting job. ')
       })
 
@@ -180,7 +181,7 @@ export async function executeScript(
       debug,
       authConfig,
       pollOptions
-    ).catch(async (err) => {
+    ).catch(async err => {
       const error = err?.response?.data
       const result = /err=[0-9]*,/.exec(error)
 
@@ -208,14 +209,14 @@ export async function executeScript(
         `/compute/sessions/${executionSessionId}/jobs/${postedJob.id}`,
         access_token
       )
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(err, 'Error while getting job. ')
       })
 
     let jobResult
     let log = ''
 
-    const logLink = currentJob.links.find((l) => l.rel === 'log')
+    const logLink = currentJob.links.find(l => l.rel === 'log')
 
     if (debug && logLink) {
       const logUrl = `${logLink.href}/content`
@@ -240,7 +241,7 @@ export async function executeScript(
 
     jobResult = await requestClient
       .get<any>(resultLink, access_token, 'text/plain')
-      .catch(async (e) => {
+      .catch(async e => {
         if (e instanceof NotFoundError) {
           if (logLink) {
             const logUrl = `${logLink.href}/content`
@@ -266,7 +267,7 @@ export async function executeScript(
 
     await sessionManager
       .clearSession(executionSessionId, access_token)
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(err, 'Error while clearing session. ')
       })
 

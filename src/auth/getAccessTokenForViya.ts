@@ -35,8 +35,8 @@ export async function getAccessTokenForViya(
 
   const authResponse = await requestClient
     .post(url, data, undefined, 'application/x-www-form-urlencoded', headers)
-    .then((res) => res.result as SasAuthResponse)
-    .catch((err) => {
+    .then(res => res.result as SasAuthResponse)
+    .catch(err => {
       if (err instanceof CertificateError) throw err
       throw prefixMessage(err, 'Error while getting access token. ')
     })

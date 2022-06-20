@@ -37,7 +37,7 @@ export async function pollJobState(
     '',
     debug,
     authConfig
-  ).catch((err) => {
+  ).catch(err => {
     logger.error(
       `Error fetching job state from ${stateLink.href}. Starting poll, assuming job to be running.`,
       err
@@ -139,7 +139,7 @@ const getJobState = async (
         {},
         debug
       )
-      .catch((err) => {
+      .catch(err => {
         throw new JobStatePollError(job.id, err)
       })
 
@@ -192,7 +192,7 @@ const doPoll = async (
       state,
       debug,
       authConfig
-    ).catch((err) => {
+    ).catch(err => {
       errorCount++
       if (pollCount >= maxPollCount || errorCount >= maxErrorCount) {
         throw err

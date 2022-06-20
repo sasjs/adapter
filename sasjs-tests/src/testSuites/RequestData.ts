@@ -86,7 +86,7 @@ export const sendArrTests = (adapter: SASjs): TestSuite => ({
         'Should error out with long string values over 32765 characters',
       test: () => {
         const data = getLongStringData(32767)
-        return adapter.request('common/sendArr', data).catch((e) => e)
+        return adapter.request('common/sendArr', data).catch(e => e)
       },
       assertion: (error: any) => {
         return !!error && !!error.error && !!error.error.message
@@ -182,7 +182,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           '1InvalidTable': [{ col1: 42 }]
         }
-        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+        return adapter.request('common/sendObj', invalidData).catch(e => e)
       },
       assertion: (error: any) =>
         !!error && !!error.error && !!error.error.message
@@ -194,7 +194,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           'an invalidTable': [{ col1: 42 }]
         }
-        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+        return adapter.request('common/sendObj', invalidData).catch(e => e)
       },
       assertion: (error: any) =>
         !!error && !!error.error && !!error.error.message
@@ -206,7 +206,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           'anInvalidTable#': [{ col1: 42 }]
         }
-        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+        return adapter.request('common/sendObj', invalidData).catch(e => e)
       },
       assertion: (error: any) =>
         !!error && !!error.error && !!error.error.message
@@ -219,7 +219,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: [{ col1: 42 }]
         }
 
-        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+        return adapter.request('common/sendObj', invalidData).catch(e => e)
       },
       assertion: (error: any) =>
         !!error && !!error.error && !!error.error.message
@@ -231,7 +231,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         const invalidData: any = {
           inData: [[{ data: 'value' }]]
         }
-        return adapter.request('common/sendObj', invalidData).catch((e) => e)
+        return adapter.request('common/sendObj', invalidData).catch(e => e)
       },
       assertion: (error: any) =>
         !!error && !!error.error && !!error.error.message
@@ -265,7 +265,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       test: () => {
         return adapter
           .request('common/sendObj', getLongStringData(32767))
-          .catch((e) => e)
+          .catch(e => e)
       },
       assertion: (error: any) => {
         return !!error && !!error.error && !!error.error.message

@@ -59,7 +59,7 @@ export class WebJobExecutor extends BaseJobExecutor {
       let jobUri
       try {
         jobUri = await this.getJobUri(sasJob)
-      } catch (e: any) {
+      } catch (e) {
         return new Promise(async (resolve, reject) => {
           if (e instanceof LoginRequiredError) {
             this.appendWaitingRequest(() => {
@@ -128,17 +128,19 @@ export class WebJobExecutor extends BaseJobExecutor {
         // file upload approach
         try {
           formData = generateFileUploadForm(formData, data)
-        } catch (e: any) {
+        } catch (e) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       } else {
         // param based approach
         try {
-          const { formData: newFormData, requestParams: params } =
-            generateTableUploadForm(formData, data)
+          const {
+            formData: newFormData,
+            requestParams: params
+          } = generateTableUploadForm(formData, data)
           formData = newFormData
           requestParams = { ...requestParams, ...params }
-        } catch (e: any) {
+        } catch (e) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
       }

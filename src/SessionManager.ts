@@ -58,9 +58,9 @@ export class SessionManager {
     return await this.requestClient
       .delete<Session>(`/compute/sessions/${id}`, accessToken)
       .then(() => {
-        this.sessions = this.sessions.filter((s) => s.id !== id)
+        this.sessions = this.sessions.filter(s => s.id !== id)
       })
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(err, 'Error while deleting session. ')
       })
   }
@@ -68,7 +68,7 @@ export class SessionManager {
   private async createSessions(accessToken?: string) {
     if (!this.sessions.length) {
       if (!this.currentContext) {
-        await this.setCurrentContext(accessToken).catch((err) => {
+        await this.setCurrentContext(accessToken).catch(err => {
           throw err
         })
       }
@@ -76,12 +76,12 @@ export class SessionManager {
       await asyncForEach(new Array(MAX_SESSION_COUNT), async () => {
         const createdSession = await this.createAndWaitForSession(
           accessToken
-        ).catch((err) => {
+        ).catch(err => {
           throw err
         })
 
         this.sessions.push(createdSession)
-      }).catch((err) => {
+      }).catch(err => {
         throw err
       })
     }
@@ -96,7 +96,7 @@ export class SessionManager {
         {},
         accessToken
       )
-      .catch((err) => {
+      .catch(err => {
         throw err
       })
 
@@ -113,7 +113,7 @@ export class SessionManager {
         .get<{
           items: Context[]
         }>(`${this.serverUrl}/compute/contexts?limit=10000`, accessToken)
-        .catch((err) => {
+        .catch(err => {
           throw err
         })
 
@@ -173,14 +173,16 @@ export class SessionManager {
           this.printedSessionState.printed = true
         }
 
-        const { result: state, responseStatus: responseStatus } =
-          await this.getSessionState(
-            `${this.serverUrl}${stateLink.href}?wait=30`,
-            etag!,
-            accessToken
-          ).catch((err) => {
-            throw prefixMessage(err, 'Error while getting session state.')
-          })
+        const {
+          result: state,
+          responseStatus: responseStatus
+        } = await this.getSessionState(
+          `${this.serverUrl}${stateLink.href}?wait=30`,
+          etag!,
+          accessToken
+        ).catch(err => {
+          throw prefixMessage(err, 'Error while getting session state.')
+        })
 
         sessionState = state.trim()
 
@@ -232,11 +234,11 @@ export class SessionManager {
   ) {
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
-      .then((res) => ({
+      .then(res => ({
         result: res.result as string,
         responseStatus: res.status
       }))
-      .catch((err) => {
+      .catch(err => {
         throw err
       })
   }
@@ -247,7 +249,7 @@ export class SessionManager {
         `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
         accessToken
       )
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(
           err,
           `Error while fetching session variable '${variable}'.`

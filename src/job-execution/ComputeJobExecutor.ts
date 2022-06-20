@@ -34,7 +34,7 @@ export class ComputeJobExecutor extends BaseJobExecutor {
           waitForResult,
           expectWebout
         )
-        .then((response) => {
+        .then(response => {
           this.sasViyaApiClient.appendRequest(response, sasJob, config.debug)
           resolve(response.result)
         })

@@ -29,9 +29,7 @@ describe('uploadTables', () => {
       .spyOn(convertToCsvModule, 'convertToCSV')
       .mockImplementation(() => 'ERROR: LARGE STRING LENGTH')
 
-    const error = await uploadTables(requestClient, data, 't0k3n').catch(
-      (e) => e
-    )
+    const error = await uploadTables(requestClient, data, 't0k3n').catch(e => e)
 
     expect(requestClient.uploadFile).not.toHaveBeenCalled()
     expect(error.message).toEqual(
@@ -45,9 +43,7 @@ describe('uploadTables', () => {
       .spyOn(requestClient, 'uploadFile')
       .mockImplementation(() => Promise.reject('Upload Error'))
 
-    const error = await uploadTables(requestClient, data, 't0k3n').catch(
-      (e) => e
-    )
+    const error = await uploadTables(requestClient, data, 't0k3n').catch(e => e)
 
     expect(error).toContain('Error while uploading file.')
   })

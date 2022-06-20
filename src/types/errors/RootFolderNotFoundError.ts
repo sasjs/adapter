@@ -13,7 +13,7 @@ export class RootFolderNotFoundError extends Error {
     if (accessToken) {
       const decodedToken = decodeToken(accessToken)
       let scope = decodedToken.scope
-      scope = scope.map((element) => '* ' + element)
+      scope = scope.map(element => '* ' + element)
       message +=
         `Your access token contains the following scopes:\n` + scope.join('\n')
     }

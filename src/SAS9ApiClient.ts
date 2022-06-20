@@ -73,9 +73,9 @@ export class SAS9ApiClient {
       'Content-Length': contentLength,
       Connection: 'keep-alive'
     }
-    const storedProcessUrl = `${this.jobsPath}/?${
-      '_program=' + codeInjectorPath + '&_debug=log'
-    }`
+    const storedProcessUrl = `${this.jobsPath}/?${'_program=' +
+      codeInjectorPath +
+      '&_debug=log'}`
     const response = await this.requestClient.post(
       storedProcessUrl,
       formData,

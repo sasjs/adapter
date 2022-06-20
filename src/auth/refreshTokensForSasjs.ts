@@ -17,7 +17,7 @@ export async function refreshTokensForSasjs(
 
   const authResponse = await requestClient
     .post(url, undefined, undefined, undefined, headers)
-    .then((res) => {
+    .then(res => {
       const sasAuth = res.result as {
         accessToken: string
         refreshToken: string
@@ -27,7 +27,7 @@ export async function refreshTokensForSasjs(
         refresh_token: sasAuth.refreshToken
       }
     })
-    .catch((err) => {
+    .catch(err => {
       throw prefixMessage(err, 'Error while refreshing tokens')
     })
 

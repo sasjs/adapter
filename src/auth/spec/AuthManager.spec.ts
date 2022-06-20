@@ -321,7 +321,7 @@ describe('AuthManager', () => {
       jest
         .spyOn(openWebPageModule, 'openWebPage')
         .mockImplementation(() =>
-          Promise.resolve({ close: jest.fn() } as unknown as Window)
+          Promise.resolve(({ close: jest.fn() } as unknown) as Window)
         )
       jest.mock('../verifySasViyaLogin')
       jest

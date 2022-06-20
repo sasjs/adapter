@@ -28,7 +28,7 @@ describe('writeStream', () => {
     jest
       .spyOn(stream, 'write')
       .mockImplementation((_, callback) => callback(new Error('Test Error')))
-    const error = await writeStream(stream, content).catch((e) => e)
+    const error = await writeStream(stream, content).catch(e => e)
 
     expect(error.message).toEqual('Test Error')
   })

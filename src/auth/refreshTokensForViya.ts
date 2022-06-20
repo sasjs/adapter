@@ -40,8 +40,8 @@ export async function refreshTokensForViya(
       'multipart/form-data; boundary=' + (formData as any)._boundary,
       headers
     )
-    .then((res) => res.result)
-    .catch((err) => {
+    .then(res => res.result)
+    .catch(err => {
       throw prefixMessage(err, 'Error while refreshing tokens')
     })
 

@@ -140,7 +140,7 @@ describe('RequestClient', () => {
         `Error while executing callback in handleError. ${randomError}`
       )
 
-      error.response.headers = {} as unknown as { 'x-csrf-header': string }
+      error.response.headers = ({} as unknown) as { 'x-csrf-header': string }
       requestClient['csrfToken'].headerName = ''
 
       await expect(
@@ -262,7 +262,7 @@ const setupSelfSignedServer = async (): Promise<{
   httpsServer: https.Server
   keys: pem.CertificateCreationResult
 }> => {
-  return await new Promise(async (resolve) => {
+  return await new Promise(async resolve => {
     const keys = await createCertificate()
 
     const httpsServer = https.createServer(

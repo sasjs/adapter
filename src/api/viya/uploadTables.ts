@@ -27,7 +27,7 @@ export async function uploadTables(
 
     const uploadResponse = await requestClient
       .uploadFile(`/files/files#rawUpload`, csv, accessToken)
-      .catch((err) => {
+      .catch(err => {
         throw prefixMessage(err, 'Error while uploading file. ')
       })
 

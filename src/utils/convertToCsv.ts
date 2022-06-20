@@ -22,12 +22,12 @@ export const convertToCSV = (
   let invalidString = false
 
   if (formats) {
-    headers = Object.keys(formats).map((key) => `${key}:${formats![key]}`)
+    headers = Object.keys(formats).map(key => `${key}:${formats![key]}`)
   }
 
   const headerFields = Object.keys(table[0])
 
-  headerFields.forEach((field) => {
+  headerFields.forEach(field => {
     if (!formats || !Object.keys(formats).includes(field)) {
       let hasNullOrNumber = false
       let hasSpecialMissingString = false

@@ -28,7 +28,7 @@ export const generateTableUploadForm = (
       const csvChunks = splitChunks(csv)
 
       // append chunks to form data with same key
-      csvChunks.map((chunk) => {
+      csvChunks.map(chunk => {
         formData.append(`sasjs${tableCounter}data`, chunk)
       })
     } else {

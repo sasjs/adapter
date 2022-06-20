@@ -11,7 +11,7 @@ const classes = {
 }
 
 export const openLoginPrompt = (): Promise<boolean> => {
-  return new Promise(async (resolve) => {
+  return new Promise(async resolve => {
     const style = document.createElement('style')
     style.id = domIDs.styles
     style.innerText = cssContent
@@ -60,7 +60,7 @@ export const openLoginPrompt = (): Promise<boolean> => {
   })
 }
 const closeLoginPrompt = () => {
-  Object.values(domIDs).forEach((id) => {
+  Object.values(domIDs).forEach(id => {
     const elem = document.getElementById(id)
     elem?.parentNode?.removeChild(elem)
   })

@@ -87,7 +87,7 @@ export class SASjsApiClient {
             .join('\n')
         }
       })
-      .catch((err) => {
+      .catch(err => {
         parsedSasjsServerLog = err
       })
 

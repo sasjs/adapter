@@ -16,12 +16,12 @@ describe('verifySasViyaLogin', () => {
   })
 
   it('should return isLoggedIn true by checking state of popup', async () => {
-    const popup = {
+    const popup = ({
       window: {
         location: { href: serverUrl + `/SASLogon/home` },
         document: { body: { innerText: '<h3>You have signed in.</h3>' } }
       }
-    } as unknown as Window
+    } as unknown) as Window
 
     await expect(verifySasViyaLogin(popup)).resolves.toEqual({
       isLoggedIn: true
@@ -29,7 +29,7 @@ describe('verifySasViyaLogin', () => {
   })
 
   it('should return isLoggedIn false if user closed popup, already', async () => {
-    const popup: Window = { closed: true } as unknown as Window
+    const popup: Window = ({ closed: true } as unknown) as Window
 
     await expect(verifySasViyaLogin(popup)).resolves.toEqual({
       isLoggedIn: false

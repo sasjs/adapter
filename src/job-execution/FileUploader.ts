@@ -52,9 +52,8 @@ export class FileUploader extends BaseJobExecutor {
     const program = config.appLoc
       ? config.appLoc.replace(/\/?$/, '/') + sasJob.replace(/^\//, '')
       : sasJob
-    const uploadUrl = `${this.jobsPath}/?${
-      '_program=' + program
-    }${paramsString}`
+    const uploadUrl = `${this.jobsPath}/?${'_program=' +
+      program}${paramsString}`
 
     const formData = new FormData()
 
