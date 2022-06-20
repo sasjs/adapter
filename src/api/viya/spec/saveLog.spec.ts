@@ -17,7 +17,7 @@ describe('saveLog', () => {
 
   it('should throw an error when a valid access token is not provided', async () => {
     const error = await saveLog(mockJob, requestClient, 0, 100, stream).catch(
-      (e) => e
+      (e: any) => e
     )
 
     expect(error.message).toContain(
@@ -33,7 +33,7 @@ describe('saveLog', () => {
       100,
       stream,
       't0k3n'
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error.message).toContain(
       `Log URL for job ${mockJob.id} was not found.`

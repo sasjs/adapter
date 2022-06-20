@@ -30,7 +30,7 @@ describe('uploadTables', () => {
       .mockImplementation(() => 'ERROR: LARGE STRING LENGTH')
 
     const error = await uploadTables(requestClient, data, 't0k3n').catch(
-      (e) => e
+      (e: any) => e
     )
 
     expect(requestClient.uploadFile).not.toHaveBeenCalled()
@@ -46,7 +46,7 @@ describe('uploadTables', () => {
       .mockImplementation(() => Promise.reject('Upload Error'))
 
     const error = await uploadTables(requestClient, data, 't0k3n').catch(
-      (e) => e
+      (e: any) => e
     )
 
     expect(error).toContain('Error while uploading file.')

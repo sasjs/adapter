@@ -9,7 +9,7 @@ export const assert = (
     } else {
       result = expression()
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error(message)
     throw new Error(message)
   }

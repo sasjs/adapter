@@ -53,7 +53,7 @@ describe('getAccessTokenForSasjs', () => {
       requestClient,
       authConfig.client,
       authConfig.refresh_token
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while getting access token')
   })
