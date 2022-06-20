@@ -80,7 +80,7 @@ describe('executeScript', () => {
       'test',
       ['%put hello'],
       'test context'
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while getting session.')
   })
@@ -128,7 +128,7 @@ describe('executeScript', () => {
       false,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while getting session variable.')
   })
@@ -297,7 +297,7 @@ describe('executeScript', () => {
       false,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while posting job')
   })
@@ -367,7 +367,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while polling job status.')
   })
@@ -393,7 +393,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
@@ -468,7 +468,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
@@ -501,7 +501,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
@@ -561,7 +561,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(requestClient.get).toHaveBeenCalledWith(
       `/compute/sessions/${mockSession.id}/filerefs/_webout/content`,
@@ -622,7 +622,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error).toContain('Error while clearing session.')
   })

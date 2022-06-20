@@ -7,7 +7,6 @@ describe('generateFileUploadForm', () => {
     }
 
     const BlobMock = jest.fn()
-
     ;(global as any).FormData = FormDataMock
     ;(global as any).Blob = BlobMock
   })
