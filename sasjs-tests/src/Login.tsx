@@ -9,9 +9,9 @@ const Login = (): ReactElement<{}> => {
   const appContext = useContext(AppContext)
 
   const handleSubmit = useCallback(
-    e => {
+    (e) => {
       e.preventDefault()
-      appContext.adapter.logIn(username, password).then(res => {
+      appContext.adapter.logIn(username, password).then((res) => {
         appContext.setIsLoggedIn(res.isLoggedIn)
       })
     },
@@ -28,7 +28,7 @@ const Login = (): ReactElement<{}> => {
             placeholder="User Name"
             value={username}
             required
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div className="row">
@@ -38,7 +38,7 @@ const Login = (): ReactElement<{}> => {
             type="password"
             value={password}
             required
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
         <button type="submit" className="submit-button">

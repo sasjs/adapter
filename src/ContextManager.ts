@@ -42,7 +42,7 @@ export class ContextManager {
         `${this.serverUrl}/compute/contexts?limit=10000`,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting compute contexts. ')
       })
 
@@ -63,7 +63,7 @@ export class ContextManager {
         `${this.serverUrl}/launcher/contexts?limit=10000`,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting launcher contexts. ')
       })
 
@@ -96,7 +96,9 @@ export class ContextManager {
 
     const existingComputeContexts = await this.getComputeContexts(accessToken)
 
-    if (existingComputeContexts.find(context => context.name === contextName)) {
+    if (
+      existingComputeContexts.find((context) => context.name === contextName)
+    ) {
       throw new Error(`Compute context '${contextName}' already exists.`)
     }
 
@@ -105,7 +107,9 @@ export class ContextManager {
         const launcherContexts = await this.getLauncherContexts(accessToken)
 
         if (
-          !launcherContexts.find(context => context.name === launchContextName)
+          !launcherContexts.find(
+            (context) => context.name === launchContextName
+          )
         ) {
           const description = `The launcher context for ${launchContextName}`
           const launchType = 'direct'
@@ -115,7 +119,7 @@ export class ContextManager {
             description,
             launchType,
             accessToken
-          ).catch(err => {
+          ).catch((err) => {
             throw new Error(`Error while creating launcher context. ${err}`)
           })
 
@@ -165,7 +169,7 @@ export class ContextManager {
         requestBody,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while creating compute context. ')
       })
 
@@ -191,7 +195,7 @@ export class ContextManager {
     const existingLauncherContexts = await this.getLauncherContexts(accessToken)
 
     if (
-      existingLauncherContexts.find(context => context.name === contextName)
+      existingLauncherContexts.find((context) => context.name === contextName)
     ) {
       throw new Error(`Launcher context '${contextName}' already exists.`)
     }
@@ -216,7 +220,7 @@ export class ContextManager {
         requestBody,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while creating launcher context. ')
       })
 
@@ -257,7 +261,7 @@ export class ContextManager {
         `${this.serverUrl}/compute/contexts/${originalContext.id}`,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         if (err && err.status === 404) {
           throw new Error(
             `The context '${contextName}' was not found on this server.`
@@ -291,7 +295,7 @@ export class ContextManager {
         `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(
           err,
           'Error while getting compute context by name. '
@@ -316,7 +320,7 @@ export class ContextManager {
         `${this.serverUrl}/compute/contexts/${contextId}`,
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting compute context by id. ')
       })
 
@@ -332,7 +336,7 @@ export class ContextManager {
         `${this.serverUrl}/compute/contexts?limit=10000`,
         authConfig?.access_token
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while fetching compute contexts.')
       })
 

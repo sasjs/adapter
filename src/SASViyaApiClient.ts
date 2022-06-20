@@ -313,7 +313,7 @@ export class SASViyaApiClient {
   public async getFolder(folderPath: string, accessToken?: string) {
     return await this.requestClient
       .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
-      .then(res => res.result)
+      .then((res) => res.result)
   }
 
   /**
@@ -427,16 +427,15 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } = await this.requestClient.post<
-      Folder
-    >(
-      `/folders/folders?parentFolderUri=${parentFolderUri}`,
-      {
-        name: folderName,
-        type: 'folder'
-      },
-      accessToken
-    )
+    const { result: createFolderResponse } =
+      await this.requestClient.post<Folder>(
+        `/folders/folders?parentFolderUri=${parentFolderUri}`,
+        {
+          name: folderName,
+          type: 'folder'
+        },
+        accessToken
+      )
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
@@ -496,8 +495,8 @@ export class SASViyaApiClient {
 
     const authCode = await this.requestClient
       .get<string>(authUrl, undefined, 'text/plain')
-      .then(response => response.result)
-      .then(async response => {
+      .then((response) => response.result)
+      .then(async (response) => {
         let code = ''
         if (isAuthorizeFormRequired(response)) {
           const formResponse: any = await this.requestClient.authorize(response)
@@ -626,7 +625,7 @@ export class SASViyaApiClient {
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
 
-    await this.populateFolderMap(fullFolderPath, access_token).catch(err => {
+    await this.populateFolderMap(fullFolderPath, access_token).catch((err) => {
       throw prefixMessage(err, 'Error while populating folder map. ')
     })
 
@@ -638,7 +637,7 @@ export class SASViyaApiClient {
       )
     }
 
-    const jobToExecute = jobFolder?.find(item => item.name === jobName)
+    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
 
     if (!jobToExecute) {
       throw new Error(`Job was not found.`)
@@ -648,7 +647,7 @@ export class SASViyaApiClient {
 
     if (!code) {
       const jobDefinitionLink = jobToExecute?.links.find(
-        l => l.rel === 'getResource'
+        (l) => l.rel === 'getResource'
       )
 
       if (!jobDefinitionLink) {
@@ -660,7 +659,7 @@ export class SASViyaApiClient {
           `${this.serverUrl}${jobDefinitionLink.href}`,
           access_token
         )
-        .catch(err => {
+        .catch((err) => {
           throw prefixMessage(err, 'Error while getting job definition. ')
         })
 
@@ -729,7 +728,7 @@ export class SASViyaApiClient {
       )
     }
 
-    const jobToExecute = jobFolder?.find(item => item.name === jobName)
+    const jobToExecute = jobFolder?.find((item) => item.name === jobName)
 
     let files: any[] = []
     if (data && Object.keys(data).length) {
@@ -740,7 +739,7 @@ export class SASViyaApiClient {
       throw new Error(`Job was not found.`)
     }
     const jobDefinitionLink = jobToExecute?.links.find(
-      l => l.rel === 'getResource'
+      (l) => l.rel === 'getResource'
     )?.href
 
     const { result: jobDefinition } = await this.requestClient.get<Job>(
@@ -784,7 +783,7 @@ export class SASViyaApiClient {
       access_token
     )
     const jobStatus = await this.pollJobState(postedJob, authConfig).catch(
-      err => {
+      (err) => {
         throw prefixMessage(err, 'Error while polling job status. ')
       }
     )
@@ -797,7 +796,7 @@ export class SASViyaApiClient {
     let log
 
     const resultLink = currentJob.results['_webout.json']
-    const logLink = currentJob.links.find(l => l.rel === 'log')
+    const logLink = currentJob.links.find((l) => l.rel === 'log')
     if (resultLink) {
       jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
@@ -831,7 +830,7 @@ export class SASViyaApiClient {
     const url = '/folders/folders/@item?path=' + path
     const { result: folder } = await this.requestClient
       .get<Folder>(`${url}`, accessToken)
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting folder. ')
       })
 
@@ -846,7 +845,7 @@ export class SASViyaApiClient {
         }`, // this is a fix for https://github.com/sasjs/adapter/issues/669
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting members. ')
       })
 
@@ -883,7 +882,7 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(err => {
+      .catch((err) => {
         if (err instanceof CertificateError) throw err
         return { result: null }
       })
@@ -905,7 +904,7 @@ export class SASViyaApiClient {
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
-      .catch(err => {
+      .catch((err) => {
         if (err instanceof CertificateError) throw err
         return { result: null }
       })
@@ -1025,7 +1024,7 @@ export class SASViyaApiClient {
         },
         accessToken
       )
-      .catch(err => {
+      .catch((err) => {
         if (err.code && err.code === 'ENOTFOUND') {
           const notFoundError = {
             body: {

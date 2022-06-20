@@ -754,9 +754,7 @@ export default class SASjs {
    * @param data A json object that contains one or more tables, it can also be null
    * @returns An object which contains two attributes: 1) status: boolean, 2) msg: string
    */
-  private validateInput(
-    data: { [key: string]: any } | null
-  ): {
+  private validateInput(data: { [key: string]: any } | null): {
     status: boolean
     msg: string
   } {
@@ -980,7 +978,7 @@ export default class SASjs {
    * @param accessToken - an access token for an authorised user.
    */
   public async fetchLogFileContent(logUrl: string, accessToken?: string) {
-    return await this.requestClient!.get(logUrl, accessToken).then(res => {
+    return await this.requestClient!.get(logUrl, accessToken).then((res) => {
       if (!res)
         return Promise.reject(
           new ErrorResponse(

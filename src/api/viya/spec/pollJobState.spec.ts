@@ -55,11 +55,11 @@ describe('pollJobState', () => {
   it('should throw an error if the job does not have a state link', async () => {
     const error = await pollJobState(
       requestClient,
-      { ...mockJob, links: mockJob.links.filter(l => l.rel !== 'state') },
+      { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'state') },
       false,
       undefined,
       defaultPollOptions
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect((error as Error).message).toContain('Job state link was not found.')
   })
@@ -238,7 +238,7 @@ describe('pollJobState', () => {
       false,
       undefined,
       defaultPollOptions
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error.message).toEqual(
       'Error while polling job state for job j0b: Status Error'
@@ -267,13 +267,13 @@ const setupMocks = () => {
     .mockImplementation(() => Promise.resolve())
   jest
     .spyOn(getFileStreamModule, 'getFileStream')
-    .mockImplementation(() => Promise.resolve(({} as unknown) as WriteStream))
+    .mockImplementation(() => Promise.resolve({} as unknown as WriteStream))
   jest.spyOn(isNodeModule, 'isNode').mockImplementation(() => true)
 }
 
 const mockSimplePoll = (runningCount = 2) => {
   let count = 0
-  jest.spyOn(requestClient, 'get').mockImplementation(url => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
@@ -293,7 +293,7 @@ const mockSimplePoll = (runningCount = 2) => {
 
 const mockRunningPoll = () => {
   let count = 0
-  jest.spyOn(requestClient, 'get').mockImplementation(url => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
@@ -308,7 +308,7 @@ const mockRunningPoll = () => {
 
 const mockLongPoll = () => {
   let count = 0
-  jest.spyOn(requestClient, 'get').mockImplementation(url => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
@@ -323,7 +323,7 @@ const mockLongPoll = () => {
 
 const mockPollWithSingleError = () => {
   let count = 0
-  jest.spyOn(requestClient, 'get').mockImplementation(url => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
@@ -340,7 +340,7 @@ const mockPollWithSingleError = () => {
 }
 
 const mockErroredPoll = () => {
-  jest.spyOn(requestClient, 'get').mockImplementation(url => {
+  jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }

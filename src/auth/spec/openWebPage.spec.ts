@@ -10,7 +10,7 @@ describe('openWebPage', () => {
   describe('window.open is not blocked', () => {
     const mockedOpen = jest
       .fn()
-      .mockImplementation(() => (({} as unknown) as Window))
+      .mockImplementation(() => ({} as unknown as Window))
     const originalOpen = window.open
 
     beforeAll(() => {

@@ -63,7 +63,7 @@ describe('refreshTokensForViya', () => {
       authConfig.client,
       authConfig.secret,
       authConfig.refresh_token
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while refreshing tokens')
   })

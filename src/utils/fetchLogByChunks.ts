@@ -41,13 +41,14 @@ export const fetchLog = async (
   const loglimit = end < 10000 ? end : 10000
   do {
     logger.info(
-      `Fetching logs from line no: ${start + 1} to ${start +
-        loglimit} of ${end}.`
+      `Fetching logs from line no: ${start + 1} to ${
+        start + loglimit
+      } of ${end}.`
     )
     const logChunkJson = await requestClient!
       .get<any>(`${logUrl}?start=${start}&limit=${loglimit}`, accessToken)
       .then((res: any) => res.result)
-      .catch(err => {
+      .catch((err) => {
         throw prefixMessage(err, 'Error while getting log. ')
       })
 

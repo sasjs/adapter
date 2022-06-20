@@ -64,7 +64,7 @@ describe('getAccessTokenForViya', () => {
       authConfig.client,
       authConfig.secret,
       authConfig.refresh_token
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while getting access token')
   })

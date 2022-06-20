@@ -1,8 +1,6 @@
 import { delay } from '../utils'
 
-export async function verifySas9Login(
-  loginPopup: Window
-): Promise<{
+export async function verifySas9Login(loginPopup: Window): Promise<{
   isLoggedIn: boolean
 }> {
   let isLoggedIn = false

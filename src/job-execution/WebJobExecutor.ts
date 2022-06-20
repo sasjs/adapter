@@ -134,10 +134,8 @@ export class WebJobExecutor extends BaseJobExecutor {
       } else {
         // param based approach
         try {
-          const {
-            formData: newFormData,
-            requestParams: params
-          } = generateTableUploadForm(formData, data)
+          const { formData: newFormData, requestParams: params } =
+            generateTableUploadForm(formData, data)
           formData = newFormData
           requestParams = { ...requestParams, ...params }
         } catch (e) {

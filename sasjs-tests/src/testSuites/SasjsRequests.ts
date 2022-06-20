@@ -31,7 +31,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
           .catch(() => {
             const sasRequests = adapter.getSasRequests()
             const makeErrRequest: any =
-              sasRequests.find(req => req.serviceLink.includes('makeErr')) ||
+              sasRequests.find((req) => req.serviceLink.includes('makeErr')) ||
               null
 
             if (!makeErrRequest) return false
@@ -41,7 +41,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
             )
           })
       },
-      assertion: response => {
+      assertion: (response) => {
         return response
       }
     }

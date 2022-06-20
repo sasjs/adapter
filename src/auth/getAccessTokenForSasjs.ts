@@ -20,7 +20,7 @@ export async function getAccessTokenForSasjs(
 
   return await requestClient
     .post(url, data, undefined)
-    .then(res => {
+    .then((res) => {
       const sasAuth = res.result as {
         accessToken: string
         refreshToken: string
@@ -30,7 +30,7 @@ export async function getAccessTokenForSasjs(
         refresh_token: sasAuth.refreshToken
       }
     })
-    .catch(err => {
+    .catch((err) => {
       throw prefixMessage(err, 'Error while getting access token. ')
     })
 }

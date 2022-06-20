@@ -80,7 +80,7 @@ describe('executeScript', () => {
       'test',
       ['%put hello'],
       'test context'
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while getting session.')
   })
@@ -128,7 +128,7 @@ describe('executeScript', () => {
       false,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while getting session variable.')
   })
@@ -297,7 +297,7 @@ describe('executeScript', () => {
       false,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while posting job')
   })
@@ -367,7 +367,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while polling job status.')
   })
@@ -393,12 +393,12 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig.access_token,
-      mockJob.links.find(l => l.rel === 'up')!.href + '/log',
+      mockJob.links.find((l) => l.rel === 'up')!.href + '/log',
       1000000
     )
     expect(error.log).toEqual('Test Log')
@@ -424,7 +424,7 @@ describe('executeScript', () => {
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig.access_token,
-      mockJob.links.find(l => l.rel === 'log')!.href + '/content',
+      mockJob.links.find((l) => l.rel === 'log')!.href + '/content',
       mockJob.logStatistics.lineCount
     )
   })
@@ -468,12 +468,12 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig.access_token,
-      mockJob.links.find(l => l.rel === 'log')!.href + '/content',
+      mockJob.links.find((l) => l.rel === 'log')!.href + '/content',
       mockJob.logStatistics.lineCount
     )
 
@@ -501,12 +501,12 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig.access_token,
-      mockJob.links.find(l => l.rel === 'log')!.href + '/content',
+      mockJob.links.find((l) => l.rel === 'log')!.href + '/content',
       mockJob.logStatistics.lineCount
     )
 
@@ -561,7 +561,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(requestClient.get).toHaveBeenCalledWith(
       `/compute/sessions/${mockSession.id}/filerefs/_webout/content`,
@@ -572,7 +572,7 @@ describe('executeScript', () => {
     expect(fetchLogsModule.fetchLogByChunks).toHaveBeenCalledWith(
       requestClient,
       mockAuthConfig.access_token,
-      mockJob.links.find(l => l.rel === 'log')!.href + '/content',
+      mockJob.links.find((l) => l.rel === 'log')!.href + '/content',
       mockJob.logStatistics.lineCount
     )
 
@@ -622,7 +622,7 @@ describe('executeScript', () => {
       true,
       defaultPollOptions,
       true
-    ).catch(e => e)
+    ).catch((e) => e)
 
     expect(error).toContain('Error while clearing session.')
   })

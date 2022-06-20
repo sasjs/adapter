@@ -33,10 +33,8 @@ export class AuthManager {
   public async redirectedLogIn({
     onLoggedOut
   }: LoginOptions): Promise<LoginResult> {
-    const {
-      isLoggedIn: isLoggedInAlready,
-      userName: currentSessionUsername
-    } = await this.fetchUserName()
+    const { isLoggedIn: isLoggedInAlready, userName: currentSessionUsername } =
+      await this.fetchUserName()
 
     if (isLoggedInAlready) {
       await this.loginCallback()

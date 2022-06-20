@@ -36,7 +36,7 @@ export async function saveLog(
   }
 
   const logger = process.logger || console
-  const jobLogUrl = job.links.find(l => l.rel === 'log')
+  const jobLogUrl = job.links.find((l) => l.rel === 'log')
 
   if (!jobLogUrl) {
     throw new Error(`Log URL for job ${job.id} was not found.`)

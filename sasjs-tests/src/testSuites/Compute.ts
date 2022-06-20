@@ -119,7 +119,7 @@ const validateLog = (text: string, log: string): boolean => {
 const validate = (expectedProperties: string[], data: any): boolean => {
   const actualProperties = Object.keys(data)
 
-  const isValid = expectedProperties.every(property =>
+  const isValid = expectedProperties.every((property) =>
     actualProperties.includes(property)
   )
   return isValid
