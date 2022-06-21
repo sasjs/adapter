@@ -23,7 +23,7 @@ export class AuthManager {
         ? '/SASLogon/logout?'
         : this.serverType === ServerType.SasViya
         ? '/SASLogon/logout.do?'
-        : '/SASjsApi/auth/logout'
+        : '/SASLogon/logout'
   }
 
   /**
@@ -334,19 +334,9 @@ export class AuthManager {
 
   /**
    * Logs out of the configured SAS server.
-   * @param accessToken - an optional access token is required for SASjs server type.
+   *
    */
   public async logOut() {
-    if (this.serverType === ServerType.Sasjs) {
-      return this.requestClient
-        .delete(this.logoutUrl)
-        .catch(() => true)
-        .finally(() => {
-          this.requestClient.clearLocalStorageTokens()
-          return true
-        })
-    }
-
     this.requestClient.clearCsrfTokens()
 
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
