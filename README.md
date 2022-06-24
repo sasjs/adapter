@@ -94,7 +94,7 @@ const sasJs = new SASjs({your config})
 More on the config later.
 
 ### SAS Logon
-All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the `LoginMechanism` attribute of the sasJs config object (above):
+All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the `loginMechanism` attribute of the sasJs config object (above):
 
 * `loginMechanism:'Redirected'` - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.
 * `loginMechanism:'Default'` - this approach requires that the username and password are captured, and used within the `.login()` method.  This can be helpful for development, or automated testing.
