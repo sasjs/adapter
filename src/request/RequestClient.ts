@@ -207,7 +207,7 @@ export class RequestClient implements HttpClient {
 
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(
           e,
           () =>
@@ -248,7 +248,7 @@ export class RequestClient implements HttpClient {
 
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(e, () =>
           this.post<T>(url, data, accessToken, contentType, overrideHeaders)
         )
@@ -272,7 +272,7 @@ export class RequestClient implements HttpClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(e, () =>
           this.put<T>(url, data, accessToken, overrideHeaders)
         )
@@ -291,7 +291,7 @@ export class RequestClient implements HttpClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(e, () => this.delete<T>(url, accessToken))
       })
   }
@@ -309,7 +309,7 @@ export class RequestClient implements HttpClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(e, () =>
           this.patch<T>(url, data, accessToken)
         )

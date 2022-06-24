@@ -4,7 +4,7 @@ export const parseSasViyaLog = (logResponse: { items: any[] }) => {
     log = logResponse.items
       ? logResponse.items.map((i) => i.line).join('\n')
       : JSON.stringify(logResponse)
-  } catch (e) {
+  } catch (e: any) {
     console.error('An error has occurred while parsing the log response', e)
     log = logResponse
   }

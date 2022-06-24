@@ -68,7 +68,7 @@ export class Sas9RequestClient extends RequestClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(
           e,
           () =>
@@ -113,7 +113,7 @@ export class Sas9RequestClient extends RequestClient {
         throwIfError(response)
         return this.parseResponse<T>(response)
       })
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         return await this.handleError(e, () =>
           this.post<T>(url, data, accessToken, contentType, overrideHeaders)
         )

@@ -31,7 +31,7 @@ describe('SASViyaApiClient', () => {
       .mockImplementation(() => Promise.reject('Not Found'))
     const error = await sasViyaApiClient
       .createFolder('test', '/foo')
-      .catch((e) => e)
+      .catch((e: any) => e)
     expect(error).toBeInstanceOf(RootFolderNotFoundError)
   })
 })

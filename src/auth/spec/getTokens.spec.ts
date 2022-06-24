@@ -62,7 +62,9 @@ describe('getTokens', () => {
     const expectedError =
       'Unable to obtain new access token. Your refresh token has expired.'
 
-    const error = await getTokens(requestClient, authConfig).catch((e) => e)
+    const error = await getTokens(requestClient, authConfig).catch(
+      (e: any) => e
+    )
 
     expect(error.message).toEqual(expectedError)
   })

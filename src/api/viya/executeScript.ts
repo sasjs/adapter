@@ -240,7 +240,7 @@ export async function executeScript(
 
     jobResult = await requestClient
       .get<any>(resultLink, access_token, 'text/plain')
-      .catch(async (e) => {
+      .catch(async (e: any) => {
         if (e instanceof NotFoundError) {
           if (logLink) {
             const logUrl = `${logLink.href}/content`
@@ -271,7 +271,7 @@ export async function executeScript(
       })
 
     return { result: jobResult?.result, log }
-  } catch (e) {
+  } catch (e: any) {
     interface HttpError {
       status: number
     }

@@ -59,7 +59,7 @@ describe('pollJobState', () => {
       false,
       undefined,
       defaultPollOptions
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect((error as Error).message).toContain('Job state link was not found.')
   })
@@ -238,7 +238,7 @@ describe('pollJobState', () => {
       false,
       undefined,
       defaultPollOptions
-    ).catch((e) => e)
+    ).catch((e: any) => e)
 
     expect(error.message).toEqual(
       'Error while polling job state for job j0b: Status Error'
