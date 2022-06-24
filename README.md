@@ -96,8 +96,8 @@ More on the config later.
 ### SAS Logon
 All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the `LoginMechanism` attribute of the sasJs config object (above):
 
-* `LoginMechanism:'Redirected'` - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.
-* `LoginMechanism:'Default'` - this approach requires that the username and password are captured, and used within the `.login()` method.  This can be helpful for development, or automated testing.
+* `loginMechanism:'Redirected'` - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.
+* `loginMechanism:'Default'` - this approach requires that the username and password are captured, and used within the `.login()` method.  This can be helpful for development, or automated testing.
 
 Sample code for logging in with the `Default` approach:
 
@@ -125,7 +125,11 @@ sasJs.request("/path/to/my/service", dataObject)
   })
 ```
 
-We supply the path to the SAS service, and a data object.  The data object can be null (for services with no input), or can contain one or more tables in the following format:
+We supply the path to the SAS service, and a data object.  
+
+If the path starts with a `/` then it should be a full path to the service.  If there is no leading `/` then it is relative to the `appLoc`. 
+
+The data object can be null (for services with no input), or can contain one or more "tables" in the following format:
 
 ```javascript
 let dataObject={
@@ -141,7 +145,9 @@ let dataObject={
 };
 ```
 
-There are optional parameters such as a config object and a callback login function.
+These tables (`tablewith2cols1row` and `tablewith1col2rows`) will be created in SAS WORK after running `%webout(FETCH)` in your SAS service.
+
+The `request()` method also has optional parameters such as a config object and a callback login function.
 
 The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.
 
@@ -248,6 +254,8 @@ Where an entire column is made up of special missing numerics, there would be no
 %webout(OBJ,a,missing=STRING,showmeta=YES)
 ```
 
+The `%webout()` macro itself is just a wrapper for the [mp_jsonout](https://core.sasjs.io/mp__jsonout_8sas.html) macro.
+
 ## Configuration
 
 Configuration on the client side involves passing an object on startup, which can also be passed with each request.  Technical documentation on the SASjsConfig class is available [here](https://adapter.sasjs.io/classes/types.sasjsconfig.html).  The main config items are:
@@ -256,7 +264,7 @@ Configuration on the client side involves passing an object on startup, which ca
 * `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
-* `LoginMechanism` - either `Default` or `Redirected`.  See [SAS Logon](#sas-logon) section.
+* `loginMechanism` - either `Default` or `Redirected`.  See [SAS Logon](#sas-logon) section.
 * `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.
 * `requestHistoryLimit` - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled.  Default is 10.
