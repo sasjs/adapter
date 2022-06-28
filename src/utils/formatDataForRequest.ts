@@ -1,4 +1,4 @@
-import { convertToCSV } from './convertToCsv'
+import { convertToCSV, isFormatsTable } from './convertToCsv'
 import { splitChunks } from './splitChunks'
 
 export const formatDataForRequest = (data: any) => {
@@ -8,7 +8,7 @@ export const formatDataForRequest = (data: any) => {
 
   for (const tableName in data) {
     if (
-      tableName.match(/^\$.*/) &&
+      isFormatsTable(tableName) &&
       Object.keys(data).includes(tableName.replace(/^\$/, ''))
     ) {
       continue
@@ -16,7 +16,8 @@ export const formatDataForRequest = (data: any) => {
 
     tableCounter++
 
-    sasjsTables.push(tableName)
+    // Formats table should not be sent as part of 'sasjs_tables'
+    if (!isFormatsTable(tableName)) sasjsTables.push(tableName)
 
     const csv = convertToCSV(data, tableName)
 

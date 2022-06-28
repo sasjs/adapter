@@ -1,4 +1,4 @@
-import { convertToCSV } from './convertToCsv'
+import { convertToCSV, isFormatsTable } from './convertToCsv'
 
 describe('convertToCsv', () => {
   const tableName = 'testTable'
@@ -216,7 +216,9 @@ describe('convertToCsv', () => {
     const data = { [tableName]: [{ var1: 'string' }] }
 
     expect(() => convertToCSV(data, 'wrongTableName')).toThrow(
-      new Error('No table provided to be converted to CSV')
+      new Error(
+        'Error while converting to CSV. No table provided to be converted to CSV.'
+      )
     )
   })
 
@@ -224,5 +226,17 @@ describe('convertToCsv', () => {
     const data = { [tableName]: true }
 
     expect(convertToCSV(data, tableName)).toEqual('')
+  })
+})
+
+describe('isFormatsTable', () => {
+  const tableName = 'sometable'
+
+  it('should return true if table name match pattern of formats table', () => {
+    expect(isFormatsTable(`$${tableName}`)).toEqual(true)
+  })
+
+  it('should return false if table  name does not match pattern of formats table', () => {
+    expect(isFormatsTable(tableName)).toEqual(false)
   })
 })
