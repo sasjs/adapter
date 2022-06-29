@@ -30,7 +30,7 @@ const App = (): ReactElement<{}> => {
 
       setTestSuites(testSuites)
     }
-  }, [adapter, config])
+  }, [adapter, config, appLoc])
 
   return (
     <div className="app">
