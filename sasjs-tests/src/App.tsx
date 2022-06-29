@@ -11,12 +11,13 @@ import { fileUploadTests } from './testSuites/FileUpload'
 const App = (): ReactElement<{}> => {
   const { adapter, config } = useContext(AppContext)
   const [testSuites, setTestSuites] = useState<TestSuite[]>([])
+  const appLoc = config.sasJsConfig.appLoc
 
   useEffect(() => {
     if (adapter) {
       const testSuites = [
         basicTests(adapter, config.userName, config.password),
-        sendArrTests(adapter),
+        sendArrTests(adapter, appLoc),
         sendObjTests(adapter),
         specialCaseTests(adapter),
         sasjsRequestTests(adapter),
@@ -24,7 +25,7 @@ const App = (): ReactElement<{}> => {
       ]
 
       if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
-        testSuites.push(computeTests(adapter))
+        testSuites.push(computeTests(adapter, appLoc))
       }
 
       setTestSuites(testSuites)

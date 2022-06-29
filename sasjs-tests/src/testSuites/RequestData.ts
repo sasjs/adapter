@@ -45,14 +45,14 @@ const getLargeObjectData = () => {
   return data
 }
 
-export const sendArrTests = (adapter: SASjs): TestSuite => ({
+export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
   name: 'sendArr',
   tests: [
     {
       title: 'Absolute paths',
       description: 'Should work with absolute paths to SAS jobs',
       test: () => {
-        return adapter.request('/Public/app/common/sendArr', stringData)
+        return adapter.request(`${appLoc}/common/sendArr`, stringData)
       },
       assertion: (res: any) => {
         return res.table1[0][0] === stringData.table1[0].col1
