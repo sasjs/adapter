@@ -1,4 +1,5 @@
 import { isSpecialMissing } from '@sasjs/utils/input/validators'
+import { prefixMessage } from '@sasjs/utils/error'
 
 /**
  * Converts the given JSON object array to a CSV string.
@@ -9,7 +10,10 @@ export const convertToCSV = (
   tableName: string
 ) => {
   if (!data[tableName]) {
-    throw new Error('No table provided to be converted to CSV')
+    throw prefixMessage(
+      'No table provided to be converted to CSV.',
+      'Error while converting to CSV. '
+    )
   }
 
   const table = data[tableName]
@@ -169,6 +173,12 @@ export const convertToCSV = (
 
   return finalCSV
 }
+
+/**
+ * Checks if table is table of formats (table name should start from '$' character).
+ * @param tableName - table name.
+ */
+export const isFormatsTable = (tableName: string) => /^\$.*/.test(tableName)
 
 const getByteSize = (str: string) => {
   let byteSize = str.length

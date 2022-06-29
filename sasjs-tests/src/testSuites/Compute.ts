@@ -3,7 +3,7 @@ import { TestSuite } from '@sasjs/test-framework'
 
 const stringData: any = { table1: [{ col1: 'first col value' }] }
 
-export const computeTests = (adapter: SASjs): TestSuite => ({
+export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
   name: 'Compute',
   tests: [
     {
@@ -35,7 +35,7 @@ export const computeTests = (adapter: SASjs): TestSuite => ({
       description: 'Should start a compute job and return the session',
       test: () => {
         const data: any = { table1: [{ col1: 'first col value' }] }
-        return adapter.startComputeJob('/Public/app/common/sendArr', data)
+        return adapter.startComputeJob(`${appLoc}/common/sendArr`, data)
       },
       assertion: (res: any) => {
         const expectedProperties = ['id', 'applicationName', 'attributes']

@@ -1,5 +1,5 @@
 import * as NodeFormData from 'form-data'
-import { convertToCSV } from '../utils/convertToCsv'
+import { convertToCSV, isFormatsTable } from '../utils/convertToCsv'
 import { splitChunks } from '../utils/splitChunks'
 
 export const generateTableUploadForm = (
@@ -13,7 +13,8 @@ export const generateTableUploadForm = (
   for (const tableName in data) {
     tableCounter++
 
-    sasjsTables.push(tableName)
+    // Formats table should not be sent as part of 'sasjs_tables'
+    if (!isFormatsTable(tableName)) sasjsTables.push(tableName)
 
     const csv = convertToCSV(data, tableName)
 
