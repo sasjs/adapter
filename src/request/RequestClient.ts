@@ -703,7 +703,14 @@ const parseError = (data: string) => {
   } catch (_) {}
 
   try {
+    // There are some edge cases in which the SAS mp_abort macro
+    // (https://core.sasjs.io/mp__abort_8sas.html) is unable to
+    // provide a clean exit.  In this case the JSON response will
+    // be wrapped in >>weboutBEGIN<< and >>weboutEND<< strings.
+    // Therefore, if the first string exists, we won't throw an
+    // error just yet (the parser may yet throw one instead)
     const hasError =
+      !data?.match(/>>weboutBEGIN<</) &&
       !!data?.match(/Stored Process Error/i) &&
       !!data?.match(/This request completed with errors./i)
     if (hasError) {
