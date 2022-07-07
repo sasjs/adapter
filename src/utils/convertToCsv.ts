@@ -141,7 +141,9 @@ export const convertToCSV = (
           )
         }
 
-        return `.${value.toLowerCase()}`
+        const dot = value.includes('.') ? '' : '.'
+
+        return `${dot}${value.toLowerCase()}`
       }
 
       // if there any present, it should have preceding (") for escaping
