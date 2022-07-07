@@ -11,13 +11,16 @@ describe('formatDataForRequest', () => {
         { var1: 'string', var2: 232, nullvar: '_' },
         { var1: 'string', var2: 232, nullvar: 0 },
         { var1: 'string', var2: 232, nullvar: 'z' },
-        { var1: 'string', var2: 232, nullvar: null }
+        { var1: 'string', var2: 232, nullvar: null },
+        { var1: 'string', var2: 232, nullvar: '.A' },
+        { var1: 'string', var2: 232, nullvar: '._' },
+        { var1: 'string', var2: 232, nullvar: '.' }
       ],
       [`$${testTable}`]: { formats: { var1: '$char12.', nullvar: 'best.' } }
     }
 
     const expectedOutput = {
-      sasjs1data: `var1:$char12. var2:best. nullvar:best.\r\nstring,232,.a\r\nstring,232,.b\r\nstring,232,._\r\nstring,232,0\r\nstring,232,.z\r\nstring,232,.`,
+      sasjs1data: `var1:$char12. var2:best. nullvar:best.\r\nstring,232,.a\r\nstring,232,.b\r\nstring,232,._\r\nstring,232,0\r\nstring,232,.z\r\nstring,232,.\r\nstring,232,.a\r\nstring,232,._\r\nstring,232,.`,
       sasjs_tables: testTable
     }
 
