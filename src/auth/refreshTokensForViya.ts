@@ -42,7 +42,7 @@ export async function refreshTokensForViya(
     )
     .then((res) => res.result)
     .catch((err) => {
-      throw prefixMessage(err, 'Error while refreshing tokens')
+      throw prefixMessage(err, 'Error while refreshing tokens: ')
     })
 
   return authResponse
