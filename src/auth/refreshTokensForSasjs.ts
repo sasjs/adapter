@@ -28,7 +28,7 @@ export async function refreshTokensForSasjs(
       }
     })
     .catch((err) => {
-      throw prefixMessage(err, 'Error while refreshing tokens')
+      throw prefixMessage(err, 'Error while refreshing tokens: ')
     })
 
   return authResponse

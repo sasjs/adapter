@@ -46,17 +46,20 @@ describe('refreshTokensForViya', () => {
 
   it('should handle errors while refreshing tokens', async () => {
     setupMocks()
+
     const access_token = generateToken(30)
     const refresh_token = generateToken(30)
+    const tokenError = 'unable to verify the first certificate'
     const authConfig: AuthConfig = {
       access_token,
       refresh_token,
       client: 'cl13nt',
       secret: 's3cr3t'
     }
+
     jest
       .spyOn(requestClient, 'post')
-      .mockImplementation(() => Promise.reject('Token Error'))
+      .mockImplementation(() => Promise.reject(tokenError))
 
     const error = await refreshTokensForViya(
       requestClient,
@@ -65,7 +68,7 @@ describe('refreshTokensForViya', () => {
       authConfig.refresh_token
     ).catch((e: any) => e)
 
-    expect(error).toContain('Error while refreshing tokens')
+    expect(error).toEqual(`Error while refreshing tokens: ${tokenError}`)
   })
 })
 
