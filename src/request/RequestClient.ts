@@ -611,7 +611,10 @@ export const throwIfError = (response: AxiosResponse) => {
         throw new LoginRequiredError(response.data)
       }
 
-      if (response.data.toLowerCase() === 'invalid csrf token!') {
+      if (
+        typeof response.data === 'string' &&
+        response.data.toLowerCase() === 'invalid csrf token!'
+      ) {
         throw new InvalidCsrfError()
       }
       break
