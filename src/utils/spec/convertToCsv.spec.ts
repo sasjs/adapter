@@ -1,4 +1,4 @@
-import { convertToCSV, isFormatsTable } from './convertToCsv'
+import { convertToCSV, isFormatsTable } from '../convertToCsv'
 
 describe('convertToCsv', () => {
   const tableName = 'testTable'

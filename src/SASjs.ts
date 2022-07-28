@@ -1,4 +1,4 @@
-import { compareTimestamps, asyncForEach } from './utils'
+import { compareTimestamps, asyncForEach, validateInput } from './utils'
 import {
   SASjsConfig,
   UploadFile,
@@ -686,7 +686,7 @@ export default class SASjs {
       ...config
     }
 
-    const validationResult = this.validateInput(data)
+    const validationResult = validateInput(data)
 
     // status is true if the data passes validation checks above
     if (validationResult.status) {
@@ -745,74 +745,6 @@ export default class SASjs {
       }
     } else {
       return Promise.reject(new ErrorResponse(validationResult.msg))
-    }
-  }
-
-  /**
-   * This function validates the input data structure and table naming convention
-   *
-   * @param data A json object that contains one or more tables, it can also be null
-   * @returns An object which contains two attributes: 1) status: boolean, 2) msg: string
-   */
-  private validateInput(data: { [key: string]: any } | null): {
-    status: boolean
-    msg: string
-  } {
-    if (data === null) return { status: true, msg: '' }
-
-    const isSasFormatsTable = (key: string) =>
-      key.match(/^\$.*/) && Object.keys(data).includes(key.replace(/^\$/, ''))
-
-    for (const key in data) {
-      if (!key.match(/^[a-zA-Z_]/) && !isSasFormatsTable(key)) {
-        return {
-          status: false,
-          msg: 'First letter of table should be alphabet or underscore.'
-        }
-      }
-
-      if (!key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/) && !isSasFormatsTable(key)) {
-        return { status: false, msg: 'Table name should be alphanumeric.' }
-      }
-
-      if (key.length > 32) {
-        return {
-          status: false,
-          msg: 'Maximum length for table name could be 32 characters.'
-        }
-      }
-
-      if (this.getType(data[key]) !== 'Array' && !isSasFormatsTable(key)) {
-        return {
-          status: false,
-          msg: 'Parameter data contains invalid table structure.'
-        }
-      }
-
-      for (let i = 0; i < data[key].length; i++) {
-        if (this.getType(data[key][i]) !== 'object') {
-          return {
-            status: false,
-            msg: `Table ${key} contains invalid structure.`
-          }
-        }
-      }
-    }
-
-    return { status: true, msg: '' }
-  }
-
-  /**
-   * this function returns the type of variable
-   *
-   * @param data it could be anything, like string, array, object etc.
-   * @returns a string which tells the type of input parameter
-   */
-  private getType(data: any): string {
-    if (Array.isArray(data)) {
-      return 'Array'
-    } else {
-      return typeof data
     }
   }
 
