@@ -223,9 +223,17 @@ export class AuthManager {
 
   private async getNewLoginForm() {
     if (this.serverType === ServerType.Sasjs) {
-      // server will be sending CSRF cookie,
+      // server will be sending CSRF token in response,
+      // need to save in cookie so that,
       // http client will use it automatically
-      return this.requestClient.get('/', undefined)
+      return this.requestClient.get('/', undefined).then(({ result }) => {
+        const cookie =
+          /<script>document.cookie = '(XSRF-TOKEN=.*; Max-Age=86400; SameSite=Strict; Path=\/;)'<\/script>/.exec(
+            result as string
+          )?.[1]
+
+        if (cookie) document.cookie = cookie
+      })
     }
 
     const { result: formResponse } = await this.requestClient.get<string>(
