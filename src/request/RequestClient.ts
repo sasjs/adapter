@@ -500,10 +500,18 @@ export class RequestClient implements HttpClient {
     }
 
     if (e instanceof InvalidCsrfError) {
-      // Fetching root will inject CSRF token in cookie
+      // Fetching root and creating CSRF cookie
       await this.httpClient
         .get('/', {
           withCredentials: true
+        })
+        .then((response) => {
+          const cookie =
+            /<script>document.cookie = '(XSRF-TOKEN=.*; Max-Age=86400; SameSite=Strict; Path=\/;)'<\/script>/.exec(
+              response.data
+            )?.[1]
+
+          if (cookie) document.cookie = cookie
         })
         .catch((err) => {
           throw prefixMessage(err, 'Error while re-fetching CSRF token.')
