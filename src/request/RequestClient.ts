@@ -19,7 +19,7 @@ import {
   parseSourceCode,
   createAxiosInstance
 } from '../utils'
-import { InvalidCsrfError } from '../types/errors/InvalidCsrfError'
+import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 
 export interface HttpClient {
   get<T>(
@@ -499,7 +499,7 @@ export class RequestClient implements HttpClient {
       throw e
     }
 
-    if (e instanceof InvalidCsrfError) {
+    if (e instanceof InvalidSASjsCsrfError) {
       // Fetching root and creating CSRF cookie
       await this.httpClient
         .get('/', {
@@ -623,7 +623,7 @@ export const throwIfError = (response: AxiosResponse) => {
         typeof response.data === 'string' &&
         response.data.toLowerCase() === 'invalid csrf token!'
       ) {
-        throw new InvalidCsrfError()
+        throw new InvalidSASjsCsrfError()
       }
       break
     case 401:
