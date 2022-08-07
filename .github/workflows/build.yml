@@ -24,16 +24,16 @@ jobs:
 
       - name: Check npm audit
         run: npm audit --production --audit-level=low
-      
+
       - name: Install Dependencies
         run: npm ci
-      
+
       - name: Check code style
         run: npm run lint
-      
+
       - name: Run unit tests
         run: npm test
-      
+
       - name: Build Package
         run: npm run package:lib
         env:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
-        with: 
+        with:
           key: ${{ secrets.DCGITLAB_KEY }}
           known_hosts: 'placeholder'
 
@@ -88,7 +88,7 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
-          sh ./sasjs-cypress-run.sh ${{ secrets.DISCORD_WEBHOOK }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
+          sh ./sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
       # For some reason if coverage report action is run before other commands, those commands can't access the directories and files on which they depend on
       - name: Generate coverage report
