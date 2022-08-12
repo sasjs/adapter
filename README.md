@@ -237,7 +237,8 @@ run;
 %webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */
 %webout(ARR,b) /* Rows in table `b` are arrays (compact) */
 %webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */
-%webout(OBJ,c,label=d) /* Rename as `d` on JS side */
+%webout(OBJ,c,label=d) /* Rename table as `d` in output JSON */
+%webout(OBJ,c,label=e, maxobs=10) /* send only 10 rows back */
 %webout(CLOSE) /* Close the JSON and add default variables */
 ```
 
