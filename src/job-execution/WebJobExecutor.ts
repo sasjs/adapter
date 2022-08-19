@@ -17,7 +17,8 @@ import {
   isRelativePath,
   parseSasViyaDebugResponse,
   appendExtraResponseAttributes,
-  getValidJson
+  getValidJson,
+  SASJS_LOGS_SEPARATOR
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -164,33 +165,37 @@ export class WebJobExecutor extends BaseJobExecutor {
         contentType
       )
         .then(async (res: any) => {
-          const parsedSasjsServerLog =
+          const parsedSasjsLog =
             this.serverType === ServerType.Sasjs
-              ? res.result.log.map((logLine: any) => logLine.line).join('\n')
+              ? res.log?.split(SASJS_LOGS_SEPARATOR)[1]
               : res.result.log
+
+          const parsedSasjsServerWebout =
+            this.serverType === ServerType.Sasjs
+              ? typeof res.result === 'string'
+                ? getValidJson(res.log?.split(SASJS_LOGS_SEPARATOR)[0])
+                : res.result
+              : undefined
 
           const resObj =
             this.serverType === ServerType.Sasjs
               ? {
-                  result: res.result._webout,
-                  log: parsedSasjsServerLog
+                  result: parsedSasjsServerWebout,
+                  log: parsedSasjsLog
                 }
               : res
 
-          if (
-            this.serverType === ServerType.Sasjs &&
-            res.result._webout.length < 1
-          ) {
+          if (this.serverType === ServerType.Sasjs && res.result.length < 1) {
             throw new JobExecutionError(
               0,
               `No webout was returned by job ${program}. Server type is SASJS and the calling function is WebJobExecutor. Please check the SAS log for more info.`,
-              parsedSasjsServerLog
+              parsedSasjsLog
             )
           }
 
           this.requestClient!.appendRequest(resObj, sasJob, config.debug)
 
-          let jsonResponse = res.result
+          let jsonResponse = resObj.result
 
           if (config.debug) {
             switch (this.serverType) {
@@ -207,21 +212,11 @@ export class WebJobExecutor extends BaseJobExecutor {
                     ? parseWeboutResponse(res.result, apiUrl)
                     : res.result
                 break
-              case ServerType.Sasjs:
-                if (typeof res.result._webout === 'object') {
-                  jsonResponse = res.result._webout
-                } else {
-                  const webout = parseWeboutResponse(res.result._webout, apiUrl)
-                  jsonResponse = getValidJson(webout)
-                }
-                break
             }
-          } else if (this.serverType === ServerType.Sasjs) {
-            jsonResponse = getValidJson(res.result._webout)
           }
 
           const responseObject = appendExtraResponseAttributes(
-            { result: jsonResponse, log: parsedSasjsServerLog },
+            { result: jsonResponse, log: parsedSasjsLog },
             extraResponseAttributes
           )
           resolve(responseObject)
@@ -261,9 +256,7 @@ export class WebJobExecutor extends BaseJobExecutor {
             })
 
             if (loginCallback) await loginCallback()
-          } else {
-            reject(new ErrorResponse(e?.message, e))
-          }
+          } else reject(new ErrorResponse(e?.message, e))
         })
     })
 

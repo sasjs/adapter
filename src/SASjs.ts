@@ -102,10 +102,14 @@ export default class SASjs {
    * @param code - a string of code from the file to run.
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
    */
-  public async executeScriptSASjs(code: string, authConfig?: AuthConfig) {
+  public async executeScriptSASjs(
+    code: string,
+    runTime?: string,
+    authConfig?: AuthConfig
+  ) {
     this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
 
-    return await this.sasJSApiClient?.executeScript(code, authConfig)
+    return await this.sasJSApiClient?.executeScript(code, runTime, authConfig)
   }
 
   /**

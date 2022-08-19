@@ -1,7 +1,8 @@
 import {
   getValidJson,
   parseSasViyaDebugResponse,
-  parseWeboutResponse
+  parseWeboutResponse,
+  SASJS_LOGS_SEPARATOR
 } from '../utils'
 import { UploadFile } from '../types/UploadFile'
 import {
@@ -80,9 +81,29 @@ export class FileUploader extends BaseJobExecutor {
       this.requestClient
         .post(uploadUrl, formData, undefined, 'application/json', headers)
         .then(async (res: any) => {
-          this.requestClient.appendRequest(res, sasJob, config.debug)
+          const parsedSasjsLog =
+            this.serverType === ServerType.Sasjs
+              ? res.log?.split(SASJS_LOGS_SEPARATOR)[1]
+              : res.result.log
 
-          let jsonResponse = res.result
+          const parsedSasjsServerWebout =
+            this.serverType === ServerType.Sasjs
+              ? typeof res.result === 'string'
+                ? getValidJson(res.log?.split(SASJS_LOGS_SEPARATOR)[0])
+                : res.result
+              : undefined
+
+          const resObj =
+            this.serverType === ServerType.Sasjs
+              ? {
+                  result: parsedSasjsServerWebout,
+                  log: parsedSasjsLog
+                }
+              : res
+
+          this.requestClient.appendRequest(resObj, sasJob, config.debug)
+
+          let jsonResponse = resObj.result
 
           if (config.debug) {
             switch (this.serverType) {
@@ -99,25 +120,7 @@ export class FileUploader extends BaseJobExecutor {
                     ? parseWeboutResponse(res.result, uploadUrl)
                     : res.result
                 break
-              case ServerType.Sasjs:
-                if (typeof res.result._webout === 'object') {
-                  jsonResponse = res.result._webout
-                } else {
-                  const webout = parseWeboutResponse(
-                    res.result._webout,
-                    uploadUrl
-                  )
-                  jsonResponse = getValidJson(webout)
-                }
-                break
             }
-          } else if (this.serverType === ServerType.Sasjs) {
-            jsonResponse = getValidJson(res.result._webout)
-          } else {
-            jsonResponse =
-              typeof res.result === 'string'
-                ? getValidJson(res.result)
-                : res.result
           }
 
           resolve(jsonResponse)
