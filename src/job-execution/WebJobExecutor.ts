@@ -16,13 +16,10 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
-  appendExtraResponseAttributes,
-  getValidJson,
-  SASJS_LOGS_SEPARATOR
+  appendExtraResponseAttributes
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
-import { Server } from 'https'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -122,7 +119,6 @@ export class WebJobExecutor extends BaseJobExecutor {
       const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.Sas9 ||
-        config.serverType === ServerType.Sasjs ||
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';')
       ) {
@@ -165,37 +161,9 @@ export class WebJobExecutor extends BaseJobExecutor {
         contentType
       )
         .then(async (res: any) => {
-          const parsedSasjsLog =
-            this.serverType === ServerType.Sasjs
-              ? res.log?.split(SASJS_LOGS_SEPARATOR)[1]
-              : res.result.log
+          this.requestClient!.appendRequest(res, sasJob, config.debug)
 
-          const parsedSasjsServerWebout =
-            this.serverType === ServerType.Sasjs
-              ? typeof res.result === 'string'
-                ? getValidJson(res.log?.split(SASJS_LOGS_SEPARATOR)[0])
-                : res.result
-              : undefined
-
-          const resObj =
-            this.serverType === ServerType.Sasjs
-              ? {
-                  result: parsedSasjsServerWebout,
-                  log: parsedSasjsLog
-                }
-              : res
-
-          if (this.serverType === ServerType.Sasjs && res.result.length < 1) {
-            throw new JobExecutionError(
-              0,
-              `No webout was returned by job ${program}. Server type is SASJS and the calling function is WebJobExecutor. Please check the SAS log for more info.`,
-              parsedSasjsLog
-            )
-          }
-
-          this.requestClient!.appendRequest(resObj, sasJob, config.debug)
-
-          let jsonResponse = resObj.result
+          let jsonResponse = res.result
 
           if (config.debug) {
             switch (this.serverType) {
@@ -216,7 +184,7 @@ export class WebJobExecutor extends BaseJobExecutor {
           }
 
           const responseObject = appendExtraResponseAttributes(
-            { result: jsonResponse, log: parsedSasjsLog },
+            { result: jsonResponse, log: res.log },
             extraResponseAttributes
           )
           resolve(responseObject)
@@ -293,40 +261,5 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
     return uri
-  }
-
-  private getRequestParams(config: any): any {
-    const requestParams: any = {}
-
-    if (config.debug) {
-      requestParams['_omittextlog'] = 'false'
-      requestParams['_omitsessionresults'] = 'false'
-
-      requestParams['_debug'] = 131
-    }
-
-    return requestParams
-  }
-
-  private parseSAS9ErrorResponse(response: string) {
-    const logLines = response.split('\n')
-    const parsedLines: string[] = []
-    let firstErrorLineIndex: number = -1
-
-    logLines.map((line: string, index: number) => {
-      if (
-        line.toLowerCase().includes('error') &&
-        !line.toLowerCase().includes('this request completed with errors.') &&
-        firstErrorLineIndex === -1
-      ) {
-        firstErrorLineIndex = index
-      }
-    })
-
-    for (let i = firstErrorLineIndex - 10; i <= firstErrorLineIndex + 10; i++) {
-      parsedLines.push(logLines[i])
-    }
-
-    return parsedLines.join(', ')
   }
 }

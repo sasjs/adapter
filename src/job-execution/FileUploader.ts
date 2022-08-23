@@ -81,29 +81,9 @@ export class FileUploader extends BaseJobExecutor {
       this.requestClient
         .post(uploadUrl, formData, undefined, 'application/json', headers)
         .then(async (res: any) => {
-          const parsedSasjsLog =
-            this.serverType === ServerType.Sasjs
-              ? res.log?.split(SASJS_LOGS_SEPARATOR)[1]
-              : res.result.log
+          this.requestClient.appendRequest(res, sasJob, config.debug)
 
-          const parsedSasjsServerWebout =
-            this.serverType === ServerType.Sasjs
-              ? typeof res.result === 'string'
-                ? getValidJson(res.log?.split(SASJS_LOGS_SEPARATOR)[0])
-                : res.result
-              : undefined
-
-          const resObj =
-            this.serverType === ServerType.Sasjs
-              ? {
-                  result: parsedSasjsServerWebout,
-                  log: parsedSasjsLog
-                }
-              : res
-
-          this.requestClient.appendRequest(resObj, sasJob, config.debug)
-
-          let jsonResponse = resObj.result
+          let jsonResponse = res.result
 
           if (config.debug) {
             switch (this.serverType) {
@@ -121,6 +101,11 @@ export class FileUploader extends BaseJobExecutor {
                     : res.result
                 break
             }
+          } else if (this.serverType !== ServerType.Sasjs) {
+            jsonResponse =
+              typeof res.result === 'string'
+                ? getValidJson(res.result)
+                : res.result
           }
 
           resolve(jsonResponse)

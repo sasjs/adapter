@@ -102,7 +102,7 @@ export class Sas9JobExecutor extends BaseJobExecutor {
     return requestPromise
   }
 
-  private getRequestParams(config: any): any {
+  protected getRequestParams(config: any): any {
     const requestParams: any = {}
 
     if (config.debug) {
