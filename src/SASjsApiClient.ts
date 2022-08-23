@@ -86,9 +86,7 @@ export class SASjsApiClient {
     await this.requestClient
       .post('SASjsApi/code/execute', { code, runTime }, access_token)
       .then((res: any) => {
-        if (res.log) {
-          parsedSasjsServerLog = res.log.split(SASJS_LOGS_SEPARATOR)[1]
-        }
+        if (res.log) parsedSasjsServerLog = res.log
       })
       .catch((err) => {
         parsedSasjsServerLog = err
