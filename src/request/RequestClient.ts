@@ -158,8 +158,9 @@ export class RequestClient implements HttpClient {
         if (typeof response.result === 'string') {
           sourceCode = parseSourceCode(response.result)
           generatedCode = parseGeneratedCode(response.result)
-          sasWork = response.result.WORK
         }
+
+        sasWork = response.result.WORK
       }
     }
 
