@@ -133,26 +133,6 @@ export class RequestClient implements HttpClient {
         } else {
           sasWork = response.log
         }
-      } else if (response?.result?.log) {
-        //In this scenario we know we got the response from SASJS server
-        //Log is array of `{ line: '' }` so we need to convert it back to text
-        //To be able to parse it with current functions.
-        let log: string = ''
-
-        if (typeof log !== 'string') {
-          log = response.result.log
-            .map((logLine: any) => logLine.line)
-            .join('\n')
-        }
-
-        sourceCode = parseSourceCode(log)
-        generatedCode = parseGeneratedCode(log)
-
-        if (response?.result?._webout) {
-          sasWork = response.result._webout.WORK
-        } else {
-          sasWork = log
-        }
       } else if (response?.result) {
         // We parse only if it's a string, otherwise it would throw error
         if (typeof response.result === 'string') {

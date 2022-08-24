@@ -24,6 +24,7 @@ import { SasjsRequestClient } from './request/SasjsRequestClient'
 import {
   JobExecutor,
   WebJobExecutor,
+  SasjsJobExecutor,
   ComputeJobExecutor,
   JesJobExecutor,
   Sas9JobExecutor,
@@ -59,6 +60,7 @@ export default class SASjs {
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
   private webJobExecutor: JobExecutor | null = null
+  private sasjsJobExecutor: JobExecutor | null = null
   private computeJobExecutor: JobExecutor | null = null
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
@@ -102,10 +104,14 @@ export default class SASjs {
    * @param code - a string of code from the file to run.
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
    */
-  public async executeScriptSASjs(code: string, authConfig?: AuthConfig) {
+  public async executeScriptSASjs(
+    code: string,
+    runTime?: string,
+    authConfig?: AuthConfig
+  ) {
     this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
 
-    return await this.sasJSApiClient?.executeScript(code, authConfig)
+    return await this.sasJSApiClient?.executeScript(code, runTime, authConfig)
   }
 
   /**
@@ -691,7 +697,7 @@ export default class SASjs {
     // status is true if the data passes validation checks above
     if (validationResult.status) {
       if (config.serverType === ServerType.Sasjs) {
-        return await this.webJobExecutor!.execute(
+        return await this.sasjsJobExecutor!.execute(
           sasJob,
           data,
           config,
@@ -1047,6 +1053,12 @@ export default class SASjs {
       this.jobsPath,
       this.requestClient,
       this.sasViyaApiClient!
+    )
+
+    this.sasjsJobExecutor = new SasjsJobExecutor(
+      this.sasjsConfig.serverUrl,
+      this.jobsPath,
+      this.requestClient
     )
 
     this.sas9JobExecutor = new Sas9JobExecutor(

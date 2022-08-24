@@ -3,7 +3,7 @@ import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
-import { parseWeboutResponse } from './utils'
+import { parseWeboutResponse, SASJS_LOGS_SEPARATOR } from './utils'
 import { getTokens } from './auth/getTokens'
 
 export class SASjsApiClient {
@@ -64,9 +64,14 @@ export class SASjsApiClient {
   /**
    * Executes code on a SASJS server.
    * @param code - a string of code to execute.
+   * @param runTime - a string to representing runTime for code execution
    * @param authConfig - an object for authentication.
    */
-  public async executeScript(code: string, authConfig?: AuthConfig) {
+  public async executeScript(
+    code: string,
+    runTime: string = 'sas',
+    authConfig?: AuthConfig
+  ) {
     let access_token = (authConfig || {}).access_token
     if (authConfig) {
       ;({ access_token } = await getTokens(
@@ -79,13 +84,9 @@ export class SASjsApiClient {
     let parsedSasjsServerLog = ''
 
     await this.requestClient
-      .post('SASjsApi/code/execute', { code }, access_token)
+      .post('SASjsApi/code/execute', { code, runTime }, access_token)
       .then((res: any) => {
-        if (res.result?.log) {
-          parsedSasjsServerLog = res.result.log
-            .map((logLine: any) => logLine.line)
-            .join('\n')
-        }
+        if (res.log) parsedSasjsServerLog = res.log
       })
       .catch((err) => {
         parsedSasjsServerLog = err

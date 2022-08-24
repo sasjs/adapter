@@ -1,6 +1,6 @@
 import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { ExtraResponseAttributes } from '@sasjs/utils/types'
-import { asyncForEach } from '../utils'
+import { asyncForEach, isRelativePath } from '../utils'
 
 export type ExecuteFunction = () => Promise<any>
 
@@ -44,5 +44,18 @@ export abstract class BaseJobExecutor implements JobExecutor {
 
   protected appendWaitingRequest(request: ExecuteFunction) {
     this.waitingRequests.push(request)
+  }
+
+  protected getRequestParams(config: any): any {
+    const requestParams: any = {}
+
+    if (config.debug) {
+      requestParams['_omittextlog'] = 'false'
+      requestParams['_omitsessionresults'] = 'false'
+
+      requestParams['_debug'] = 131
+    }
+
+    return requestParams
   }
 }

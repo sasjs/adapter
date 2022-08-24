@@ -1,9 +1,12 @@
 import { RequestClient } from './RequestClient'
+import { AxiosResponse } from 'axios'
+import { SASJS_LOGS_SEPARATOR, getValidJson } from '../utils'
 
 /**
  * Specific request client for SASJS.
  * Append tokens in headers.
  */
+
 export class SasjsRequestClient extends RequestClient {
   getHeaders = (accessToken: string | undefined, contentType: string) => {
     const headers: any = {}
@@ -19,5 +22,33 @@ export class SasjsRequestClient extends RequestClient {
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`
 
     return headers
+  }
+
+  protected parseResponse<T>(response: AxiosResponse<any>) {
+    const etag = response?.headers ? response.headers['etag'] : ''
+    let parsedResponse
+    let log
+
+    try {
+      if (typeof response.data === 'string') {
+        parsedResponse = JSON.parse(response.data)
+      } else {
+        parsedResponse = response.data
+      }
+    } catch {
+      if (response.data.includes(SASJS_LOGS_SEPARATOR)) {
+        parsedResponse = getValidJson(
+          response.data.split(SASJS_LOGS_SEPARATOR)[0]
+        )
+        log = response.data.split(SASJS_LOGS_SEPARATOR)[1]
+      } else parsedResponse = response.data
+    }
+
+    return {
+      result: parsedResponse as T,
+      log,
+      etag,
+      status: response.status
+    }
   }
 }

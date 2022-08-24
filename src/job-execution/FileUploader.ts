@@ -1,7 +1,8 @@
 import {
   getValidJson,
   parseSasViyaDebugResponse,
-  parseWeboutResponse
+  parseWeboutResponse,
+  SASJS_LOGS_SEPARATOR
 } from '../utils'
 import { UploadFile } from '../types/UploadFile'
 import {
@@ -99,21 +100,8 @@ export class FileUploader extends BaseJobExecutor {
                     ? parseWeboutResponse(res.result, uploadUrl)
                     : res.result
                 break
-              case ServerType.Sasjs:
-                if (typeof res.result._webout === 'object') {
-                  jsonResponse = res.result._webout
-                } else {
-                  const webout = parseWeboutResponse(
-                    res.result._webout,
-                    uploadUrl
-                  )
-                  jsonResponse = getValidJson(webout)
-                }
-                break
             }
-          } else if (this.serverType === ServerType.Sasjs) {
-            jsonResponse = getValidJson(res.result._webout)
-          } else {
+          } else if (this.serverType !== ServerType.Sasjs) {
             jsonResponse =
               typeof res.result === 'string'
                 ? getValidJson(res.result)
