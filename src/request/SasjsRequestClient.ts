@@ -26,7 +26,7 @@ export class SasjsRequestClient extends RequestClient {
 
   protected parseResponse<T>(response: AxiosResponse<any>) {
     const etag = response?.headers ? response.headers['etag'] : ''
-    let parsedResponse
+    let parsedResponse = {}
     let log
 
     try {
@@ -37,10 +37,10 @@ export class SasjsRequestClient extends RequestClient {
       }
     } catch {
       if (response.data.includes(SASJS_LOGS_SEPARATOR)) {
-        parsedResponse = getValidJson(
-          response.data.split(SASJS_LOGS_SEPARATOR)[0]
-        )
-        log = response.data.split(SASJS_LOGS_SEPARATOR)[1]
+        const splittedResponse = response.data.split(SASJS_LOGS_SEPARATOR)
+        log = splittedResponse[1]
+        if (splittedResponse[0].trim())
+          parsedResponse = getValidJson(splittedResponse[0])
       } else parsedResponse = response.data
     }
 
