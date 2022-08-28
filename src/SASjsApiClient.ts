@@ -88,9 +88,6 @@ export class SASjsApiClient {
       .then((res: any) => {
         if (res.log) parsedSasjsServerLog = res.log
       })
-      .catch((err) => {
-        parsedSasjsServerLog = err
-      })
 
     return parsedSasjsServerLog
   }
