@@ -96,6 +96,16 @@
         "test",
         "review"
       ]
+    },
+    {
+      "login": "rudvfaden",
+      "name": "Rud Faden",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2445577?v=4",
+      "profile": "http://rudvfaden.github.io/",
+      "contributions": [
+        "userTesting",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
