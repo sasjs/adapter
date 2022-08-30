@@ -125,9 +125,9 @@ sasJs.request("/path/to/my/service", dataObject)
   })
 ```
 
-We supply the path to the SAS service, and a data object.  
+We supply the path to the SAS service, and a data object.
 
-If the path starts with a `/` then it should be a full path to the service.  If there is no leading `/` then it is relative to the `appLoc`. 
+If the path starts with a `/` then it should be a full path to the service.  If there is no leading `/` then it is relative to the `appLoc`.
 
 The data object can be null (for services with no input), or can contain one or more "tables" in the following format:
 
@@ -159,7 +159,7 @@ The SAS type (char/numeric) of the values is determined according to a set of ru
 
 * If the values are numeric, the SAS type is numeric
 * If the values are all string, the SAS type is character
-* If the values contain a single character (a-Z + underscore + .) AND a numeric, then the SAS type is numeric (with special missing values).  
+* If the values contain a single character (a-Z + underscore + .) AND a numeric, then the SAS type is numeric (with special missing values).
 * `null` is set to either '.' or '' depending on the assigned or derived type per the above rules.  If entire column is `null` then the type will be numeric.
 
 The following table illustrates the formats applied to columns under various scenarios:
@@ -237,8 +237,8 @@ run;
 %webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */
 %webout(ARR,b) /* Rows in table `b` are arrays (compact) */
 %webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */
-%webout(OBJ,c,label=d) /* Rename table as `d` in output JSON */
-%webout(OBJ,c,label=e, maxobs=10) /* send only 10 rows back */
+%webout(OBJ,c,dslabel=d) /* Rename table as `d` in output JSON */
+%webout(OBJ,c,dslabel=e, maxobs=10) /* send only 10 rows back */
 %webout(CLOSE) /* Close the JSON and add default variables */
 ```
 
