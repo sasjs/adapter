@@ -5,4 +5,5 @@ export interface LoginOptions {
 export interface LoginResult {
   isLoggedIn: boolean
   userName: string
+  errorMessage?: string
 }

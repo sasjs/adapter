@@ -136,7 +136,17 @@ export class AuthManager {
 
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
-        await this.performCASSecurityCheck()
+        const casSecurityCheckResponse = await this.performCASSecurityCheck()
+
+        if (isPublicAccessDenied(casSecurityCheckResponse.result)) {
+          isLoggedIn = false
+
+          return {
+            isLoggedIn,
+            userName: this.userName || '',
+            errorMessage: 'Public access has been denied.'
+          }
+        }
       }
 
       this.loginCallback()
@@ -151,7 +161,7 @@ export class AuthManager {
   private async performCASSecurityCheck() {
     const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
-    await this.requestClient.get<string>(
+    return await this.requestClient.get<string>(
       `/SASLogon/login?service=${casAuthenticationUrl}`,
       undefined
     )
@@ -360,4 +370,8 @@ const isLogInSuccess = (serverType: ServerType, response: any): boolean => {
   if (serverType === ServerType.Sasjs) return response?.loggedin
 
   return /You have signed in/gm.test(response)
+}
+
+const isPublicAccessDenied = (response: any): boolean => {
+  return /Public access has been denied/gm.test(response)
 }
