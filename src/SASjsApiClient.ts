@@ -3,7 +3,6 @@ import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
-import { parseWeboutResponse, SASJS_LOGS_SEPARATOR } from './utils'
 import { getTokens } from './auth/getTokens'
 
 export class SASjsApiClient {
@@ -42,23 +41,25 @@ export class SASjsApiClient {
     return Promise.resolve(result)
   }
 
-  public async executeJob(query: ExecutionQuery, authConfig?: AuthConfig) {
+  public async executeJob(
+    query: ExecutionQuery,
+    appLoc: string,
+    authConfig?: AuthConfig
+  ) {
     const access_token = authConfig ? authConfig.access_token : undefined
 
-    const { result } = await this.requestClient.post<{
-      status: string
-      message: string
-      log?: string
-      logPath?: string
-      error?: {}
-      _webout?: string
-    }>('SASjsApi/stp/execute', query, access_token)
+    let _program
+    if (query._program.startsWith('/')) {
+      _program = query._program
+    } else _program = `${appLoc}/${query._program}`
 
-    if (Object.keys(result).includes('_webout')) {
-      result._webout = parseWeboutResponse(result._webout!)
-    }
+    const response: any = await this.requestClient.post(
+      'SASjsApi/stp/execute',
+      { _debug: 131, ...query, _program },
+      access_token
+    )
 
-    return Promise.resolve(result)
+    return { result: response.result, log: response.log }
   }
 
   /**
