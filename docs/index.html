@@ -4,7 +4,6 @@
 </a>
 <p><a href="http://npmjs.org/package/@sasjs/adapter"><img src="https://img.shields.io/npm/v/@sasjs/adapter.svg" alt="npm package"></a>
 <a href="https://github.com/sasjs/adapter/blob/main/.github/workflows/build.yml"><img src="https://github.com/sasjs/adapter/actions/workflows/build.yml/badge.svg" alt="Github Workflow"></a>
-<a href="https://github.com/sasjs/adapter/blob/main/package.json"><img src="https://david-dm.org/sasjs/adapter.svg" alt="Dependency Status"></a>
 <a href=""><img src="https://img.shields.io/npm/dt/@sasjs/adapter" alt="npm"></a>
 <img src="https://img.shields.io/snyk/vulnerabilities/npm/@sasjs/adapter" alt="Snyk Vulnerabilities for npm package">
 <a href="/LICENSE"><img src="https://img.shields.io/apm/l/atomic-design-ui.svg" alt="License"></a>
@@ -21,9 +20,9 @@
 <a href="#none-of-this-makes-sense-how-do-i-build-an-app-with-it" id="none-of-this-makes-sense-how-do-i-build-an-app-with-it" style="color: inherit; text-decoration: none;">
   <h2>None of this makes sense. How do I build an app with it?</h2>
 </a>
-<p>Ok ok. Deploy this <a href="https://raw.githubusercontent.com/sasjs/adapter/master/example.html">example.html</a> file to your web server, and update <code>servertype</code> to <code>SAS9</code> or <code>SASVIYA</code> depending on your backend.</p>
+<p>Ok ok. Deploy this <a href="https://raw.githubusercontent.com/sasjs/adapter/master/example.html">example.html</a> file to your web server, and update <code>servertype</code> to <code>SAS9</code>, <code>SASVIYA</code>, or <code>SASJS</code> depending on your backend.</p>
 <p>The backend part can be deployed as follows:</p>
-<pre><code class="language-sas"><span class="hl-0">%let appLoc=/Public/app/readme;  /* Metadata or Viya Folder per SASjs config */</span><br/><span class="hl-0">filename mc url &quot;https://raw.githubusercontent.com/sasjs/core/main/all.sas&quot;;</span><br/><span class="hl-0">%inc mc; /* compile macros (can also be downloaded &amp; compiled seperately) */</span><br/><span class="hl-0">filename ft15f001 temp;</span><br/><span class="hl-0">parmcards4;</span><br/><span class="hl-0">  %webout(FETCH) /* receive all data as SAS datasets */</span><br/><span class="hl-0">  proc sql;</span><br/><span class="hl-0">  create table areas as select make,mean(invoice) as avprice</span><br/><span class="hl-0">    from sashelp.cars</span><br/><span class="hl-0">    where type in (select type from work.fromjs)</span><br/><span class="hl-0">    group by 1;</span><br/><span class="hl-0">  %webout(OPEN)</span><br/><span class="hl-0">  %webout(OBJ,areas)</span><br/><span class="hl-0">  %webout(CLOSE)</span><br/><span class="hl-0">;;;;</span><br/><span class="hl-0">%mp_createwebservice(path=&amp;appLoc/common,name=getdata)</span>
+<pre><code class="language-sas"><span class="hl-0">%let appLoc=/Public/app/readme;  /* Metadata or Viya Folder per SASjs config */</span><br/><span class="hl-0">filename mc url &quot;https://raw.githubusercontent.com/sasjs/core/main/all.sas&quot;;</span><br/><span class="hl-0">%inc mc; /* compile macros (can also be downloaded &amp; compiled seperately) */</span><br/><span class="hl-0">filename ft15f001 temp;</span><br/><span class="hl-0">parmcards4;</span><br/><span class="hl-0">  %webout(FETCH) /* receive all data as SAS datasets */</span><br/><span class="hl-0">  proc sql;</span><br/><span class="hl-0">  create table areas as select make,mean(invoice) as avprice</span><br/><span class="hl-0">    from sashelp.cars</span><br/><span class="hl-0">    where type in (select type from work.fromjs)</span><br/><span class="hl-0">    group by 1;</span><br/><span class="hl-0">  %webout(OPEN)</span><br/><span class="hl-0">  %webout(OBJ,areas)</span><br/><span class="hl-0">  %webout(CLOSE)</span><br/><span class="hl-0">;;;;</span><br/><span class="hl-0">%mx_createwebservice(path=&amp;appLoc/common,name=getdata)</span>
 </code></pre>
 <p>You now have a simple web app with a backend service!</p>
 
@@ -61,10 +60,10 @@
 <a href="#sas-logon" id="sas-logon" style="color: inherit; text-decoration: none;">
   <h3>SAS Logon</h3>
 </a>
-<p>All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the <code>LoginMechanism</code> attribute of the sasJs config object (above):</p>
+<p>All authentication from the adapter is done against SASLogon.  There are two approaches that can be taken, which are configured using the <code>loginMechanism</code> attribute of the sasJs config object (above):</p>
 <ul>
-<li><code>LoginMechanism:&#39;Redirected&#39;</code> - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.</li>
-<li><code>LoginMechanism:&#39;Default&#39;</code> - this approach requires that the username and password are captured, and used within the <code>.login()</code> method.  This can be helpful for development, or automated testing.</li>
+<li><code>loginMechanism:&#39;Redirected&#39;</code> - this approach enables authentication through a SASLogon window, supporting complex authentication flows (such as 2FA) and avoids the need to handle passwords in the application itself.  The styling of the window can be modified using CSS.</li>
+<li><code>loginMechanism:&#39;Default&#39;</code> - this approach requires that the username and password are captured, and used within the <code>.login()</code> method.  This can be helpful for development, or automated testing.</li>
 </ul>
 <p>Sample code for logging in with the <code>Default</code> approach:</p>
 <pre><code class="language-javascript"><span class="hl-2">sasJs</span><span class="hl-0">.</span><span class="hl-3">logIn</span><span class="hl-0">(</span><span class="hl-4">&#39;USERNAME&#39;</span><span class="hl-0">,</span><span class="hl-4">&#39;PASSWORD&#39;</span><br/><span class="hl-0">  ).</span><span class="hl-3">then</span><span class="hl-0">((</span><span class="hl-2">response</span><span class="hl-0">) </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-5">if</span><span class="hl-0"> (</span><span class="hl-2">response</span><span class="hl-0">.</span><span class="hl-2">isLoggedIn</span><span class="hl-0"> === </span><span class="hl-1">true</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-2">console</span><span class="hl-0">.</span><span class="hl-3">log</span><span class="hl-0">(</span><span class="hl-4">&#39;do stuff&#39;</span><span class="hl-0">)</span><br/><span class="hl-0">  } </span><span class="hl-5">else</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-2">console</span><span class="hl-0">.</span><span class="hl-3">log</span><span class="hl-0">(</span><span class="hl-4">&#39;do other stuff&#39;</span><span class="hl-0">)</span><br/><span class="hl-0">  }</span><br/><span class="hl-0">}</span>
@@ -77,10 +76,13 @@
 <p>A simple request can be sent to SAS in the following fashion:</p>
 <pre><code class="language-javascript"><span class="hl-2">sasJs</span><span class="hl-0">.</span><span class="hl-3">request</span><span class="hl-0">(</span><span class="hl-4">&quot;/path/to/my/service&quot;</span><span class="hl-0">, </span><span class="hl-2">dataObject</span><span class="hl-0">)</span><br/><span class="hl-0">  .</span><span class="hl-3">then</span><span class="hl-0">((</span><span class="hl-2">response</span><span class="hl-0">) </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-7">// all tables are in the response object, eg:</span><br/><span class="hl-0">    </span><span class="hl-2">console</span><span class="hl-0">.</span><span class="hl-3">log</span><span class="hl-0">(</span><span class="hl-2">response</span><span class="hl-0">.</span><span class="hl-2">tablewith2cols1row</span><span class="hl-0">[</span><span class="hl-8">0</span><span class="hl-0">].</span><span class="hl-6">COL1</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">)</span><br/><span class="hl-0">  })</span>
 </code></pre>
-<p>We supply the path to the SAS service, and a data object.  The data object can be null (for services with no input), or can contain one or more tables in the following format:</p>
+<p>We supply the path to the SAS service, and a data object.</p>
+<p>If the path starts with a <code>/</code> then it should be a full path to the service.  If there is no leading <code>/</code> then it is relative to the <code>appLoc</code>.</p>
+<p>The data object can be null (for services with no input), or can contain one or more &quot;tables&quot; in the following format:</p>
 <pre><code class="language-javascript"><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-2">dataObject</span><span class="hl-0">={</span><br/><span class="hl-0">    </span><span class="hl-4">&quot;tablewith2cols1row&quot;</span><span class="hl-2">:</span><span class="hl-0"> [{</span><br/><span class="hl-0">        </span><span class="hl-4">&quot;col1&quot;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-4">&quot;val1&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-4">&quot;col2&quot;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-8">42</span><br/><span class="hl-0">    }],</span><br/><span class="hl-0">    </span><span class="hl-4">&quot;tablewith1col2rows&quot;</span><span class="hl-2">:</span><span class="hl-0"> [{</span><br/><span class="hl-0">        </span><span class="hl-4">&quot;col&quot;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-4">&quot;row1&quot;</span><br/><span class="hl-0">    }, {</span><br/><span class="hl-0">        </span><span class="hl-4">&quot;col&quot;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-4">&quot;row2&quot;</span><br/><span class="hl-0">    }]</span><br/><span class="hl-0">};</span>
 </code></pre>
-<p>There are optional parameters such as a config object and a callback login function.</p>
+<p>These tables (<code>tablewith2cols1row</code> and <code>tablewith1col2rows</code>) will be created in SAS WORK after running <code>%webout(FETCH)</code> in your SAS service.</p>
+<p>The <code>request()</code> method also has optional parameters such as a config object and a callback login function.</p>
 <p>The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.</p>
 <p>The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.</p>
 
@@ -91,7 +93,7 @@
 <ul>
 <li>If the values are numeric, the SAS type is numeric</li>
 <li>If the values are all string, the SAS type is character</li>
-<li>If the values contain a single character (a-Z + underscore) AND a numeric, then the SAS type is numeric (with special missing values).  </li>
+<li>If the values contain a single character (a-Z + underscore + .) AND a numeric, then the SAS type is numeric (with special missing values).</li>
 <li><code>null</code> is set to either &#39;.&#39; or &#39;&#39; depending on the assigned or derived type per the above rules.  If entire column is <code>null</code> then the type will be numeric.</li>
 </ul>
 <p>The following table illustrates the formats applied to columns under various scenarios:</p>
@@ -197,7 +199,7 @@ ABCD,X,.
 </a>
 <p>The SAS side is handled by a number of macros in the <a href="https://github.com/sasjs/core">macro core</a> library.</p>
 <p>The following snippet shows the process of SAS tables arriving / leaving:</p>
-<pre><code class="language-sas"><span class="hl-7">/* fetch all input tables sent from frontend - they arrive as work tables */</span><br/><span class="hl-0">%webout(FETCH)</span><br/><br/><span class="hl-7">/* some sas code */</span><br/><span class="hl-0">data a b c;</span><br/><span class="hl-0">  set from js;</span><br/><span class="hl-0">run;</span><br/><br/><span class="hl-0">%webout(OPEN)  /* Open the JSON to be returned */</span><br/><span class="hl-0">%webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */</span><br/><span class="hl-0">%webout(ARR,b) /* Rows in table `b` are arrays (compact) */</span><br/><span class="hl-0">%webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */</span><br/><span class="hl-0">%webout(OBJ,c,label=d) /* Rename as `d` on JS side */</span><br/><span class="hl-0">%webout(CLOSE) /* Close the JSON and add default variables */</span>
+<pre><code class="language-sas"><span class="hl-7">/* convert frontend input tables from into SASWORK datasets */</span><br/><span class="hl-0">%webout(FETCH)</span><br/><br/><span class="hl-7">/* some sas code */</span><br/><span class="hl-0">data a b c;</span><br/><span class="hl-0">  set from js;</span><br/><span class="hl-0">run;</span><br/><br/><span class="hl-0">%webout(OPEN)  /* Open the JSON to be returned */</span><br/><span class="hl-0">%webout(OBJ,a) /* Rows in table `a` are objects (easy to use) */</span><br/><span class="hl-0">%webout(ARR,b) /* Rows in table `b` are arrays (compact) */</span><br/><span class="hl-0">%webout(OBJ,c,fmt=N) /* Table `c` is sent unformatted (raw) */</span><br/><span class="hl-0">%webout(OBJ,c,dslabel=d) /* Rename table as `d` in output JSON */</span><br/><span class="hl-0">%webout(OBJ,c,dslabel=e, maxobs=10) /* send only 10 rows back */</span><br/><span class="hl-0">%webout(CLOSE) /* Close the JSON and add default variables */</span>
 </code></pre>
 <p>By default, special SAS numeric missings (_a-Z) are converted to <code>null</code> in the JSON.  If you&#39;d like to preserve these, use the <code>missing=STRING</code> option as follows:</p>
 <pre><code class="language-sas"><span class="hl-0">%webout(OBJ,a,missing=STRING)</span>
@@ -206,6 +208,7 @@ ABCD,X,.
 <p>Where an entire column is made up of special missing numerics, there would be no way to distinguish it from a single-character column by looking at the values.  To cater for this scenario, it is possible to export the variable types (and other attributes such as label and format) by adding a <code>showmeta</code> param to the <code>webout()</code> macro as follows:</p>
 <pre><code class="language-sas"><span class="hl-0">%webout(OBJ,a,missing=STRING,showmeta=YES)</span>
 </code></pre>
+<p>The <code>%webout()</code> macro itself is just a wrapper for the <a href="https://core.sasjs.io/mp__jsonout_8sas.html">mp_jsonout</a> macro.</p>
 
 <a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
   <h2>Configuration</h2>
@@ -216,7 +219,7 @@ ABCD,X,.
 <li><code>serverType</code> - either <code>SAS9</code>, <code>SASVIYA</code> or <code>SASJS</code>.  The <code>SASJS</code> server type is for use with <a href="https://github.com/sasjs/server">sasjs/server</a>.</li>
 <li><code>serverUrl</code> - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.</li>
 <li><code>debug</code> - if <code>true</code> then SAS Logs and extra debug information is returned.</li>
-<li><code>LoginMechanism</code> - either <code>Default</code> or <code>Redirected</code>.  See <a href="#sas-logon">SAS Logon</a> section.</li>
+<li><code>loginMechanism</code> - either <code>Default</code> or <code>Redirected</code>.  See <a href="#sas-logon">SAS Logon</a> section.</li>
 <li><code>useComputeApi</code> - Only relevant when the serverType is <code>SASVIYA</code>. If <code>true</code> the <a href="#using-the-compute-api">Compute API</a> is used.  If <code>false</code> the <a href="#using-the-jes-api">JES API</a> is used.  If <code>null</code> or <code>undefined</code> the <a href="#using-jes-web-app">Web</a> approach is used.</li>
 <li><code>contextName</code> - Compute context on which the requests will be called.  If missing or not provided, defaults to <code>Job Execution Compute context</code>.</li>
 <li><code>requestHistoryLimit</code> - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled.  Default is 10.</li>
@@ -252,7 +255,7 @@ ABCD,X,.
 </a>
 <p>For more information and examples specific to this adapter you can check out the <a href="https://sasjs.io/sasjs-adapter/">user guide</a> or the <a href="http://adapter.sasjs.io/">technical</a> documentation.</p>
 <p>For more information on building web apps in general, check out these <a href="https://sasjs.io/training/resources/">resources</a> or contact the <a href="https://www.linkedin.com/in/allanbowe/">author</a> directly.</p>
-<p>If you are a SAS 9 or SAS Viya customer you can also request a copy of <a href="https://datacontroller.io">Data Controller</a> - free for up to 5 users, this tool makes use of all parts of the SASjs framework.</p>
+<p>As a SAS customer you can also request a copy of <a href="https://datacontroller.io">Data Controller</a> - free for up to 5 users, this tool makes use of all parts of the SASjs framework.</p>
 
 <a href="#star-gazing" id="star-gazing" style="color: inherit; text-decoration: none;">
   <h2>Star Gazing</h2>
@@ -264,7 +267,7 @@ ABCD,X,.
   <h2>Contributors ✨</h2>
 </a>
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<p><a href="#contributors-"><img src="https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square" alt="All Contributors"></a></p>
+<p><a href="#contributors-"><img src="https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square" alt="All Contributors"></a></p>
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 <p>Thanks goes to these wonderful people (<a href="https://allcontributors.org/docs/en/emoji-key">emoji key</a>):</p>
@@ -281,6 +284,9 @@ ABCD,X,.
     <td align="center"><a href="https://github.com/sabhas"><img src="https://avatars.githubusercontent.com/u/82647447?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sabir Hassan</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asabhas" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Tests">⚠️</a> <a href="#ideas-sabhas" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/VladislavParhomchik"><img src="https://avatars.githubusercontent.com/u/83717836?v=4?s=100" width="100px;" alt=""/><br /><sub><b>VladislavParhomchik</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=VladislavParhomchik" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3AVladislavParhomchik" title="Reviewed Pull Requests">👀</a></td>
   </tr>
+  <tr>
+    <td align="center"><a href="http://rudvfaden.github.io/"><img src="https://avatars.githubusercontent.com/u/2445577?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Rud Faden</b></sub></a><br /><a href="#userTesting-rudvfaden" title="User Testing">📓</a> <a href="https://github.com/sasjs/adapter/commits?author=rudvfaden" title="Documentation">📖</a></td>
+  </tr>
 </table>
 
 <!-- markdownlint-restore -->
@@ -289,4 +295,4 @@ ABCD,X,.
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 <p>This project follows the <a href="https://github.com/all-contributors/all-contributors">all-contributors</a> specification. Contributions of any kind welcome!</p>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/SAS9ApiClient.html">SAS9<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/SASViyaApiClient.html">SASViya<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/SASjs.html">SASjs</a></li><li class=" tsd-kind-module"><a href="modules/SASjsApiClient.html">SASjs<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/types.html">types</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/SAS9ApiClient.html">SAS9<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/SASViyaApiClient.html">SASViya<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/SASjs.html">SASjs</a></li><li class=" tsd-kind-module"><a href="modules/SASjsApiClient.html">SASjs<wbr/>Api<wbr/>Client</a></li><li class=" tsd-kind-module"><a href="modules/types.html">types</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

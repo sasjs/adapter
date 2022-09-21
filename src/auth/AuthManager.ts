@@ -2,6 +2,7 @@ import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
 import { LoginOptions, LoginResult } from '../types/Login'
 import { serialize } from '../utils'
+import { extractUserNameSas9 } from '../utils/sas9/extractUserNameSas9'
 import { openWebPage } from './openWebPage'
 import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
@@ -280,15 +281,7 @@ export class AuthManager {
         return response?.id
 
       case ServerType.Sas9:
-        const matched = response?.match(/"title":"Log Off [0-1a-zA-Z ]*"/)
-        const username = matched?.[0].slice(17, -1)
-
-        if (!username.includes(' ')) return username
-
-        return username
-          .split(' ')
-          .map((name: string) => name.slice(0, 3).toLowerCase())
-          .join('')
+        return extractUserNameSas9(response)
 
       case ServerType.Sasjs:
         return response?.username
