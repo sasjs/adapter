@@ -10,7 +10,7 @@ const dictionary = ['Log Off']
  * @returns username
  */
 export const extractUserNameSas9 = (response: string) => {
-  const regex = /"title":\s?".*"/
+  const regex = /"title":\s?".*?"/
 
   const matched = response?.match(regex)
   let username = matched?.[0].split(':')[1].trim()
