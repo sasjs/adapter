@@ -13,20 +13,31 @@ export const extractUserNameSas9 = (response: string) => {
   const regex = /"title":\s?".*?"/
 
   const matched = response?.match(regex)
-  let username = matched?.[0].split(':')[1].trim()
-  let breakIndex = username?.indexOf(' ')
+  let fullName = matched?.[0].split(':')[1].trim()
+  let breakIndex = fullName?.indexOf(' ')
+
+  if (!fullName) return 'unknown'
 
   dictionary.map((logoutWord) => {
-    const index = username?.indexOf(logoutWord) || -1
+    const index = fullName?.indexOf(logoutWord) || -1
 
     if (index > -1) {
       breakIndex = index + logoutWord.length
     }
   })
 
-  username = username?.slice(breakIndex, -1)
+  //Cut only name
+  let username = fullName.slice(breakIndex, -1).trim()
 
-  if (!username) return 'unknown'
+  //Create username by SAS method - first 3 chars of every word lowercase
+  const usernameSplit = username.split(' ')
+  username = usernameSplit
+    .map((name: string) =>
+      usernameSplit.length > 1
+        ? name.slice(0, 3).toLowerCase()
+        : name.toLowerCase()
+    )
+    .join('')
 
-  return username.trim()
+  return username
 }

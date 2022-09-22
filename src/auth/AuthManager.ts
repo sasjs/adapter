@@ -217,7 +217,7 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: userName,
+      userName: userName.toLowerCase(),
       loginForm
     })
   }

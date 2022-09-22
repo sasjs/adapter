@@ -596,6 +596,7 @@ describe('AuthManager', () => {
 
     it('return session information when logged in - SAS9 - having full name in html', async () => {
       const fullname = 'FirstName LastName'
+      const username = 'firlas'
       const serverType = ServerType.Sas9
       const authManager = new AuthManager(
         serverUrl,
@@ -611,7 +612,7 @@ describe('AuthManager', () => {
 
       const response = await authManager.checkSession()
       expect(response.isLoggedIn).toBeTruthy()
-      expect(response.userName).toEqual(fullname)
+      expect(response.userName).toEqual(username)
       expect(mockedAxios.get).toHaveBeenNthCalledWith(
         1,
         `http://test-server.com/SASStoredProcess`,
