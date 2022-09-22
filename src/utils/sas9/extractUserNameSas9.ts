@@ -5,10 +5,6 @@ export const extractUserNameSas9 = (response: string) => {
   const username = matched?.[0].slice(17, -1)
 
   if (!username) return 'unknown (error fetching username)'
-  if (!username.trim().includes(' ')) return username.trim()
 
-  return username
-    .split(' ')
-    .map((name: string) => name.slice(0, 3).toLowerCase())
-    .join('')
+  return username.trim()
 }
