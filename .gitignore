@@ -6,5 +6,3 @@ build
 /coverage
 
 .DS_Store
-
-/docs/*
