@@ -1,41 +1,97 @@
 import { extractUserNameSas9 } from '../sas9/extractUserNameSas9'
 
-describe('Extract username SAS9', () => {
-  it('should return username', () => {
-    const response = `                  "title": "Log Off SAS User One",`
+describe('Extract username SAS9 English - two word logout handled language', () => {
+  const logoutWord = 'Log Off'
+
+  it('should return username with space after colon', () => {
+    const response = `                  "title": "${logoutWord} SAS User One",`
     const username = extractUserNameSas9(response)
 
     expect(username).toEqual('SAS User One')
   })
 
-  it('should return username with fallback regex', () => {
-    const response = `                  "title": "Logout SAS User One",`
+  it('should return username without space after colon', () => {
+    const response = `                  "title":"${logoutWord} SAS User One",`
     const username = extractUserNameSas9(response)
 
     expect(username).toEqual('SAS User One')
+  })
+
+  it('should return username with one word user name', () => {
+    const response = `                  "title": "${logoutWord} SasUserOne",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('SasUserOne')
   })
 
   it('should return username unknown', () => {
     const response = `                  invalid",`
     const username = extractUserNameSas9(response)
 
-    expect(username).toEqual('unknown (error fetching username)')
+    expect(username).toEqual('unknown')
+  })
+})
+
+describe('Extract username SAS9 two word logout unhandled language', () => {
+  const logoutWord = 'Log out'
+
+  it('should return username with space after colon', () => {
+    const response = `                  "title": "${logoutWord} SAS User One",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('out SAS User One')
+  })
+
+  it('should return username without space after colon', () => {
+    const response = `                  "title":"${logoutWord} SAS User One",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('out SAS User One')
   })
 
   it('should return username with one word user name', () => {
-    const response = `                  "title": "Log Off SasUserOne",`
+    const response = `                  "title": "${logoutWord} SasUserOne",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('out SasUserOne')
+  })
+
+  it('should return username unknown', () => {
+    const response = `                  invalid",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('unknown')
+  })
+})
+
+describe('Extract username SAS9 Spasnish - one word logout languages', () => {
+  const logoutWord = 'Desconexión'
+
+  it('should return username with space after colon', () => {
+    const response = `                  "title": "${logoutWord} SAS User One",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('SAS User One')
+  })
+
+  it('should return username without space after colon', () => {
+    const response = `                  "title":"${logoutWord} SAS User One",`
+    const username = extractUserNameSas9(response)
+
+    expect(username).toEqual('SAS User One')
+  })
+
+  it('should return username with one word user name', () => {
+    const response = `                  "title": "${logoutWord} SasUserOne",`
     const username = extractUserNameSas9(response)
 
     expect(username).toEqual('SasUserOne')
   })
 
-  it('should return username with unhandled Spanish language', () => {
-    const response = `                  "title": "Desconectarse SAS User One",`
+  it('should return username unknown', () => {
+    const response = `                  invalid",`
     const username = extractUserNameSas9(response)
 
-    // Result won't be perfect but it will work Result will be: ctasasuseone
-    // instead of sasuseone
-
-    expect(username).toEqual('ctarse SAS User One')
+    expect(username).toEqual('unknown')
   })
 })
