@@ -20,6 +20,7 @@ describe('AuthManager', () => {
   const serverUrl = 'http://test-server.com'
   const serverType = ServerType.SasViya
   const userName = 'test-username'
+  const userLongName = 'test-user long name'
   const password = 'test-password'
   const requestClient = new RequestClient(serverUrl)
 
@@ -73,6 +74,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: true,
           userName,
+          userLongName,
           loginForm: 'test'
         })
       )
@@ -95,6 +97,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: true,
           userName: 'someOtherUsername',
+          userLongName: 'someOtherUser Long name',
           loginForm: null
         })
       )
@@ -152,6 +155,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -196,6 +200,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -245,6 +250,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -290,6 +296,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: 'test',
+          userLongName: 'test Long name',
           loginForm: { name: 'test' }
         })
       )
