@@ -3,10 +3,11 @@
   "description": "JavaScript adapter for SAS",
   "homepage": "https://adapter.sasjs.io",
   "scripts": {
-    "preinstall": "node checkNodeVersion",
-    "prebuild": "node checkNodeVersion",
+    "nodeVersionMessage": "echo \u001b[33m make sure you are running node lts version \u001b[0m",
+    "preinstall": "npm run nodeVersionMessage",
+    "prebuild": "npm run nodeVersionMessage",
     "build": "rimraf build && rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && rimraf build/src && rimraf node",
-    "package:lib": "npm run build && copyfiles ./package.json ./checkNodeVersion.js build && cd build && npm version \"5.0.0\" && npm pack",
+    "package:lib": "npm run build && copyfiles ./package.json build && cd build && npm version \"5.0.0\" && npm pack",
     "publish:lib": "npm run build && cd build && npm publish",
     "lint:fix": "npx prettier --loglevel silent --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --loglevel silent --write \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
@@ -78,7 +79,7 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@sasjs/utils": "2.44.0",
+    "@sasjs/utils": "2.48.2",
     "axios": "0.26.0",
     "axios-cookiejar-support": "1.0.1",
     "form-data": "4.0.0",
