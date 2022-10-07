@@ -28,7 +28,7 @@ jobs:
 
       - name: Ensure docs folder exists
         run: |
-          rm docs
+          rm -rf docs || true # avoid error if docs folder does not exist
           mkdir docs
 
       - name: Generate Docs
