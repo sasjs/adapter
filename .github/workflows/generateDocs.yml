@@ -34,15 +34,11 @@ jobs:
       - name: Generate Docs
         run: npm run typedoc
 
-      - name: Create CNAME file in docs
-        run: |
-          touch CNAME
-          echo adapter.sasjs.io >> CNAME
+      - name: Push generated docs
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./docs 
+          cname: adapter.sasjs.io
 
-      - name: Push generated docs to docs branch
-        uses: nicholasgriffintn/github-branch-deployment-action@0.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: docs
-          MESSAGE: 'Docs: ({sha}) {msg}'
