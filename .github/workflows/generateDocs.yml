@@ -38,5 +38,5 @@ jobs:
         uses: nicholasgriffintn/github-branch-deployment-action@0.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          BRANCH: docs
+          BRANCH: gh-pages
           MESSAGE: 'Docs: ({sha}) {msg}'
