@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-    matrix:
-      node-version: [lts/fermium]
+      matrix:
+        node-version: [lts/fermium]
 
     steps:
       - name: Checkout
