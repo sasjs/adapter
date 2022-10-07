@@ -39,5 +39,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           BRANCH: docs
-          FOLDER: docs
           MESSAGE: 'Docs: ({sha}) {msg}'
