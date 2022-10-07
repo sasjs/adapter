@@ -1,0 +1,43 @@
+name: Generate docs and Push to docs Branch
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  generate_and_push_docs:
+    runs-on: ubuntu-latest
+
+    strategy:
+    matrix:
+      node-version: [lts/fermium]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Docs
+        run: npm run typedoc
+
+      - name: Create CNAME file in docs
+        run: |
+          touch CNAME
+          echo adapter.sasjs.io >> CNAME
+
+      - name: Push generated docs to docs branch
+        uses: nicholasgriffintn/github-branch-deployment-action@0.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          BRANCH: docs
+          FOLDER: docs
+          MESSAGE: 'Docs: ({sha}) {msg}'
