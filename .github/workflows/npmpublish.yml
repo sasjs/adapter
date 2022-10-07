@@ -40,4 +40,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Send Matrix message
-        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/%21BDUPBPEGVvRLKLQUxY:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
+        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!BDUPBPEGVvRLKLQUxY:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
