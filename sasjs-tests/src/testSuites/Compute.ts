@@ -71,13 +71,12 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       test: () => {
         const fileLines = [`data;`, `do x=1 to 100;`, `output;`, `end;`, `run;`]
 
-        return adapter.executeScriptSASViya(
-          'sasCode.sas',
-          fileLines,
-          'SAS Studio compute context',
-          undefined,
-          true
-        )
+        return adapter.executeScript({
+          fileName: 'sasCode.sas',
+          linesOfCode: fileLines,
+          contextName: 'SAS Studio compute context',
+          debug: true
+        })
       },
       assertion: (res: any) => {
         const expectedLogContent = `1    data;\\n2    do x=1 to 100;\\n3    output;\\n4    end;\\n5    run;\\n\\n`
@@ -92,13 +91,12 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
         const fileLines = [`%abort;`]
 
         return adapter
-          .executeScriptSASViya(
-            'sasCode.sas',
-            fileLines,
-            'SAS Studio compute context',
-            undefined,
-            true
-          )
+          .executeScript({
+            fileName: 'sasCode.sas',
+            linesOfCode: fileLines,
+            contextName: 'SAS Studio compute context',
+            debug: true
+          })
           .catch((err: any) => err)
       },
       assertion: (res: any) => {
