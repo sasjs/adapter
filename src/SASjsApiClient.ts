@@ -8,6 +8,13 @@ import { getTokens } from './auth/getTokens'
 export class SASjsApiClient {
   constructor(private requestClient: RequestClient) {}
 
+  /**
+   * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
+   * @param dataJson - the JSON specifying the folders and files to be created, can also includes
+   * appLoc, streamServiceName, streamWebFolder, streamLogo
+   * @param appLoc - the base folder in which to create the new folders and services.
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   */
   public async deploy(
     dataJson: ServicePackSASjs,
     appLoc: string,

@@ -837,33 +837,6 @@ export default class SASjs {
   }
 
   /**
-   * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
-   * @param dataJson - the JSON specifying the folders and files to be created, can also includes
-   * appLoc, streamServiceName, streamWebFolder, streamLogo
-   * @param appLoc - (optional) the base folder in which to create the new folders and
-   * services.  If not provided, is taken from SASjsConfig. Precedence will be of appLoc present in dataJson.
-   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
-   */
-  public async deployToSASjs(
-    dataJson: ServicePackSASjs,
-    appLoc?: string,
-    authConfig?: AuthConfig
-  ) {
-    if (!appLoc) {
-      appLoc = this.sasjsConfig.appLoc
-    }
-    return await this.sasJSApiClient?.deploy(dataJson, appLoc, authConfig)
-  }
-
-  public async executeJobSASjs(query: ExecutionQuery, authConfig?: AuthConfig) {
-    return await this.sasJSApiClient?.executeJob(
-      query,
-      this.sasjsConfig.appLoc,
-      authConfig
-    )
-  }
-
-  /**
    * Kicks off execution of the given job via the compute API.
    * @returns an object representing the compute session created for the given job.
    * @param sasJob - the path to the SAS program (ultimately resolves to
