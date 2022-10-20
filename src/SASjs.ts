@@ -17,7 +17,8 @@ import {
   AuthConfig,
   ExtraResponseAttributes,
   SasAuthResponse,
-  ServicePackSASjs
+  ServicePackSASjs,
+  AuthConfigSas9
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
 import { SasjsRequestClient } from './request/SasjsRequestClient'
@@ -32,6 +33,16 @@ import {
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
 import { LoginOptions, LoginResult } from './types/Login'
+
+interface ExecuteScriptParams {
+  linesOfCode: string[]
+  fileName?: string
+  contextName?: string
+  runTime?: string
+  authConfig?: AuthConfig
+  authConfigSas9?: AuthConfigSas9
+  debug?: boolean
+}
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -79,74 +90,73 @@ export default class SASjs {
   }
 
   /**
-   * Executes SAS code on a SAS 9 server.  Requires a runner to be present in
-   * the users home directory in metadata.
-   * @param linesOfCode - lines of sas code from the file to run.
-   * @param username - a string representing the username.
-   * @param password - a string representing the password.
-   */
-  public async executeScriptSAS9(
-    linesOfCode: string[],
-    userName: string,
-    password: string
-  ) {
-    this.isMethodSupported('executeScriptSAS9', [ServerType.Sas9])
-
-    return await this.sas9ApiClient?.executeScript(
-      linesOfCode,
-      userName,
-      password
-    )
-  }
-
-  /**
-   * Executes SAS code on a SASJS server
-   * @param code - a string of code from the file to run.
+   * Executes code on a SAS server.
+   * @param linesOfCode - lines of code to run.
+   * @param fileName - (required for server type sas viya) name of the file to run. It will be converted to path to the file being submitted for execution.
+   * @param contextName - (required for server type sas viya) context name on which code will be run on the server.
+   * @param runTime - (required for server type sasjs) a string to represent runTime for code execution.
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
-   */
-  public async executeScriptSASjs(
-    code: string,
-    runTime?: string,
-    authConfig?: AuthConfig
-  ) {
-    this.isMethodSupported('executeScriptSASJS', [ServerType.Sasjs])
-
-    return await this.sasJSApiClient?.executeScript(code, runTime, authConfig)
-  }
-
-  /**
-   * Executes sas code in a SAS Viya compute session.
-   * @param fileName - name of the file to run. It will be converted to path to the file being submitted for execution.
-   * @param linesOfCode - lines of sas code from the file to run.
-   * @param contextName - context name on which code will be run on the server.
-   * @param authConfig - (optional) the access token, refresh token, client and secret for authorizing the request.
+   * @param authConfigSas9 - (required for server type sas9) a valid username and password that are authorised to execute scripts.
    * @param debug - (optional) if true, global debug config will be overriden
    */
-  public async executeScriptSASViya(
-    fileName: string,
-    linesOfCode: string[],
-    contextName: string,
-    authConfig?: AuthConfig,
-    debug?: boolean
-  ) {
-    this.isMethodSupported('executeScriptSASViya', [ServerType.SasViya])
+  public async executeScript({
+    linesOfCode,
+    fileName,
+    contextName,
+    runTime,
+    authConfig,
+    authConfigSas9,
+    debug
+  }: ExecuteScriptParams) {
+    this.isMethodSupported('executeScript', [
+      ServerType.Sas9,
+      ServerType.Sasjs,
+      ServerType.SasViya
+    ])
 
-    contextName = contextName || this.sasjsConfig.contextName
+    if (this.sasjsConfig.serverType === ServerType.Sas9) {
+      if (!authConfigSas9)
+        throw new Error('Auth config for sas9 is not provided')
 
-    if (!contextName) {
-      throw new Error(
-        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+      return await this.sas9ApiClient?.executeScript(
+        linesOfCode,
+        authConfigSas9.userName,
+        authConfigSas9.password
       )
     }
 
-    return await this.sasViyaApiClient!.executeScript(
-      fileName,
-      linesOfCode,
-      contextName,
-      authConfig,
-      null,
-      debug ? debug : this.sasjsConfig.debug
-    )
+    if (this.sasjsConfig.serverType === ServerType.Sasjs) {
+      return await this.sasJSApiClient?.executeScript(
+        linesOfCode.join('\n'),
+        runTime,
+        authConfig
+      )
+    }
+
+    if (this.sasjsConfig.serverType === ServerType.SasViya) {
+      contextName = contextName || this.sasjsConfig.contextName
+
+      if (!contextName) {
+        throw new Error(
+          'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+        )
+      }
+
+      if (!fileName) {
+        throw new Error(
+          'File name is required in case of SAS VIYA. Please provide a `fileName`.'
+        )
+      }
+
+      return await this.sasViyaApiClient!.executeScript(
+        fileName,
+        linesOfCode,
+        contextName,
+        authConfig,
+        null,
+        debug ? debug : this.sasjsConfig.debug
+      )
+    }
   }
 
   /**
@@ -823,33 +833,6 @@ export default class SASjs {
       accessToken,
       sasApiClient,
       isForced
-    )
-  }
-
-  /**
-   * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
-   * @param dataJson - the JSON specifying the folders and files to be created, can also includes
-   * appLoc, streamServiceName, streamWebFolder, streamLogo
-   * @param appLoc - (optional) the base folder in which to create the new folders and
-   * services.  If not provided, is taken from SASjsConfig. Precedence will be of appLoc present in dataJson.
-   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
-   */
-  public async deployToSASjs(
-    dataJson: ServicePackSASjs,
-    appLoc?: string,
-    authConfig?: AuthConfig
-  ) {
-    if (!appLoc) {
-      appLoc = this.sasjsConfig.appLoc
-    }
-    return await this.sasJSApiClient?.deploy(dataJson, appLoc, authConfig)
-  }
-
-  public async executeJobSASjs(query: ExecutionQuery, authConfig?: AuthConfig) {
-    return await this.sasJSApiClient?.executeJob(
-      query,
-      this.sasjsConfig.appLoc,
-      authConfig
     )
   }
 
