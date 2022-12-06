@@ -1,3 +1,5 @@
+import * as NodeFormData from 'form-data'
+import { createReadStream } from '@sasjs/utils/file'
 import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
 import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
@@ -7,6 +9,18 @@ import { getTokens } from './auth/getTokens'
 
 export class SASjsApiClient {
   constructor(private requestClient: RequestClient) {}
+
+  private async getAccessTokenForRequest(authConfig?: AuthConfig) {
+    if (authConfig) {
+      const { access_token } = await getTokens(
+        this.requestClient,
+        authConfig,
+        ServerType.Sasjs
+      )
+
+      return access_token
+    }
+  }
 
   /**
    * Creates the folders and services at the given location `appLoc` on the given server `serverUrl`.
@@ -20,15 +34,7 @@ export class SASjsApiClient {
     appLoc: string,
     authConfig?: AuthConfig
   ) {
-    let access_token = (authConfig || {}).access_token
-    if (authConfig) {
-      ;({ access_token } = await getTokens(
-        this.requestClient,
-        authConfig,
-        ServerType.Sasjs
-      ))
-    }
-
+    const access_token = await this.getAccessTokenForRequest(authConfig)
     dataJson.appLoc = dataJson.appLoc || appLoc
 
     const { result } = await this.requestClient.post<{
@@ -41,6 +47,39 @@ export class SASjsApiClient {
       dataJson,
       access_token,
       undefined,
+      {},
+      { maxContentLength: Infinity, maxBodyLength: Infinity }
+    )
+
+    return Promise.resolve(result)
+  }
+
+  /**
+   * Creates/updates files within SASjs drive using uploaded json compressed file.
+   * @param zipFilePath - Compressed file path; file should only contain one JSON file and
+   * should have same name as of compressed file e.g. deploy.JSON should be compressed to deploy.JSON.zip
+   * Any other file or JSON file in zipped will be ignored!
+   * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
+   */
+  public async deployZipFile(zipFilePath: string, authConfig?: AuthConfig) {
+    const access_token = await this.getAccessTokenForRequest(authConfig)
+
+    const file = await createReadStream(zipFilePath)
+    const formData = new NodeFormData()
+    formData.append('file', file)
+
+    const contentType = `multipart/form-data; boundary=${formData.getBoundary()}`
+
+    const { result } = await this.requestClient.post<{
+      status: string
+      message: string
+      streamServiceName?: string
+      example?: {}
+    }>(
+      'SASjsApi/drive/deploy/upload',
+      formData,
+      access_token,
+      contentType,
       {},
       { maxContentLength: Infinity, maxBodyLength: Infinity }
     )
@@ -80,14 +119,7 @@ export class SASjsApiClient {
     runTime: string = 'sas',
     authConfig?: AuthConfig
   ) {
-    let access_token = (authConfig || {}).access_token
-    if (authConfig) {
-      ;({ access_token } = await getTokens(
-        this.requestClient,
-        authConfig,
-        ServerType.Sasjs
-      ))
-    }
+    const access_token = await this.getAccessTokenForRequest(authConfig)
 
     let parsedSasjsServerLog = ''
 
