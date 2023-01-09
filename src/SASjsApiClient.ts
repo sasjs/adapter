@@ -1,5 +1,4 @@
 import * as NodeFormData from 'form-data'
-import { createReadStream } from '@sasjs/utils/file'
 import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
 import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
@@ -62,6 +61,7 @@ export class SASjsApiClient {
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    */
   public async deployZipFile(zipFilePath: string, authConfig?: AuthConfig) {
+    const { createReadStream } = require('@sasjs/utils/file')
     const access_token = await this.getAccessTokenForRequest(authConfig)
 
     const file = await createReadStream(zipFilePath)
