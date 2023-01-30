@@ -692,7 +692,7 @@ const parseError = (data: string) => {
       if (parts.length > 1) {
         const storedProcessPath = parts[1].split('<i>')[1].split('</i>')[0]
         const message = storedProcessPath.endsWith('runner')
-          ? `SASJS runner not found. Here's the link (https://cli.sasjs.io/auth/#sasjs-runner) to sas code for registering sasjs runner`
+          ? `SASJS runner not found. Here's the link (https://cli.sasjs.io/auth/#sasjs-runner) to the SAS code for registering the SASjs runner`
           : `Stored process not found: ${storedProcessPath}`
         return new JobExecutionError(500, message, '')
       }
