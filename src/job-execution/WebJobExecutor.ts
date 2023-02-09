@@ -16,7 +16,8 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
-  appendExtraResponseAttributes
+  appendExtraResponseAttributes,
+  getValidJson
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -181,6 +182,10 @@ export class WebJobExecutor extends BaseJobExecutor {
                     : res.result
                 break
             }
+          }
+
+          if (typeof jsonResponse === 'string') {
+            jsonResponse = getValidJson(jsonResponse)
           }
 
           const responseObject = appendExtraResponseAttributes(
