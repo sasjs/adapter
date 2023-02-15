@@ -1,11 +1,11 @@
 ## Expected behaviour
-*Describe what's shoud be happening*
+*Describe what should be happening*
 
 ## Current behaviour
-*Describe what's happening* 
+*Describe what is actually happening* 
 
 ## Environment info
-**Client tech stack**: *Angular, React, Vue, VanillaJS etc.*
+**Client tech stack**: *Angular, React, Vue, VanillaJS, NodeJS etc.*
 **Server type**: SASJS|SASVIYA|SAS9
 **Login mechanism**: Default|Redirected
 **Debug**: true|false
