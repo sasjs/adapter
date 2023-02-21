@@ -239,7 +239,7 @@ export class AuthManager {
     }
 
     const { result: formResponse } = await this.requestClient.get<string>(
-      this.loginUrl.replace('.do', ''),
+      this.loginUrl.replace('login.do', 'login'),
       undefined,
       'text/plain'
     )
@@ -348,7 +348,7 @@ export class AuthManager {
       this.loginUrl =
         this.serverType === ServerType.SasViya
           ? tempLoginLink
-          : loginUrl.replace('.do', '')
+          : loginUrl.replace('login.do', 'login')
     }
   }
 
