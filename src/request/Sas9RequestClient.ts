@@ -4,6 +4,7 @@ import axiosCookieJarSupport from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
+import { JobExecutionError } from '../types/errors'
 
 /**
  * Specific request client for SAS9 in Node.js environments.
@@ -69,6 +70,8 @@ export class Sas9RequestClient extends RequestClient {
         return this.parseResponse<T>(response)
       })
       .catch(async (e: any) => {
+        if (e instanceof JobExecutionError) throw e
+
         return await this.handleError(
           e,
           () =>
