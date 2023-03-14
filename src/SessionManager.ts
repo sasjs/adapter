@@ -14,6 +14,7 @@ export class SessionManager {
     private contextName: string,
     private requestClient: RequestClient
   ) {
+    console.log(`🤖[SessionManager constructor]🤖`)
     if (serverUrl) isUrl(serverUrl)
   }
 
@@ -34,27 +35,76 @@ export class SessionManager {
   }
 
   async getSession(accessToken?: string) {
-    await this.createSessions(accessToken)
-    await this.createAndWaitForSession(accessToken)
-    const session = this.sessions.pop()
-    const secondsSinceSessionCreation =
-      (new Date().getTime() - new Date(session!.creationTimeStamp).getTime()) /
-      1000
+    console.log(`🤖[]🤖`)
+    console.log(`🤖[---- SessionManager getSession start]🤖`)
+    console.log(
+      `🤖[this.sessions]🤖`,
+      this.sessions.map((session: any) => session.id)
+    )
 
-    if (
-      !session!.attributes ||
-      secondsSinceSessionCreation >= session!.attributes.sessionInactiveTimeout
-    ) {
+    if (this.sessions.length) {
+      const session = this.sessions[0]
+
+      this.createSessions(accessToken)
+      this.createAndWaitForSession(accessToken)
+
+      // TODO: check secondsSinceSessionCreation
+
+      return session
+    } else {
       await this.createSessions(accessToken)
-      const freshSession = this.sessions.pop()
+      console.log(
+        `🤖[ 45 this.sessions]🤖`,
+        this.sessions.map((session: any) => session.id)
+      )
+      await this.createAndWaitForSession(accessToken)
+      console.log(
+        `🤖[ 50 this.sessions]🤖`,
+        this.sessions.map((session: any) => session.id)
+      )
 
-      return freshSession
+      const session = this.sessions.pop()
+      console.log(`🤖[session]🤖`, session!.id)
+
+      console.log(
+        `🤖[59 this.sessions]🤖`,
+        this.sessions.map((session: any) => session.id)
+      )
+
+      const secondsSinceSessionCreation =
+        (new Date().getTime() -
+          new Date(session!.creationTimeStamp).getTime()) /
+        1000
+      console.log(
+        `🤖[secondsSinceSessionCreation]🤖`,
+        secondsSinceSessionCreation
+      )
+
+      if (
+        !session!.attributes ||
+        secondsSinceSessionCreation >=
+          session!.attributes.sessionInactiveTimeout
+      ) {
+        console.log(`🤖[54]🤖`, 54)
+        await this.createSessions(accessToken)
+        const freshSession = this.sessions.pop()
+        console.log(`🤖[freshSession]🤖`, freshSession!.id)
+        return freshSession
+      }
+      console.log(`🤖[60]🤖`, 60)
+      console.log(`🤖[---- SessionManager getSession end]🤖`)
+      console.log(`🤖[]🤖`)
+      return session
     }
-
-    return session
   }
 
   async clearSession(id: string, accessToken?: string) {
+    console.log(
+      `🤖[clearSession this.sessions]🤖`,
+      this.sessions.map((session: any) => session.id)
+    )
+    console.log(`🤖[SessionManager clearSession id]🤖`, id)
+
     return await this.requestClient
       .delete<Session>(`/compute/sessions/${id}`, accessToken)
       .then(() => {
@@ -66,12 +116,19 @@ export class SessionManager {
   }
 
   private async createSessions(accessToken?: string) {
+    console.log(`🤖[SessionManager createSessions]🤖`)
+
     if (!this.sessions.length) {
       if (!this.currentContext) {
         await this.setCurrentContext(accessToken).catch((err) => {
           throw err
         })
       }
+
+      console.log(
+        `🤖[createSessions start this.sessions]🤖`,
+        this.sessions.map((session: any) => session.id)
+      )
 
       await asyncForEach(new Array(MAX_SESSION_COUNT), async () => {
         const createdSession = await this.createAndWaitForSession(
@@ -80,14 +137,23 @@ export class SessionManager {
           throw err
         })
 
-        this.sessions.push(createdSession)
+        // console.log(`🤖[createSessions new session id]🤖`, createdSession.id)
+
+        // this.sessions.push(createdSession)
       }).catch((err) => {
         throw err
       })
+
+      console.log(
+        `🤖[createSessions end this.sessions]🤖`,
+        this.sessions.map((session: any) => session.id)
+      )
     }
   }
 
   private async createAndWaitForSession(accessToken?: string) {
+    console.log(`🤖[SessionManager createAndWaitForSession]🤖`)
+
     const { result: createdSession, etag } = await this.requestClient
       .post<Session>(
         `${this.serverUrl}/compute/contexts/${
@@ -102,12 +168,23 @@ export class SessionManager {
 
     await this.waitForSession(createdSession, etag, accessToken)
 
+    console.log(
+      `🤖[createAndWaitForSession this.sessions.map((session: any) => session.id)]🤖`,
+      this.sessions.map((session: any) => session.id)
+    )
+    console.log(
+      `🤖[createAndWaitForSession adding createdSession.id]🤖`,
+      createdSession.id
+    )
+
     this.sessions.push(createdSession)
 
     return createdSession
   }
 
   private async setCurrentContext(accessToken?: string) {
+    console.log(`🤖[SessionManager setCurrentContext]🤖`)
+
     if (!this.currentContext) {
       const { result: contexts } = await this.requestClient
         .get<{
@@ -138,6 +215,7 @@ export class SessionManager {
     }
   }
 
+  // DEPRECATE
   private getHeaders(accessToken?: string) {
     const headers: any = {
       'Content-Type': 'application/json'
@@ -155,6 +233,8 @@ export class SessionManager {
     etag: string | null,
     accessToken?: string
   ): Promise<string> {
+    console.log(`🤖[SessionManager waitForSession]🤖`)
+
     const logger = process.logger || console
 
     let sessionState = session.state
@@ -230,6 +310,8 @@ export class SessionManager {
     etag: string,
     accessToken?: string
   ) {
+    console.log(`🤖[SessionManager getSessionState]🤖`)
+
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
       .then((res) => ({
@@ -242,6 +324,8 @@ export class SessionManager {
   }
 
   async getVariable(sessionId: string, variable: string, accessToken?: string) {
+    console.log(`🤖[SessionManager getVariable]🤖`)
+
     return await this.requestClient
       .get<SessionVariable>(
         `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
