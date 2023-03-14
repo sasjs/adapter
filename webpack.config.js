@@ -23,7 +23,7 @@ const optimization = {
 }
 
 const browserConfig = {
-  entry: './src/index.ts',
+  entry: './src/index-sas9-min.ts',
   devtool: 'inline-source-map',
   mode: 'production',
   optimization: optimization,
@@ -41,7 +41,7 @@ const browserConfig = {
     fallback: { https: false, fs: false, readline: false }
   },
   output: {
-    filename: 'index.js',
+    filename: 'index-sas9-min.js',
     path: path.resolve(__dirname, 'build'),
     libraryTarget: 'umd',
     library: 'SASjs'
