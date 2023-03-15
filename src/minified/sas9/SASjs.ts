@@ -1,16 +1,16 @@
-import { validateInput, compareTimestamps } from './utils'
-import { SASjsConfig, UploadFile, LoginMechanism } from './types'
-import { SAS9ApiClient } from './SAS9ApiClient'
-import { AuthManager } from './auth/AuthManager-sas9-min'
+import { validateInput, compareTimestamps } from '../../utils'
+import { SASjsConfig, UploadFile, LoginMechanism } from '../../types'
+import { AuthManager } from '../../auth'
 import {
   ServerType,
   AuthConfig,
   ExtraResponseAttributes
 } from '@sasjs/utils/types'
-import { RequestClient } from './request/RequestClient'
-import { JobExecutor, Sas9JobExecutor, FileUploader } from './job-execution'
-import { ErrorResponse } from './types/errors'
-import { LoginOptions, LoginResult } from './types/Login'
+import { RequestClient } from '../../request/RequestClient'
+import { FileUploader } from '../../job-execution/FileUploader'
+import { WebJobExecutor } from './WebJobExecutor'
+import { ErrorResponse } from '../../types/errors/ErrorResponse'
+import { LoginOptions, LoginResult } from '../../types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
@@ -32,12 +32,10 @@ const defaultConfig: SASjsConfig = {
 export default class SASjs {
   private sasjsConfig: SASjsConfig = new SASjsConfig()
   private jobsPath: string = ''
-  private sas9ApiClient: SAS9ApiClient | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
-  private webJobExecutor: JobExecutor | null = null
-  private sas9JobExecutor: JobExecutor | null = null
+  private webJobExecutor: WebJobExecutor | null = null
 
   constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
@@ -190,23 +188,14 @@ export default class SASjs {
 
     // status is true if the data passes validation checks above
     if (validationResult.status) {
-      if (
-        config.serverType === ServerType.Sas9 &&
-        config.username &&
-        config.password
-      ) {
-        console.log(`🤖[198]🤖`, 198)
-        return await this.sas9JobExecutor!.execute(sasJob, data, config)
-      } else {
-        return await this.webJobExecutor!.execute(
-          sasJob,
-          data,
-          config,
-          loginRequiredCallback,
-          authConfig,
-          extraResponseAttributes
-        )
-      }
+      return await this.webJobExecutor!.execute(
+        sasJob,
+        data,
+        config,
+        loginRequiredCallback,
+        authConfig,
+        extraResponseAttributes
+      )
     } else {
       return Promise.reject(new ErrorResponse(validationResult.msg))
     }
@@ -241,8 +230,7 @@ export default class SASjs {
     }
 
     if (!this.requestClient) {
-      const RequestClientClass = RequestClient
-      this.requestClient = new RequestClientClass(
+      this.requestClient = new RequestClient(
         this.sasjsConfig.serverUrl,
         this.sasjsConfig.httpsAgentOptions,
         this.sasjsConfig.requestHistoryLimit
@@ -263,18 +251,6 @@ export default class SASjs {
       this.resendWaitingRequests
     )
 
-    if (this.sasjsConfig.serverType === ServerType.Sas9) {
-      if (this.sas9ApiClient) {
-        this.sas9ApiClient!.setConfig(this.sasjsConfig.serverUrl)
-      } else {
-        this.sas9ApiClient = new SAS9ApiClient(
-          this.sasjsConfig.serverUrl,
-          this.jobsPath,
-          this.sasjsConfig.httpsAgentOptions
-        )
-      }
-    }
-
     this.fileUploader = new FileUploader(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
@@ -282,17 +258,11 @@ export default class SASjs {
       this.requestClient
     )
 
-    this.sas9JobExecutor = new Sas9JobExecutor(
+    this.webJobExecutor = new WebJobExecutor(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
       this.jobsPath,
-      this.requestClient,
-      this.sasjsConfig.httpsAgentOptions
-    )
-
-    console.log(
-      `🤖[setupConfiguration this.sas9JobExecutor]🤖`,
-      this.sas9JobExecutor
+      this.requestClient
     )
   }
 
