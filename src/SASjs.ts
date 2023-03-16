@@ -4,8 +4,7 @@ import {
   UploadFile,
   EditContextInput,
   PollOptions,
-  LoginMechanism,
-  ExecutionQuery
+  LoginMechanism
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -17,7 +16,6 @@ import {
   AuthConfig,
   ExtraResponseAttributes,
   SasAuthResponse,
-  ServicePackSASjs,
   AuthConfigSas9
 } from '@sasjs/utils/types'
 import { RequestClient } from './request/RequestClient'
