@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
+import { NotFoundError } from '../types/errors'
 import { LoginOptions, LoginResult, LoginResultInternal } from '../types/Login'
 import { serialize } from '../utils'
 import { extractUserLongNameSas9 } from '../utils/sas9/extractUserLongNameSas9'
@@ -47,7 +48,8 @@ export class AuthManager {
       return {
         isLoggedIn: true,
         userName: currentSessionUserName,
-        userLongName: currentSessionUserLongName
+        userLongName: currentSessionUserLongName,
+        message: 'User is already Logged In!'
       }
     }
 
@@ -116,7 +118,8 @@ export class AuthManager {
       return {
         isLoggedIn: true,
         userName: this.userName,
-        userLongName: this.userLongName
+        userLongName: this.userLongName,
+        message: 'User is already Logged In!'
       }
     }
 
@@ -155,10 +158,12 @@ export class AuthManager {
   private async performCASSecurityCheck() {
     const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
-    await this.requestClient.get<string>(
-      `/SASLogon/login?service=${casAuthenticationUrl}`,
-      undefined
-    )
+    await this.requestClient
+      .get<string>(`/SASLogon/login?service=${casAuthenticationUrl}`, undefined)
+      .catch((err) => {
+        // ignore if resource not found error
+        if (!(err instanceof NotFoundError)) throw err
+      })
   }
 
   private async sendLoginRequest(
@@ -312,12 +317,13 @@ export class AuthManager {
   }
 
   private getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
+    const pattern: RegExp = /<form.+action="(.*(Logon)|(login)[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
 
     if (matches && matches.length) {
       this.setLoginUrl(matches)
+      response = response.replace(/<input/g, '\n<input')
       const inputs = response.match(/<input.*"hidden"[^>]*>/g)
 
       if (inputs) {
