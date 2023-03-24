@@ -43,13 +43,15 @@ export class AuthManager {
     } = await this.fetchUserName()
 
     if (isLoggedInAlready) {
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
+
       await this.loginCallback()
 
       return {
         isLoggedIn: true,
         userName: currentSessionUserName,
-        userLongName: currentSessionUserLongName,
-        message: 'User is already Logged In!'
+        userLongName: currentSessionUserLongName
       }
     }
 
@@ -111,6 +113,9 @@ export class AuthManager {
     } = await this.checkSession()
 
     if (isLoggedInAlready) {
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
+
       await this.loginCallback()
 
       this.userName = loginParams.username
@@ -118,8 +123,7 @@ export class AuthManager {
       return {
         isLoggedIn: true,
         userName: this.userName,
-        userLongName: this.userLongName,
-        message: 'User is already Logged In!'
+        userLongName: this.userLongName
       }
     }
 
