@@ -14,12 +14,12 @@ export class SessionManager {
     private contextName: string,
     private requestClient: RequestClient
   ) {
-    console.log(`🤖[SessionManager constructor]🤖`)
     if (serverUrl) isUrl(serverUrl)
   }
 
   private sessions: Session[] = []
   private currentContext: Context | null = null
+  private settingContext: boolean = false
   private _debug: boolean = false
   private printedSessionState = {
     printed: false,
@@ -34,148 +34,181 @@ export class SessionManager {
     this._debug = value
   }
 
-  async getSession(accessToken?: string) {
-    console.log(`🤖[]🤖`)
-    console.log(`🤖[---- SessionManager getSession start]🤖`)
-    console.log(
-      `🤖[this.sessions]🤖`,
-      this.sessions.map((session: any) => session.id)
+  private isSessionValid(session: Session) {
+    if (!session) return false
+
+    const secondsSinceSessionCreation =
+      (new Date().getTime() - new Date(session.creationTimeStamp).getTime()) /
+      1000
+
+    if (
+      !session!.attributes ||
+      secondsSinceSessionCreation >= session!.attributes.sessionInactiveTimeout
+    ) {
+      return false
+    } else {
+      return true
+    }
+  }
+
+  private removeSessionFromPull(session: Session) {
+    this.sessions = this.sessions.filter((ses) => ses.id !== session.id)
+  }
+
+  private removeExpiredSessions() {
+    this.sessions = this.sessions.filter((session) =>
+      this.isSessionValid(session)
     )
+  }
+
+  private throwErrors(errors: (Error | string)[], prefix?: string) {
+    throw prefix
+      ? prefixMessage(new Error(errors.join('. ')), prefix)
+      : new Error(
+          errors
+            .map((err) =>
+              (err as Error).message ? (err as Error).message : err
+            )
+            .join('. ')
+        )
+  }
+
+  async getSession(accessToken?: string) {
+    const errors: (Error | string)[] = []
+    let isErrorThrown = false
+
+    const throwIfError = () => {
+      if (errors.length && !isErrorThrown) {
+        isErrorThrown = true
+
+        this.throwErrors(errors)
+      }
+    }
+
+    this.removeExpiredSessions()
 
     if (this.sessions.length) {
       const session = this.sessions[0]
 
-      this.createSessions(accessToken)
-      this.createAndWaitForSession(accessToken)
+      this.removeSessionFromPull(session)
 
-      // TODO: check secondsSinceSessionCreation
+      this.createSessions(accessToken).catch((err) => {
+        errors.push(err)
+      })
+
+      this.createAndWaitForSession(accessToken).catch((err) => {
+        errors.push(err)
+      })
+
+      throwIfError()
 
       return session
     } else {
-      await this.createSessions(accessToken)
-      console.log(
-        `🤖[ 45 this.sessions]🤖`,
-        this.sessions.map((session: any) => session.id)
-      )
-      await this.createAndWaitForSession(accessToken)
-      console.log(
-        `🤖[ 50 this.sessions]🤖`,
-        this.sessions.map((session: any) => session.id)
-      )
+      this.createSessions(accessToken).catch((err) => {
+        errors.push(err)
+      })
 
-      const session = this.sessions.pop()
-      console.log(`🤖[session]🤖`, session!.id)
+      await this.createAndWaitForSession(accessToken).catch((err) => {
+        errors.push(err)
+      })
 
-      console.log(
-        `🤖[59 this.sessions]🤖`,
-        this.sessions.map((session: any) => session.id)
-      )
+      this.removeExpiredSessions()
 
-      const secondsSinceSessionCreation =
-        (new Date().getTime() -
-          new Date(session!.creationTimeStamp).getTime()) /
-        1000
-      console.log(
-        `🤖[secondsSinceSessionCreation]🤖`,
-        secondsSinceSessionCreation
-      )
+      const session = this.sessions.pop()!
 
-      if (
-        !session!.attributes ||
-        secondsSinceSessionCreation >=
-          session!.attributes.sessionInactiveTimeout
-      ) {
-        console.log(`🤖[54]🤖`, 54)
-        await this.createSessions(accessToken)
-        const freshSession = this.sessions.pop()
-        console.log(`🤖[freshSession]🤖`, freshSession!.id)
-        return freshSession
-      }
-      console.log(`🤖[60]🤖`, 60)
-      console.log(`🤖[---- SessionManager getSession end]🤖`)
-      console.log(`🤖[]🤖`)
+      this.removeSessionFromPull(session)
+
+      throwIfError()
+
       return session
     }
   }
 
-  async clearSession(id: string, accessToken?: string) {
-    console.log(
-      `🤖[clearSession this.sessions]🤖`,
-      this.sessions.map((session: any) => session.id)
+  private getErrorMessage(
+    err: any,
+    url: string,
+    method: 'GET' | 'POST' | 'DELETE'
+  ) {
+    return (
+      `${method} request to ${url} failed with status code ${
+        err?.response?.status || 'unknown'
+      }. ` + err?.response?.data?.message || ''
     )
-    console.log(`🤖[SessionManager clearSession id]🤖`, id)
+  }
+
+  async clearSession(id: string, accessToken?: string) {
+    const url = `/compute/sessions/${id}`
 
     return await this.requestClient
-      .delete<Session>(`/compute/sessions/${id}`, accessToken)
+      .delete<Session>(url, accessToken)
       .then(() => {
         this.sessions = this.sessions.filter((s) => s.id !== id)
       })
       .catch((err) => {
-        throw prefixMessage(err, 'Error while deleting session. ')
+        throw prefixMessage(
+          this.getErrorMessage(err, url, 'DELETE'),
+          'Error while deleting session. '
+        )
       })
   }
 
   private async createSessions(accessToken?: string) {
-    console.log(`🤖[SessionManager createSessions]🤖`)
+    const errors: (Error | string)[] = []
 
     if (!this.sessions.length) {
-      if (!this.currentContext) {
-        await this.setCurrentContext(accessToken).catch((err) => {
-          throw err
-        })
-      }
-
-      console.log(
-        `🤖[createSessions start this.sessions]🤖`,
-        this.sessions.map((session: any) => session.id)
-      )
-
       await asyncForEach(new Array(MAX_SESSION_COUNT), async () => {
-        const createdSession = await this.createAndWaitForSession(
-          accessToken
-        ).catch((err) => {
-          throw err
+        await this.createAndWaitForSession(accessToken).catch((err) => {
+          errors.push(err)
         })
-
-        // console.log(`🤖[createSessions new session id]🤖`, createdSession.id)
-
-        // this.sessions.push(createdSession)
-      }).catch((err) => {
-        throw err
       })
+    }
 
-      console.log(
-        `🤖[createSessions end this.sessions]🤖`,
-        this.sessions.map((session: any) => session.id)
-      )
+    if (errors.length) {
+      this.throwErrors(errors, 'Error while creating session. ')
     }
   }
 
+  private async waitForCurrentContext(): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = setInterval(() => {
+        if (this.currentContext) {
+          this.settingContext = false
+
+          clearInterval(timer)
+
+          resolve()
+        }
+      }, 100)
+    })
+  }
+
   private async createAndWaitForSession(accessToken?: string) {
-    console.log(`🤖[SessionManager createAndWaitForSession]🤖`)
+    if (!this.currentContext) {
+      if (!this.settingContext) {
+        await this.setCurrentContext(accessToken)
+      } else {
+        await this.waitForCurrentContext()
+      }
+    }
+
+    const url = `${this.serverUrl}/compute/contexts/${
+      this.currentContext!.id
+    }/sessions`
 
     const { result: createdSession, etag } = await this.requestClient
-      .post<Session>(
-        `${this.serverUrl}/compute/contexts/${
-          this.currentContext!.id
-        }/sessions`,
-        {},
-        accessToken
-      )
+      .post<Session>(url, {}, accessToken)
       .catch((err) => {
-        throw err
+        throw prefixMessage(
+          err,
+          `Error while creating session. ${this.getErrorMessage(
+            err,
+            url,
+            'POST'
+          )}`
+        )
       })
 
     await this.waitForSession(createdSession, etag, accessToken)
-
-    console.log(
-      `🤖[createAndWaitForSession this.sessions.map((session: any) => session.id)]🤖`,
-      this.sessions.map((session: any) => session.id)
-    )
-    console.log(
-      `🤖[createAndWaitForSession adding createdSession.id]🤖`,
-      createdSession.id
-    )
 
     this.sessions.push(createdSession)
 
@@ -183,15 +216,24 @@ export class SessionManager {
   }
 
   private async setCurrentContext(accessToken?: string) {
-    console.log(`🤖[SessionManager setCurrentContext]🤖`)
-
     if (!this.currentContext) {
+      const url = `${this.serverUrl}/compute/contexts?limit=10000`
+
+      this.settingContext = true
+
       const { result: contexts } = await this.requestClient
         .get<{
           items: Context[]
-        }>(`${this.serverUrl}/compute/contexts?limit=10000`, accessToken)
+        }>(url, accessToken)
         .catch((err) => {
-          throw err
+          throw prefixMessage(
+            err,
+            `Error while getting list of contexts. ${this.getErrorMessage(
+              err,
+              url,
+              'GET'
+            )}`
+          )
         })
 
       const contextsList =
@@ -215,26 +257,11 @@ export class SessionManager {
     }
   }
 
-  // DEPRECATE
-  private getHeaders(accessToken?: string) {
-    const headers: any = {
-      'Content-Type': 'application/json'
-    }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    return headers
-  }
-
   private async waitForSession(
     session: Session,
     etag: string | null,
     accessToken?: string
   ): Promise<string> {
-    console.log(`🤖[SessionManager waitForSession]🤖`)
-
     const logger = process.logger || console
 
     let sessionState = session.state
@@ -253,13 +280,14 @@ export class SessionManager {
           this.printedSessionState.printed = true
         }
 
+        const url = `${this.serverUrl}${stateLink.href}?wait=30`
+
         const { result: state, responseStatus: responseStatus } =
-          await this.getSessionState(
-            `${this.serverUrl}${stateLink.href}?wait=30`,
-            etag!,
-            accessToken
-          ).catch((err) => {
-            throw prefixMessage(err, 'Error while getting session state.')
+          await this.getSessionState(url, etag!, accessToken).catch((err) => {
+            throw prefixMessage(
+              this.getErrorMessage(err, url, 'GET'),
+              'Error while getting session state. '
+            )
           })
 
         sessionState = state.trim()
@@ -296,7 +324,7 @@ export class SessionManager {
 
         return sessionState
       } else {
-        throw 'Error while getting session state link.'
+        throw 'Error while getting session state link. '
       }
     } else {
       this.loggedErrors = []
@@ -310,8 +338,6 @@ export class SessionManager {
     etag: string,
     accessToken?: string
   ) {
-    console.log(`🤖[SessionManager getSessionState]🤖`)
-
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
       .then((res) => ({
@@ -319,13 +345,14 @@ export class SessionManager {
         responseStatus: res.status
       }))
       .catch((err) => {
-        throw err
+        throw prefixMessage(
+          this.getErrorMessage(err, url, 'GET'),
+          'Error while getting session state. '
+        )
       })
   }
 
   async getVariable(sessionId: string, variable: string, accessToken?: string) {
-    console.log(`🤖[SessionManager getVariable]🤖`)
-
     return await this.requestClient
       .get<SessionVariable>(
         `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
