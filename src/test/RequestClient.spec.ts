@@ -26,7 +26,7 @@ const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`
 
 const ERROR_MESSAGES = {
-  selfSigned: 'self signed certificate',
+  selfSigned: 'self-signed certificate',
   CCA: 'unable to verify the first certificate'
 }
 
