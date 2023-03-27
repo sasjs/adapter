@@ -386,7 +386,7 @@ describe('SessionManager', () => {
         })
       )
 
-      const expectedError = `Error while getting list of contexts. GET request to https://4gl.io/compute/contexts?limit=10000 failed with status code ${responseStatus}. ${responseErrorMessage}`
+      const expectedError = `Error while getting list of contexts. GET request to ${process.env.SERVER_URL}/compute/contexts?limit=10000 failed with status code ${responseStatus}. ${responseErrorMessage}`
 
       sessionManager['currentContext'] = null
 
@@ -419,7 +419,7 @@ describe('SessionManager', () => {
       sessionManager['settingContext'] = false
 
       const expectedError = new Error(
-        `The context '${contextName}' was not found on the server https://4gl.io.`
+        `The context '${contextName}' was not found on the server ${process.env.SERVER_URL}.`
       )
 
       await expect(sessionManager['setCurrentContext']()).rejects.toEqual(
