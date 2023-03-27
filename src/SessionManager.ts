@@ -6,7 +6,7 @@ import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
 
-interface ErrorResponse {
+interface ApiErrorResponse {
   response: { status: number | string; data: { message: string } }
 }
 
@@ -164,7 +164,7 @@ export class SessionManager {
    * @returns - an error message.
    */
   private getErrorMessage(
-    err: ErrorResponse,
+    err: ApiErrorResponse,
     url: string,
     method: 'GET' | 'POST' | 'DELETE'
   ) {
@@ -189,7 +189,7 @@ export class SessionManager {
       .then(() => {
         this.sessions = this.sessions.filter((s) => s.id !== id)
       })
-      .catch((err: ErrorResponse) => {
+      .catch((err: ApiErrorResponse) => {
         throw prefixMessage(
           this.getErrorMessage(err, url, 'DELETE'),
           'Error while deleting session. '
@@ -258,7 +258,7 @@ export class SessionManager {
 
     const { result: createdSession, etag } = await this.requestClient
       .post<Session>(url, {}, accessToken)
-      .catch((err: ErrorResponse) => {
+      .catch((err: ApiErrorResponse) => {
         throw prefixMessage(
           this.getErrorMessage(err, url, 'POST'),
           `Error while creating session. `
@@ -287,7 +287,7 @@ export class SessionManager {
         .get<{
           items: Context[]
         }>(url, accessToken)
-        .catch((err: ErrorResponse) => {
+        .catch((err: ApiErrorResponse) => {
           throw prefixMessage(
             this.getErrorMessage(err, url, 'GET'),
             `Error while getting list of contexts. `
