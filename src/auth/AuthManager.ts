@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
+import { NotFoundError } from '../types/errors'
 import { LoginOptions, LoginResult, LoginResultInternal } from '../types/Login'
 import { serialize } from '../utils'
 import { extractUserLongNameSas9 } from '../utils/sas9/extractUserLongNameSas9'
@@ -42,6 +43,9 @@ export class AuthManager {
     } = await this.fetchUserName()
 
     if (isLoggedInAlready) {
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
+
       await this.loginCallback()
 
       return {
@@ -109,6 +113,9 @@ export class AuthManager {
     } = await this.checkSession()
 
     if (isLoggedInAlready) {
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
+
       await this.loginCallback()
 
       this.userName = loginParams.username
@@ -155,10 +162,12 @@ export class AuthManager {
   private async performCASSecurityCheck() {
     const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
 
-    await this.requestClient.get<string>(
-      `/SASLogon/login?service=${casAuthenticationUrl}`,
-      undefined
-    )
+    await this.requestClient
+      .get<string>(`/SASLogon/login?service=${casAuthenticationUrl}`, undefined)
+      .catch((err) => {
+        // ignore if resource not found error
+        if (!(err instanceof NotFoundError)) throw err
+      })
   }
 
   private async sendLoginRequest(
@@ -312,12 +321,13 @@ export class AuthManager {
   }
 
   private getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
+    const pattern: RegExp = /<form.+action="(.*(Logon)|(login)[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
 
     if (matches && matches.length) {
       this.setLoginUrl(matches)
+      response = response.replace(/<input/g, '\n<input')
       const inputs = response.match(/<input.*"hidden"[^>]*>/g)
 
       if (inputs) {
