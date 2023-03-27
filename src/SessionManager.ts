@@ -21,6 +21,7 @@ export class SessionManager {
     if (serverUrl) isUrl(serverUrl)
   }
 
+  // INFO: session pool
   private sessions: Session[] = []
   private currentContext: Context | null = null
   private settingContext: boolean = false
@@ -38,7 +39,12 @@ export class SessionManager {
     this._debug = value
   }
 
-  private isSessionValid(session: Session) {
+  /**
+   * Checks if session is valid. Session is considered valid if time since it's creation is less than 'sessionInactiveTimeout' attribute.
+   * @param session - session object.
+   * @returns - boolean indicating if session is valid.
+   */
+  private isSessionValid(session: Session): boolean {
     if (!session) return false
 
     const secondsSinceSessionCreation =
@@ -55,17 +61,33 @@ export class SessionManager {
     }
   }
 
-  private removeSessionFromPull(session: Session) {
+  /**
+   * Removes session from pool of hot sessions.
+   * @param session - session object.
+   * @returns - void.
+   */
+  private removeSessionFromPool(session: Session): void {
     this.sessions = this.sessions.filter((ses) => ses.id !== session.id)
   }
 
-  private removeExpiredSessions() {
+  /**
+   * Filters session pool to remain only valid sessions.
+   * @param session - session object.
+   * @returns - void.
+   */
+  private removeExpiredSessions(): void {
     this.sessions = this.sessions.filter((session) =>
       this.isSessionValid(session)
     )
   }
 
-  private throwErrors(errors: (Error | string)[], prefix?: string) {
+  /**
+   * Throws set of errors as a single error.
+   * @param errors - array of errors or string.
+   * @param prefix - an optional final error prefix.
+   * @returns - never.
+   */
+  private throwErrors(errors: (Error | string)[], prefix?: string): never {
     throw prefix
       ? prefixMessage(new Error(errors.join('. ')), prefix)
       : new Error(
@@ -77,6 +99,13 @@ export class SessionManager {
         )
   }
 
+  /**
+   * Returns session.
+   * If there is a hot session available, it will be returned immediately and an asynchronous request to create new hot session will be submitted.
+   * If there is no available session, 2 session creation requests will be submitted. The session is returned once it is created and ready.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves with a session.
+   */
   async getSession(accessToken?: string) {
     const errors: (Error | string)[] = []
     let isErrorThrown = false
@@ -94,7 +123,7 @@ export class SessionManager {
     if (this.sessions.length) {
       const session = this.sessions[0]
 
-      this.removeSessionFromPull(session)
+      this.removeSessionFromPool(session)
 
       this.createSessions(accessToken).catch((err) => {
         errors.push(err)
@@ -120,7 +149,7 @@ export class SessionManager {
 
       const session = this.sessions.pop()!
 
-      this.removeSessionFromPull(session)
+      this.removeSessionFromPool(session)
 
       throwIfError()
 
@@ -128,19 +157,31 @@ export class SessionManager {
     }
   }
 
+  /**
+   * Returns error message based on the response from SAS API.
+   * @param err - an optional access token.
+   * @param accessToken - an optional access token.
+   * @returns - an error message.
+   */
   private getErrorMessage(
-    err: any,
+    err: ErrorResponse,
     url: string,
     method: 'GET' | 'POST' | 'DELETE'
   ) {
     return (
       `${method} request to ${url} failed with status code ${
-        err?.response?.status || 'unknown'
-      }. ` + err?.response?.data?.message || ''
+        err.response.status || 'unknown'
+      }. ` + err.response.data.message || ''
     )
   }
 
-  async clearSession(id: string, accessToken?: string) {
+  /**
+   * Deletes session.
+   * @param id - a session id.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves when session is deleted.
+   */
+  async clearSession(id: string, accessToken?: string): Promise<void> {
     const url = `/compute/sessions/${id}`
 
     return await this.requestClient
@@ -148,7 +189,7 @@ export class SessionManager {
       .then(() => {
         this.sessions = this.sessions.filter((s) => s.id !== id)
       })
-      .catch((err) => {
+      .catch((err: ErrorResponse) => {
         throw prefixMessage(
           this.getErrorMessage(err, url, 'DELETE'),
           'Error while deleting session. '
@@ -156,7 +197,12 @@ export class SessionManager {
       })
   }
 
-  private async createSessions(accessToken?: string) {
+  /**
+   * Creates sessions in amount equal to MAX_SESSION_COUNT.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves when required amount of sessions is created.
+   */
+  private async createSessions(accessToken?: string): Promise<void> {
     const errors: (Error | string)[] = []
 
     if (!this.sessions.length) {
@@ -172,6 +218,10 @@ export class SessionManager {
     }
   }
 
+  /**
+   * Waits for the current context to be set.
+   * @returns - a promise which resolves when current context is set.
+   */
   private async waitForCurrentContext(): Promise<void> {
     return new Promise((resolve) => {
       const timer = setInterval(() => {
@@ -186,7 +236,14 @@ export class SessionManager {
     })
   }
 
-  private async createAndWaitForSession(accessToken?: string) {
+  /**
+   * Creates and waits for session to be ready.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves with a session.
+   */
+  private async createAndWaitForSession(
+    accessToken?: string
+  ): Promise<Session> {
     if (!this.currentContext) {
       if (!this.settingContext) {
         await this.setCurrentContext(accessToken)
@@ -215,7 +272,12 @@ export class SessionManager {
     return createdSession
   }
 
-  private async setCurrentContext(accessToken?: string) {
+  /**
+   * Sets current context.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves when current context is set.
+   */
+  private async setCurrentContext(accessToken?: string): Promise<void> {
     if (!this.currentContext) {
       const url = `${this.serverUrl}/compute/contexts?limit=10000`
 
@@ -253,6 +315,13 @@ export class SessionManager {
     }
   }
 
+  /**
+   * Waits for session to be ready.
+   * @param session - a session object.
+   * @param etag - an etag that can be a string or null.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves with a session state.
+   */
   private async waitForSession(
     session: Session,
     etag: string | null,
@@ -326,11 +395,21 @@ export class SessionManager {
     }
   }
 
+  /**
+   * Gets session state.
+   * @param url - a URL to get session state.
+   * @param etag - an etag string.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves with a result string and response status.
+   */
   private async getSessionState(
     url: string,
     etag: string,
     accessToken?: string
-  ) {
+  ): Promise<{
+    result: string
+    responseStatus: number
+  }> {
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
       .then((res) => ({
@@ -345,7 +424,22 @@ export class SessionManager {
       })
   }
 
-  async getVariable(sessionId: string, variable: string, accessToken?: string) {
+  /**
+   * Gets variable.
+   * @param sessionId - a session id.
+   * @param variable - a variable string.
+   * @param accessToken - an optional access token.
+   * @returns - a promise which resolves with a result that confirms to SessionVariable interface, etag string and status code.
+   */
+  async getVariable(
+    sessionId: string,
+    variable: string,
+    accessToken?: string
+  ): Promise<{
+    result: SessionVariable
+    etag: string
+    status: number
+  }> {
     const url = `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`
 
     return await this.requestClient
