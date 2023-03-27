@@ -3,7 +3,6 @@ import { RequestClient } from '../request/RequestClient'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils'
-import { prefixMessage } from '@sasjs/utils/error'
 import { Session, Context } from '../types'
 
 jest.mock('axios')
@@ -79,11 +78,11 @@ describe('SessionManager', () => {
         })
       )
 
-      const expectedError = `Error while fetching session variable '${testVariable}'.`
+      const expectedError = `Error while fetching session variable '${testVariable}'. GET request to ${process.env.SERVER_URL}/compute/sessions/testId/variables/${testVariable} failed with status code ${responseStatus}. ${responseErrorMessage}`
 
       await expect(
         sessionManager.getVariable('testId', testVariable)
-      ).rejects.toEqual(prefixMessage({ response } as any, expectedError))
+      ).rejects.toEqual(expectedError)
     })
   })
 
@@ -155,11 +154,25 @@ describe('SessionManager', () => {
     })
 
     it('should throw an error if could not get session state', async () => {
-      mockedAxios.get.mockImplementation(() => Promise.reject('Mocked error'))
+      const gettingSessionStatus = 500
+      const sessionStatusError = `Getting session status timed out after 60 seconds. Request failed with status code ${gettingSessionStatus}`
+
+      mockedAxios.get.mockImplementation(() =>
+        Promise.reject({
+          response: {
+            status: gettingSessionStatus,
+            data: {
+              message: sessionStatusError
+            }
+          }
+        })
+      )
+
+      const expectedError = `Error while waiting for session. Error while getting session state. GET request to ${process.env.SERVER_URL}?wait=30 failed with status code ${gettingSessionStatus}. ${sessionStatusError}`
 
       await expect(
         sessionManager['waitForSession'](session, null, 'access_token')
-      ).rejects.toContain('Error while getting session state.')
+      ).rejects.toEqual(expectedError)
     })
 
     it('should return session state', async () => {
@@ -196,13 +209,13 @@ describe('SessionManager', () => {
     })
   })
 
-  describe('removeSessionFromPull', () => {
-    it('should remove session from the pull of sessions', () => {
+  describe('removeSessionFromPool', () => {
+    it('should remove session from the pool of sessions', () => {
       const session: Session = getMockSession()
       const sessions: Session[] = [getMockSession(), session]
 
       sessionManager['sessions'] = sessions
-      sessionManager['removeSessionFromPull'](session)
+      sessionManager['removeSessionFromPool'](session)
 
       expect(sessionManager['sessions'].length).toEqual(1)
     })
@@ -378,7 +391,7 @@ describe('SessionManager', () => {
       sessionManager['currentContext'] = null
 
       await expect(sessionManager['setCurrentContext']()).rejects.toEqual(
-        prefixMessage({ response } as any, expectedError)
+        expectedError
       )
     })
 

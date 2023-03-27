@@ -6,6 +6,10 @@ import { RequestClient } from './request/RequestClient'
 
 const MAX_SESSION_COUNT = 1
 
+interface ErrorResponse {
+  response: { status: number | string; data: { message: string } }
+}
+
 export class SessionManager {
   private loggedErrors: NoSessionStateError[] = []
 
@@ -197,14 +201,10 @@ export class SessionManager {
 
     const { result: createdSession, etag } = await this.requestClient
       .post<Session>(url, {}, accessToken)
-      .catch((err) => {
+      .catch((err: ErrorResponse) => {
         throw prefixMessage(
-          err,
-          `Error while creating session. ${this.getErrorMessage(
-            err,
-            url,
-            'POST'
-          )}`
+          this.getErrorMessage(err, url, 'POST'),
+          `Error while creating session. `
         )
       })
 
@@ -225,14 +225,10 @@ export class SessionManager {
         .get<{
           items: Context[]
         }>(url, accessToken)
-        .catch((err) => {
+        .catch((err: ErrorResponse) => {
           throw prefixMessage(
-            err,
-            `Error while getting list of contexts. ${this.getErrorMessage(
-              err,
-              url,
-              'GET'
-            )}`
+            this.getErrorMessage(err, url, 'GET'),
+            `Error while getting list of contexts. `
           )
         })
 
@@ -284,10 +280,7 @@ export class SessionManager {
 
         const { result: state, responseStatus: responseStatus } =
           await this.getSessionState(url, etag!, accessToken).catch((err) => {
-            throw prefixMessage(
-              this.getErrorMessage(err, url, 'GET'),
-              'Error while getting session state. '
-            )
+            throw prefixMessage(err, 'Error while waiting for session. ')
           })
 
         sessionState = state.trim()
@@ -353,15 +346,14 @@ export class SessionManager {
   }
 
   async getVariable(sessionId: string, variable: string, accessToken?: string) {
+    const url = `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`
+
     return await this.requestClient
-      .get<SessionVariable>(
-        `${this.serverUrl}/compute/sessions/${sessionId}/variables/${variable}`,
-        accessToken
-      )
+      .get<SessionVariable>(url, accessToken)
       .catch((err) => {
         throw prefixMessage(
-          err,
-          `Error while fetching session variable '${variable}'.`
+          this.getErrorMessage(err, url, 'GET'),
+          `Error while fetching session variable '${variable}'. `
         )
       })
   }
