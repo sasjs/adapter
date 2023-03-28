@@ -71,7 +71,7 @@ export class SessionManager {
   }
 
   /**
-   * Filters session pool to remain only valid sessions.
+   * Filters session pool to keep only valid sessions.
    * @param session - session object.
    * @returns - void.
    */
