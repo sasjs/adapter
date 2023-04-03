@@ -106,6 +106,16 @@
         "userTesting",
         "doc"
       ]
+    },
+    {
+      "login": "saramartinelli1992",
+      "name": "Sara",
+      "avatar_url": "https://avatars.githubusercontent.com/u/100193908?v=4",
+      "profile": "https://github.com/saramartinelli1992",
+      "contributions": [
+        "userTesting",
+        "platform"
+      ]
     }
   ],
   "contributorsPerLine": 7,
