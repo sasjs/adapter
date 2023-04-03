@@ -138,6 +138,10 @@ export class AuthManager {
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
+      // Sometimes due to redirection on SAS9 and SASViya we don't get the login response that says
+      // You have signed in. Therefore, we have to make an extra request for checking session to
+      // ensure either user is logged in or not.
+
       const res = await this.checkSession()
       isLoggedIn = res.isLoggedIn
       this.userLongName = res.userLongName
@@ -321,7 +325,7 @@ export class AuthManager {
   }
 
   private getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*(Logon)|(login)[^"]*).*>/
+    const pattern: RegExp = /<form.+action="(.*(Logon|login)[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
 
