@@ -18,7 +18,7 @@ describe('verifySasViyaLogin', () => {
   it('should return isLoggedIn true by checking state of popup', async () => {
     const popup = {
       window: {
-        location: { href: serverUrl + `/SASLogon/home` },
+        location: { href: serverUrl + `/SASLogon` },
         document: { body: { innerText: '<h3>You have signed in.</h3>' } }
       }
     } as unknown as Window
