@@ -80,6 +80,7 @@ jobs:
           npm run update:adapter && npm run build
           echo "CLIENT=${{secrets.SAS9_4GL_IO_CLIENT}}"> .env.4gl
           echo "ACCESS_TOKEN=${{secrets.SAS9_4GL_IO_ACCESS_TOKEN}}" >> .env.4gl
+          echo "REFRESH_TOKEN=${{secrets.SAS9_4GL_IO_REFRESH_TOKEN}}" >> .env.4gl
           sasjs cbd -t 4gl
 
       - name: Run cypress on sasjs
