@@ -11,7 +11,7 @@
       "name": "4gl",
       "serverType": "SASJS",
       "serverUrl": "https://sas9.4gl.io",
-      "appLoc": "/Public/app/common"
+      "appLoc": "/Public/app/adapter-tests"
     }
   ]
 }
