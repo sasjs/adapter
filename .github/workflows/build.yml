@@ -64,6 +64,9 @@ jobs:
       - name: Start Open VPN 3
         run: openvpn3 session-start --config .github/vpn/config.ovpn
 
+      - name: install pm2
+        run: npm i -g pm2
+
       - name: Deploy sasjs-tests
         run: |
           npm install -g replace-in-files-cli
@@ -74,7 +77,8 @@ jobs:
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
-          npm run update:adapter && npm start
+          npm run update:adapter
+          pm2 start --name sasjs-test npm -- start
 
       - name: Run cypress on sasjs
         run: |
