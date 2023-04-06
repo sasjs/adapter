@@ -3,8 +3,8 @@
   "password": "",
   "sasJsConfig": {
     "serverUrl": "",
-    "appLoc": "/Public/app",
-    "serverType": "SASVIYA",
+    "appLoc": "/Public/app/adapter-tests",
+    "serverType": "SASJS",
     "debug": false,
     "contextName": "sasjs adapter compute context",
     "useComputeApi": true
