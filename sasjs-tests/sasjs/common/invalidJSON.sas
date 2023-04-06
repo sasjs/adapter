@@ -1,6 +1,6 @@
 /**
   @file
-  @brief Makes an error
+  @brief Makes an invalid JSON file
 
   <h4> SAS Macros </h4>
 **/
