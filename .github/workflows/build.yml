@@ -69,6 +69,9 @@ jobs:
           echo "CLIENT=${{secrets.SAS9_4GL_IO_CLIENT}}"> .env.4gl
           echo "ACCESS_TOKEN=${{secrets.SAS9_4GL_IO_ACCESS_TOKEN}}" >> .env.4gl
 
+      - name: install sasjs/cli
+        run: npm i -g @sasjs/cli
+
       - name: Deploy sasjs-tests
         run: |
           npm install -g replace-in-files-cli
@@ -80,7 +83,7 @@ jobs:
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
           npm run update:adapter && npm run build
-          npx sasjs cbd -t 4gl
+          sasjs cbd -t 4gl
 
       - name: Run cypress on sasjs
         run: |
