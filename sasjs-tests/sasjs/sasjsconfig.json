@@ -1,7 +1,9 @@
 {
   "$schema": "https://cli.sasjs.io/sasjsconfig-schema.json",
   "serviceConfig": {
-    "serviceFolders": ["sasjs/common"]
+    "serviceFolders": [
+      "sasjs/common"
+    ]
   },
   "defaultTarget": "4gl",
   "targets": [
@@ -21,7 +23,8 @@
         "streamWeb": true,
         "streamWebFolder": "webv",
         "webSourcePath": "build",
-        "streamServiceName": "adapter-tests"
+        "streamServiceName": "adapter-tests",
+        "assetPaths": []
       }
     }
   ]
