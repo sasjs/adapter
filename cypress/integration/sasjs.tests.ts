@@ -14,7 +14,10 @@ context('sasjs-tests', function () {
 
   it('Should have all tests successfull', (done) => {
     cy.get('body').then(($body) => {
-      if ($body.find('input[placeholder="User Name"]').length > 0) {
+      const startButton = $body.find('.ui.massive.icon.primary.left.labeled.button')[0]
+      cy.wait(1000)
+      
+      if (startButton && !Cypress.dom.isVisible(startButton)) {
         cy.get('input[placeholder="User Name"]').type(username)
         cy.get('input[placeholder="Password"]').type(password)
         cy.get('.submit-button').click()
@@ -44,7 +47,10 @@ context('sasjs-tests', function () {
 
   it('Should have all tests successfull with debug on', (done) => {
     cy.get('body').then(($body) => {
-      if ($body.find('input[placeholder="User Name"]').length > 0) {
+      const startButton = $body.find('.ui.massive.icon.primary.left.labeled.button')[0]
+      cy.wait(1000)
+      
+      if (startButton && !Cypress.dom.isVisible(startButton)) {
         cy.get('input[placeholder="User Name"]').type(username)
         cy.get('input[placeholder="Password"]').type(password)
         cy.get('.submit-button').click()
