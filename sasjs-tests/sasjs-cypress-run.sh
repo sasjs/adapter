@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts" --browser chrome ; then
+if npm run cy:run -- --spec "cypress/integration/sasjs.tests.ts" ; then
     echo "Cypress sasjs testing passed!"
 else
     echo '{"msgtype":"m.text", "body":"Automated sasjs-tests failed on the @sasjs/adapter PR: '$2'"}'
