@@ -1,9 +1,7 @@
 {
   "$schema": "https://cli.sasjs.io/sasjsconfig-schema.json",
   "serviceConfig": {
-    "serviceFolders": [
-      "sasjs/common"
-    ]
+    "serviceFolders": ["sasjs/common"]
   },
   "defaultTarget": "4gl",
   "targets": [
