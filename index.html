@@ -100,6 +100,16 @@
 <p>The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.</p>
 <p>The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.</p>
 
+<a href="#session-manager" id="session-manager" style="color: inherit; text-decoration: none;">
+  <h3>Session Manager</h3>
+</a>
+<p>To execute a script on Viya a session has to be created first which is time-consuming (~15sec). That is why a Session Manager has been created which is implementing the following logic:</p>
+<ol>
+<li>When the first session is requested, we also create one more session (hot session) for future requests. Please notice two pending POST requests to create a session within the same context: <img src="./screenshots/session-manager-first-request.png" alt="the first session request"></li>
+<li>When a subsequent request for a session is received and there is a hot session available (not expired), this session is returned and an asynchronous request to create another hot session is sent. Please notice that there is a pending POST request to create a new session while a job has been already finished execution (POST request with status 201): <img src="./screenshots/subsequent-session-request.png" alt="subsequent session request"></li>
+<li>When a subsequent request for a session is received and there is no available hot session, 2 requests are sent asynchronously to create a session. The first created session will be returned and another session will be reserved for future requests.</li>
+</ol>
+
 <a href="#variable-types" id="variable-types" style="color: inherit; text-decoration: none;">
   <h3>Variable Types</h3>
 </a>
