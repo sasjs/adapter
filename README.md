@@ -153,6 +153,14 @@ The response object will contain returned tables and columns.  Table names are a
 
 The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.
 
+### Session Manager
+
+To execute a script on Viya a session has to be created first which is time-consuming (~15sec). That is why a Session Manager has been created which is implementing the following logic:
+
+1. When the first session is requested, we also create one more session (hot session) for future requests. Please notice two pending POST requests to create a session within the same context: ![the first session request](./screenshots/session-manager-first-request.png)
+2. When a subsequent request for a session is received and there is a hot session available (not expired), this session is returned and an asynchronous request to create another hot session is sent. Please notice that there is a pending POST request to create a new session while a job has been already finished execution (POST request with status 201): ![subsequent session request](./screenshots/subsequent-session-request.png)
+3. When a subsequent request for a session is received and there is no available hot session, 2 requests are sent asynchronously to create a session. The first created session will be returned and another session will be reserved for future requests.
+
 ### Variable Types
 
 The SAS type (char/numeric) of the values is determined according to a set of rules:
