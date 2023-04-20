@@ -29,9 +29,12 @@ export async function getTokens(
       const error =
         'Unable to obtain new access token. Your refresh token has expired.'
       logger.error(error)
+
       throw new Error(error)
     }
+
     logger.info('Refreshing access and refresh tokens.')
+
     const tokens =
       serverType === ServerType.SasViya
         ? await refreshTokensForViya(

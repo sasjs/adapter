@@ -2,6 +2,7 @@ import { SasAuthResponse } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as NodeFormData from 'form-data'
 import { RequestClient } from '../request/RequestClient'
+import { isNode } from '../utils'
 
 /**
  * Exchanges the refresh token for an access token for the given client.
@@ -17,8 +18,7 @@ export async function refreshTokensForViya(
   refreshToken: string
 ) {
   const url = '/SASLogon/oauth/token'
-  let token
-  token =
+  const token =
     typeof Buffer === 'undefined'
       ? btoa(clientId + ':' + clientSecret)
       : Buffer.from(clientId + ':' + clientSecret).toString('base64')
@@ -27,8 +27,7 @@ export async function refreshTokensForViya(
     Authorization: 'Basic ' + token
   }
 
-  const formData =
-    typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
+  const formData = isNode() ? new NodeFormData() : new FormData()
   formData.append('grant_type', 'refresh_token')
   formData.append('refresh_token', refreshToken)
 
