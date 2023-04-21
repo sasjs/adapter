@@ -548,6 +548,7 @@ export class SASViyaApiClient {
 
   /**
    * Exchanges the refresh token for an access token for the given client.
+   * This method can only be used by Node.
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
    * @param refreshToken - the refresh token received from the server.

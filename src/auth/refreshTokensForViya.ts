@@ -6,6 +6,7 @@ import { isNode } from '../utils'
 
 /**
  * Exchanges the refresh token for an access token for the given client.
+ * This function can only be used by Node.
  * @param requestClient - the pre-configured HTTP request client
  * @param clientId - the client ID to authenticate with.
  * @param clientSecret - the client secret to authenticate with.

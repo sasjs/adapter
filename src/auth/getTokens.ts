@@ -10,6 +10,7 @@ import { refreshTokensForSasjs } from './refreshTokensForSasjs'
 
 /**
  * Returns the auth configuration, refreshing the tokens if necessary.
+ * This function can only be used by Node, if a server type is SASVIYA.
  * @param requestClient - the pre-configured HTTP request client
  * @param authConfig - an object containing a client ID, secret, access token and refresh token
  * @param serverType - server type for which refreshing the tokens, defaults to SASVIYA
