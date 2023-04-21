@@ -3,6 +3,7 @@ import * as NodeFormData from 'form-data'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { refreshTokensForViya } from '../refreshTokensForViya'
+import * as IsNodeModule from '../../utils/isNode'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
@@ -69,6 +70,18 @@ describe('refreshTokensForViya', () => {
     ).catch((e: any) => e)
 
     expect(error).toEqual(`Error while refreshing tokens: ${tokenError}`)
+  })
+
+  it('should throw an error if environment is not Node', async () => {
+    jest.spyOn(IsNodeModule, 'isNode').mockImplementation(() => false)
+
+    const expectedError = new Error(
+      `Method 'refreshTokensForViya' can only be used by Node.`
+    )
+
+    expect(
+      refreshTokensForViya(requestClient, 'client', 'secret', 'token')
+    ).rejects.toEqual(expectedError)
   })
 })
 

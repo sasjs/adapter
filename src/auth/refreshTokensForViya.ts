@@ -17,6 +17,10 @@ export async function refreshTokensForViya(
   clientSecret: string,
   refreshToken: string
 ) {
+  if (!isNode()) {
+    throw new Error(`Method 'refreshTokensForViya' can only be used by Node.`)
+  }
+
   const url = '/SASLogon/oauth/token'
   const token =
     typeof Buffer === 'undefined'
@@ -27,7 +31,7 @@ export async function refreshTokensForViya(
     Authorization: 'Basic ' + token
   }
 
-  const formData = isNode() ? new NodeFormData() : new FormData()
+  const formData = new NodeFormData()
   formData.append('grant_type', 'refresh_token')
   formData.append('refresh_token', refreshToken)
 
