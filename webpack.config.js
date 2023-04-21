@@ -86,7 +86,8 @@ const nodeConfig = {
   entry: './node/index.ts',
   output: {
     ...browserConfig.output,
-    path: path.resolve(__dirname, 'build', 'node')
+    path: path.resolve(__dirname, 'build', 'node'),
+    filename: 'index.js'
   }
 }
 
