@@ -3,7 +3,7 @@
   "password": "",
   "sasJsConfig": {
     "serverUrl": "",
-    "appLoc": "/Public/app/adapter-tests",
+    "appLoc": "/Public/app/adapter-tests/services",
     "serverType": "SASJS",
     "debug": false,
     "contextName": "sasjs adapter compute context",
