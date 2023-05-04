@@ -133,19 +133,17 @@ export class SASjsApiClient {
     authConfig?: AuthConfig
   ): Promise<ScriptExecutionResult> {
     const access_token = await this.getAccessTokenForRequest(authConfig)
-
-    let executionResult: ScriptExecutionResult = { log: '' }
+    const executionResult: ScriptExecutionResult = { log: '' }
 
     await this.requestClient
       .post('SASjsApi/code/execute', { code, runTime }, access_token)
       .then((res: any) => {
-        const { log, printOutput } = res
-        const webout = res.result
+        const { log, printOutput, result: webout } = res
 
         executionResult.log = log
 
-        if (printOutput) executionResult = { ...executionResult, printOutput }
-        if (webout) executionResult = { ...executionResult, webout }
+        if (printOutput) executionResult.printOutput = printOutput
+        if (webout) executionResult.webout = webout
       })
       .catch((err) => {
         throw prefixMessage(
