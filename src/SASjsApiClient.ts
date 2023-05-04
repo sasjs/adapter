@@ -1,10 +1,23 @@
 import * as NodeFormData from 'form-data'
 import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
+import { prefixMessage } from '@sasjs/utils/error'
 import { ExecutionQuery } from './types'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
 import { getTokens } from './auth/getTokens'
+
+// TODO: move to sasjs/utils
+export interface SASjsAuthResponse {
+  access_token: string
+  refresh_token: string
+}
+
+export interface ScriptExecutionResult {
+  log: string
+  webout?: string
+  printOutput?: string
+}
 
 export class SASjsApiClient {
   constructor(private requestClient: RequestClient) {}
@@ -118,18 +131,30 @@ export class SASjsApiClient {
     code: string,
     runTime: string = 'sas',
     authConfig?: AuthConfig
-  ) {
+  ): Promise<ScriptExecutionResult> {
     const access_token = await this.getAccessTokenForRequest(authConfig)
 
-    let parsedSasjsServerLog = ''
+    let executionResult: ScriptExecutionResult = { log: '' }
 
     await this.requestClient
       .post('SASjsApi/code/execute', { code, runTime }, access_token)
       .then((res: any) => {
-        if (res.log) parsedSasjsServerLog = res.log
+        const { log, printOutput } = res
+        const webout = res.result
+
+        executionResult.log = log
+
+        if (printOutput) executionResult = { ...executionResult, printOutput }
+        if (webout) executionResult = { ...executionResult, webout }
+      })
+      .catch((err) => {
+        throw prefixMessage(
+          err,
+          'Error while sending POST request to execute code. '
+        )
       })
 
-    return parsedSasjsServerLog
+    return executionResult
   }
 
   /**
@@ -151,10 +176,4 @@ export class SASjsApiClient {
   public async refreshTokens(refreshToken: string): Promise<SASjsAuthResponse> {
     return refreshTokensForSasjs(this.requestClient, refreshToken)
   }
-}
-
-// todo move to sasjs/utils
-export interface SASjsAuthResponse {
-  access_token: string
-  refresh_token: string
 }
