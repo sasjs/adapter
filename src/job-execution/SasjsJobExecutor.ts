@@ -13,7 +13,11 @@ import { generateFileUploadForm } from '../file/generateFileUploadForm'
 
 import { RequestClient } from '../request/RequestClient'
 
-import { isRelativePath, appendExtraResponseAttributes } from '../utils'
+import {
+  isRelativePath,
+  appendExtraResponseAttributes,
+  getValidJson
+} from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class SasjsJobExecutor extends BaseJobExecutor {
@@ -89,12 +93,16 @@ export class SasjsJobExecutor extends BaseJobExecutor {
             )
           }
 
+          const { result } = res.result
+          if (result && result.trim()) res.result = getValidJson(result)
+
           this.requestClient!.appendRequest(res, sasJob, config.debug)
 
           const responseObject = appendExtraResponseAttributes(
             res,
             extraResponseAttributes
           )
+
           resolve(responseObject)
         })
         .catch(async (e: Error) => {

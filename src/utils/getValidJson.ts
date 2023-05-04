@@ -17,6 +17,7 @@ export const getValidJson = (str: string | object): object => {
     return JSON.parse(str)
   } catch (e: any) {
     if (e instanceof JsonParseArrayError) throw e
+
     throw new InvalidJsonError()
   }
 }
