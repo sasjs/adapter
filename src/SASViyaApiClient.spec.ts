@@ -29,10 +29,32 @@ describe('SASViyaApiClient', () => {
     jest
       .spyOn(requestClient, 'get')
       .mockImplementation(() => Promise.reject('Not Found'))
+
     const error = await sasViyaApiClient
       .createFolder('test', '/foo')
       .catch((e: any) => e)
+
     expect(error).toBeInstanceOf(RootFolderNotFoundError)
+  })
+
+  it('should throw an error when ', async () => {
+    const testMessage1 = 'test message 1'
+    const testMessage2 = 'test message 2.'
+
+    jest.spyOn(requestClient, 'post').mockImplementation(() => {
+      return Promise.reject({
+        message: testMessage1,
+        response: { data: { message: testMessage2 }, status: 409 }
+      })
+    })
+
+    const error = await sasViyaApiClient
+      .createFolder('test', '/foo')
+      .catch((e: any) => e)
+
+    const expectedError = `${testMessage1}. ${testMessage2} To override, please set "isForced" to "true".`
+
+    expect(error).toEqual(expectedError)
   })
 })
 

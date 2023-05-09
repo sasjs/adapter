@@ -378,12 +378,14 @@ export class SASViyaApiClient {
     isForced?: boolean
   ): Promise<Folder> {
     const logger = process.logger || console
+
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Path or URI of the parent folder is required.')
     }
 
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
+
       if (!parentFolderUri) {
         logger.info(
           `Parent folder at path '${parentFolderPath}' is not present.`
@@ -394,6 +396,7 @@ export class SASViyaApiClient {
           parentFolderPath.lastIndexOf('/')
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
+
         if (newParentFolderPath === '') {
           throw new RootFolderNotFoundError(
             parentFolderPath,
@@ -401,20 +404,24 @@ export class SASViyaApiClient {
             accessToken
           )
         }
+
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
+
         const parentFolder = await this.createFolder(
           newFolderName,
           newParentFolderPath,
           undefined,
           accessToken
         )
+
         logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
         )
+
         parentFolderUri = `/folders/folders/${parentFolder.id}`
-      } else if (isForced && accessToken) {
+      } else if (isForced) {
         const folderPath = parentFolderPath + '/' + folderName
         const folderUri = await this.getFolderUri(folderPath, accessToken)
 
@@ -427,8 +434,8 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } =
-      await this.requestClient.post<Folder>(
+    const { result: createFolderResponse } = await this.requestClient
+      .post<Folder>(
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name: folderName,
@@ -436,12 +443,34 @@ export class SASViyaApiClient {
         },
         accessToken
       )
+      .catch((err) => {
+        const { message, response } = err
+
+        if (message && response && response.data && response.data.message) {
+          const { status } = response
+          const { message: responseMessage } = response.data
+          const messages = [message, responseMessage].map((mes: string) =>
+            /\.$/.test(mes) ? mes : `${mes}.`
+          )
+
+          if (!isForced && status === 409) {
+            messages.push(`To override, please set "isForced" to "true".`)
+          }
+
+          const errMessage = messages.join(' ')
+
+          throw errMessage
+        }
+
+        throw err
+      })
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
       `${parentFolderPath}/${folderName}`,
       accessToken
     )
+
     return createFolderResponse
   }
 
@@ -900,7 +929,7 @@ export class SASViyaApiClient {
     return `/folders/folders/${folderDetails.id}`
   }
 
-  private async getRecycleBinUri(accessToken: string) {
+  private async getRecycleBinUri(accessToken?: string) {
     const url = '/folders/folders/@myRecycleBin'
 
     const { result: folder } = await this.requestClient
@@ -984,7 +1013,7 @@ export class SASViyaApiClient {
     sourceFolder: string,
     targetParentFolder: string,
     targetFolderName: string,
-    accessToken: string
+    accessToken?: string
   ) {
     // If target path is an existing folder, than keep source folder name, othervise rename it with given target folder name
     const sourceFolderName = sourceFolder.split('/').pop() as string
@@ -1051,7 +1080,7 @@ export class SASViyaApiClient {
    * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
    * @param accessToken - an access token for authorizing the request.
    */
-  public async deleteFolder(folderPath: string, accessToken: string) {
+  public async deleteFolder(folderPath: string, accessToken?: string) {
     const recycleBinUri = await this.getRecycleBinUri(accessToken)
     const folderName = folderPath.split('/').pop() || ''
     const date = new Date()
