@@ -434,8 +434,8 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } =
-      await this.requestClient.post<Folder>(
+    const { result: createFolderResponse } = await this.requestClient
+      .post<Folder>(
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name: folderName,
@@ -443,12 +443,34 @@ export class SASViyaApiClient {
         },
         accessToken
       )
+      .catch((err) => {
+        const { message, response } = err
+
+        if (message && response && response.data && response.data.message) {
+          const { status } = response
+          const { message: responseMessage } = response.data
+          const messages = [message, responseMessage].map((mes: string) =>
+            /\.$/.test(mes) ? mes : `${mes}.`
+          )
+
+          if (!isForced && status === 409) {
+            messages.push(`To override, please set "isForced" to "true".`)
+          }
+
+          const errMessage = messages.join(' ')
+
+          throw errMessage
+        }
+
+        throw err
+      })
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
       `${parentFolderPath}/${folderName}`,
       accessToken
     )
+
     return createFolderResponse
   }
 
