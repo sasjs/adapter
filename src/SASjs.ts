@@ -337,13 +337,16 @@ export default class SASjs {
     sasApiClient?: SASViyaApiClient,
     isForced?: boolean
   ) {
-    if (sasApiClient)
+    if (sasApiClient) {
       return await sasApiClient.createFolder(
         folderName,
         parentFolderPath,
         parentFolderUri,
-        accessToken
+        accessToken,
+        isForced
       )
+    }
+
     return await this.sasViyaApiClient!.createFolder(
       folderName,
       parentFolderPath,
@@ -783,13 +786,11 @@ export default class SASjs {
     this.isMethodSupported('deployServicePack', [ServerType.SasViya])
 
     let sasApiClient: any = null
+
     if (serverUrl || appLoc) {
-      if (!serverUrl) {
-        serverUrl = this.sasjsConfig.serverUrl
-      }
-      if (!appLoc) {
-        appLoc = this.sasjsConfig.appLoc
-      }
+      if (!serverUrl) serverUrl = this.sasjsConfig.serverUrl
+      if (!appLoc) appLoc = this.sasjsConfig.appLoc
+
       if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasApiClient = new SASViyaApiClient(
           serverUrl,
@@ -807,11 +808,13 @@ export default class SASjs {
       }
     } else {
       let sasClientConfig: any = null
+
       if (this.sasjsConfig.serverType === ServerType.SasViya) {
         sasClientConfig = this.sasViyaApiClient!.getConfig()
       } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
         sasClientConfig = this.sas9ApiClient!.getConfig()
       }
+
       serverUrl = sasClientConfig.serverUrl
       appLoc = sasClientConfig.rootFolderName as string
     }
