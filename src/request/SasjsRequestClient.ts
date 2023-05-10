@@ -48,7 +48,7 @@ export class SasjsRequestClient extends RequestClient {
         const splittedResponse = response.data.split(SASJS_LOGS_SEPARATOR)
 
         webout = splittedResponse[0]
-        if (webout) parsedResponse = webout
+        if (webout !== undefined) parsedResponse = webout
 
         log = splittedResponse[1]
         printOutput = splittedResponse[2]
