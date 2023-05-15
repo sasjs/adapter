@@ -5,7 +5,3 @@ groups:
       - YuryShkoda
       - medjedovicm
       - sabhas
-  - name: SASjs QA
-    reviewers: 1
-    usernames:
-      - VladislavParhomchik
