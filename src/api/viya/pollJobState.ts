@@ -6,23 +6,39 @@ import { JobStatePollError } from '../../types/errors'
 import { Link, WriteStream } from '../../types'
 import { delay, isNode } from '../../utils'
 
+export enum JobState {
+  Completed = 'completed',
+  Running = 'running',
+  Pending = 'pending',
+  Unavailable = 'unavailable',
+  NoState = '',
+  Failed = 'failed',
+  Error = 'error'
+}
+
+type PollStrategies = PollOptions[]
+
 export async function pollJobState(
   requestClient: RequestClient,
   postedJob: Job,
   debug: boolean,
   authConfig?: AuthConfig,
-  pollOptions?: PollOptions
+  pollOptions?: PollOptions,
+  pollStrategies?: PollStrategies
 ) {
   const logger = process.logger || console
 
-  let pollInterval = 300
-  let maxPollCount = 1000
+  const defaultPollStrategies: PollStrategies = [
+    { maxPollCount: 200, pollInterval: 300, streamLog: false },
+    { maxPollCount: 300, pollInterval: 3000, streamLog: false },
+    { maxPollCount: 400, pollInterval: 30000, streamLog: false },
+    { maxPollCount: 3400, pollInterval: 60000, streamLog: false }
+  ]
 
-  const defaultPollOptions: PollOptions = {
-    maxPollCount,
-    pollInterval,
-    streamLog: false
-  }
+  if (pollStrategies === undefined) pollStrategies = defaultPollStrategies
+  else validatePollStrategies(pollStrategies)
+
+  let defaultPollOptions: PollOptions = pollStrategies.splice(0, 1)[0]
 
   pollOptions = { ...defaultPollOptions, ...(pollOptions || {}) }
 
@@ -31,10 +47,10 @@ export async function pollJobState(
     throw new Error(`Job state link was not found.`)
   }
 
-  let currentState = await getJobState(
+  let currentState: JobState = await getJobState(
     requestClient,
     postedJob,
-    '',
+    JobState.NoState,
     debug,
     authConfig
   ).catch((err) => {
@@ -42,12 +58,13 @@ export async function pollJobState(
       `Error fetching job state from ${stateLink.href}. Starting poll, assuming job to be running.`,
       err
     )
-    return 'unavailable'
+
+    return JobState.Unavailable
   })
 
   let pollCount = 0
 
-  if (currentState === 'completed') {
+  if (currentState === JobState.Completed) {
     return Promise.resolve(currentState)
   }
 
@@ -57,58 +74,53 @@ export async function pollJobState(
     logFileStream = await getFileStream(postedJob, pollOptions.logFolderPath)
   }
 
-  // Poll up to the first 100 times with the specified poll interval
   let result = await doPoll(
     requestClient,
     postedJob,
     currentState,
     debug,
     pollCount,
+    pollOptions,
     authConfig,
-    {
-      ...pollOptions,
-      maxPollCount:
-        pollOptions.maxPollCount <= 100 ? pollOptions.maxPollCount : 100
-    },
     logFileStream
   )
 
   currentState = result.state
   pollCount = result.pollCount
 
-  if (!needsRetry(currentState) || pollCount >= pollOptions.maxPollCount) {
+  if (
+    !needsRetry(currentState) ||
+    (pollCount >= pollOptions.maxPollCount && !pollStrategies.length)
+  ) {
     return currentState
   }
 
-  // If we get to this point, this is a long-running job that needs longer polling.
-  // We will resume polling with a bigger interval of 1 minute
-  let longJobPollOptions: PollOptions = {
-    maxPollCount: 24 * 60,
-    pollInterval: 60000,
-    streamLog: false
-  }
-  if (pollOptions) {
-    longJobPollOptions.streamLog = pollOptions.streamLog
-    longJobPollOptions.logFolderPath = pollOptions.logFolderPath
+  // INFO: If we get to this point, this is a long-running job that needs longer polling.
+  // We will resume polling with a bigger interval according to the next polling strategy
+  while (pollStrategies.length && needsRetry(currentState)) {
+    defaultPollOptions = pollStrategies.splice(0, 1)[0]
+
+    if (pollOptions) {
+      defaultPollOptions.streamLog = pollOptions.streamLog
+      defaultPollOptions.logFolderPath = pollOptions.logFolderPath
+    }
+
+    result = await doPoll(
+      requestClient,
+      postedJob,
+      currentState,
+      debug,
+      pollCount,
+      defaultPollOptions,
+      authConfig,
+      logFileStream
+    )
+
+    currentState = result.state
+    pollCount = result.pollCount
   }
 
-  result = await doPoll(
-    requestClient,
-    postedJob,
-    currentState,
-    debug,
-    pollCount,
-    authConfig,
-    longJobPollOptions,
-    logFileStream
-  )
-
-  currentState = result.state
-  pollCount = result.pollCount
-
-  if (logFileStream) {
-    logFileStream.end()
-  }
+  if (logFileStream) logFileStream.end()
 
   return currentState
 }
@@ -119,17 +131,13 @@ const getJobState = async (
   currentState: string,
   debug: boolean,
   authConfig?: AuthConfig
-) => {
-  const stateLink = job.links.find((l: any) => l.rel === 'state')
-  if (!stateLink) {
-    throw new Error(`Job state link was not found.`)
-  }
+): Promise<JobState> => {
+  const stateLink = job.links.find((l: any) => l.rel === 'state')!
 
   if (needsRetry(currentState)) {
     let tokens
-    if (authConfig) {
-      tokens = await getTokens(requestClient, authConfig)
-    }
+
+    if (authConfig) tokens = await getTokens(requestClient, authConfig)
 
     const { result: jobState } = await requestClient
       .get<string>(
@@ -143,47 +151,36 @@ const getJobState = async (
         throw new JobStatePollError(job.id, err)
       })
 
-    return jobState.trim()
+    return jobState.trim() as JobState
   } else {
-    return currentState
+    return currentState as JobState
   }
 }
 
 const needsRetry = (state: string) =>
-  state === 'running' ||
-  state === '' ||
-  state === 'pending' ||
-  state === 'unavailable'
+  state === JobState.Running ||
+  state === JobState.NoState ||
+  state === JobState.Pending ||
+  state === JobState.Unavailable
 
 const doPoll = async (
   requestClient: RequestClient,
   postedJob: Job,
-  currentState: string,
+  currentState: JobState,
   debug: boolean,
   pollCount: number,
+  pollOptions: PollOptions,
   authConfig?: AuthConfig,
-  pollOptions?: PollOptions,
   logStream?: WriteStream
-): Promise<{ state: string; pollCount: number }> => {
-  let pollInterval = 300
-  let maxPollCount = 1000
+): Promise<{ state: JobState; pollCount: number }> => {
+  const { maxPollCount, pollInterval } = pollOptions
+  const logger = process.logger || console
+  const stateLink = postedJob.links.find((l: Link) => l.rel === 'state')!
   let maxErrorCount = 5
   let errorCount = 0
   let state = currentState
-  let printedState = ''
+  let printedState = JobState.NoState
   let startLogLine = 0
-
-  const logger = process.logger || console
-
-  if (pollOptions) {
-    pollInterval = pollOptions.pollInterval || pollInterval
-    maxPollCount = pollOptions.maxPollCount || maxPollCount
-  }
-
-  const stateLink = postedJob.links.find((l: Link) => l.rel === 'state')
-  if (!stateLink) {
-    throw new Error(`Job state link was not found.`)
-  }
 
   while (needsRetry(state) && pollCount <= maxPollCount) {
     state = await getJobState(
@@ -194,14 +191,17 @@ const doPoll = async (
       authConfig
     ).catch((err) => {
       errorCount++
+
       if (pollCount >= maxPollCount || errorCount >= maxErrorCount) {
         throw err
       }
+
       logger.error(
         `Error fetching job state from ${stateLink.href}. Resuming poll, assuming job to be running.`,
         err
       )
-      return 'unavailable'
+
+      return JobState.Unavailable
     })
 
     pollCount++
@@ -238,12 +238,47 @@ const doPoll = async (
       printedState = state
     }
 
-    if (state != 'unavailable' && errorCount > 0) {
+    if (state !== JobState.Unavailable && errorCount > 0) {
       errorCount = 0
     }
 
-    await delay(pollInterval)
+    if (state !== JobState.Completed) {
+      await delay(pollInterval)
+    }
   }
 
   return { state, pollCount }
+}
+
+const validatePollStrategies = (strategies: PollStrategies) => {
+  const throwError = (message?: string, strategy?: PollOptions) => {
+    throw new Error(
+      `Poll strategies are not valid.${message ? ` ${message}` : ''}${
+        strategy
+          ? ` Invalid poll strategy: \n${JSON.stringify(strategy, null, 2)}`
+          : ''
+      }`
+    )
+  }
+
+  if (!strategies.length) throwError('No strategies provided.')
+
+  strategies.forEach((strategy: PollOptions, i: number) => {
+    const { maxPollCount, pollInterval } = strategy
+
+    if (maxPollCount < 1) {
+      throwError(`'maxPollCount' has to be greater than 0.`, strategy)
+    } else if (i !== 0) {
+      const previousStrategy = strategies[i - 1]
+
+      if (maxPollCount <= previousStrategy.maxPollCount) {
+        throwError(
+          `'maxPollCount' has to be greater than 'maxPollCount' in previous poll strategy.`,
+          strategy
+        )
+      }
+    } else if (pollInterval < 1) {
+      throwError(`'pollInterval' has to be greater than 0.`, strategy)
+    }
+  })
 }

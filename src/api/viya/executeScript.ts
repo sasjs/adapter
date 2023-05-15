@@ -12,7 +12,7 @@ import { RequestClient } from '../../request/RequestClient'
 import { SessionManager } from '../../SessionManager'
 import { isRelativePath, fetchLogByChunks } from '../../utils'
 import { formatDataForRequest } from '../../utils/formatDataForRequest'
-import { pollJobState } from './pollJobState'
+import { pollJobState, JobState } from './pollJobState'
 import { uploadTables } from './uploadTables'
 
 /**
@@ -228,7 +228,7 @@ export async function executeScript(
       )
     }
 
-    if (jobStatus === 'failed' || jobStatus === 'error') {
+    if (jobStatus === JobState.Failed || jobStatus === JobState.Error) {
       throw new ComputeJobExecutionError(currentJob, log)
     }
 

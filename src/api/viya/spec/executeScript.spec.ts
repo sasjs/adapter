@@ -452,7 +452,9 @@ describe('executeScript', () => {
   it('should throw a ComputeJobExecutionError if the job has failed', async () => {
     jest
       .spyOn(pollJobStateModule, 'pollJobState')
-      .mockImplementation(() => Promise.resolve('failed'))
+      .mockImplementation(() =>
+        Promise.resolve(pollJobStateModule.JobState.Failed)
+      )
 
     const error: ComputeJobExecutionError = await executeScript(
       requestClient,
@@ -485,7 +487,9 @@ describe('executeScript', () => {
   it('should throw a ComputeJobExecutionError if the job has errored out', async () => {
     jest
       .spyOn(pollJobStateModule, 'pollJobState')
-      .mockImplementation(() => Promise.resolve('error'))
+      .mockImplementation(() =>
+        Promise.resolve(pollJobStateModule.JobState.Error)
+      )
 
     const error: ComputeJobExecutionError = await executeScript(
       requestClient,
@@ -654,7 +658,9 @@ const setupMocks = () => {
     .mockImplementation(() => Promise.resolve(mockAuthConfig))
   jest
     .spyOn(pollJobStateModule, 'pollJobState')
-    .mockImplementation(() => Promise.resolve('completed'))
+    .mockImplementation(() =>
+      Promise.resolve(pollJobStateModule.JobState.Completed)
+    )
   jest
     .spyOn(sessionManager, 'getVariable')
     .mockImplementation(() =>
