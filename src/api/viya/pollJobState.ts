@@ -29,10 +29,10 @@ export async function pollJobState(
   const logger = process.logger || console
 
   const defaultPollStrategies: PollStrategies = [
-    { maxPollCount: 200, pollInterval: 300, streamLog: false },
-    { maxPollCount: 300, pollInterval: 3000, streamLog: false },
-    { maxPollCount: 400, pollInterval: 30000, streamLog: false },
-    { maxPollCount: 3400, pollInterval: 60000, streamLog: false }
+    { maxPollCount: 200, pollInterval: 300, streamLog: false }, // INFO: approximately ~2 mins (including time to get response (~300ms))
+    { maxPollCount: 300, pollInterval: 3000, streamLog: false }, // INFO: approximately ~5.5 mins (including time to get response (~300ms))
+    { maxPollCount: 400, pollInterval: 30000, streamLog: false }, // INFO: approximately ~50.5 mins (including time to get response (~300ms))
+    { maxPollCount: 3400, pollInterval: 60000, streamLog: false } // INFO: approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
   ]
 
   if (pollStrategies === undefined) pollStrategies = defaultPollStrategies
