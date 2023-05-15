@@ -1,5 +1,5 @@
 import { AuthConfig } from '@sasjs/utils/types'
-import { Job, PollOptions } from '../..'
+import { Job, PollStrategy, PollStrategies } from '../..'
 import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
@@ -16,31 +16,55 @@ export enum JobState {
   Error = 'error'
 }
 
-type PollStrategies = PollOptions[]
-
+/**
+ * Polls job status using default or provided poll strategies.
+ * @param requestClient - the pre-configured HTTP request client.
+ * @param postedJob - the relative or absolute path to the job.
+ * @param debug - sets the _debug flag in the job arguments.
+ * @param authConfig - an access token, refresh token, client and secret for an authorized user.
+ * @param pollStrategy - an object containing maxPollCount, pollInterval, streamLog and logFolderPath. It will override the first default poll strategy if provided.
+ * Example:
+ * { maxPollCount: 200, pollInterval: 300, streamLog: false }
+ * @param pollStrategies - an array of poll strategies. It will override default poll strategies if provided.
+ * Example:
+ * [
+ *    { maxPollCount: 200, pollInterval: 300, streamLog: false },
+ *    { maxPollCount: 300, pollInterval: 3000, streamLog: false },
+ *    { maxPollCount: 500, pollInterval: 30000, streamLog: false }
+ * ]
+ * Default poll strategies:
+ * [
+ *    { maxPollCount: 200, pollInterval: 300, streamLog: false }, // INFO: approximately ~2 mins (including time to get response (~300ms))
+ *    { maxPollCount: 300, pollInterval: 3000, streamLog: false }, // INFO: approximately ~5.5 mins (including time to get response (~300ms))
+ *    { maxPollCount: 400, pollInterval: 30000, streamLog: false }, // INFO: approximately ~50.5 mins (including time to get response (~300ms))
+ *    { maxPollCount: 3400, pollInterval: 60000, streamLog: false } // INFO: approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
+ * ]
+ * @returns - a promise which resolves with a job state
+ */
 export async function pollJobState(
   requestClient: RequestClient,
   postedJob: Job,
   debug: boolean,
   authConfig?: AuthConfig,
-  pollOptions?: PollOptions,
+  pollStrategy?: PollStrategy,
   pollStrategies?: PollStrategies
-) {
+): Promise<JobState> {
   const logger = process.logger || console
 
+  const defaultStreamLog = pollStrategy ? pollStrategy.streamLog : false
   const defaultPollStrategies: PollStrategies = [
-    { maxPollCount: 200, pollInterval: 300, streamLog: false }, // INFO: approximately ~2 mins (including time to get response (~300ms))
-    { maxPollCount: 300, pollInterval: 3000, streamLog: false }, // INFO: approximately ~5.5 mins (including time to get response (~300ms))
-    { maxPollCount: 400, pollInterval: 30000, streamLog: false }, // INFO: approximately ~50.5 mins (including time to get response (~300ms))
-    { maxPollCount: 3400, pollInterval: 60000, streamLog: false } // INFO: approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
+    { maxPollCount: 200, pollInterval: 300, streamLog: defaultStreamLog },
+    { maxPollCount: 300, pollInterval: 3000, streamLog: defaultStreamLog },
+    { maxPollCount: 400, pollInterval: 30000, streamLog: defaultStreamLog },
+    { maxPollCount: 3400, pollInterval: 60000, streamLog: defaultStreamLog }
   ]
 
   if (pollStrategies === undefined) pollStrategies = defaultPollStrategies
   else validatePollStrategies(pollStrategies)
 
-  let defaultPollOptions: PollOptions = pollStrategies.splice(0, 1)[0]
+  let defaultPollStrategy: PollStrategy = pollStrategies.splice(0, 1)[0]
 
-  pollOptions = { ...defaultPollOptions, ...(pollOptions || {}) }
+  pollStrategy = { ...defaultPollStrategy, ...(pollStrategy || {}) }
 
   const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
   if (!stateLink) {
@@ -69,9 +93,9 @@ export async function pollJobState(
   }
 
   let logFileStream
-  if (pollOptions.streamLog && isNode()) {
+  if (pollStrategy.streamLog && isNode()) {
     const { getFileStream } = require('./getFileStream')
-    logFileStream = await getFileStream(postedJob, pollOptions.logFolderPath)
+    logFileStream = await getFileStream(postedJob, pollStrategy.logFolderPath)
   }
 
   let result = await doPoll(
@@ -80,7 +104,7 @@ export async function pollJobState(
     currentState,
     debug,
     pollCount,
-    pollOptions,
+    pollStrategy,
     authConfig,
     logFileStream
   )
@@ -90,7 +114,7 @@ export async function pollJobState(
 
   if (
     !needsRetry(currentState) ||
-    (pollCount >= pollOptions.maxPollCount && !pollStrategies.length)
+    (pollCount >= pollStrategy.maxPollCount && !pollStrategies.length)
   ) {
     return currentState
   }
@@ -98,11 +122,11 @@ export async function pollJobState(
   // INFO: If we get to this point, this is a long-running job that needs longer polling.
   // We will resume polling with a bigger interval according to the next polling strategy
   while (pollStrategies.length && needsRetry(currentState)) {
-    defaultPollOptions = pollStrategies.splice(0, 1)[0]
+    defaultPollStrategy = pollStrategies.splice(0, 1)[0]
 
-    if (pollOptions) {
-      defaultPollOptions.streamLog = pollOptions.streamLog
-      defaultPollOptions.logFolderPath = pollOptions.logFolderPath
+    if (pollStrategy) {
+      defaultPollStrategy.streamLog = pollStrategy.streamLog
+      defaultPollStrategy.logFolderPath = pollStrategy.logFolderPath
     }
 
     result = await doPoll(
@@ -111,7 +135,7 @@ export async function pollJobState(
       currentState,
       debug,
       pollCount,
-      defaultPollOptions,
+      defaultPollStrategy,
       authConfig,
       logFileStream
     )
@@ -169,11 +193,11 @@ const doPoll = async (
   currentState: JobState,
   debug: boolean,
   pollCount: number,
-  pollOptions: PollOptions,
+  pollStrategy: PollStrategy,
   authConfig?: AuthConfig,
   logStream?: WriteStream
 ): Promise<{ state: JobState; pollCount: number }> => {
-  const { maxPollCount, pollInterval } = pollOptions
+  const { maxPollCount, pollInterval } = pollStrategy
   const logger = process.logger || console
   const stateLink = postedJob.links.find((l: Link) => l.rel === 'state')!
   let maxErrorCount = 5
@@ -208,7 +232,7 @@ const doPoll = async (
 
     const jobHref = postedJob.links.find((l: Link) => l.rel === 'self')!.href
 
-    if (pollOptions?.streamLog) {
+    if (pollStrategy?.streamLog) {
       const { result: job } = await requestClient.get<Job>(
         jobHref,
         authConfig?.access_token
@@ -251,7 +275,7 @@ const doPoll = async (
 }
 
 const validatePollStrategies = (strategies: PollStrategies) => {
-  const throwError = (message?: string, strategy?: PollOptions) => {
+  const throwError = (message?: string, strategy?: PollStrategy) => {
     throw new Error(
       `Poll strategies are not valid.${message ? ` ${message}` : ''}${
         strategy
@@ -263,7 +287,7 @@ const validatePollStrategies = (strategies: PollStrategies) => {
 
   if (!strategies.length) throwError('No strategies provided.')
 
-  strategies.forEach((strategy: PollOptions, i: number) => {
+  strategies.forEach((strategy: PollStrategy, i: number) => {
     const { maxPollCount, pollInterval } = strategy
 
     if (maxPollCount < 1) {

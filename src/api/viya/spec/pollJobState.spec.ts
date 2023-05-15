@@ -7,14 +7,14 @@ import * as saveLogModule from '../saveLog'
 import * as getFileStreamModule from '../getFileStream'
 import * as isNodeModule from '../../../utils/isNode'
 import * as delayModule from '../../../utils/delay'
-import { PollOptions } from '../../../types'
+import { PollStrategy, PollStrategies } from '../../../types'
 import { WriteStream } from 'fs'
 
 const baseUrl = 'http://localhost'
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 requestClient['httpClient'].defaults.baseURL = baseUrl
 
-const defaultPollOptions: PollOptions = {
+const defaultPollStrategy: PollStrategy = {
   maxPollCount: 100,
   pollInterval: 500,
   streamLog: false
@@ -32,7 +32,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(getTokensModule.getTokens).toHaveBeenCalledWith(
@@ -47,7 +47,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(getTokensModule.getTokens).not.toHaveBeenCalled()
@@ -59,7 +59,7 @@ describe('pollJobState', () => {
       { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'state') },
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     ).catch((e: any) => e)
 
     expect((error as Error).message).toContain('Job state link was not found.')
@@ -73,7 +73,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(getTokensModule.getTokens).toHaveBeenCalledTimes(3)
@@ -84,7 +84,7 @@ describe('pollJobState', () => {
     const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -97,7 +97,7 @@ describe('pollJobState', () => {
     const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -112,7 +112,7 @@ describe('pollJobState', () => {
     const { getFileStream } = require('../getFileStream')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -128,7 +128,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(saveLogModule.saveLog).not.toHaveBeenCalled()
@@ -137,18 +137,18 @@ describe('pollJobState', () => {
   it('should return the current status when the max poll count is reached', async () => {
     mockRunningPoll()
 
-    const pollOptions = {
-      ...defaultPollOptions,
+    const pollStrategy = {
+      ...defaultPollStrategy,
       maxPollCount: 1
     }
-    const pollStrategies = [pollOptions]
+    const pollStrategies = [pollStrategy]
 
     const state = await pollJobState(
       requestClient,
       mockJob,
       false,
       mockAuthConfig,
-      pollOptions,
+      pollStrategy,
       pollStrategies
     )
 
@@ -164,7 +164,7 @@ describe('pollJobState', () => {
       false,
       mockAuthConfig,
       {
-        ...defaultPollOptions,
+        ...defaultPollStrategy,
         maxPollCount: 200,
         pollInterval: 10
       }
@@ -181,7 +181,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(requestClient.get).toHaveBeenCalledTimes(2)
@@ -197,7 +197,7 @@ describe('pollJobState', () => {
       mockJob,
       true,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect((process as any).logger.info).toHaveBeenCalledTimes(4)
@@ -227,7 +227,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(requestClient.get).toHaveBeenCalledTimes(2)
@@ -242,7 +242,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     ).catch((e: any) => e)
 
     expect(error.message).toEqual(
@@ -288,7 +288,7 @@ describe('pollJobState', () => {
       'Poll strategies are not valid. No strategies provided.'
     )
 
-    let pollStrategies: PollOptions[] = []
+    let pollStrategies: PollStrategies = []
 
     await expect(
       pollJobState(
