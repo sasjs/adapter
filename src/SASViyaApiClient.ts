@@ -29,6 +29,12 @@ import { executeScript } from './api/viya/executeScript'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 
+interface JobExecutionResult {
+  result?: { result: object }
+  log?: string
+  error?: object
+}
+
 /**
  * A client for interfacing with the SAS Viya REST API.
  *
@@ -732,11 +738,13 @@ export class SASViyaApiClient {
     debug: boolean,
     data?: any,
     authConfig?: AuthConfig
-  ) {
+  ): Promise<JobExecutionResult> {
     let access_token = (authConfig || {}).access_token
+
     if (authConfig) {
       ;({ access_token } = await getTokens(this.requestClient, authConfig))
     }
+
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name.'
@@ -749,6 +757,7 @@ export class SASViyaApiClient {
     const fullFolderPath = isRelativePath(sasJob)
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
+
     await this.populateFolderMap(fullFolderPath, access_token)
 
     const jobFolder = this.folderMap.get(fullFolderPath)
@@ -765,9 +774,8 @@ export class SASViyaApiClient {
       files = await this.uploadTables(data, access_token)
     }
 
-    if (!jobToExecute) {
-      throw new Error(`Job was not found.`)
-    }
+    if (!jobToExecute) throw new Error(`Job was not found.`)
+
     const jobDefinitionLink = jobToExecute?.links.find(
       (l) => l.rel === 'getResource'
     )?.href
@@ -807,16 +815,19 @@ export class SASViyaApiClient {
       jobDefinition,
       arguments: jobArguments
     }
+
     const { result: postedJob } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
       access_token
     )
+
     const jobStatus = await this.pollJobState(postedJob, authConfig).catch(
       (err) => {
         throw prefixMessage(err, 'Error while polling job status. ')
       }
     )
+
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       access_token
@@ -827,6 +838,7 @@ export class SASViyaApiClient {
 
     const resultLink = currentJob.results['_webout.json']
     const logLink = currentJob.links.find((l) => l.rel === 'log')
+
     if (resultLink) {
       jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
@@ -834,11 +846,13 @@ export class SASViyaApiClient {
         'text/plain'
       )
     }
+
     if (debug && logLink) {
       log = await this.requestClient
         .get<any>(`${this.serverUrl}${logLink.href}/content`, access_token)
         .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
+
     if (jobStatus === 'failed') {
       throw new JobExecutionError(
         currentJob.error?.errorCode,
@@ -846,7 +860,16 @@ export class SASViyaApiClient {
         log
       )
     }
-    return { result: jobResult?.result, log }
+
+    const executionResult: JobExecutionResult = {
+      result: jobResult?.result,
+      log
+    }
+
+    const { error } = currentJob
+    if (error) executionResult.error = error
+
+    return executionResult
   }
 
   private async populateFolderMap(folderPath: string, accessToken?: string) {
