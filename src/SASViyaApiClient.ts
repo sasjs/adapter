@@ -276,7 +276,7 @@ export class SASViyaApiClient {
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
-   * @param pollStrategy - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }.
+   * @param pollStrategy - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    */
@@ -627,7 +627,7 @@ export class SASViyaApiClient {
    * @param accessToken - an optional access token for an authorized user.
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
-   * @param pollStrategy - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }.
+   * @param pollStrategy - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    */
