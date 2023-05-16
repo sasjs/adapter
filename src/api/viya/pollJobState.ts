@@ -24,20 +24,19 @@ export enum JobState {
  * @param authConfig - an access token, refresh token, client and secret for an authorized user.
  * @param pollStrategy - an object containing maxPollCount, pollInterval, streamLog and logFolderPath. It will override the first default poll strategy if provided.
  * Example:
- * { maxPollCount: 200, pollInterval: 300, streamLog: false }
- * @param pollStrategies - an array of poll strategies. It will override default poll strategies if provided.
- * Example:
+ * {
+ *    maxPollCount: 200,
+ *    pollInterval: 300,
+ *    streamLog: true, // optional, equals to false by default.
+ *    subsequentStrategies?: // optional array of the strategies that should be applied after 'maxPollCount' of the provided poll strategy is reached. If not provided the default (see example below) subsequent poll strategies will be used.
+ * }
+ * @param pollStrategies - optional array of poll strategies. It will override default poll strategies if provided.
+ * Example (default poll strategies):
  * [
- *    { maxPollCount: 200, pollInterval: 300, streamLog: false },
- *    { maxPollCount: 300, pollInterval: 3000, streamLog: false },
- *    { maxPollCount: 500, pollInterval: 30000, streamLog: false }
- * ]
- * Default poll strategies:
- * [
- *    { maxPollCount: 200, pollInterval: 300, streamLog: false }, // INFO: approximately ~2 mins (including time to get response (~300ms))
- *    { maxPollCount: 300, pollInterval: 3000, streamLog: false }, // INFO: approximately ~5.5 mins (including time to get response (~300ms))
- *    { maxPollCount: 400, pollInterval: 30000, streamLog: false }, // INFO: approximately ~50.5 mins (including time to get response (~300ms))
- *    { maxPollCount: 3400, pollInterval: 60000, streamLog: false } // INFO: approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
+ *    { maxPollCount: 200, pollInterval: 300 }, // approximately ~2 mins (including time to get response (~300ms))
+ *    { maxPollCount: 300, pollInterval: 3000 }, // approximately ~5.5 mins (including time to get response (~300ms))
+ *    { maxPollCount: 500, pollInterval: 30000 }, // approximately ~50.5 mins (including time to get response (~300ms))
+ *    { maxPollCount: 3400, pollInterval: 60000 } // approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
  * ]
  * @returns - a promise which resolves with a job state
  */
@@ -47,20 +46,42 @@ export async function pollJobState(
   debug: boolean,
   authConfig?: AuthConfig,
   pollStrategy?: PollStrategy,
-  pollStrategies?: PollStrategies
+  streamLog?: boolean
 ): Promise<JobState> {
   const logger = process.logger || console
 
-  const defaultStreamLog = pollStrategy ? pollStrategy.streamLog : false
+  streamLog = streamLog || false
+
   const defaultPollStrategies: PollStrategies = [
-    { maxPollCount: 200, pollInterval: 300, streamLog: defaultStreamLog },
-    { maxPollCount: 300, pollInterval: 3000, streamLog: defaultStreamLog },
-    { maxPollCount: 400, pollInterval: 30000, streamLog: defaultStreamLog },
-    { maxPollCount: 3400, pollInterval: 60000, streamLog: defaultStreamLog }
+    { maxPollCount: 200, pollInterval: 300 },
+    { maxPollCount: 400, pollInterval: 30000 },
+    { maxPollCount: 300, pollInterval: 3000 },
+    { maxPollCount: 3400, pollInterval: 60000 }
   ]
 
-  if (pollStrategies === undefined) pollStrategies = defaultPollStrategies
-  else validatePollStrategies(pollStrategies)
+  let pollStrategies: PollStrategies
+
+  if (pollStrategy !== undefined) {
+    pollStrategies = [pollStrategy]
+
+    let { subsequentStrategies } = pollStrategy
+
+    if (subsequentStrategies !== undefined) {
+      validatePollStrategies(subsequentStrategies)
+
+      // INFO: sort by 'maxPollCount'
+      subsequentStrategies = subsequentStrategies.sort(
+        (strategyA: PollStrategy, strategyB: PollStrategy) =>
+          strategyA.maxPollCount - strategyB.maxPollCount
+      )
+
+      pollStrategies = [...pollStrategies, ...subsequentStrategies]
+    } else {
+      pollStrategies = [...pollStrategies, ...defaultPollStrategies]
+    }
+  } else {
+    pollStrategies = defaultPollStrategies
+  }
 
   let defaultPollStrategy: PollStrategy = pollStrategies.splice(0, 1)[0]
 
@@ -93,8 +114,9 @@ export async function pollJobState(
   }
 
   let logFileStream
-  if (pollStrategy.streamLog && isNode()) {
+  if (streamLog && isNode()) {
     const { getFileStream } = require('./getFileStream')
+
     logFileStream = await getFileStream(postedJob, pollStrategy.logFolderPath)
   }
 
@@ -106,6 +128,7 @@ export async function pollJobState(
     pollCount,
     pollStrategy,
     authConfig,
+    streamLog,
     logFileStream
   )
 
@@ -125,7 +148,6 @@ export async function pollJobState(
     defaultPollStrategy = pollStrategies.splice(0, 1)[0]
 
     if (pollStrategy) {
-      defaultPollStrategy.streamLog = pollStrategy.streamLog
       defaultPollStrategy.logFolderPath = pollStrategy.logFolderPath
     }
 
@@ -137,6 +159,7 @@ export async function pollJobState(
       pollCount,
       defaultPollStrategy,
       authConfig,
+      streamLog,
       logFileStream
     )
 
@@ -195,6 +218,7 @@ const doPoll = async (
   pollCount: number,
   pollStrategy: PollStrategy,
   authConfig?: AuthConfig,
+  streamLog?: boolean,
   logStream?: WriteStream
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollStrategy
@@ -232,7 +256,7 @@ const doPoll = async (
 
     const jobHref = postedJob.links.find((l: Link) => l.rel === 'self')!.href
 
-    if (pollStrategy?.streamLog) {
+    if (streamLog) {
       const { result: job } = await requestClient.get<Job>(
         jobHref,
         authConfig?.access_token
@@ -284,8 +308,6 @@ const validatePollStrategies = (strategies: PollStrategies) => {
       }`
     )
   }
-
-  if (!strategies.length) throwError('No strategies provided.')
 
   strategies.forEach((strategy: PollStrategy, i: number) => {
     const { maxPollCount, pollInterval } = strategy

@@ -1,7 +1,8 @@
 export interface PollStrategy {
   maxPollCount: number
   pollInterval: number // milliseconds
-  streamLog: boolean
+  subsequentStrategies?: PollStrategy[]
+  streamLog?: boolean
   logFolderPath?: string
 }
 

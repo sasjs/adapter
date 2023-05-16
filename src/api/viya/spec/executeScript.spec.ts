@@ -15,8 +15,7 @@ const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 const defaultPollStrategy: PollStrategy = {
   maxPollCount: 100,
-  pollInterval: 500,
-  streamLog: false
+  pollInterval: 500
 }
 
 describe('executeScript', () => {
