@@ -7,7 +7,7 @@ import * as saveLogModule from '../saveLog'
 import * as getFileStreamModule from '../getFileStream'
 import * as isNodeModule from '../../../utils/isNode'
 import * as delayModule from '../../../utils/delay'
-import { PollStrategy, PollStrategies } from '../../../types'
+import { PollOptions, PollStrategy } from '../../../types'
 import { WriteStream } from 'fs'
 
 const baseUrl = 'http://localhost'
@@ -15,7 +15,7 @@ const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 requestClient['httpClient'].defaults.baseURL = baseUrl
 
 const defaultStreamLog = false
-const defaultPollStrategy: PollStrategy = {
+const defaultPollStrategy: PollOptions = {
   maxPollCount: 100,
   pollInterval: 500
 }
@@ -27,14 +27,10 @@ describe('pollJobState', () => {
   })
 
   it('should get valid tokens if the authConfig has been provided', async () => {
-    await pollJobState(
-      requestClient,
-      mockJob,
-      false,
-      mockAuthConfig,
-      defaultPollStrategy,
-      defaultStreamLog
-    )
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollStrategy,
+      streamLog: defaultStreamLog
+    })
 
     expect(getTokensModule.getTokens).toHaveBeenCalledWith(
       requestClient,
@@ -84,14 +80,10 @@ describe('pollJobState', () => {
     mockSimplePoll()
     const { saveLog } = require('../saveLog')
 
-    await pollJobState(
-      requestClient,
-      mockJob,
-      false,
-      mockAuthConfig,
-      defaultPollStrategy,
-      true
-    )
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollStrategy,
+      streamLog: true
+    })
 
     expect(saveLog).toHaveBeenCalledTimes(2)
   })
@@ -101,14 +93,10 @@ describe('pollJobState', () => {
     const { getFileStream } = require('../getFileStream')
     const { saveLog } = require('../saveLog')
 
-    await pollJobState(
-      requestClient,
-      mockJob,
-      false,
-      mockAuthConfig,
-      defaultPollStrategy,
-      true
-    )
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollStrategy,
+      streamLog: true
+    })
 
     expect(getFileStream).toHaveBeenCalled()
     expect(saveLog).toHaveBeenCalledTimes(2)
@@ -120,14 +108,10 @@ describe('pollJobState', () => {
     const { saveLog } = require('../saveLog')
     const { getFileStream } = require('../getFileStream')
 
-    await pollJobState(
-      requestClient,
-      mockJob,
-      false,
-      mockAuthConfig,
-      defaultPollStrategy,
-      true
-    )
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollStrategy,
+      streamLog: true
+    })
 
     expect(getFileStream).not.toHaveBeenCalled()
     expect(saveLog).not.toHaveBeenCalled()
@@ -150,10 +134,10 @@ describe('pollJobState', () => {
   it('should return the current status when the max poll count is reached', async () => {
     mockRunningPoll()
 
-    const pollStrategy: PollStrategy = {
+    const pollOptions: PollOptions = {
       ...defaultPollStrategy,
       maxPollCount: 1,
-      subsequentStrategies: []
+      pollStrategy: []
     }
 
     const state = await pollJobState(
@@ -161,7 +145,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      pollStrategy
+      pollOptions
     )
 
     expect(state).toEqual('running')
@@ -275,19 +259,19 @@ describe('pollJobState', () => {
 
     const pollIntervals = [3, 4, 5, 6]
 
-    const pollStrategies = [
+    const pollStrategy = [
       { maxPollCount: 2, pollInterval: pollIntervals[1] },
       { maxPollCount: 3, pollInterval: pollIntervals[2] },
       { maxPollCount: 4, pollInterval: pollIntervals[3] }
     ]
 
-    const pollStrategy: PollStrategy = {
+    const pollOptions: PollOptions = {
       maxPollCount: 1,
       pollInterval: pollIntervals[0],
-      subsequentStrategies: pollStrategies
+      pollStrategy: pollStrategy
     }
 
-    await pollJobState(requestClient, mockJob, false, undefined, pollStrategy)
+    await pollJobState(requestClient, mockJob, false, undefined, pollOptions)
 
     expect(delays).toEqual([pollIntervals[0], ...pollIntervals])
   })
@@ -299,7 +283,7 @@ describe('pollJobState', () => {
       pollInterval: 3
     }
 
-    let pollStrategies: PollStrategies = [invalidPollStrategy]
+    let pollStrategy: PollStrategy = [invalidPollStrategy]
 
     let expectedError = new Error(
       `Poll strategies are not valid. 'maxPollCount' has to be greater than 0. Invalid poll strategy: \n${JSON.stringify(
@@ -312,7 +296,7 @@ describe('pollJobState', () => {
     await expect(
       pollJobState(requestClient, mockJob, false, undefined, {
         ...defaultPollStrategy,
-        subsequentStrategies: pollStrategies
+        pollStrategy: pollStrategy
       })
     ).rejects.toThrow(expectedError)
 
@@ -327,7 +311,7 @@ describe('pollJobState', () => {
       pollInterval: 3
     }
 
-    pollStrategies = [validPollStrategy, invalidPollStrategy]
+    pollStrategy = [validPollStrategy, invalidPollStrategy]
 
     expectedError = new Error(
       `Poll strategies are not valid. 'maxPollCount' has to be greater than 'maxPollCount' in previous poll strategy. Invalid poll strategy: \n${JSON.stringify(
@@ -340,7 +324,7 @@ describe('pollJobState', () => {
     await expect(
       pollJobState(requestClient, mockJob, false, undefined, {
         ...defaultPollStrategy,
-        subsequentStrategies: pollStrategies
+        pollStrategy: pollStrategy
       })
     ).rejects.toThrow(expectedError)
 
@@ -350,7 +334,7 @@ describe('pollJobState', () => {
       pollInterval: 0
     }
 
-    pollStrategies = [invalidPollStrategy]
+    pollStrategy = [invalidPollStrategy]
 
     expectedError = new Error(
       `Poll strategies are not valid. 'pollInterval' has to be greater than 0. Invalid poll strategy: \n${JSON.stringify(
@@ -363,7 +347,7 @@ describe('pollJobState', () => {
     await expect(
       pollJobState(requestClient, mockJob, false, undefined, {
         ...defaultPollStrategy,
-        subsequentStrategies: pollStrategies
+        pollStrategy: pollStrategy
       })
     ).rejects.toThrow(expectedError)
   })

@@ -7,13 +7,13 @@ import * as uploadTablesModule from '../uploadTables'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as formatDataModule from '../../../utils/formatDataForRequest'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
-import { PollStrategy } from '../../../types'
+import { PollOptions } from '../../../types'
 import { ComputeJobExecutionError, NotFoundError } from '../../../types/errors'
 import { Logger, LogLevel } from '@sasjs/utils'
 
 const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
-const defaultPollStrategy: PollStrategy = {
+const defaultPollOptions: PollOptions = {
   maxPollCount: 100,
   pollInterval: 500
 }
@@ -97,7 +97,7 @@ describe('executeScript', () => {
       false,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -125,7 +125,7 @@ describe('executeScript', () => {
       false,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -151,7 +151,7 @@ describe('executeScript', () => {
       false,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -175,7 +175,7 @@ describe('executeScript', () => {
       false,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -201,7 +201,7 @@ describe('executeScript', () => {
       false,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -247,7 +247,7 @@ describe('executeScript', () => {
       true,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -294,7 +294,7 @@ describe('executeScript', () => {
       true,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -314,7 +314,7 @@ describe('executeScript', () => {
       true,
       false,
       false,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -334,7 +334,7 @@ describe('executeScript', () => {
       false,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -343,7 +343,7 @@ describe('executeScript', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollStrategy
+      defaultPollOptions
     )
   })
 
@@ -364,7 +364,7 @@ describe('executeScript', () => {
       false,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -390,7 +390,7 @@ describe('executeScript', () => {
       false,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -416,7 +416,7 @@ describe('executeScript', () => {
       true,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -441,7 +441,7 @@ describe('executeScript', () => {
       false,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -467,7 +467,7 @@ describe('executeScript', () => {
       true,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -502,7 +502,7 @@ describe('executeScript', () => {
       true,
       false,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -531,7 +531,7 @@ describe('executeScript', () => {
       false,
       true,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -562,7 +562,7 @@ describe('executeScript', () => {
       false,
       true,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 
@@ -596,7 +596,7 @@ describe('executeScript', () => {
       false,
       true,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     )
 
@@ -623,7 +623,7 @@ describe('executeScript', () => {
       false,
       true,
       true,
-      defaultPollStrategy,
+      defaultPollOptions,
       true
     ).catch((e: any) => e)
 

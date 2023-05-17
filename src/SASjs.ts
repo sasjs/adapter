@@ -3,7 +3,7 @@ import {
   SASjsConfig,
   UploadFile,
   EditContextInput,
-  PollStrategy,
+  PollOptions,
   LoginMechanism
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
@@ -851,7 +851,7 @@ export default class SASjs {
    * @param authConfig - a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    * The access token is not required when the user is authenticated via the browser.
    * @param waitForResult - a boolean that indicates whether the function needs to wait for execution to complete.
-   * @param pollStrategy - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    */
@@ -861,7 +861,7 @@ export default class SASjs {
     config: any = {},
     authConfig?: AuthConfig,
     waitForResult?: boolean,
-    pollStrategy?: PollStrategy,
+    pollOptions?: PollOptions,
     printPid = false,
     variables?: MacroVar
   ) {
@@ -885,7 +885,7 @@ export default class SASjs {
       authConfig,
       !!waitForResult,
       false,
-      pollStrategy,
+      pollOptions,
       printPid,
       variables
     )

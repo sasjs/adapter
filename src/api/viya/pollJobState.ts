@@ -1,5 +1,5 @@
 import { AuthConfig } from '@sasjs/utils/types'
-import { Job, PollStrategy, PollStrategies } from '../..'
+import { Job, PollOptions, PollStrategy } from '../..'
 import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
@@ -17,21 +17,20 @@ export enum JobState {
 }
 
 /**
- * Polls job status using default or provided poll strategies.
+ * Polls job status using default or provided poll options.
  * @param requestClient - the pre-configured HTTP request client.
  * @param postedJob - the relative or absolute path to the job.
  * @param debug - sets the _debug flag in the job arguments.
  * @param authConfig - an access token, refresh token, client and secret for an authorized user.
- * @param pollStrategy - an object containing maxPollCount, pollInterval, streamLog and logFolderPath. It will override the first default poll strategy if provided.
- * Example:
+ * @param pollOptions - an object containing maxPollCount, pollInterval, streamLog and logFolderPath. It will override the first default poll options in poll strategy if provided.
+ * Example pollOptions:
  * {
  *    maxPollCount: 200,
  *    pollInterval: 300,
  *    streamLog: true, // optional, equals to false by default.
- *    subsequentStrategies?: // optional array of the strategies that should be applied after 'maxPollCount' of the provided poll strategy is reached. If not provided the default (see example below) subsequent poll strategies will be used.
+ *    pollStrategy?: // optional array of poll options that should be applied after 'maxPollCount' of the provided poll options is reached. If not provided the default (see example below) poll strategy will be used.
  * }
- * @param pollStrategies - optional array of poll strategies. It will override default poll strategies if provided.
- * Example (default poll strategies):
+ * Example pollStrategy (values used from default poll strategy):
  * [
  *    { maxPollCount: 200, pollInterval: 300 }, // approximately ~2 mins (including time to get response (~300ms))
  *    { maxPollCount: 300, pollInterval: 3000 }, // approximately ~5.5 mins (including time to get response (~300ms))
@@ -45,47 +44,46 @@ export async function pollJobState(
   postedJob: Job,
   debug: boolean,
   authConfig?: AuthConfig,
-  pollStrategy?: PollStrategy,
-  streamLog?: boolean
+  pollOptions?: PollOptions
 ): Promise<JobState> {
   const logger = process.logger || console
 
-  streamLog = streamLog || false
+  const streamLog = pollOptions?.streamLog || false
 
-  const defaultPollStrategies: PollStrategies = [
+  const defaultPollStrategy: PollStrategy = [
     { maxPollCount: 200, pollInterval: 300 },
-    { maxPollCount: 400, pollInterval: 30000 },
     { maxPollCount: 300, pollInterval: 3000 },
+    { maxPollCount: 500, pollInterval: 30000 },
     { maxPollCount: 3400, pollInterval: 60000 }
   ]
 
-  let pollStrategies: PollStrategies
+  let pollStrategy: PollStrategy
 
-  if (pollStrategy !== undefined) {
-    pollStrategies = [pollStrategy]
+  if (pollOptions !== undefined) {
+    pollStrategy = [pollOptions]
 
-    let { subsequentStrategies } = pollStrategy
+    let { pollStrategy: providedPollStrategy } = pollOptions
 
-    if (subsequentStrategies !== undefined) {
-      validatePollStrategies(subsequentStrategies)
+    if (providedPollStrategy !== undefined) {
+      validatePollStrategies(providedPollStrategy)
 
       // INFO: sort by 'maxPollCount'
-      subsequentStrategies = subsequentStrategies.sort(
-        (strategyA: PollStrategy, strategyB: PollStrategy) =>
+      providedPollStrategy = providedPollStrategy.sort(
+        (strategyA: PollOptions, strategyB: PollOptions) =>
           strategyA.maxPollCount - strategyB.maxPollCount
       )
 
-      pollStrategies = [...pollStrategies, ...subsequentStrategies]
+      pollStrategy = [...pollStrategy, ...providedPollStrategy]
     } else {
-      pollStrategies = [...pollStrategies, ...defaultPollStrategies]
+      pollStrategy = [...pollStrategy, ...defaultPollStrategy]
     }
   } else {
-    pollStrategies = defaultPollStrategies
+    pollStrategy = defaultPollStrategy
   }
 
-  let defaultPollStrategy: PollStrategy = pollStrategies.splice(0, 1)[0]
+  let defaultPollOptions: PollOptions = pollStrategy.splice(0, 1)[0]
 
-  pollStrategy = { ...defaultPollStrategy, ...(pollStrategy || {}) }
+  pollOptions = { ...defaultPollOptions, ...(pollOptions || {}) }
 
   const stateLink = postedJob.links.find((l: any) => l.rel === 'state')
   if (!stateLink) {
@@ -117,7 +115,7 @@ export async function pollJobState(
   if (streamLog && isNode()) {
     const { getFileStream } = require('./getFileStream')
 
-    logFileStream = await getFileStream(postedJob, pollStrategy.logFolderPath)
+    logFileStream = await getFileStream(postedJob, pollOptions.logFolderPath)
   }
 
   let result = await doPoll(
@@ -126,7 +124,7 @@ export async function pollJobState(
     currentState,
     debug,
     pollCount,
-    pollStrategy,
+    pollOptions,
     authConfig,
     streamLog,
     logFileStream
@@ -137,18 +135,18 @@ export async function pollJobState(
 
   if (
     !needsRetry(currentState) ||
-    (pollCount >= pollStrategy.maxPollCount && !pollStrategies.length)
+    (pollCount >= pollOptions.maxPollCount && !pollStrategy.length)
   ) {
     return currentState
   }
 
   // INFO: If we get to this point, this is a long-running job that needs longer polling.
   // We will resume polling with a bigger interval according to the next polling strategy
-  while (pollStrategies.length && needsRetry(currentState)) {
-    defaultPollStrategy = pollStrategies.splice(0, 1)[0]
+  while (pollStrategy.length && needsRetry(currentState)) {
+    defaultPollOptions = pollStrategy.splice(0, 1)[0]
 
-    if (pollStrategy) {
-      defaultPollStrategy.logFolderPath = pollStrategy.logFolderPath
+    if (pollOptions) {
+      defaultPollOptions.logFolderPath = pollOptions.logFolderPath
     }
 
     result = await doPoll(
@@ -157,7 +155,7 @@ export async function pollJobState(
       currentState,
       debug,
       pollCount,
-      defaultPollStrategy,
+      defaultPollOptions,
       authConfig,
       streamLog,
       logFileStream
@@ -216,12 +214,12 @@ const doPoll = async (
   currentState: JobState,
   debug: boolean,
   pollCount: number,
-  pollStrategy: PollStrategy,
+  pollOptions: PollOptions,
   authConfig?: AuthConfig,
   streamLog?: boolean,
   logStream?: WriteStream
 ): Promise<{ state: JobState; pollCount: number }> => {
-  const { maxPollCount, pollInterval } = pollStrategy
+  const { maxPollCount, pollInterval } = pollOptions
   const logger = process.logger || console
   const stateLink = postedJob.links.find((l: Link) => l.rel === 'state')!
   let maxErrorCount = 5
@@ -298,33 +296,33 @@ const doPoll = async (
   return { state, pollCount }
 }
 
-const validatePollStrategies = (strategies: PollStrategies) => {
-  const throwError = (message?: string, strategy?: PollStrategy) => {
+const validatePollStrategies = (strategy: PollStrategy) => {
+  const throwError = (message?: string, pollOptions?: PollOptions) => {
     throw new Error(
       `Poll strategies are not valid.${message ? ` ${message}` : ''}${
-        strategy
-          ? ` Invalid poll strategy: \n${JSON.stringify(strategy, null, 2)}`
+        pollOptions
+          ? ` Invalid poll strategy: \n${JSON.stringify(pollOptions, null, 2)}`
           : ''
       }`
     )
   }
 
-  strategies.forEach((strategy: PollStrategy, i: number) => {
-    const { maxPollCount, pollInterval } = strategy
+  strategy.forEach((pollOptions: PollOptions, i: number) => {
+    const { maxPollCount, pollInterval } = pollOptions
 
     if (maxPollCount < 1) {
-      throwError(`'maxPollCount' has to be greater than 0.`, strategy)
+      throwError(`'maxPollCount' has to be greater than 0.`, pollOptions)
     } else if (i !== 0) {
-      const previousStrategy = strategies[i - 1]
+      const previousPollOptions = strategy[i - 1]
 
-      if (maxPollCount <= previousStrategy.maxPollCount) {
+      if (maxPollCount <= previousPollOptions.maxPollCount) {
         throwError(
           `'maxPollCount' has to be greater than 'maxPollCount' in previous poll strategy.`,
-          strategy
+          pollOptions
         )
       }
     } else if (pollInterval < 1) {
-      throwError(`'pollInterval' has to be greater than 0.`, strategy)
+      throwError(`'pollInterval' has to be greater than 0.`, pollOptions)
     }
   })
 }
