@@ -72,14 +72,13 @@ jobs:
           npm install -g replace-in-files-cli
           cd sasjs-tests
           replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"latest",' ./package.json
-          npm i
+          npm i --legacy-peer-deps
           replace-in-files --regex='"serverUrl".*' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}",' ./public/config.json
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
-          pm2 log
           cat ./public/config.json
 
       - name: Run cypress on sasjs

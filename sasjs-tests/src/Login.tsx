@@ -11,7 +11,7 @@ const Login = (): ReactElement<{}> => {
   const handleSubmit = useCallback(
     (e: any) => {
       e.preventDefault()
-      appContext.adapter.logIn(username, password).then((res) => {
+      appContext.adapter.logIn(username, password).then((res: any) => {
         appContext.setIsLoggedIn(res.isLoggedIn)
       })
     },
