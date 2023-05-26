@@ -79,6 +79,7 @@ jobs:
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
+          pm2 log
           cat ./public/config.json
 
       - name: Run cypress on sasjs
