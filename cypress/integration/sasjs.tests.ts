@@ -25,6 +25,8 @@ context('sasjs-tests', function () {
           '.ui.massive.icon.primary.left.labeled.button'
         )[0]
 
+        // ui massive icon primary left labeled button
+
         cy.task('log', `startButton: ${startButton}`)
 
         if (
@@ -35,8 +37,17 @@ context('sasjs-tests', function () {
           cy.task('log', `username: ${username}`)
           cy.task('log', `password: ${password}`)
 
+          const userNameInput = cy.get('input[placeholder="User Name"]')
+          const passwordInput = cy.get('input[placeholder="Password"]')
+
+          cy.task('log', `userNameInput: ${userNameInput}`)
+          cy.task('log', `passwordInput: ${passwordInput}`)
+
           cy.get('input[placeholder="User Name"]').type(username)
           cy.get('input[placeholder="Password"]').type(password)
+          const submitBtn = cy.get('.submit-button')
+
+          cy.task('log', `submitBtn: ${submitBtn}`)
           cy.get('.submit-button').click()
         }
 
@@ -48,6 +59,13 @@ context('sasjs-tests', function () {
               .click()
               .then(() => {
                 cy.task('log', `50`)
+
+                const loadingButton = $body.find(
+                  '.ui.massive.loading.primary.button'
+                )[0]
+
+                cy.task('log', `loadingButton: ${loadingButton}`)
+
                 cy.get('.ui.massive.loading.primary.button', {
                   timeout: testingFinishTimeout
                 })
