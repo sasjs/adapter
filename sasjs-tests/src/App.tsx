@@ -1,7 +1,7 @@
 import React, { ReactElement, useState, useContext, useEffect } from 'react'
 import { TestSuiteRunner, TestSuite, AppContext } from '@sasjs/test-framework'
 import { basicTests } from './testSuites/Basic'
-// import { sendArrTests, sendObjTests } from './testSuites/RequestData'
+import { sendArrTests, sendObjTests } from './testSuites/RequestData'
 // import { specialCaseTests } from './testSuites/SpecialCases'
 // import { sasjsRequestTests } from './testSuites/SasjsRequests'
 // import '@sasjs/test-framework/dist/index.css'
@@ -16,8 +16,8 @@ const App = (): ReactElement<{}> => {
   useEffect(() => {
     if (adapter) {
       const testSuites = [
-        basicTests(adapter, config.userName, config.password)
-        // sendArrTests(adapter, appLoc),
+        // basicTests(adapter, config.userName, config.password)
+        sendArrTests(adapter, appLoc)
         // sendObjTests(adapter),
         // specialCaseTests(adapter),
         // sasjsRequestTests(adapter),
