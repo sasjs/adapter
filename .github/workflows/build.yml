@@ -81,10 +81,10 @@ jobs:
           pm2 start --name sasjs-test npm -- start
           cat ./public/config.json
           cat ../cypress.json
-          curl http://localhost:3000
 
       - name: Run cypress on sasjs
         run: |
+          ss -lntu
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           # replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           # replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
