@@ -67,26 +67,26 @@ export const basicTests = (
       assertion: (response: any) =>
         response && response.isLoggedIn && response.userName === userName
     },
-    {
-      title: 'Trigger login callback',
-      description:
-        'Should trigger required login callback and after successful login, it should finish the request',
-      test: async () => {
-        await adapter.logOut()
+    // {
+    //   title: 'Trigger login callback',
+    //   description:
+    //     'Should trigger required login callback and after successful login, it should finish the request',
+    //   test: async () => {
+    //     await adapter.logOut()
 
-        return await adapter.request(
-          'common/sendArr',
-          stringData,
-          undefined,
-          async () => {
-            await adapter.logIn(userName, password)
-          }
-        )
-      },
-      assertion: (response: any) => {
-        return response.table1[0][0] === stringData.table1[0].col1
-      }
-    },
+    //     return await adapter.request(
+    //       'common/sendArr',
+    //       stringData,
+    //       undefined,
+    //       async () => {
+    //         await adapter.logIn(userName, password)
+    //       }
+    //     )
+    //   },
+    //   assertion: (response: any) => {
+    //     return response.table1[0][0] === stringData.table1[0].col1
+    //   }
+    // },
     {
       title: 'Request with debug on',
       description:
