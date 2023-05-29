@@ -80,6 +80,8 @@ jobs:
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
           cat ./public/config.json
+          cat ../cypress.json
+          pm2 logs sasjs-test --lines 100
 
       - name: Run cypress on sasjs
         run: |
