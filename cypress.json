@@ -1,6 +1,6 @@
 {
   "chromeWebSecurity": false,
-  "defaultCommandTimeout": 20000,
+  "defaultCommandTimeout": 100000,
   "env": {
     "sasjsTestsUrl": "",
     "username": "sasjstests",

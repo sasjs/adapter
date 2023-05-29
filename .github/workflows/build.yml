@@ -81,7 +81,7 @@ jobs:
           pm2 start --name sasjs-test npm -- start
           cat ./public/config.json
           cat ../cypress.json
-          pm2 logs sasjs-test --lines 100
+          curl http://localhost:3000
 
       - name: Run cypress on sasjs
         run: |
