@@ -82,10 +82,10 @@ jobs:
           cat ./public/config.json
           cat ../cypress.json
 
-      - name: Sleep for 60 seconds
+      - name: Sleep for 10 seconds
         uses: jakejarvis/wait-action@master
         with:
-          time: '60s'
+          time: '10s'
 
       - name: Run cypress on sasjs
         run: |
