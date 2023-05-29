@@ -6,6 +6,6 @@
     "username": "sasjstests",
     "password": "sasjs1stheBe$t",
     "screenshotOnRunFailure": false,
-    "testingFinishTimeout": 600000
+    "testingFinishTimeout": 60000
   }
 }
