@@ -3,8 +3,8 @@
   "defaultCommandTimeout": 20000,
   "env": {
     "sasjsTestsUrl": "",
-    "username": "",
-    "password": "",
+    "username": "sasjstests",
+    "password": "sasjs1stheBe$t",
     "screenshotOnRunFailure": false,
     "testingFinishTimeout": 600000
   }
