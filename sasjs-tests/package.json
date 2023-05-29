@@ -4,7 +4,7 @@
   "homepage": ".",
   "private": true,
   "dependencies": {
-    "@sasjs/adapter": "file:../build/sasjs-adapter-5.0.0.tgz",
+    "@sasjs/adapter": "4.3.5",
     "@sasjs/test-framework": "1.5.7",
     "@types/jest": "^26.0.20",
     "@types/node": "^14.14.41",

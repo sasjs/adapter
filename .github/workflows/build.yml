@@ -77,7 +77,7 @@ jobs:
           # replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
           # replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
-          npm run update:adapter
+          # npm run update:adapter
           pm2 start --name sasjs-test npm -- start
           cat ./public/config.json
           cat ../cypress.json
