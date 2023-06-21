@@ -85,6 +85,7 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
+          curl http://localhost:3000
           sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
       # For some reason if coverage report action is run before other commands, those commands can't access the directories and files on which they depend on
