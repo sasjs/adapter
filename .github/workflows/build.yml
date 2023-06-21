@@ -80,6 +80,11 @@ jobs:
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
 
+      - name: Sleep for 10 seconds
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '10s'
+
       - name: Run cypress on sasjs
         run: |
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
