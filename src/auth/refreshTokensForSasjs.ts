@@ -1,7 +1,7 @@
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
-import { ServerType } from '@sasjs/utils'
+import { ServerType } from '@sasjs/utils/types'
 
 /**
  * Exchanges the refresh token for an access token for the given client.

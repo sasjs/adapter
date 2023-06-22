@@ -2,7 +2,7 @@ import * as pem from 'pem'
 import * as http from 'http'
 import * as https from 'https'
 import { app, mockedAuthResponse } from './SAS_server_app'
-import { ServerType } from '@sasjs/utils'
+import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
 import {

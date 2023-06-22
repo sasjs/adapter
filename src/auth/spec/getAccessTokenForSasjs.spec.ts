@@ -1,4 +1,4 @@
-import { AuthConfig } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils/types'
 import { generateToken, mockSasjsAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { getAccessTokenForSasjs } from '../getAccessTokenForSasjs'

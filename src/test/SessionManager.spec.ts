@@ -2,7 +2,7 @@ import { SessionManager } from '../SessionManager'
 import { RequestClient } from '../request/RequestClient'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
-import { Logger, LogLevel } from '@sasjs/utils'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { Session, Context } from '../types'
 
 jest.mock('axios')

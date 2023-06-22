@@ -1,4 +1,4 @@
-import { AuthConfig } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils/types'
 import * as NodeFormData from 'form-data'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'

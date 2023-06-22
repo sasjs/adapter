@@ -1,4 +1,4 @@
-import { ServerType } from '@sasjs/utils'
+import { ServerType } from '@sasjs/utils/types'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { refreshTokensForSasjs } from '../refreshTokensForSasjs'
