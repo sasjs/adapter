@@ -213,7 +213,7 @@ describe('RequestClient - Self Signed Server', () => {
       serverType: ServerType.SasViya
     })
 
-    const expectedError = 'self signed certificate'
+    const expectedError = 'self-signed certificate'
 
     const rejectionErrorMessage = await adapterWithoutCertificate
       .getAccessToken('clientId', 'clientSecret', 'authCode')
