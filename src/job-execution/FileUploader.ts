@@ -101,7 +101,7 @@ export class FileUploader extends BaseJobExecutor {
                     : res.result
                 break
             }
-          } else if (this.serverType !== ServerType.Sasjs) {
+          } else {
             jsonResponse =
               typeof res.result === 'string'
                 ? getValidJson(res.result)
