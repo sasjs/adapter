@@ -22,6 +22,7 @@ export async function getTokens(
 ): Promise<AuthConfig> {
   const logger = process.logger || console
   let { access_token, refresh_token, client, secret } = authConfig
+
   if (
     isAccessTokenExpiring(access_token) ||
     isRefreshTokenExpiring(refresh_token)
@@ -29,6 +30,7 @@ export async function getTokens(
     if (hasTokenExpired(refresh_token)) {
       const error =
         'Unable to obtain new access token. Your refresh token has expired.'
+
       logger.error(error)
 
       throw new Error(error)
@@ -47,5 +49,6 @@ export async function getTokens(
         : await refreshTokensForSasjs(requestClient, refresh_token)
     ;({ access_token, refresh_token } = tokens)
   }
+
   return { access_token, refresh_token, client, secret }
 }

@@ -1,5 +1,7 @@
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
+import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
+import { ServerType } from '@sasjs/utils/types'
 
 /**
  * Exchanges the auth code for an access token for the given client.
@@ -31,6 +33,16 @@ export async function getAccessTokenForSasjs(
       }
     })
     .catch((err) => {
-      throw prefixMessage(err, 'Error while getting access token. ')
+      throw prefixMessage(
+        err,
+        getTokenRequestErrorPrefix(
+          'fetching access token',
+          'getAccessTokenForSasjs',
+          ServerType.Sasjs,
+          url,
+          data,
+          clientId
+        )
+      )
     })
 }

@@ -2,7 +2,7 @@ import * as pem from 'pem'
 import * as http from 'http'
 import * as https from 'https'
 import { app, mockedAuthResponse } from './SAS_server_app'
-import { ServerType } from '@sasjs/utils'
+import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
 import {
@@ -11,8 +11,8 @@ import {
   NotFoundError,
   InternalServerError
 } from '../types/errors'
-import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
+import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -66,14 +66,18 @@ describe('RequestClient', () => {
   })
 
   it('should response the POST method with Unauthorized', async () => {
-    await expect(
-      adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toEqual(
-      prefixMessage(
-        new LoginRequiredError(incorrectAuthCodeErr),
-        'Error while getting access token. '
+    const expectedError = new LoginRequiredError({
+      error: 'unauthorized',
+      error_description: 'Bad credentials'
+    })
+
+    const rejectionErrorMessage = await adapter
+      .getAccessToken('clientId', 'clientSecret', 'incorrect')
+      .catch((err) =>
+        getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
       )
-    )
+
+    expect(rejectionErrorMessage).toEqual(expectedError.message)
   })
 
   describe('handleError', () => {
@@ -209,15 +213,15 @@ describe('RequestClient - Self Signed Server', () => {
       serverType: ServerType.SasViya
     })
 
-    await expect(
-      adapterWithoutCertificate.getAccessToken(
-        'clientId',
-        'clientSecret',
-        'authCode'
+    const expectedError = 'self-signed certificate'
+
+    const rejectionErrorMessage = await adapterWithoutCertificate
+      .getAccessToken('clientId', 'clientSecret', 'authCode')
+      .catch((err) =>
+        getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
       )
-    ).rejects.toThrow(
-      `Error while getting access token. ${ERROR_MESSAGES.selfSigned}`
-    )
+
+    expect(rejectionErrorMessage).toEqual(expectedError)
   })
 
   it('should response the POST method using insecure flag', async () => {
@@ -247,14 +251,18 @@ describe('RequestClient - Self Signed Server', () => {
   })
 
   it('should response the POST method with Unauthorized', async () => {
-    await expect(
-      adapter.getAccessToken('clientId', 'clientSecret', 'incorrect')
-    ).rejects.toEqual(
-      prefixMessage(
-        new LoginRequiredError(incorrectAuthCodeErr),
-        'Error while getting access token. '
+    const expectedError = new LoginRequiredError({
+      error: 'unauthorized',
+      error_description: 'Bad credentials'
+    })
+
+    const rejectionErrorMessage = await adapter
+      .getAccessToken('clientId', 'clientSecret', 'incorrect')
+      .catch((err) =>
+        getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
       )
-    )
+
+    expect(rejectionErrorMessage).toEqual(expectedError.message)
   })
 })
 

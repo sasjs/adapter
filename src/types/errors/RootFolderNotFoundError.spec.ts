@@ -7,7 +7,7 @@ describe('RootFolderNotFoundError', () => {
 
     const error = new RootFolderNotFoundError(
       '/myProject',
-      'https://analytium.co.uk',
+      'https://sas.4gl.io',
       token
     )
 
@@ -19,7 +19,7 @@ describe('RootFolderNotFoundError', () => {
   it('when access token is not provided, error message should not contain scopes', () => {
     const error = new RootFolderNotFoundError(
       '/myProject',
-      'https://analytium.co.uk'
+      'https://sas.4gl.io'
     )
 
     expect(error).toBeInstanceOf(RootFolderNotFoundError)
@@ -30,7 +30,7 @@ describe('RootFolderNotFoundError', () => {
 
   it('should include the folder path and SASDrive URL in the message', () => {
     const folderPath = '/myProject'
-    const serverUrl = 'https://analytium.co.uk'
+    const serverUrl = 'https://sas.4gl.io'
     const error = new RootFolderNotFoundError(folderPath, serverUrl)
 
     expect(error).toBeInstanceOf(RootFolderNotFoundError)

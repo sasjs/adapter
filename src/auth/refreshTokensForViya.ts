@@ -1,8 +1,9 @@
-import { SasAuthResponse } from '@sasjs/utils/types'
+import { SasAuthResponse, ServerType } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import * as NodeFormData from 'form-data'
 import { RequestClient } from '../request/RequestClient'
 import { isNode } from '../utils'
+import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
 
 /**
  * Exchanges the refresh token for an access token for the given client.
@@ -46,7 +47,19 @@ export async function refreshTokensForViya(
     )
     .then((res) => res.result)
     .catch((err) => {
-      throw prefixMessage(err, 'Error while refreshing tokens: ')
+      throw prefixMessage(
+        err,
+        getTokenRequestErrorPrefix(
+          'refreshing tokens',
+          'refreshTokensForViya',
+          ServerType.SasViya,
+          url,
+          formData,
+          headers,
+          clientId,
+          clientSecret
+        )
+      )
     })
 
   return authResponse
