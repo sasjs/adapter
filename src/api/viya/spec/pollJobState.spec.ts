@@ -6,17 +6,18 @@ import * as getTokensModule from '../../../auth/getTokens'
 import * as saveLogModule from '../saveLog'
 import * as getFileStreamModule from '../getFileStream'
 import * as isNodeModule from '../../../utils/isNode'
-import { PollOptions } from '../../../types'
+import * as delayModule from '../../../utils/delay'
+import { PollOptions, PollStrategy } from '../../../types'
 import { WriteStream } from 'fs'
 
 const baseUrl = 'http://localhost'
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 requestClient['httpClient'].defaults.baseURL = baseUrl
 
-const defaultPollOptions: PollOptions = {
+const defaultStreamLog = false
+const defaultPollStrategy: PollOptions = {
   maxPollCount: 100,
-  pollInterval: 500,
-  streamLog: false
+  pollInterval: 500
 }
 
 describe('pollJobState', () => {
@@ -26,13 +27,10 @@ describe('pollJobState', () => {
   })
 
   it('should get valid tokens if the authConfig has been provided', async () => {
-    await pollJobState(
-      requestClient,
-      mockJob,
-      false,
-      mockAuthConfig,
-      defaultPollOptions
-    )
+    await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
+      ...defaultPollStrategy,
+      streamLog: defaultStreamLog
+    })
 
     expect(getTokensModule.getTokens).toHaveBeenCalledWith(
       requestClient,
@@ -46,7 +44,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(getTokensModule.getTokens).not.toHaveBeenCalled()
@@ -58,7 +56,7 @@ describe('pollJobState', () => {
       { ...mockJob, links: mockJob.links.filter((l) => l.rel !== 'state') },
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     ).catch((e: any) => e)
 
     expect((error as Error).message).toContain('Job state link was not found.')
@@ -72,7 +70,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(getTokensModule.getTokens).toHaveBeenCalledTimes(3)
@@ -83,7 +81,7 @@ describe('pollJobState', () => {
     const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -96,7 +94,7 @@ describe('pollJobState', () => {
     const { saveLog } = require('../saveLog')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -111,7 +109,7 @@ describe('pollJobState', () => {
     const { getFileStream } = require('../getFileStream')
 
     await pollJobState(requestClient, mockJob, false, mockAuthConfig, {
-      ...defaultPollOptions,
+      ...defaultPollStrategy,
       streamLog: true
     })
 
@@ -127,7 +125,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(saveLogModule.saveLog).not.toHaveBeenCalled()
@@ -136,15 +134,18 @@ describe('pollJobState', () => {
   it('should return the current status when the max poll count is reached', async () => {
     mockRunningPoll()
 
+    const pollOptions: PollOptions = {
+      ...defaultPollStrategy,
+      maxPollCount: 1,
+      pollStrategy: []
+    }
+
     const state = await pollJobState(
       requestClient,
       mockJob,
       false,
       mockAuthConfig,
-      {
-        ...defaultPollOptions,
-        maxPollCount: 1
-      }
+      pollOptions
     )
 
     expect(state).toEqual('running')
@@ -159,7 +160,7 @@ describe('pollJobState', () => {
       false,
       mockAuthConfig,
       {
-        ...defaultPollOptions,
+        ...defaultPollStrategy,
         maxPollCount: 200,
         pollInterval: 10
       }
@@ -176,7 +177,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(requestClient.get).toHaveBeenCalledTimes(2)
@@ -192,7 +193,7 @@ describe('pollJobState', () => {
       mockJob,
       true,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect((process as any).logger.info).toHaveBeenCalledTimes(4)
@@ -222,7 +223,7 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     )
 
     expect(requestClient.get).toHaveBeenCalledTimes(2)
@@ -237,12 +238,118 @@ describe('pollJobState', () => {
       mockJob,
       false,
       undefined,
-      defaultPollOptions
+      defaultPollStrategy
     ).catch((e: any) => e)
 
     expect(error.message).toEqual(
       'Error while polling job state for job j0b: Status Error'
     )
+  })
+
+  it('should change poll strategies', async () => {
+    mockSimplePoll(6)
+
+    const delays: number[] = []
+
+    jest.spyOn(delayModule, 'delay').mockImplementation((ms: number) => {
+      delays.push(ms)
+
+      return Promise.resolve()
+    })
+
+    const pollIntervals = [3, 4, 5, 6]
+
+    const pollStrategy = [
+      { maxPollCount: 2, pollInterval: pollIntervals[1] },
+      { maxPollCount: 3, pollInterval: pollIntervals[2] },
+      { maxPollCount: 4, pollInterval: pollIntervals[3] }
+    ]
+
+    const pollOptions: PollOptions = {
+      maxPollCount: 1,
+      pollInterval: pollIntervals[0],
+      pollStrategy: pollStrategy
+    }
+
+    await pollJobState(requestClient, mockJob, false, undefined, pollOptions)
+
+    expect(delays).toEqual([pollIntervals[0], ...pollIntervals])
+  })
+
+  it('should throw an error if not valid poll strategies provided', async () => {
+    // INFO: 'maxPollCount' has to be > 0
+    let invalidPollStrategy = {
+      maxPollCount: 0,
+      pollInterval: 3
+    }
+
+    let pollStrategy: PollStrategy = [invalidPollStrategy]
+
+    let expectedError = new Error(
+      `Poll strategies are not valid. 'maxPollCount' has to be greater than 0. Invalid poll strategy: \n${JSON.stringify(
+        invalidPollStrategy,
+        null,
+        2
+      )}`
+    )
+
+    await expect(
+      pollJobState(requestClient, mockJob, false, undefined, {
+        ...defaultPollStrategy,
+        pollStrategy: pollStrategy
+      })
+    ).rejects.toThrow(expectedError)
+
+    // INFO: 'maxPollCount' has to be > than 'maxPollCount' of the previous strategy
+    const validPollStrategy = {
+      maxPollCount: 5,
+      pollInterval: 2
+    }
+
+    invalidPollStrategy = {
+      maxPollCount: validPollStrategy.maxPollCount,
+      pollInterval: 3
+    }
+
+    pollStrategy = [validPollStrategy, invalidPollStrategy]
+
+    expectedError = new Error(
+      `Poll strategies are not valid. 'maxPollCount' has to be greater than 'maxPollCount' in previous poll strategy. Invalid poll strategy: \n${JSON.stringify(
+        invalidPollStrategy,
+        null,
+        2
+      )}`
+    )
+
+    await expect(
+      pollJobState(requestClient, mockJob, false, undefined, {
+        ...defaultPollStrategy,
+        pollStrategy: pollStrategy
+      })
+    ).rejects.toThrow(expectedError)
+
+    // INFO: invalid 'pollInterval'
+    invalidPollStrategy = {
+      maxPollCount: 1,
+      pollInterval: 0
+    }
+
+    pollStrategy = [invalidPollStrategy]
+
+    expectedError = new Error(
+      `Poll strategies are not valid. 'pollInterval' has to be greater than 0. Invalid poll strategy: \n${JSON.stringify(
+        invalidPollStrategy,
+        null,
+        2
+      )}`
+    )
+
+    await expect(
+      pollJobState(requestClient, mockJob, false, undefined, {
+        ...defaultPollStrategy,
+        pollStrategy: pollStrategy
+      })
+    ).rejects.toThrow(expectedError)
   })
 })
 
@@ -273,11 +380,14 @@ const setupMocks = () => {
 
 const mockSimplePoll = (runningCount = 2) => {
   let count = 0
+
   jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
+
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
+
     return Promise.resolve({
       result:
         count === 0
@@ -293,11 +403,14 @@ const mockSimplePoll = (runningCount = 2) => {
 
 const mockRunningPoll = () => {
   let count = 0
+
   jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
+
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
+
     return Promise.resolve({
       result: count === 0 ? 'pending' : 'running',
       etag: '',
@@ -308,11 +421,14 @@ const mockRunningPoll = () => {
 
 const mockLongPoll = () => {
   let count = 0
+
   jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
+
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
+
     return Promise.resolve({
       result: count <= 102 ? 'running' : 'completed',
       etag: '',
@@ -323,14 +439,18 @@ const mockLongPoll = () => {
 
 const mockPollWithSingleError = () => {
   let count = 0
+
   jest.spyOn(requestClient, 'get').mockImplementation((url) => {
     count++
+
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
+
     if (count === 1) {
       return Promise.reject('Status Error')
     }
+
     return Promise.resolve({
       result: count === 0 ? 'pending' : 'completed',
       etag: '',
@@ -344,6 +464,7 @@ const mockErroredPoll = () => {
     if (url.includes('job')) {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     }
+
     return Promise.reject('Status Error')
   })
 }
