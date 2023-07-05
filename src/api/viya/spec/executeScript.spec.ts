@@ -9,7 +9,7 @@ import * as formatDataModule from '../../../utils/formatDataForRequest'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import { PollOptions } from '../../../types'
 import { ComputeJobExecutionError, NotFoundError } from '../../../types/errors'
-import { Logger, LogLevel } from '@sasjs/utils'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()

@@ -1,5 +1,7 @@
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
+import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
+import { ServerType } from '@sasjs/utils/types'
 
 /**
  * Exchanges the refresh token for an access token for the given client.
@@ -28,7 +30,15 @@ export async function refreshTokensForSasjs(
       }
     })
     .catch((err) => {
-      throw prefixMessage(err, 'Error while refreshing tokens: ')
+      throw prefixMessage(
+        err,
+        getTokenRequestErrorPrefix(
+          'refreshing tokens',
+          'refreshTokensForSasjs',
+          ServerType.Sasjs,
+          url
+        )
+      )
     })
 
   return authResponse

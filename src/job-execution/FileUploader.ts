@@ -93,15 +93,24 @@ export class FileUploader extends BaseJobExecutor {
                   this.requestClient,
                   config.serverUrl
                 )
+
                 break
               case ServerType.Sas9:
                 jsonResponse =
                   typeof res.result === 'string'
                     ? parseWeboutResponse(res.result, uploadUrl)
                     : res.result
+
+                break
+              case ServerType.Sasjs:
+                jsonResponse =
+                  typeof res.result === 'string'
+                    ? getValidJson(res.result)
+                    : res.result
+
                 break
             }
-          } else if (this.serverType !== ServerType.Sasjs) {
+          } else {
             jsonResponse =
               typeof res.result === 'string'
                 ? getValidJson(res.result)

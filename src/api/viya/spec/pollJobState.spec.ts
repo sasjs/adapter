@@ -1,4 +1,4 @@
-import { Logger, LogLevel } from '@sasjs/utils'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
 import { pollJobState } from '../pollJobState'

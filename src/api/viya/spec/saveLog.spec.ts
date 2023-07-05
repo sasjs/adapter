@@ -1,4 +1,4 @@
-import { Logger, LogLevel } from '@sasjs/utils'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { RequestClient } from '../../../request/RequestClient'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import * as writeStreamModule from '../writeStream'

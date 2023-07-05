@@ -93,8 +93,10 @@ export class SasjsJobExecutor extends BaseJobExecutor {
             )
           }
 
-          const { result } = res.result
-          if (result && result.trim()) res.result = getValidJson(result)
+          const { result } = res
+
+          if (result && typeof result === 'string' && result.trim())
+            res.result = getValidJson(result)
 
           this.requestClient!.appendRequest(res, sasJob, config.debug)
 
