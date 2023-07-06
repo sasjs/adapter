@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/fermium]
+        node-version: [lts/hydrogen]
 
     steps:
       - name: Checkout
