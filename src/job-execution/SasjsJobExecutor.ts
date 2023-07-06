@@ -10,8 +10,8 @@ import {
   LoginRequiredError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
-
 import { RequestClient } from '../request/RequestClient'
+import { getFormData } from '../utils'
 
 import {
   isRelativePath,
@@ -53,8 +53,7 @@ export class SasjsJobExecutor extends BaseJobExecutor {
      * Use the available form data object (FormData in Browser, NodeFormData in
      *  Node)
      */
-    let formData =
-      typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
+    let formData = getFormData()
 
     if (data) {
       // file upload approach

@@ -26,12 +26,12 @@ export const generateFileUploadForm = (
       )
     }
 
-    if (typeof FormData === 'undefined' && formData instanceof NodeFormData) {
+    if (formData instanceof NodeFormData) {
       formData.append(name, csv, {
         filename: `${name}.csv`,
         contentType: 'application/csv'
       })
-    } else {
+    } else if (formData instanceof FormData) {
       const file = new Blob([csv], {
         type: 'application/csv'
       })
