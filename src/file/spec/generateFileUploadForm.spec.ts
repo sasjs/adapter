@@ -1,6 +1,7 @@
 import { generateFileUploadForm } from '../generateFileUploadForm'
-import * as NodeFormData from 'form-data'
 import { convertToCSV } from '../../utils/convertToCsv'
+import * as NodeFormData from 'form-data'
+import * as isNodeModule from '../../utils/isNode'
 
 describe('generateFileUploadForm', () => {
   beforeAll(() => {
@@ -14,6 +15,10 @@ describe('generateFileUploadForm', () => {
   })
 
   describe('browser', () => {
+    afterAll(() => {
+      jest.restoreAllMocks()
+    })
+
     it('should generate file upload form from data', () => {
       const formData = new FormData()
       const testTable = 'sometable'
@@ -33,6 +38,7 @@ describe('generateFileUploadForm', () => {
       )[0]
 
       jest.spyOn(formData, 'append').mockImplementation(() => {})
+      jest.spyOn(isNodeModule, 'isNode').mockImplementation(() => false)
 
       generateFileUploadForm(formData, testTableWithNullVars)
 

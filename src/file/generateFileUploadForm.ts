@@ -1,5 +1,6 @@
 import * as NodeFormData from 'form-data'
 import { convertToCSV } from '../utils/convertToCsv'
+import { isNode } from '../utils'
 
 /**
  * One of the approaches SASjs takes to send tables-formatted JSON (see README)
@@ -26,12 +27,14 @@ export const generateFileUploadForm = (
       )
     }
 
-    if (formData instanceof NodeFormData) {
-      formData.append(name, csv, {
+    if (isNode()) {
+      // environment is Node and formData is instance of NodeFormData
+      ;(formData as NodeFormData).append(name, csv, {
         filename: `${name}.csv`,
         contentType: 'application/csv'
       })
-    } else if (formData instanceof FormData) {
+    } else {
+      // environment is Browser and formData is instance of FormData
       const file = new Blob([csv], {
         type: 'application/csv'
       })
