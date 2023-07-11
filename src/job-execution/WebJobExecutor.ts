@@ -16,10 +16,11 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
-  appendExtraResponseAttributes
+  appendExtraResponseAttributes,
+  parseWeboutResponse,
+  getFormData
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
-import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -112,8 +113,7 @@ export class WebJobExecutor extends BaseJobExecutor {
      * Use the available form data object (FormData in Browser, NodeFormData in
      *  Node)
      */
-    let formData =
-      typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
+    let formData = getFormData()
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
