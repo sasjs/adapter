@@ -27,14 +27,15 @@ export const generateFileUploadForm = (
       )
     }
 
+    // INFO: unfortunately it is not possible to check if formData is instance of NodeFormData or FormData because it will return true for both
     if (isNode()) {
-      // environment is Node and formData is instance of NodeFormData
+      // INFO: environment is Node and formData is instance of NodeFormData
       ;(formData as NodeFormData).append(name, csv, {
         filename: `${name}.csv`,
         contentType: 'application/csv'
       })
     } else {
-      // environment is Browser and formData is instance of FormData
+      // INFO: environment is Browser and formData is instance of FormData
       const file = new Blob([csv], {
         type: 'application/csv'
       })
