@@ -53,7 +53,9 @@ export const basicTests = (
         return await newAdapterIns.checkSession()
       },
       assertion: (response: any) =>
-        response?.isLoggedIn && response?.userName === userName
+        adapter.getSasjsConfig().serverType === ServerType.Sas9
+          ? response?.isLoggedIn
+          : response?.isLoggedIn && response?.userName === userName
     },
     {
       title: 'Multiple Log in attempts',

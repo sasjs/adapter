@@ -152,7 +152,7 @@ export class AuthManager {
         await this.performCASSecurityCheck()
       }
 
-      this.loginCallback()
+      await this.loginCallback()
       this.userName = loginParams.username
     }
 
