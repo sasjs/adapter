@@ -1,6 +1,8 @@
+import { ServerType } from '@sasjs/utils/types'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { refreshTokensForSasjs } from '../refreshTokensForSasjs'
+import { getTokenRequestErrorPrefixResponse } from '../getTokenRequestErrorPrefix'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
@@ -38,9 +40,9 @@ describe('refreshTokensForSasjs', () => {
     const error = await refreshTokensForSasjs(
       requestClient,
       refresh_token
-    ).catch((e: any) => e)
+    ).catch((e: any) => getTokenRequestErrorPrefixResponse(e, ServerType.Sasjs))
 
-    expect(error).toEqual(`Error while refreshing tokens: ${tokenError}`)
+    expect(error).toEqual(tokenError)
   })
 })
 

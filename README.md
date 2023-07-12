@@ -20,7 +20,7 @@ SASjs is a open-source framework for building Web Apps on SAS® platforms. You c
 
 1 - `npm install @sasjs/adapter` - for use in a nodeJS project (recommended)
 
-2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@3/index.min.js) and use a copy of the latest JS file
+2 - [Download](https://cdn.jsdelivr.net/npm/@sasjs/adapter@4/index.min.js) and use a copy of the latest JS file
 
 3 - Reference directly from the CDN - in which case click [here](https://www.jsdelivr.com/package/npm/@sasjs/adapter?tab=collection) and select "SRI" to get the script tag with the integrity hash.
 
@@ -152,6 +152,14 @@ The `request()` method also has optional parameters such as a config object and 
 The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.
 
 The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.
+
+### Session Manager
+
+To execute a script on Viya a session has to be created first which is time-consuming (~15sec). That is why a Session Manager has been created which is implementing the following logic:
+
+1. When the first session is requested, we also create one more session (hot session) for future requests. Please notice two pending POST requests to create a session within the same context: ![the first session request](./screenshots/session-manager-first-request.png)
+2. When a subsequent request for a session is received and there is a hot session available (not expired), this session is returned and an asynchronous request to create another hot session is sent. Please notice that there is a pending POST request to create a new session while a job has been already finished execution (POST request with status 201): ![subsequent session request](./screenshots/subsequent-session-request.png)
+3. When a subsequent request for a session is received and there is no available hot session, 2 requests are sent asynchronously to create a session. The first created session will be returned and another session will be reserved for future requests.
 
 ### Variable Types
 
@@ -332,7 +340,7 @@ If you find this library useful, help us grow our star graph!
 
 ## Contributors ✨
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -341,18 +349,21 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center"><a href="https://krishna-acondy.io/"><img src="https://avatars.githubusercontent.com/u/2980428?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Krishna Acondy</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=krishna-acondy" title="Code">💻</a> <a href="#infra-krishna-acondy" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#blog-krishna-acondy" title="Blogposts">📝</a> <a href="#content-krishna-acondy" title="Content">🖋</a> <a href="#ideas-krishna-acondy" title="Ideas, Planning, & Feedback">🤔</a> <a href="#video-krishna-acondy" title="Videos">📹</a></td>
-    <td align="center"><a href="https://www.erudicat.com/"><img src="https://avatars.githubusercontent.com/u/25773492?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Yury Shkoda</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Code">💻</a> <a href="#infra-YuryShkoda" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-YuryShkoda" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Tests">⚠️</a> <a href="#video-YuryShkoda" title="Videos">📹</a></td>
-    <td align="center"><a href="https://github.com/medjedovicm"><img src="https://avatars.githubusercontent.com/u/18329105?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Mihajlo Medjedovic</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Code">💻</a> <a href="#infra-medjedovicm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Amedjedovicm" title="Reviewed Pull Requests">👀</a></td>
-    <td align="center"><a href="https://github.com/allanbowe"><img src="https://avatars.githubusercontent.com/u/4420615?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Allan Bowe</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Aallanbowe" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Tests">⚠️</a> <a href="#mentoring-allanbowe" title="Mentoring">🧑‍🏫</a> <a href="#maintenance-allanbowe" title="Maintenance">🚧</a></td>
-    <td align="center"><a href="https://github.com/saadjutt01"><img src="https://avatars.githubusercontent.com/u/8914650?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Muhammad Saad </b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asaadjutt01" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Tests">⚠️</a> <a href="#mentoring-saadjutt01" title="Mentoring">🧑‍🏫</a> <a href="#infra-saadjutt01" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-    <td align="center"><a href="https://github.com/sabhas"><img src="https://avatars.githubusercontent.com/u/82647447?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sabir Hassan</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asabhas" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Tests">⚠️</a> <a href="#ideas-sabhas" title="Ideas, Planning, & Feedback">🤔</a></td>
-    <td align="center"><a href="https://github.com/VladislavParhomchik"><img src="https://avatars.githubusercontent.com/u/83717836?v=4?s=100" width="100px;" alt=""/><br /><sub><b>VladislavParhomchik</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=VladislavParhomchik" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3AVladislavParhomchik" title="Reviewed Pull Requests">👀</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="http://rudvfaden.github.io/"><img src="https://avatars.githubusercontent.com/u/2445577?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Rud Faden</b></sub></a><br /><a href="#userTesting-rudvfaden" title="User Testing">📓</a> <a href="https://github.com/sasjs/adapter/commits?author=rudvfaden" title="Documentation">📖</a></td>
-  </tr>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://krishna-acondy.io/"><img src="https://avatars.githubusercontent.com/u/2980428?v=4?s=100" width="100px;" alt="Krishna Acondy"/><br /><sub><b>Krishna Acondy</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=krishna-acondy" title="Code">💻</a> <a href="#infra-krishna-acondy" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#blog-krishna-acondy" title="Blogposts">📝</a> <a href="#content-krishna-acondy" title="Content">🖋</a> <a href="#ideas-krishna-acondy" title="Ideas, Planning, & Feedback">🤔</a> <a href="#video-krishna-acondy" title="Videos">📹</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.erudicat.com/"><img src="https://avatars.githubusercontent.com/u/25773492?v=4?s=100" width="100px;" alt="Yury Shkoda"/><br /><sub><b>Yury Shkoda</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Code">💻</a> <a href="#infra-YuryShkoda" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-YuryShkoda" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/sasjs/adapter/commits?author=YuryShkoda" title="Tests">⚠️</a> <a href="#video-YuryShkoda" title="Videos">📹</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/medjedovicm"><img src="https://avatars.githubusercontent.com/u/18329105?v=4?s=100" width="100px;" alt="Mihajlo Medjedovic"/><br /><sub><b>Mihajlo Medjedovic</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Code">💻</a> <a href="#infra-medjedovicm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/sasjs/adapter/commits?author=medjedovicm" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Amedjedovicm" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/allanbowe"><img src="https://avatars.githubusercontent.com/u/4420615?v=4?s=100" width="100px;" alt="Allan Bowe"/><br /><sub><b>Allan Bowe</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Aallanbowe" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=allanbowe" title="Tests">⚠️</a> <a href="#mentoring-allanbowe" title="Mentoring">🧑‍🏫</a> <a href="#maintenance-allanbowe" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/saadjutt01"><img src="https://avatars.githubusercontent.com/u/8914650?v=4?s=100" width="100px;" alt="Muhammad Saad "/><br /><sub><b>Muhammad Saad </b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asaadjutt01" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=saadjutt01" title="Tests">⚠️</a> <a href="#mentoring-saadjutt01" title="Mentoring">🧑‍🏫</a> <a href="#infra-saadjutt01" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sabhas"><img src="https://avatars.githubusercontent.com/u/82647447?v=4?s=100" width="100px;" alt="Sabir Hassan"/><br /><sub><b>Sabir Hassan</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Code">💻</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3Asabhas" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/sasjs/adapter/commits?author=sabhas" title="Tests">⚠️</a> <a href="#ideas-sabhas" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/VladislavParhomchik"><img src="https://avatars.githubusercontent.com/u/83717836?v=4?s=100" width="100px;" alt="VladislavParhomchik"/><br /><sub><b>VladislavParhomchik</b></sub></a><br /><a href="https://github.com/sasjs/adapter/commits?author=VladislavParhomchik" title="Tests">⚠️</a> <a href="https://github.com/sasjs/adapter/pulls?q=is%3Apr+reviewed-by%3AVladislavParhomchik" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://rudvfaden.github.io/"><img src="https://avatars.githubusercontent.com/u/2445577?v=4?s=100" width="100px;" alt="Rud Faden"/><br /><sub><b>Rud Faden</b></sub></a><br /><a href="#userTesting-rudvfaden" title="User Testing">📓</a> <a href="https://github.com/sasjs/adapter/commits?author=rudvfaden" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/saramartinelli1992"><img src="https://avatars.githubusercontent.com/u/100193908?v=4?s=100" width="100px;" alt="Sara"/><br /><sub><b>Sara</b></sub></a><br /><a href="#userTesting-saramartinelli1992" title="User Testing">📓</a> <a href="#platform-saramartinelli1992" title="Packaging/porting to new platform">📦</a></td>
+    </tr>
+  </tbody>
 </table>
 
 <!-- markdownlint-restore -->

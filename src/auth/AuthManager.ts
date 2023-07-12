@@ -1,16 +1,19 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
-import { LoginOptions, LoginResult } from '../types/Login'
+import { NotFoundError } from '../types/errors'
+import { LoginOptions, LoginResult, LoginResultInternal } from '../types/Login'
 import { serialize } from '../utils'
+import { extractUserLongNameSas9 } from '../utils/sas9/extractUserLongNameSas9'
 import { openWebPage } from './openWebPage'
 import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
 
 export class AuthManager {
   public userName = ''
+  public userLongName = ''
   private loginUrl: string
   private logoutUrl: string
-  private redirectedLoginUrl = `/SASLogon/home`
+  private redirectedLoginUrl = `/SASLogon` //SAS 9 M8 no longer redirects from `/SASLogon/home` to the login page. `/SASLogon` seems to be stable enough across SAS versions
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
@@ -33,15 +36,22 @@ export class AuthManager {
   public async redirectedLogIn({
     onLoggedOut
   }: LoginOptions): Promise<LoginResult> {
-    const { isLoggedIn: isLoggedInAlready, userName: currentSessionUsername } =
-      await this.fetchUserName()
+    const {
+      isLoggedIn: isLoggedInAlready,
+      userName: currentSessionUserName,
+      userLongName: currentSessionUserLongName
+    } = await this.fetchUserName()
 
     if (isLoggedInAlready) {
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
+
       await this.loginCallback()
 
       return {
         isLoggedIn: true,
-        userName: currentSessionUsername
+        userName: currentSessionUserName,
+        userLongName: currentSessionUserLongName
       }
     }
 
@@ -56,7 +66,7 @@ export class AuthManager {
     )
 
     if (!loginPopup) {
-      return { isLoggedIn: false, userName: '' }
+      return { isLoggedIn: false, userName: '', userLongName: '' }
     }
 
     const { isLoggedIn } =
@@ -71,14 +81,14 @@ export class AuthManager {
         await this.performCASSecurityCheck()
       }
 
-      const { userName } = await this.fetchUserName()
+      const { userName, userLongName } = await this.fetchUserName()
 
       await this.loginCallback()
 
-      return { isLoggedIn: true, userName }
+      return { isLoggedIn: true, userName, userLongName }
     }
 
-    return { isLoggedIn: false, userName: '' }
+    return { isLoggedIn: false, userName: '', userLongName: '' }
   }
 
   /**
@@ -93,27 +103,29 @@ export class AuthManager {
       username,
       password
     }
+    this.userName = ''
+    this.userLongName = ''
 
     let {
       isLoggedIn: isLoggedInAlready,
       loginForm,
-      userName: currentSessionUsername
+      userLongName: currentSessionUserLongName
     } = await this.checkSession()
 
     if (isLoggedInAlready) {
-      if (currentSessionUsername === loginParams.username) {
-        await this.loginCallback()
+      const logger = process.logger || console
+      logger.log('login was not attempted as a valid session already exists')
 
-        this.userName = currentSessionUsername!
-        return {
-          isLoggedIn: true,
-          userName: this.userName
-        }
-      } else {
-        await this.logOut()
-        loginForm = await this.getNewLoginForm()
+      await this.loginCallback()
+
+      this.userName = loginParams.username
+      this.userLongName = currentSessionUserLongName
+      return {
+        isLoggedIn: true,
+        userName: this.userName,
+        userLongName: this.userLongName
       }
-    } else this.userName = ''
+    }
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
@@ -126,12 +138,13 @@ export class AuthManager {
         loginResponse = await this.sendLoginRequest(newLoginForm, loginParams)
       }
 
+      // Sometimes due to redirection on SAS9 and SASViya we don't get the login response that says
+      // You have signed in. Therefore, we have to make an extra request for checking session to
+      // ensure either user is logged in or not.
+
       const res = await this.checkSession()
       isLoggedIn = res.isLoggedIn
-
-      if (isLoggedIn) this.userName = res.userName
-    } else {
-      this.userName = loginParams.username
+      this.userLongName = res.userLongName
     }
 
     if (isLoggedIn) {
@@ -150,21 +163,25 @@ export class AuthManager {
       }
 
       this.loginCallback()
-    } else this.userName = ''
+      this.userName = loginParams.username
+    }
 
     return {
       isLoggedIn,
-      userName: this.userName
+      userName: this.userName,
+      userLongName: this.userLongName
     }
   }
 
   private async performCASSecurityCheck() {
     const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
-
-    return await this.requestClient.get<string>(
-      `/SASLogon/login?service=${casAuthenticationUrl}`,
-      undefined
-    )
+    
+    return await this.requestClient
+      .get<string>(`/SASLogon/login?service=${casAuthenticationUrl}`, undefined)
+      .catch((err) => {
+        // ignore if resource not found error
+        if (!(err instanceof NotFoundError)) throw err
+      })
   }
 
   private async sendLoginRequest(
@@ -205,15 +222,12 @@ export class AuthManager {
    * Checks whether a session is active, or login is required.
    * @returns - a promise which resolves with an object containing three values
    *  - a boolean `isLoggedIn`
-   *  - a string `userName` and
+   *  - a string `userName`,
+   *  - a string `userFullName` and
    *  - a form `loginForm` if not loggedin.
    */
-  public async checkSession(): Promise<{
-    isLoggedIn: boolean
-    userName: string
-    loginForm?: any
-  }> {
-    const { isLoggedIn, userName } = await this.fetchUserName()
+  public async checkSession(): Promise<LoginResultInternal> {
+    const { isLoggedIn, userName, userLongName } = await this.fetchUserName()
     let loginForm = null
 
     if (!isLoggedIn) {
@@ -226,7 +240,8 @@ export class AuthManager {
 
     return Promise.resolve({
       isLoggedIn,
-      userName: userName.toLowerCase(),
+      userName,
+      userLongName,
       loginForm
     })
   }
@@ -247,7 +262,7 @@ export class AuthManager {
     }
 
     const { result: formResponse } = await this.requestClient.get<string>(
-      this.loginUrl.replace('.do', ''),
+      this.loginUrl.replace('/SASLogon/login.do', '/SASLogon/login'),
       undefined,
       'text/plain'
     )
@@ -255,10 +270,7 @@ export class AuthManager {
     return await this.getLoginForm(formResponse)
   }
 
-  private async fetchUserName(): Promise<{
-    isLoggedIn: boolean
-    userName: string
-  }> {
+  private async fetchUserName(): Promise<LoginResult> {
     const url =
       this.serverType === ServerType.SasViya
         ? `${this.serverUrl}/identities/users/@currentUser`
@@ -273,15 +285,19 @@ export class AuthManager {
       })
 
     const isLoggedIn = loginResponse !== 'authErr'
-    const userName = isLoggedIn ? this.extractUserName(loginResponse) : ''
 
     if (!isLoggedIn) {
       //We will logout to make sure cookies are removed and login form is presented
       //Residue can happen in case of session expiration
       await this.logOut()
+      return { isLoggedIn, userName: '', userLongName: '' }
     }
 
-    return { isLoggedIn, userName }
+    return {
+      isLoggedIn,
+      userName: this.extractUserName(loginResponse),
+      userLongName: this.extractUserLongName(loginResponse)
+    }
   }
 
   private extractUserName = (response: any): string => {
@@ -290,15 +306,7 @@ export class AuthManager {
         return response?.id
 
       case ServerType.Sas9:
-        const matched = response?.match(/"title":"Log Off [0-1a-zA-Z ]*"/)
-        const username = matched?.[0].slice(17, -1)
-
-        if (!username.includes(' ')) return username
-
-        return username
-          .split(' ')
-          .map((name: string) => name.slice(0, 3).toLowerCase())
-          .join('')
+        return ''
 
       case ServerType.Sasjs:
         return response?.username
@@ -309,13 +317,31 @@ export class AuthManager {
     }
   }
 
+  private extractUserLongName = (response: any): string => {
+    switch (this.serverType) {
+      case ServerType.SasViya:
+        return response?.name
+
+      case ServerType.Sas9:
+        return extractUserLongNameSas9(response)
+
+      case ServerType.Sasjs:
+        return response?.displayName
+
+      default:
+        console.error('Server Type not found in extractUserName function')
+        return ''
+    }
+  }
+
   private getLoginForm(response: any) {
-    const pattern: RegExp = /<form.+action="(.*Logon[^"]*).*>/
+    const pattern: RegExp = /<form.+action="(.*(Logon|login)[^"]*).*>/
     const matches = pattern.exec(response)
     const formInputs: any = {}
 
     if (matches && matches.length) {
       this.setLoginUrl(matches)
+      response = response.replace(/<input/g, '\n<input')
       const inputs = response.match(/<input.*"hidden"[^>]*>/g)
 
       if (inputs) {
@@ -346,7 +372,7 @@ export class AuthManager {
       this.loginUrl =
         this.serverType === ServerType.SasViya
           ? tempLoginLink
-          : loginUrl.replace('.do', '')
+          : loginUrl.replace('/SASLogon/login.do', '/SASLogon/login')
     }
   }
 

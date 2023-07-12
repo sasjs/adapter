@@ -10,10 +10,14 @@ import {
   LoginRequiredError
 } from '../types/errors'
 import { generateFileUploadForm } from '../file/generateFileUploadForm'
-
 import { RequestClient } from '../request/RequestClient'
+import { getFormData } from '../utils'
 
-import { isRelativePath, appendExtraResponseAttributes } from '../utils'
+import {
+  isRelativePath,
+  appendExtraResponseAttributes,
+  getValidJson
+} from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
 export class SasjsJobExecutor extends BaseJobExecutor {
@@ -49,8 +53,7 @@ export class SasjsJobExecutor extends BaseJobExecutor {
      * Use the available form data object (FormData in Browser, NodeFormData in
      *  Node)
      */
-    let formData =
-      typeof FormData === 'undefined' ? new NodeFormData() : new FormData()
+    let formData = getFormData()
 
     if (data) {
       // file upload approach
@@ -89,12 +92,18 @@ export class SasjsJobExecutor extends BaseJobExecutor {
             )
           }
 
+          const { result } = res
+
+          if (result && typeof result === 'string' && result.trim())
+            res.result = getValidJson(result)
+
           this.requestClient!.appendRequest(res, sasJob, config.debug)
 
           const responseObject = appendExtraResponseAttributes(
             res,
             extraResponseAttributes
           )
+
           resolve(responseObject)
         })
         .catch(async (e: Error) => {

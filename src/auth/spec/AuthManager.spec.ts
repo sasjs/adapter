@@ -20,6 +20,7 @@ describe('AuthManager', () => {
   const serverUrl = 'http://test-server.com'
   const serverType = ServerType.SasViya
   const userName = 'test-username'
+  const userLongName = 'test-user long name'
   const password = 'test-password'
   const requestClient = new RequestClient(serverUrl)
 
@@ -73,6 +74,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: true,
           userName,
+          userLongName,
           loginForm: 'test'
         })
       )
@@ -95,49 +97,24 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: true,
           userName: 'someOtherUsername',
+          userLongName: 'someOtherUser Long name',
           loginForm: null
         })
       )
-      jest
-        .spyOn(authManager, 'logOut')
-        .mockImplementation(() => Promise.resolve(true))
+      jest.spyOn(authManager, 'logOut')
 
-      jest
-        .spyOn<any, any>(authManager, 'getNewLoginForm')
-        .mockImplementation(() =>
-          Promise.resolve({
-            name: 'test'
-          })
-        )
-      mockedAxios.post.mockImplementation(() =>
-        Promise.resolve({ data: mockLoginSuccessResponse })
-      )
+      jest.spyOn<any, any>(authManager, 'getNewLoginForm')
+      jest.spyOn<any, any>(authManager, 'sendLoginRequest')
 
       const loginResponse = await authManager.logIn(userName, password)
 
       expect(loginResponse.isLoggedIn).toBeTruthy()
       expect(loginResponse.userName).toEqual(userName)
 
-      const loginParams = serialize({
-        _service: 'default',
-        username: userName,
-        password,
-        name: 'test'
-      })
       expect(authCallback).toHaveBeenCalledTimes(1)
-      expect(authManager.logOut).toHaveBeenCalledTimes(1)
-      expect(authManager['getNewLoginForm']).toHaveBeenCalledTimes(1)
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        `/SASLogon/login`,
-        loginParams,
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: '*/*'
-          }
-        }
-      )
+      expect(authManager.logOut).toHaveBeenCalledTimes(0)
+      expect(authManager['getNewLoginForm']).toHaveBeenCalledTimes(0)
+      expect(authManager['sendLoginRequest']).toHaveBeenCalledTimes(0)
       expect(authCallback).toHaveBeenCalledTimes(1)
     })
 
@@ -152,6 +129,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -196,6 +174,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -245,6 +224,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: '',
+          userLongName: '',
           loginForm: { name: 'test' }
         })
       )
@@ -290,6 +270,7 @@ describe('AuthManager', () => {
         Promise.resolve({
           isLoggedIn: false,
           userName: 'test',
+          userLongName: 'test Long name',
           loginForm: { name: 'test' }
         })
       )
@@ -384,7 +365,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual(userName)
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon/home`,
+        `/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -428,7 +409,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual(userName)
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon/home`,
+        `/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -472,7 +453,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual('')
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon/home`,
+        `/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -516,7 +497,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual('')
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon/home`,
+        `/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -560,43 +541,8 @@ describe('AuthManager', () => {
       )
     })
 
-    it('return session information when logged in - SAS9', async () => {
-      // username cannot have `-` and cannot be uppercased
-      const username = 'testusername'
-      const serverType = ServerType.Sas9
-      const authManager = new AuthManager(
-        serverUrl,
-        serverType,
-        requestClient,
-        authCallback
-      )
-      mockedAxios.get.mockImplementation(() =>
-        Promise.resolve({
-          data: `"title":"Log Off ${username}","url":"javascript: clearFrame(\"/SASStoredProcess/do?_action=logoff\")"' })`
-        })
-      )
-
-      const response = await authManager.checkSession()
-      expect(response.isLoggedIn).toBeTruthy()
-      expect(response.userName).toEqual(username)
-      expect(mockedAxios.get).toHaveBeenNthCalledWith(
-        1,
-        `http://test-server.com/SASStoredProcess`,
-        {
-          withCredentials: true,
-          responseType: 'text',
-          transformResponse: undefined,
-          headers: {
-            Accept: '*/*',
-            'Content-Type': 'text/plain'
-          }
-        }
-      )
-    })
-
     it('return session information when logged in - SAS9 - having full name in html', async () => {
       const fullname = 'FirstName LastName'
-      const username = 'firlas'
       const serverType = ServerType.Sas9
       const authManager = new AuthManager(
         serverUrl,
@@ -612,7 +558,8 @@ describe('AuthManager', () => {
 
       const response = await authManager.checkSession()
       expect(response.isLoggedIn).toBeTruthy()
-      expect(response.userName).toEqual(username)
+      expect(response.userName).toEqual('')
+      expect(response.userLongName).toEqual(fullname)
       expect(mockedAxios.get).toHaveBeenNthCalledWith(
         1,
         `http://test-server.com/SASStoredProcess`,

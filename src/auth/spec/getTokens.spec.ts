@@ -1,4 +1,4 @@
-import { AuthConfig } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils/types'
 import * as refreshTokensModule from '../refreshTokensForViya'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { getTokens } from '../getTokens'

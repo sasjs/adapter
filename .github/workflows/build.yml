@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/fermium]
+        node-version: [lts/hydrogen]
 
     steps:
       - uses: actions/checkout@v2
@@ -39,12 +39,6 @@ jobs:
         env:
           CI: true
 
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.DCGITLAB_KEY }}
-          known_hosts: 'placeholder'
-
       - name: Write VPN Files
         run: |
           echo "$CA_CRT" > .github/vpn/ca.crt
@@ -63,12 +57,15 @@ jobs:
           sudo apt install apt-transport-https
           sudo wget https://swupdate.openvpn.net/repos/openvpn-repo-pkg-key.pub
           sudo apt-key add openvpn-repo-pkg-key.pub
-          sudo wget -O /etc/apt/sources.list.d/openvpn3.list https://swupdate.openvpn.net/community/openvpn3/repos/openvpn3-focal.list
+          sudo wget -O /etc/apt/sources.list.d/openvpn3.list https://swupdate.openvpn.net/community/openvpn3/repos/openvpn3-jammy.list
           sudo apt update
-          sudo apt install openvpn3=16~beta+focal
+          sudo apt install openvpn3=17~betaUb22042+jammy
 
       - name: Start Open VPN 3
         run: openvpn3 session-start --config .github/vpn/config.ovpn
+
+      - name: install pm2
+        run: npm i -g pm2
 
       - name: Deploy sasjs-tests
         run: |
@@ -80,12 +77,12 @@ jobs:
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
-          npm run update:adapter && npm run build
-          scp -o stricthostkeychecking=no -r ./build/* ${{ secrets.DCGITLAB_DEPLOY_PATH_VIYA }}
+          npm run update:adapter
+          pm2 start --name sasjs-test npm -- start
 
       - name: Run cypress on sasjs
         run: |
-          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"${{ secrets.SASJS_TEST_URL_VIYA }}",' ./cypress.json
+          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
           sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}

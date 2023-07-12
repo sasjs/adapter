@@ -9,14 +9,13 @@ import * as formatDataModule from '../../../utils/formatDataForRequest'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import { PollOptions } from '../../../types'
 import { ComputeJobExecutionError, NotFoundError } from '../../../types/errors'
-import { Logger, LogLevel } from '@sasjs/utils'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 const defaultPollOptions: PollOptions = {
   maxPollCount: 100,
-  pollInterval: 500,
-  streamLog: false
+  pollInterval: 500
 }
 
 describe('executeScript', () => {
@@ -452,7 +451,9 @@ describe('executeScript', () => {
   it('should throw a ComputeJobExecutionError if the job has failed', async () => {
     jest
       .spyOn(pollJobStateModule, 'pollJobState')
-      .mockImplementation(() => Promise.resolve('failed'))
+      .mockImplementation(() =>
+        Promise.resolve(pollJobStateModule.JobState.Failed)
+      )
 
     const error: ComputeJobExecutionError = await executeScript(
       requestClient,
@@ -485,7 +486,9 @@ describe('executeScript', () => {
   it('should throw a ComputeJobExecutionError if the job has errored out', async () => {
     jest
       .spyOn(pollJobStateModule, 'pollJobState')
-      .mockImplementation(() => Promise.resolve('error'))
+      .mockImplementation(() =>
+        Promise.resolve(pollJobStateModule.JobState.Error)
+      )
 
     const error: ComputeJobExecutionError = await executeScript(
       requestClient,
@@ -654,7 +657,9 @@ const setupMocks = () => {
     .mockImplementation(() => Promise.resolve(mockAuthConfig))
   jest
     .spyOn(pollJobStateModule, 'pollJobState')
-    .mockImplementation(() => Promise.resolve('completed'))
+    .mockImplementation(() =>
+      Promise.resolve(pollJobStateModule.JobState.Completed)
+    )
   jest
     .spyOn(sessionManager, 'getVariable')
     .mockImplementation(() =>

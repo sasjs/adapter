@@ -1,0 +1,29 @@
+{
+  "$schema": "https://cli.sasjs.io/sasjsconfig-schema.json",
+  "serviceConfig": {
+    "serviceFolders": ["sasjs/common"]
+  },
+  "defaultTarget": "4gl",
+  "targets": [
+    {
+      "name": "4gl",
+      "serverUrl": "https://sas9.4gl.io",
+      "serverType": "SASJS",
+      "httpsAgentOptions": {
+        "allowInsecureRequests": false
+      },
+      "appLoc": "/Public/app/adapter-tests",
+      "deployConfig": {
+        "deployServicePack": true,
+        "deployScripts": []
+      },
+      "streamConfig": {
+        "streamWeb": true,
+        "streamWebFolder": "webv",
+        "webSourcePath": "build",
+        "streamServiceName": "adapter-tests",
+        "assetPaths": []
+      }
+    }
+  ]
+}

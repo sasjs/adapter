@@ -1,4 +1,4 @@
-import { AuthConfig } from '@sasjs/utils'
+import { AuthConfig } from '@sasjs/utils/types'
 import { generateToken, mockSasjsAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { getAccessTokenForSasjs } from '../getAccessTokenForSasjs'
@@ -55,7 +55,7 @@ describe('getAccessTokenForSasjs', () => {
       authConfig.refresh_token
     ).catch((e: any) => e)
 
-    expect(error).toContain('Error while getting access token')
+    expect(error).toContain('Error while fetching access token')
   })
 })
 

@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/fermium]
+        node-version: [lts/hydrogen]
 
     steps:
       - uses: actions/checkout@v2
@@ -34,9 +34,10 @@ jobs:
         run: npm run build
 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Send Slack message
-        run: curl -X POST --data-urlencode "payload={\"channel\":\"#sasjs\", \"username\":\"GitHub CI\", \"text\":\"New version of @sasjs/adapter has been released! \n Please deploy and run `dctests` with new adapter to make sure everything is still in place.\", \"icon_emoji\":\":rocket:\"}" ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Send Matrix message
+        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}

@@ -12,7 +12,7 @@ import { RequestClient } from '../../request/RequestClient'
 import { SessionManager } from '../../SessionManager'
 import { isRelativePath, fetchLogByChunks } from '../../utils'
 import { formatDataForRequest } from '../../utils/formatDataForRequest'
-import { pollJobState } from './pollJobState'
+import { pollJobState, JobState } from './pollJobState'
 import { uploadTables } from './uploadTables'
 
 /**
@@ -25,7 +25,7 @@ import { uploadTables } from './uploadTables'
  * @param debug - when set to true, the log will be returned.
  * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
  * @param waitForResult - when set to true, function will return the session
- * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+ * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
  * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
  * @param variables - an object that represents macro variables.
  */
@@ -228,7 +228,7 @@ export async function executeScript(
       )
     }
 
-    if (jobStatus === 'failed' || jobStatus === 'error') {
+    if (jobStatus === JobState.Failed || jobStatus === JobState.Error) {
       throw new ComputeJobExecutionError(currentJob, log)
     }
 

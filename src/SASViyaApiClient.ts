@@ -29,6 +29,12 @@ import { executeScript } from './api/viya/executeScript'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 
+interface JobExecutionResult {
+  result?: { result: object }
+  log?: string
+  error?: object
+}
+
 /**
  * A client for interfacing with the SAS Viya REST API.
  *
@@ -270,7 +276,7 @@ export class SASViyaApiClient {
    * @param debug - when set to true, the log will be returned.
    * @param expectWebout - when set to true, the automatic _webout fileref will be checked for content, and that content returned. This fileref is used when the Job contains a SASjs web request (as opposed to executing arbitrary SAS code).
    * @param waitForResult - when set to true, function will return the session
-   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    */
@@ -378,12 +384,14 @@ export class SASViyaApiClient {
     isForced?: boolean
   ): Promise<Folder> {
     const logger = process.logger || console
+
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Path or URI of the parent folder is required.')
     }
 
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
+
       if (!parentFolderUri) {
         logger.info(
           `Parent folder at path '${parentFolderPath}' is not present.`
@@ -394,6 +402,7 @@ export class SASViyaApiClient {
           parentFolderPath.lastIndexOf('/')
         )
         const newFolderName = `${parentFolderPath.split('/').pop()}`
+
         if (newParentFolderPath === '') {
           throw new RootFolderNotFoundError(
             parentFolderPath,
@@ -401,20 +410,24 @@ export class SASViyaApiClient {
             accessToken
           )
         }
+
         logger.info(
           `Creating parent folder:\n'${newFolderName}' in '${newParentFolderPath}'`
         )
+
         const parentFolder = await this.createFolder(
           newFolderName,
           newParentFolderPath,
           undefined,
           accessToken
         )
+
         logger.info(
           `Parent folder '${newFolderName}' has been successfully created.`
         )
+
         parentFolderUri = `/folders/folders/${parentFolder.id}`
-      } else if (isForced && accessToken) {
+      } else if (isForced) {
         const folderPath = parentFolderPath + '/' + folderName
         const folderUri = await this.getFolderUri(folderPath, accessToken)
 
@@ -427,8 +440,8 @@ export class SASViyaApiClient {
       }
     }
 
-    const { result: createFolderResponse } =
-      await this.requestClient.post<Folder>(
+    const { result: createFolderResponse } = await this.requestClient
+      .post<Folder>(
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name: folderName,
@@ -436,12 +449,34 @@ export class SASViyaApiClient {
         },
         accessToken
       )
+      .catch((err) => {
+        const { message, response } = err
+
+        if (message && response && response.data && response.data.message) {
+          const { status } = response
+          const { message: responseMessage } = response.data
+          const messages = [message, responseMessage].map((mes: string) =>
+            /\.$/.test(mes) ? mes : `${mes}.`
+          )
+
+          if (!isForced && status === 409) {
+            messages.push(`To override, please set "isForced" to "true".`)
+          }
+
+          const errMessage = messages.join(' ')
+
+          throw errMessage
+        }
+
+        throw err
+      })
 
     // update folder map with newly created folder.
     await this.populateFolderMap(
       `${parentFolderPath}/${folderName}`,
       accessToken
     )
+
     return createFolderResponse
   }
 
@@ -548,6 +583,7 @@ export class SASViyaApiClient {
 
   /**
    * Exchanges the refresh token for an access token for the given client.
+   * This method can only be used by Node.
    * @param clientId - the client ID to authenticate with.
    * @param clientSecret - the client secret to authenticate with.
    * @param refreshToken - the refresh token received from the server.
@@ -591,7 +627,7 @@ export class SASViyaApiClient {
    * @param accessToken - an optional access token for an authorized user.
    * @param waitForResult - a boolean indicating if the function should wait for a result.
    * @param expectWebout - a boolean indicating whether to expect a _webout response.
-   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { MAX_POLL_COUNT: 24 * 60 * 60, POLL_INTERVAL: 1000 }.
+   * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    */
@@ -702,11 +738,13 @@ export class SASViyaApiClient {
     debug: boolean,
     data?: any,
     authConfig?: AuthConfig
-  ) {
+  ): Promise<JobExecutionResult> {
     let access_token = (authConfig || {}).access_token
+
     if (authConfig) {
       ;({ access_token } = await getTokens(this.requestClient, authConfig))
     }
+
     if (isRelativePath(sasJob) && !this.rootFolderName) {
       throw new Error(
         'Relative paths cannot be used without specifying a root folder name.'
@@ -719,6 +757,7 @@ export class SASViyaApiClient {
     const fullFolderPath = isRelativePath(sasJob)
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
+
     await this.populateFolderMap(fullFolderPath, access_token)
 
     const jobFolder = this.folderMap.get(fullFolderPath)
@@ -735,9 +774,8 @@ export class SASViyaApiClient {
       files = await this.uploadTables(data, access_token)
     }
 
-    if (!jobToExecute) {
-      throw new Error(`Job was not found.`)
-    }
+    if (!jobToExecute) throw new Error(`Job was not found.`)
+
     const jobDefinitionLink = jobToExecute?.links.find(
       (l) => l.rel === 'getResource'
     )?.href
@@ -777,16 +815,19 @@ export class SASViyaApiClient {
       jobDefinition,
       arguments: jobArguments
     }
+
     const { result: postedJob } = await this.requestClient.post<Job>(
       `${this.serverUrl}/jobExecution/jobs?_action=wait`,
       postJobRequestBody,
       access_token
     )
+
     const jobStatus = await this.pollJobState(postedJob, authConfig).catch(
       (err) => {
         throw prefixMessage(err, 'Error while polling job status. ')
       }
     )
+
     const { result: currentJob } = await this.requestClient.get<Job>(
       `${this.serverUrl}/jobExecution/jobs/${postedJob.id}`,
       access_token
@@ -797,6 +838,7 @@ export class SASViyaApiClient {
 
     const resultLink = currentJob.results['_webout.json']
     const logLink = currentJob.links.find((l) => l.rel === 'log')
+
     if (resultLink) {
       jobResult = await this.requestClient.get<any>(
         `${this.serverUrl}${resultLink}/content`,
@@ -804,11 +846,13 @@ export class SASViyaApiClient {
         'text/plain'
       )
     }
+
     if (debug && logLink) {
       log = await this.requestClient
         .get<any>(`${this.serverUrl}${logLink.href}/content`, access_token)
         .then((res: any) => res.result.items.map((i: any) => i.line).join('\n'))
     }
+
     if (jobStatus === 'failed') {
       throw new JobExecutionError(
         currentJob.error?.errorCode,
@@ -816,7 +860,16 @@ export class SASViyaApiClient {
         log
       )
     }
-    return { result: jobResult?.result, log }
+
+    const executionResult: JobExecutionResult = {
+      result: jobResult?.result,
+      log
+    }
+
+    const { error } = currentJob
+    if (error) executionResult.error = error
+
+    return executionResult
   }
 
   private async populateFolderMap(folderPath: string, accessToken?: string) {
@@ -899,7 +952,7 @@ export class SASViyaApiClient {
     return `/folders/folders/${folderDetails.id}`
   }
 
-  private async getRecycleBinUri(accessToken: string) {
+  private async getRecycleBinUri(accessToken?: string) {
     const url = '/folders/folders/@myRecycleBin'
 
     const { result: folder } = await this.requestClient
@@ -983,7 +1036,7 @@ export class SASViyaApiClient {
     sourceFolder: string,
     targetParentFolder: string,
     targetFolderName: string,
-    accessToken: string
+    accessToken?: string
   ) {
     // If target path is an existing folder, than keep source folder name, othervise rename it with given target folder name
     const sourceFolderName = sourceFolder.split('/').pop() as string
@@ -1050,7 +1103,7 @@ export class SASViyaApiClient {
    * @param folderPath - the full path (eg `/Public/example/deleteThis`) of the folder to be deleted.
    * @param accessToken - an access token for authorizing the request.
    */
-  public async deleteFolder(folderPath: string, accessToken: string) {
+  public async deleteFolder(folderPath: string, accessToken?: string) {
     const recycleBinUri = await this.getRecycleBinUri(accessToken)
     const folderName = folderPath.split('/').pop() || ''
     const date = new Date()

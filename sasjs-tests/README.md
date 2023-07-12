@@ -65,6 +65,7 @@ The code below will work on ALL SAS platforms (Viya, SAS 9 EBI, SASjs Server).
 ```sas
 filename mc url "https://raw.githubusercontent.com/sasjs/core/main/all.sas";
 %inc mc;
+%let apploc=/Public/app/adapter-tests;
 filename ft15f001 temp lrecl=1000;
 parmcards4;
   %webout(FETCH)
@@ -80,7 +81,7 @@ parmcards4;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
-%mx_createwebservice(path=/Public/app/common,name=sendObj)
+%mx_createwebservice(path=&apploc/services/common,name=sendObj)
 parmcards4;
   %webout(FETCH)
   %webout(OPEN)
@@ -95,7 +96,7 @@ parmcards4;
   %mend; %x()
   %webout(CLOSE)
 ;;;;
-%mx_createwebservice(path=/Public/app/common,name=sendArr)
+%mx_createwebservice(path=&apploc/services/common,name=sendArr)
 parmcards4;
   data work.macvars;
     set sashelp.vmacro;
@@ -104,14 +105,14 @@ parmcards4;
   %webout(OBJ,macvars) 
   %webout(CLOSE)
 ;;;;
-%mx_createwebservice(path=/Public/app/common,name=sendMacVars)
+%mx_createwebservice(path=&apploc/services/common,name=sendMacVars)
 parmcards4;
 If you can keep your head when all about you
     Are losing theirs and blaming it on you,
 If you can trust yourself when all men doubt you,
     But make allowance for their doubting too;
 ;;;;
-%mx_createwebservice(path=/Public/app/common,name=makeErr)
+%mx_createwebservice(path=&apploc/services/common,name=makeErr)
 parmcards4;
 %webout(OPEN)
 data _null_;
@@ -120,7 +121,7 @@ data _null_;
  run;
 %webout(CLOSE)
 ;;;;
-%mx_createwebservice(path=/Public/app/common,name=invalidJSON)
+%mx_createwebservice(path=&apploc/services/common,name=invalidJSON)
 ```
 
 You should now be able to access the tests in your browser at the deployed path on your server.

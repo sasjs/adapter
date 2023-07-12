@@ -23,8 +23,16 @@ const optimization = {
 }
 
 const browserConfig = {
-  entry: './src/index.ts',
-  devtool: 'inline-source-map',
+  entry: {
+    index: './src/index.ts',
+    minified_sas9: './src/minified/sas9/index.ts'
+  },
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'build'),
+    libraryTarget: 'umd',
+    library: 'SASjs'
+  },
   mode: 'production',
   optimization: optimization,
   module: {
@@ -40,12 +48,6 @@ const browserConfig = {
     extensions: ['.ts', '.js'],
     fallback: { https: false, fs: false, readline: false }
   },
-  output: {
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'build'),
-    libraryTarget: 'umd',
-    library: 'SASjs'
-  },
   plugins: [
     ...defaultPlugins,
     new webpack.ProvidePlugin({
@@ -53,6 +55,18 @@ const browserConfig = {
     }),
     new nodePolyfillPlugin()
   ]
+}
+
+const browserConfigWithDevTool = {
+  ...browserConfig,
+  entry: './src/index.ts',
+  output: {
+    filename: 'index-dev.js',
+    path: path.resolve(__dirname, 'build'),
+    libraryTarget: 'umd',
+    library: 'SASjs'
+  },
+  devtool: 'inline-source-map'
 }
 
 const browserConfigWithoutProcessPlugin = {
@@ -72,8 +86,9 @@ const nodeConfig = {
   entry: './node/index.ts',
   output: {
     ...browserConfig.output,
-    path: path.resolve(__dirname, 'build', 'node')
+    path: path.resolve(__dirname, 'build', 'node'),
+    filename: 'index.js'
   }
 }
 
-module.exports = [browserConfig, nodeConfig]
+module.exports = [browserConfig, browserConfigWithDevTool, nodeConfig]

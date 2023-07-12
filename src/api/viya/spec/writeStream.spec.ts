@@ -5,7 +5,7 @@ import {
   fileExists,
   readFile,
   deleteFile
-} from '@sasjs/utils'
+} from '@sasjs/utils/file'
 
 describe('writeStream', () => {
   const filename = 'test.txt'
