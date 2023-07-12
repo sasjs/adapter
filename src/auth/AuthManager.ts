@@ -157,6 +157,7 @@ export class AuthManager {
           return {
             isLoggedIn,
             userName: this.userName || '',
+            userLongName: this.userLongName || '',
             errorMessage: 'Public access has been denied.'
           }
         }
@@ -181,6 +182,10 @@ export class AuthManager {
       .catch((err) => {
         // ignore if resource not found error
         if (!(err instanceof NotFoundError)) throw err
+
+        return {
+          result: ''
+        }
       })
   }
 
