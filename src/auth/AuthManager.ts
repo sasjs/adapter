@@ -175,7 +175,7 @@ export class AuthManager {
 
   private async performCASSecurityCheck() {
     const casAuthenticationUrl = `${this.serverUrl}/SASStoredProcess/j_spring_cas_security_check`
-    
+
     return await this.requestClient
       .get<string>(`/SASLogon/login?service=${casAuthenticationUrl}`, undefined)
       .catch((err) => {
