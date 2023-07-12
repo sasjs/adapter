@@ -78,7 +78,16 @@ export class AuthManager {
 
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
-        await this.performCASSecurityCheck()
+        const casSecurityCheckResponse = await this.performCASSecurityCheck()
+
+        if (isPublicAccessDenied(casSecurityCheckResponse.result)) {
+          return {
+            isLoggedIn: false,
+            userName: this.userName || '',
+            userLongName: this.userLongName || '',
+            errorMessage: 'Public access has been denied.'
+          }
+        }
       }
 
       const { userName, userLongName } = await this.fetchUserName()
@@ -150,7 +159,6 @@ export class AuthManager {
     if (isLoggedIn) {
       if (this.serverType === ServerType.Sas9) {
         const casSecurityCheckResponse = await this.performCASSecurityCheck()
-
         if (isPublicAccessDenied(casSecurityCheckResponse.result)) {
           isLoggedIn = false
 

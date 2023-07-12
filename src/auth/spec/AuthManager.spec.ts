@@ -5,6 +5,7 @@ import axios from 'axios'
 import {
   mockedCurrentUserApi,
   mockLoginAuthoriseRequiredResponse,
+  mockLoginPublicAccessDeniedResponse,
   mockLoginSuccessResponse
 } from './mockResponses'
 import { serialize } from '../../utils'
@@ -211,6 +212,61 @@ describe('AuthManager', () => {
         getHeadersJson
       )
       expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should post a login & a cas_security request to the SAS9 server when not logged in & get rejected due to public access denied', async () => {
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
+        Promise.resolve({
+          isLoggedIn: false,
+          userName: '',
+          userLongName: '',
+          loginForm: { name: 'test' }
+        })
+      )
+      mockedAxios.post.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginSuccessResponse })
+      )
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginPublicAccessDeniedResponse })
+      )
+
+      const loginResponse = await authManager.logIn(userName, password)
+
+      expect(loginResponse.isLoggedIn).toBeFalse()
+      expect(loginResponse.userName).toEqual('')
+      expect(loginResponse.errorMessage).toEqual(
+        'Public access has been denied.'
+      )
+
+      const loginParams = serialize({
+        _service: 'default',
+        username: userName,
+        password,
+        name: 'test'
+      })
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/SASLogon/login`,
+        loginParams,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: '*/*'
+          }
+        }
+      )
+      const casAuthenticationUrl = `${serverUrl}/SASStoredProcess/j_spring_cas_security_check`
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        `/SASLogon/login?service=${casAuthenticationUrl}`,
+        getHeadersJson
+      )
     })
 
     it('should return empty username if unable to logged in', async () => {
@@ -420,6 +476,53 @@ describe('AuthManager', () => {
       expect(authManager['fetchUserName']).toHaveBeenCalledTimes(2)
       expect(verifySas9LoginModule.verifySas9Login).toHaveBeenCalledTimes(1)
       expect(authCallback).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return error if public account access is denied', async () => {
+      const serverType = ServerType.Sas9
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+      jest
+        .spyOn<any, any>(authManager, 'fetchUserName')
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: false,
+            userName: ''
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            isLoggedIn: true,
+            userName
+          })
+        )
+      mockedAxios.get.mockImplementation(() =>
+        Promise.resolve({ data: mockLoginPublicAccessDeniedResponse })
+      )
+
+      const loginResponse = await authManager.redirectedLogIn({})
+
+      expect(loginResponse.isLoggedIn).toBeFalse()
+      expect(loginResponse.userName).toEqual('')
+      expect(loginResponse.errorMessage).toEqual(
+        'Public access has been denied.'
+      )
+
+      expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
+        `/SASLogon`,
+        'SASLogon',
+        {
+          width: 500,
+          height: 600
+        },
+        undefined
+      )
+      expect(authManager['fetchUserName']).toHaveBeenCalledTimes(1)
+      expect(verifySas9LoginModule.verifySas9Login).toHaveBeenCalledTimes(1)
     })
 
     it('should return empty username if user unable to re-login via pop up', async () => {
