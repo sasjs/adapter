@@ -230,10 +230,10 @@ describe('AuthManager', () => {
           loginForm: { name: 'test' }
         })
       )
-      mockedAxios.post.mockImplementation(() =>
+      mockedAxios.post.mockImplementationOnce(() =>
         Promise.resolve({ data: mockLoginSuccessResponse })
       )
-      mockedAxios.get.mockImplementation(() =>
+      mockedAxios.get.mockImplementationOnce(() =>
         Promise.resolve({ data: mockLoginPublicAccessDeniedResponse })
       )
 
