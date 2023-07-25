@@ -126,9 +126,9 @@ NOTE: The SAS System used:
   it('should parse response with 1 log', () => {
     const response: AxiosResponse<any> = {
       data: `${webout}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${log}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784`,
+${SASJS_LOGS_SEPARATOR}`,
       status,
       statusText: 'ok',
       headers: { etag },
@@ -153,9 +153,9 @@ ${log}
   it('should parse response with 1 log and printOutput', () => {
     const response: AxiosResponse<any> = {
       data: `${webout}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${log}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${printOutput}`,
       status,
       statusText: 'ok',
@@ -182,16 +182,16 @@ ${printOutput}`
 
   it('should parse response with nested logs', () => {
     const logWithNestedLog = `root log start
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${log}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 root log end`
 
     const response: AxiosResponse<any> = {
       data: `${webout}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${logWithNestedLog}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784`,
+${SASJS_LOGS_SEPARATOR}`,
       status,
       statusText: 'ok',
       headers: { etag },
@@ -215,21 +215,21 @@ ${logWithNestedLog}
 
   it('should parse response with nested logs and printOutput', () => {
     const logWithNestedLog = `root log start
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${log}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 log with indentation
-  SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+  ${SASJS_LOGS_SEPARATOR}
   ${log}
-  SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
-some SAS code containing SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+  ${SASJS_LOGS_SEPARATOR}
+some SAS code containing ${SASJS_LOGS_SEPARATOR}
 root log end`
 
     const response: AxiosResponse<any> = {
       data: `${webout}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${logWithNestedLog}
-SASJS_LOGS_SEPARATOR_163ee17b6ff24f028928972d80a26784
+${SASJS_LOGS_SEPARATOR}
 ${printOutput}`,
       status,
       statusText: 'ok',
