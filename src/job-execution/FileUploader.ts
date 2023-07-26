@@ -1,8 +1,7 @@
 import {
   getValidJson,
   parseSasViyaDebugResponse,
-  parseWeboutResponse,
-  SASJS_LOGS_SEPARATOR
+  parseWeboutResponse
 } from '../utils'
 import { UploadFile } from '../types/UploadFile'
 import {
