@@ -13,6 +13,8 @@ import {
 } from '../types/errors'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
+import { AxiosResponse } from 'axios'
+import { Logger, LogLevel } from '@sasjs/utils/logger'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -24,16 +26,6 @@ jest
 
 const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`
-
-const ERROR_MESSAGES = {
-  selfSigned: 'self signed certificate',
-  CCA: 'unable to verify the first certificate'
-}
-
-const incorrectAuthCodeErr = {
-  error: 'unauthorized',
-  error_description: 'Bad credentials'
-}
 
 describe('RequestClient', () => {
   let server: http.Server
@@ -78,6 +70,187 @@ describe('RequestClient', () => {
       )
 
     expect(rejectionErrorMessage).toEqual(expectedError.message)
+  })
+
+  describe('defaultInterceptionCallBack', () => {
+    beforeAll(() => {
+      ;(process as any).logger = new Logger(LogLevel.Off)
+    })
+
+    it('should log parsed response', () => {
+      jest.spyOn((process as any).logger, 'info')
+
+      const status = 200
+      const reqData = `{
+        name: 'test_job',
+        description: 'Powered by SASjs',
+        code: ['test_code'],
+        variables: {
+          SYS_JES_JOB_URI: '',
+          _program: '/Public/sasjs/jobs/jobs/test_job'
+        },
+        arguments: {
+          _contextName: 'SAS Job Execution compute context',
+          _OMITJSONLISTING: true,
+          _OMITJSONLOG: true,
+          _OMITSESSIONRESULTS: true,
+          _OMITTEXTLISTING: true,
+          _OMITTEXTLOG: true
+        }
+      }`
+      const resData = {
+        id: 'id_string',
+        name: 'name_string',
+        uri: 'uri_string',
+        createdBy: 'createdBy_string',
+        code: 'TEST CODE',
+        links: [
+          {
+            method: 'method_string',
+            rel: 'state',
+            href: 'state_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          },
+          {
+            method: 'method_string',
+            rel: 'state',
+            href: 'state_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          },
+          {
+            method: 'method_string',
+            rel: 'state',
+            href: 'state_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          },
+          {
+            method: 'method_string',
+            rel: 'state',
+            href: 'state_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          },
+          {
+            method: 'method_string',
+            rel: 'state',
+            href: 'state_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          },
+          {
+            method: 'method_string',
+            rel: 'self',
+            href: 'self_href_string',
+            uri: 'uri_string',
+            type: 'type_string'
+          }
+        ],
+        results: { '_webout.json': '_webout.json_string' },
+        logStatistics: {
+          lineCount: 1,
+          modifiedTimeStamp: 'modifiedTimeStamp_string'
+        }
+      }
+      const reqHeaders = `POST https://sas.server.com/compute/sessions/session_id/jobs HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+User-Agent: axios/0.27.2
+Content-Length: 334
+host: sas.server.io
+Connection: close
+`
+      const resHeaders = ['content-type', 'application/json']
+      const mockedResponse: AxiosResponse = {
+        data: resData,
+        status,
+        statusText: '',
+        headers: {},
+        config: { data: reqData },
+        request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
+      }
+
+      const requestClient = new RequestClient('')
+      requestClient['defaultInterceptionCallBack'](mockedResponse)
+
+      const expectedLog = `HTTP Request (first 50 lines):
+${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
+
+HTTP Response Code: ${requestClient['prettifyString'](status)}
+
+HTTP Response (first 50 lines):
+${resHeaders[0]}: ${resHeaders[1]}${
+        requestClient['parseInterceptedBody'](resData)
+          ? `\n\n${requestClient['parseInterceptedBody'](resData)}`
+          : ''
+      }
+`
+
+      expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
+    })
+  })
+
+  describe('enableVerboseMode', () => {
+    it('should add defaultInterceptionCallBack functions to response interceptors', () => {
+      const requestClient = new RequestClient('')
+      const interceptorSpy = jest.spyOn(
+        requestClient['httpClient'].interceptors.response,
+        'use'
+      )
+
+      requestClient.enableVerboseMode()
+
+      expect(interceptorSpy).toHaveBeenCalledWith(
+        requestClient['defaultInterceptionCallBack'],
+        requestClient['defaultInterceptionCallBack']
+      )
+    })
+
+    it('should add callback functions to response interceptors', () => {
+      const requestClient = new RequestClient('')
+      const interceptorSpy = jest.spyOn(
+        requestClient['httpClient'].interceptors.response,
+        'use'
+      )
+
+      const successCallback = (response: AxiosResponse) => {
+        console.log('success')
+
+        return response
+      }
+      const failureCallback = (response: AxiosResponse) => {
+        console.log('failure')
+
+        return response
+      }
+
+      requestClient.enableVerboseMode(successCallback, failureCallback)
+
+      expect(interceptorSpy).toHaveBeenCalledWith(
+        successCallback,
+        failureCallback
+      )
+    })
+  })
+
+  describe('disableVerboseMode', () => {
+    it('should eject interceptor', () => {
+      const requestClient = new RequestClient('')
+
+      const interceptorSpy = jest.spyOn(
+        requestClient['httpClient'].interceptors.response,
+        'eject'
+      )
+
+      const interceptorId = 100
+
+      requestClient['httpInterceptor'] = interceptorId
+      requestClient.disableVerboseMode()
+
+      expect(interceptorSpy).toHaveBeenCalledWith(interceptorId)
+    })
   })
 
   describe('handleError', () => {

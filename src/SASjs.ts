@@ -863,7 +863,8 @@ export default class SASjs {
     waitForResult?: boolean,
     pollOptions?: PollOptions,
     printPid = false,
-    variables?: MacroVar
+    variables?: MacroVar,
+    verboseMode?: boolean
   ) {
     config = {
       ...this.sasjsConfig,
@@ -876,6 +877,9 @@ export default class SASjs {
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
       )
     }
+
+    if (verboseMode) this.requestClient?.enableVerboseMode()
+    else this.requestClient?.disableVerboseMode()
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,

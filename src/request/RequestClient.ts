@@ -20,6 +20,7 @@ import {
   createAxiosInstance
 } from '../utils'
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
+import { inspect } from 'util'
 
 export interface HttpClient {
   get<T>(
@@ -59,6 +60,7 @@ export interface HttpClient {
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
   private requestsLimit: number = 10
+  private httpInterceptor?: number
 
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
@@ -70,6 +72,7 @@ export class RequestClient implements HttpClient {
     requestsLimit?: number
   ) {
     this.createHttpClient(baseUrl, httpsAgentOptions)
+
     if (requestsLimit) this.requestsLimit = requestsLimit
   }
 
@@ -180,6 +183,7 @@ export class RequestClient implements HttpClient {
       responseType: contentType === 'text/plain' ? 'text' : 'json',
       withCredentials: true
     }
+
     if (contentType === 'text/plain') {
       requestConfig.transformResponse = undefined
     }
@@ -387,6 +391,82 @@ export class RequestClient implements HttpClient {
         const logger = process.logger || console
         logger.error(error)
       })
+  }
+
+  private prettifyString = (str: any) => inspect(str, { colors: true })
+
+  private parseInterceptedBody = (body: any) => {
+    if (!body) return ''
+
+    let parsedBody
+
+    if (typeof body === 'string') {
+      try {
+        parsedBody = JSON.parse(body)
+      } catch (error) {
+        parsedBody = body
+      }
+    } else {
+      parsedBody = body
+    }
+
+    const bodyLines = this.prettifyString(parsedBody).split('\n')
+
+    if (bodyLines.length > 51) {
+      bodyLines.splice(50)
+      bodyLines.push('...')
+    }
+
+    return bodyLines.join('\n')
+  }
+
+  private defaultInterceptionCallBack = (response: AxiosResponse) => {
+    const { status, config, request, data: resData } = response
+    const { data: reqData } = config
+    const { _header: reqHeaders, res } = request
+    const { rawHeaders } = res
+
+    const resHeaders = rawHeaders.reduce(
+      (acc: string, value: string, i: number) => {
+        if (i % 2 === 0) {
+          acc += `${i === 0 ? '' : '\n'}${value}`
+        } else {
+          acc += `: ${value}`
+        }
+
+        return acc
+      },
+      ''
+    )
+
+    const parsedResBody = this.parseInterceptedBody(resData)
+
+    process.logger?.info(`HTTP Request (first 50 lines):
+${reqHeaders}${this.parseInterceptedBody(reqData)}
+
+HTTP Response Code: ${this.prettifyString(status)}
+
+HTTP Response (first 50 lines):
+${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+`)
+
+    return response
+  }
+
+  public enableVerboseMode = (
+    successCallBack = this.defaultInterceptionCallBack,
+    errorCallBack = this.defaultInterceptionCallBack
+  ) => {
+    this.httpInterceptor = this.httpClient.interceptors.response.use(
+      successCallBack,
+      errorCallBack
+    )
+  }
+
+  public disableVerboseMode = () => {
+    if (this.httpInterceptor) {
+      this.httpClient.interceptors.response.eject(this.httpInterceptor)
+    }
   }
 
   protected getHeaders = (
