@@ -393,13 +393,24 @@ export class RequestClient implements HttpClient {
       })
   }
 
+  /**
+   * Adds colors to the string.
+   * @param str - string to be prettified.
+   * @returns - prettified string
+   */
   private prettifyString = (str: any) => inspect(str, { colors: true })
 
+  /**
+   * Formats HTTP request/response body.
+   * @param body - HTTP request/response body.
+   * @returns - formatted string.
+   */
   private parseInterceptedBody = (body: any) => {
     if (!body) return ''
 
     let parsedBody
 
+    // Tries to parse body into JSON object.
     if (typeof body === 'string') {
       try {
         parsedBody = JSON.parse(body)
@@ -412,6 +423,7 @@ export class RequestClient implements HttpClient {
 
     const bodyLines = this.prettifyString(parsedBody).split('\n')
 
+    // Leaves first 50 lines
     if (bodyLines.length > 51) {
       bodyLines.splice(50)
       bodyLines.push('...')
@@ -426,6 +438,8 @@ export class RequestClient implements HttpClient {
     const { _header: reqHeaders, res } = request
     const { rawHeaders } = res
 
+    // Converts an array of strings into a single string with the following format:
+    // <headerName>: <headerValue>
     const resHeaders = rawHeaders.reduce(
       (acc: string, value: string, i: number) => {
         if (i % 2 === 0) {
@@ -441,6 +455,7 @@ export class RequestClient implements HttpClient {
 
     const parsedResBody = this.parseInterceptedBody(resData)
 
+    // HTTP response summary.
     process.logger?.info(`HTTP Request (first 50 lines):
 ${reqHeaders}${this.parseInterceptedBody(reqData)}
 
@@ -453,6 +468,11 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     return response
   }
 
+  /**
+   * Turns on verbose mode to log every HTTP response.
+   * @param successCallBack - function that should be triggered on every HTTP response with the status 2**.
+   * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
+   */
   public enableVerboseMode = (
     successCallBack = this.defaultInterceptionCallBack,
     errorCallBack = this.defaultInterceptionCallBack
@@ -463,6 +483,9 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     )
   }
 
+  /**
+   * Turns off verbose mode to log every HTTP response.
+   */
   public disableVerboseMode = () => {
     if (this.httpInterceptor) {
       this.httpClient.interceptors.response.eject(this.httpInterceptor)
