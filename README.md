@@ -155,7 +155,7 @@ The adapter will also cache the logs (if debug enabled) and even the work tables
 
 ### Verbose Mode
 
-Enabling debug will also enable a verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling `disableVerboseMode` method or enabled by `enableVerboseMode` method. Verbose mode can also be enabled/disabled by `startComputeJob` method.
+Set `verbose` to `true` to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling `disableVerboseMode` method or enabled by `enableVerboseMode` method. Verbose mode can also be enabled/disabled by `startComputeJob` method.
 
 ### Session Manager
 
