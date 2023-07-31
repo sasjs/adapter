@@ -46,6 +46,10 @@ export class SASjsConfig {
    */
   debug: boolean = true
   /**
+   * Set to `true` to enable verbose mode that will log a summary of every HTTP response.
+   */
+  verbose?: boolean = true
+  /**
    * The name of the compute context to use when calling the Viya services directly.
    * Example value: 'SAS Job Execution compute context'
    */
