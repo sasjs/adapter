@@ -233,7 +233,8 @@ export default class SASjs {
       this.requestClient = new RequestClient(
         this.sasjsConfig.serverUrl,
         this.sasjsConfig.httpsAgentOptions,
-        this.sasjsConfig.requestHistoryLimit
+        this.sasjsConfig.requestHistoryLimit,
+        this.sasjsConfig.debug // enable verbose mode if debug is true
       )
     } else {
       this.requestClient.setConfig(

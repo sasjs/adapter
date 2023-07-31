@@ -31,6 +31,7 @@ import {
 } from './job-execution'
 import { ErrorResponse } from './types/errors'
 import { LoginOptions, LoginResult } from './types/Login'
+import { AxiosResponse } from 'axios'
 
 interface ExecuteScriptParams {
   linesOfCode: string[]
@@ -880,7 +881,7 @@ export default class SASjs {
     }
 
     if (verboseMode) this.requestClient?.enableVerboseMode()
-    else this.requestClient?.disableVerboseMode()
+    else if (verboseMode === false) this.requestClient?.disableVerboseMode()
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
@@ -975,7 +976,8 @@ export default class SASjs {
       this.requestClient = new RequestClientClass(
         this.sasjsConfig.serverUrl,
         this.sasjsConfig.httpsAgentOptions,
-        this.sasjsConfig.requestHistoryLimit
+        this.sasjsConfig.requestHistoryLimit,
+        this.sasjsConfig.debug // enable verbose mode if debug is true
       )
     } else {
       this.requestClient.setConfig(
@@ -1138,5 +1140,24 @@ export default class SASjs {
         )} servers.`
       )
     }
+  }
+
+  /**
+   * Enables verbose mode that will log a summary of every HTTP response.
+   * @param successCallBack - function that should be triggered on every HTTP response with the status 2**.
+   * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
+   */
+  public enableVerboseMode(
+    successCallBack?: (response: AxiosResponse) => AxiosResponse,
+    errorCallBack?: (response: AxiosResponse) => AxiosResponse
+  ) {
+    this.requestClient?.enableVerboseMode(successCallBack, errorCallBack)
+  }
+
+  /**
+   * Turns off verbose mode to log every HTTP response.
+   */
+  public disableVerboseMode() {
+    this.requestClient?.disableVerboseMode()
   }
 }

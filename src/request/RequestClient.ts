@@ -69,11 +69,14 @@ export class RequestClient implements HttpClient {
   constructor(
     protected baseUrl: string,
     httpsAgentOptions?: https.AgentOptions,
-    requestsLimit?: number
+    requestsLimit?: number,
+    verboseMode?: boolean
   ) {
     this.createHttpClient(baseUrl, httpsAgentOptions)
 
     if (requestsLimit) this.requestsLimit = requestsLimit
+
+    if (verboseMode) this.enableVerboseMode()
   }
 
   public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
