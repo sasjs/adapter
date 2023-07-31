@@ -854,6 +854,7 @@ export default class SASjs {
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
+   * @param verboseMode - boolean to enable verbose mode (log every HTTP response).
    */
   public async startComputeJob(
     sasJob: string,
@@ -863,7 +864,8 @@ export default class SASjs {
     waitForResult?: boolean,
     pollOptions?: PollOptions,
     printPid = false,
-    variables?: MacroVar
+    variables?: MacroVar,
+    verboseMode?: boolean
   ) {
     config = {
       ...this.sasjsConfig,
@@ -876,6 +878,9 @@ export default class SASjs {
         'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
       )
     }
+
+    if (verboseMode) this.requestClient?.enableVerboseMode()
+    else this.requestClient?.disableVerboseMode()
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
