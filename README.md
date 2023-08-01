@@ -151,7 +151,11 @@ The `request()` method also has optional parameters such as a config object and 
 
 The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.
 
-The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.
+The adapter will also cache the logs (if debug enabled) and even the work tables. For performance, it is best to keep debug mode off.
+
+### Verbose Mode
+
+Set `verbose` to `true` to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling `disableVerboseMode` method or enabled by `enableVerboseMode` method. Verbose mode can also be enabled/disabled by `startComputeJob` method.
 
 ### Session Manager
 
@@ -273,6 +277,7 @@ Configuration on the client side involves passing an object on startup, which ca
 * `serverType` - either `SAS9`, `SASVIYA` or `SASJS`.  The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 * `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
 * `debug` - if `true` then SAS Logs and extra debug information is returned.
+* `verbose` - optional, if `true` then a summary of every HTTP response is logged.
 * `loginMechanism` - either `Default` or `Redirected`.  See [SAS Logon](#sas-logon) section.
 * `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used.  If `false` the [JES API](#using-the-jes-api) is used.  If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
 * `contextName` - Compute context on which the requests will be called.  If missing or not provided, defaults to `Job Execution Compute context`.

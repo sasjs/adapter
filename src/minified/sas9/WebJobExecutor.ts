@@ -11,7 +11,6 @@ import {
 import { RequestClient } from '../../request/RequestClient'
 import {
   isRelativePath,
-  parseSasViyaDebugResponse,
   appendExtraResponseAttributes,
   convertToCSV
 } from '../../utils'
