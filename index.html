@@ -98,7 +98,12 @@
 <p>These tables (<code>tablewith2cols1row</code> and <code>tablewith1col2rows</code>) will be created in SAS WORK after running <code>%webout(FETCH)</code> in your SAS service.</p>
 <p>The <code>request()</code> method also has optional parameters such as a config object and a callback login function.</p>
 <p>The response object will contain returned tables and columns.  Table names are always lowercase, and column names uppercase.</p>
-<p>The adapter will also cache the logs (if debug enabled) and even the work tables.  For performance, it is best to keep debug mode off.</p>
+<p>The adapter will also cache the logs (if debug enabled) and even the work tables. For performance, it is best to keep debug mode off.</p>
+
+<a href="#verbose-mode" id="verbose-mode" style="color: inherit; text-decoration: none;">
+  <h3>Verbose Mode</h3>
+</a>
+<p>Set <code>verbose</code> to <code>true</code> to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling <code>disableVerboseMode</code> method or enabled by <code>enableVerboseMode</code> method. Verbose mode can also be enabled/disabled by <code>startComputeJob</code> method.</p>
 
 <a href="#session-manager" id="session-manager" style="color: inherit; text-decoration: none;">
   <h3>Session Manager</h3>
@@ -243,6 +248,7 @@ ABCD,X,.
 <li><code>serverType</code> - either <code>SAS9</code>, <code>SASVIYA</code> or <code>SASJS</code>.  The <code>SASJS</code> server type is for use with <a href="https://github.com/sasjs/server">sasjs/server</a>.</li>
 <li><code>serverUrl</code> - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.</li>
 <li><code>debug</code> - if <code>true</code> then SAS Logs and extra debug information is returned.</li>
+<li><code>verbose</code> - optional, if <code>true</code> then a summary of every HTTP response is logged.</li>
 <li><code>loginMechanism</code> - either <code>Default</code> or <code>Redirected</code>.  See <a href="#sas-logon">SAS Logon</a> section.</li>
 <li><code>useComputeApi</code> - Only relevant when the serverType is <code>SASVIYA</code>. If <code>true</code> the <a href="#using-the-compute-api">Compute API</a> is used.  If <code>false</code> the <a href="#using-the-jes-api">JES API</a> is used.  If <code>null</code> or <code>undefined</code> the <a href="#using-jes-web-app">Web</a> approach is used.</li>
 <li><code>contextName</code> - Compute context on which the requests will be called.  If missing or not provided, defaults to <code>Job Execution Compute context</code>.</li>
