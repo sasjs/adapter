@@ -1,5 +1,6 @@
 import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
+import { VerboseMode } from '../types'
 
 /**
  * Specifies the configuration for the SASjs instance - eg where and how to
@@ -48,7 +49,7 @@ export class SASjsConfig {
   /**
    * Set to `true` to enable verbose mode that will log a summary of every HTTP response.
    */
-  verbose?: boolean = true
+  verbose?: VerboseMode = true
   /**
    * The name of the compute context to use when calling the Viya services directly.
    * Example value: 'SAS Job Execution compute context'

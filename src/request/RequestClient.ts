@@ -10,7 +10,7 @@ import {
   JobExecutionError,
   CertificateError
 } from '../types/errors'
-import { SASjsRequest } from '../types'
+import { VerboseMode } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
@@ -61,6 +61,7 @@ export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
   private requestsLimit: number = 10
   private httpInterceptor?: number
+  private verboseMode: VerboseMode = false
 
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
@@ -70,13 +71,16 @@ export class RequestClient implements HttpClient {
     protected baseUrl: string,
     httpsAgentOptions?: https.AgentOptions,
     requestsLimit?: number,
-    verboseMode?: boolean
+    verboseMode?: VerboseMode
   ) {
     this.createHttpClient(baseUrl, httpsAgentOptions)
 
     if (requestsLimit) this.requestsLimit = requestsLimit
 
-    if (verboseMode) this.enableVerboseMode()
+    if (verboseMode) {
+      this.setVerboseMode(verboseMode)
+      this.enableVerboseMode()
+    }
   }
 
   public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
@@ -398,10 +402,12 @@ export class RequestClient implements HttpClient {
 
   /**
    * Adds colors to the string.
+   * If verboseMode is set to 'bleached', colors should be disabled
    * @param str - string to be prettified.
    * @returns - prettified string
    */
-  private prettifyString = (str: any) => inspect(str, { colors: true })
+  private prettifyString = (str: any) =>
+    inspect(str, { colors: this.verboseMode !== 'bleached' })
 
   /**
    * Formats HTTP request/response body.
@@ -469,6 +475,14 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 `)
 
     return response
+  }
+
+  /**
+   * Sets verbose mode.
+   * @param verboseMode - value of the verbose mode, can be true, false or bleached(without extra colors).
+   */
+  public setVerboseMode = (verboseMode: VerboseMode) => {
+    this.verboseMode = verboseMode
   }
 
   /**

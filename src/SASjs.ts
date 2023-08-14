@@ -855,7 +855,7 @@ export default class SASjs {
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
-   * @param verboseMode - boolean to enable verbose mode (log every HTTP response).
+   * @param verboseMode - boolean or a string equal to 'bleached' to enable verbose mode (log every HTTP response).
    */
   public async startComputeJob(
     sasJob: string,
@@ -866,7 +866,7 @@ export default class SASjs {
     pollOptions?: PollOptions,
     printPid = false,
     variables?: MacroVar,
-    verboseMode?: boolean
+    verboseMode?: VerboseMode
   ) {
     config = {
       ...this.sasjsConfig,
@@ -880,8 +880,10 @@ export default class SASjs {
       )
     }
 
-    if (verboseMode) this.requestClient?.enableVerboseMode()
-    else if (verboseMode === false) this.requestClient?.disableVerboseMode()
+    if (verboseMode) {
+      this.requestClient?.setVerboseMode(verboseMode)
+      this.requestClient?.enableVerboseMode()
+    } else if (verboseMode === false) this.requestClient?.disableVerboseMode()
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
@@ -1159,5 +1161,13 @@ export default class SASjs {
    */
   public disableVerboseMode() {
     this.requestClient?.disableVerboseMode()
+  }
+
+  /**
+   * Sets verbose mode.
+   * @param verboseMode - value of the verbose mode, can be true, false or bleached(without extra colors).
+   */
+  public setVerboseMode = (verboseMode: VerboseMode) => {
+    this.requestClient?.setVerboseMode(verboseMode)
   }
 }
