@@ -103,7 +103,7 @@
 <a href="#verbose-mode" id="verbose-mode" style="color: inherit; text-decoration: none;">
   <h3>Verbose Mode</h3>
 </a>
-<p>Set <code>verbose</code> to <code>true</code> to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling <code>disableVerboseMode</code> method or enabled by <code>enableVerboseMode</code> method. Verbose mode can also be enabled/disabled by <code>startComputeJob</code> method.</p>
+<p>Set <code>verbose</code> to <code>true</code> to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling <code>disableVerboseMode</code> method or enabled by <code>enableVerboseMode</code> method. Verbose mode also supports <code>bleached</code> mode that disables extra colors in req/res summary. To enable <code>bleached</code> verbose mode, pass <code>verbose</code> equal to <code>bleached</code> while instantiating an instance of <code>RequestClient</code> or to <code>setVerboseMode</code> method. Verbose mode can also be enabled/disabled by <code>startComputeJob</code> method.</p>
 
 <a href="#session-manager" id="session-manager" style="color: inherit; text-decoration: none;">
   <h3>Session Manager</h3>

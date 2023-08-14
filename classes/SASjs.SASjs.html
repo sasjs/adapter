@@ -24,7 +24,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">SASjs</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L63">SASjs.ts:63</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L66">SASjs.ts:66</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -51,6 +51,7 @@
 <a href="SASjs.SASjs.html#disableVerboseMode" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>disable<wbr/>Verbose<wbr/>Mode</span></a>
 <a href="SASjs.SASjs.html#editComputeContext" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>edit<wbr/>Compute<wbr/>Context</span></a>
 <a href="SASjs.SASjs.html#enableVerboseMode" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>enable<wbr/>Verbose<wbr/>Mode</span></a>
+<a href="SASjs.SASjs.html#executeJob" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>execute<wbr/>Job</span></a>
 <a href="SASjs.SASjs.html#executeScript" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>execute<wbr/>Script</span></a>
 <a href="SASjs.SASjs.html#fetchLogFileContent" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>fetch<wbr/>Log<wbr/>File<wbr/>Content</span></a>
 <a href="SASjs.SASjs.html#getAccessToken" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Access<wbr/>Token</span></a>
@@ -74,6 +75,7 @@
 <a href="SASjs.SASjs.html#request" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>request</span></a>
 <a href="SASjs.SASjs.html#setDebugState" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>set<wbr/>Debug<wbr/>State</span></a>
 <a href="SASjs.SASjs.html#setSASjsConfig" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>setSASjs<wbr/>Config</span></a>
+<a href="SASjs.SASjs.html#setVerboseMode" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>set<wbr/>Verbose<wbr/>Mode</span></a>
 <a href="SASjs.SASjs.html#startComputeJob" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>start<wbr/>Compute<wbr/>Job</span></a>
 <a href="SASjs.SASjs.html#uploadFile" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>upload<wbr/>File</span></a>
 </div></section></div></details></section></section>
@@ -91,13 +93,13 @@
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> config: <span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="types.SASjsConfig.html" class="tsd-signature-type" data-tsd-kind="Class">SASjsConfig</a><span class="tsd-signature-symbol">&gt;</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SASjs.SASjs.html" class="tsd-signature-type" data-tsd-kind="Class">SASjs</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L78">SASjs.ts:78</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L81">SASjs.ts:81</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="checkSession" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>check<wbr/>Session</span><a href="#checkSession" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="checkSession.checkSession-1">check<wbr/>Session<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">LoginResultInternal</span><span class="tsd-signature-symbol">&gt;</span><a href="#checkSession.checkSession-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="checkSession.checkSession-1">check<wbr/>Session<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.LoginResultInternal.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginResultInternal</a><span class="tsd-signature-symbol">&gt;</span><a href="#checkSession.checkSession-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Checks whether a session is active, or login is required.</p>
 
@@ -105,9 +107,9 @@
 <li>a promise which resolves with an object containing two values - a boolean <code>isLoggedIn</code>, and a string <code>userName</code>.</li>
 </ul>
 </div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">LoginResultInternal</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.LoginResultInternal.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginResultInternal</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L591">SASjs.ts:591</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L611">SASjs.ts:611</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="clearSasRequests" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>clear<wbr/>Sas<wbr/>Requests</span><a href="#clearSasRequests" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -115,7 +117,7 @@
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L947">SASjs.ts:947</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L969">SASjs.ts:969</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createComputeContext" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Compute<wbr/>Context</span><a href="#createComputeContext" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -152,7 +154,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.Context.html" class="tsd-signature-type" data-tsd-kind="Interface">Context</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L209">SASjs.ts:209</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L229">SASjs.ts:229</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createFile" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>File</span><a href="#createFile" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -189,7 +191,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.File.html" class="tsd-signature-type" data-tsd-kind="Interface">File</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L369">SASjs.ts:369</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L389">SASjs.ts:389</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createFolder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Folder</span><a href="#createFolder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -226,7 +228,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.Folder.html" class="tsd-signature-type" data-tsd-kind="Interface">Folder</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L333">SASjs.ts:333</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L353">SASjs.ts:353</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createJobDefinition" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Job<wbr/>Definition</span><a href="#createJobDefinition" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -249,7 +251,7 @@
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> sasApiClient: <a href="SASViyaApiClient.SASViyaApiClient.html" class="tsd-signature-type" data-tsd-kind="Class">SASViyaApiClient</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>etag<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><a href="../interfaces/types.Job.html" class="tsd-signature-type" data-tsd-kind="Interface">Job</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L457">SASjs.ts:457</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L477">SASjs.ts:477</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createLauncherContext" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Launcher<wbr/>Context</span><a href="#createLauncherContext" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -278,7 +280,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.Context.html" class="tsd-signature-type" data-tsd-kind="Interface">Context</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L236">SASjs.ts:236</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L256">SASjs.ts:256</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="createSession" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Session</span><a href="#createSession" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -293,7 +295,7 @@
 <h5>accessToken: <span class="tsd-signature-type">string</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.Session.html" class="tsd-signature-type" data-tsd-kind="Interface">Session</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L318">SASjs.ts:318</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L338">SASjs.ts:338</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="deleteClient" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Client</span><a href="#deleteClient" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -308,7 +310,7 @@
 <h5>accessToken: <span class="tsd-signature-type">string</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L542">SASjs.ts:542</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L562">SASjs.ts:562</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="deleteComputeContext" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Compute<wbr/>Context</span><a href="#deleteComputeContext" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -329,7 +331,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>etag<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><a href="../interfaces/types.Context.html" class="tsd-signature-type" data-tsd-kind="Interface">Context</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L277">SASjs.ts:277</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L297">SASjs.ts:297</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="deleteFolder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Folder</span><a href="#deleteFolder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -350,7 +352,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/types.Folder.html" class="tsd-signature-type" data-tsd-kind="Interface">Folder</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L409">SASjs.ts:409</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L429">SASjs.ts:429</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="deployServicePack" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>deploy<wbr/>Service<wbr/>Pack</span><a href="#deployServicePack" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -386,7 +388,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L780">SASjs.ts:780</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L800">SASjs.ts:800</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="disableVerboseMode" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>disable<wbr/>Verbose<wbr/>Mode</span><a href="#disableVerboseMode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -396,7 +398,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L1160">SASjs.ts:1160</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L1182">SASjs.ts:1182</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="editComputeContext" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>edit<wbr/>Compute<wbr/>Context</span><a href="#editComputeContext" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -421,7 +423,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>etag<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><a href="../interfaces/types.Context.html" class="tsd-signature-type" data-tsd-kind="Interface">Context</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L258">SASjs.ts:258</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L278">SASjs.ts:278</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="enableVerboseMode" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>enable<wbr/>Verbose<wbr/>Mode</span><a href="#enableVerboseMode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -464,7 +466,34 @@ using this function from the command line.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AxiosResponse</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L1150">SASjs.ts:1150</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L1172">SASjs.ts:1172</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="executeJob" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>execute<wbr/>Job</span><a href="#executeJob" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="executeJob.executeJob-1">execute<wbr/>Job<span class="tsd-signature-symbol">(</span>query<span class="tsd-signature-symbol">: </span><a href="../interfaces/types.ExecutionQuery.html" class="tsd-signature-type" data-tsd-kind="Interface">ExecutionQuery</a>, appLoc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, authConfig<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">AuthConfig</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>log<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><a href="#executeJob.executeJob-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Executes job on SASJS server.</p>
+
+<h3>Returns</h3><p>a promise that resolves into job execution result and log.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>query: <a href="../interfaces/types.ExecutionQuery.html" class="tsd-signature-type" data-tsd-kind="Interface">ExecutionQuery</a></h5>
+<div class="tsd-comment tsd-typography"><p>an object containing job path and debug level.</p>
+</div></li>
+<li>
+<h5>appLoc: <span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography"><p>an application path.</p>
+</div></li>
+<li>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> authConfig: <span class="tsd-signature-type">AuthConfig</span></h5>
+<div class="tsd-comment tsd-typography"><p>an object for authentication.</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>log<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L171">SASjs.ts:171</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="executeScript" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>execute<wbr/>Script</span><a href="#executeScript" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -479,7 +508,7 @@ using this function from the command line.</p>
 <h5>__namedParameters: <span class="tsd-signature-type">ExecuteScriptParams</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L101">SASjs.ts:101</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L104">SASjs.ts:104</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="fetchLogFileContent" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>fetch<wbr/>Log<wbr/>File<wbr/>Content</span><a href="#fetchLogFileContent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -500,7 +529,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L913">SASjs.ts:913</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L935">SASjs.ts:935</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getAccessToken" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Access<wbr/>Token</span><a href="#getAccessToken" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -525,7 +554,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">SasAuthResponse</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/SASjsApiClient.SASjsAuthResponse.html" class="tsd-signature-type" data-tsd-kind="Interface">SASjsAuthResponse</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L496">SASjs.ts:496</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L516">SASjs.ts:516</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getAuthCode" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Auth<wbr/>Code</span><a href="#getAuthCode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -538,7 +567,7 @@ using this function from the command line.</p>
 <h5>clientId: <span class="tsd-signature-type">string</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L484">SASjs.ts:484</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L504">SASjs.ts:504</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getComputeContextById" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Compute<wbr/>Context<wbr/>By<wbr/>Id</span><a href="#getComputeContextById" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -559,7 +588,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.ContextAllAttributes.html" class="tsd-signature-type" data-tsd-kind="Interface">ContextAllAttributes</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L309">SASjs.ts:309</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L329">SASjs.ts:329</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getComputeContextByName" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Compute<wbr/>Context<wbr/>By<wbr/>Name</span><a href="#getComputeContextByName" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -581,7 +610,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.Context.html" class="tsd-signature-type" data-tsd-kind="Interface">Context</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L292">SASjs.ts:292</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L312">SASjs.ts:312</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getComputeContexts" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Compute<wbr/>Contexts</span><a href="#getComputeContexts" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -598,7 +627,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>attributes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{}</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>createdBy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>version<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L165">SASjs.ts:165</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L185">SASjs.ts:185</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getCsrfToken" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Csrf<wbr/>Token</span><a href="#getCsrfToken" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -611,7 +640,7 @@ using this function from the command line.</p>
 <h5>type: <span class="tsd-signature-type">&quot;general&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;file&quot;</span><span class="tsd-signature-symbol"> = &#39;general&#39;</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/types.CsrfToken.html" class="tsd-signature-type" data-tsd-kind="Interface">CsrfToken</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L87">SASjs.ts:87</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L90">SASjs.ts:90</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getDefaultComputeContexts" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Default<wbr/>Compute<wbr/>Contexts</span><a href="#getDefaultComputeContexts" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -621,7 +650,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L184">SASjs.ts:184</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L204">SASjs.ts:204</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getExecutableContexts" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Executable<wbr/>Contexts</span><a href="#getExecutableContexts" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -638,7 +667,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L194">SASjs.ts:194</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L214">SASjs.ts:214</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getFolder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Folder</span><a href="#getFolder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -659,7 +688,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L399">SASjs.ts:399</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L419">SASjs.ts:419</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getLauncherContexts" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Launcher<wbr/>Contexts</span><a href="#getLauncherContexts" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -676,7 +705,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>attributes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{}</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>createdBy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>version<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L175">SASjs.ts:175</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L195">SASjs.ts:195</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getSasRequests" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Sas<wbr/>Requests</span><a href="#getSasRequests" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -688,7 +717,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <a href="../interfaces/types.SASjsRequest.html" class="tsd-signature-type" data-tsd-kind="Interface">SASjsRequest</a><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L941">SASjs.ts:941</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L963">SASjs.ts:963</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getSasjsConfig" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Sasjs<wbr/>Config</span><a href="#getSasjsConfig" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -698,7 +727,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <a href="types.SASjsConfig.html" class="tsd-signature-type" data-tsd-kind="Class">SASjsConfig</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L552">SASjs.ts:552</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L572">SASjs.ts:572</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getUserName" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>User<wbr/>Name</span><a href="#getUserName" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -708,7 +737,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L560">SASjs.ts:560</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L580">SASjs.ts:580</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="listFolder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Folder</span><a href="#listFolder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -731,11 +760,11 @@ using this function from the command line.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> limit: <span class="tsd-signature-type">number</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L420">SASjs.ts:420</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L440">SASjs.ts:440</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="logIn" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>log<wbr/>In</span><a href="#logIn" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="logIn.logIn-1">log<wbr/>In<span class="tsd-signature-symbol">(</span>username<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, password<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, clientId<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">LoginOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">LoginResult</span><span class="tsd-signature-symbol">&gt;</span><a href="#logIn.logIn-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="logIn.logIn-1">log<wbr/>In<span class="tsd-signature-symbol">(</span>username<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, password<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, clientId<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/types.LoginOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.LoginResult.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginResult</a><span class="tsd-signature-symbol">&gt;</span><a href="#logIn.logIn-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Logs into the SAS server with the supplied credentials.</p>
 </div>
@@ -755,10 +784,10 @@ using this function from the command line.</p>
 <div class="tsd-comment tsd-typography"><p>a string representing the client ID.</p>
 </div></li>
 <li>
-<h5>options: <span class="tsd-signature-type">LoginOptions</span><span class="tsd-signature-symbol"> = {}</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">LoginResult</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h5>options: <a href="../interfaces/types.LoginOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginOptions</a><span class="tsd-signature-symbol"> = {}</span></h5></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.LoginResult.html" class="tsd-signature-type" data-tsd-kind="Interface">LoginResult</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L601">SASjs.ts:601</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L621">SASjs.ts:621</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="logOut" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>log<wbr/>Out</span><a href="#logOut" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -768,7 +797,7 @@ using this function from the command line.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L628">SASjs.ts:628</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L648">SASjs.ts:648</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="moveFolder" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>move<wbr/>Folder</span><a href="#moveFolder" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -797,7 +826,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/types.Folder.html" class="tsd-signature-type" data-tsd-kind="Interface">Folder</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L441">SASjs.ts:441</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L461">SASjs.ts:461</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="refreshTokens" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>refresh<wbr/>Tokens</span><a href="#refreshTokens" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -822,7 +851,7 @@ using this function from the command line.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">SasAuthResponse</span><span class="tsd-signature-symbol"> | </span><a href="../interfaces/SASjsApiClient.SASjsAuthResponse.html" class="tsd-signature-type" data-tsd-kind="Interface">SASjsAuthResponse</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L522">SASjs.ts:522</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L542">SASjs.ts:542</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="request" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>request</span><a href="#request" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -884,7 +913,7 @@ Supported values are declared in ExtraResponseAttributes type.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L694">SASjs.ts:694</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L714">SASjs.ts:714</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="setDebugState" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>set<wbr/>Debug<wbr/>State</span><a href="#setDebugState" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -901,7 +930,7 @@ Supported values are declared in ExtraResponseAttributes type.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L580">SASjs.ts:580</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L600">SASjs.ts:600</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="setSASjsConfig" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>setSASjs<wbr/>Config</span><a href="#setSASjsConfig" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -918,11 +947,28 @@ Supported values are declared in ExtraResponseAttributes type.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L568">SASjs.ts:568</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L588">SASjs.ts:588</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="setVerboseMode" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>set<wbr/>Verbose<wbr/>Mode</span><a href="#setVerboseMode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="setVerboseMode.setVerboseMode-1">set<wbr/>Verbose<wbr/>Mode<span class="tsd-signature-symbol">(</span>verboseMode<span class="tsd-signature-symbol">: </span><a href="../types/types.VerboseMode.html" class="tsd-signature-type" data-tsd-kind="Type alias">VerboseMode</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#setVerboseMode.setVerboseMode-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Sets verbose mode.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>verboseMode: <a href="../types/types.VerboseMode.html" class="tsd-signature-type" data-tsd-kind="Type alias">VerboseMode</a></h5>
+<div class="tsd-comment tsd-typography"><p>value of the verbose mode, can be true, false or bleached(without extra colors).</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L1190">SASjs.ts:1190</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="startComputeJob" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>start<wbr/>Compute<wbr/>Job</span><a href="#startComputeJob" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="startComputeJob.startComputeJob-1">start<wbr/>Compute<wbr/>Job<span class="tsd-signature-symbol">(</span>sasJob<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, config<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span>, authConfig<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">AuthConfig</span>, waitForResult<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span>, pollOptions<span class="tsd-signature-symbol">?: </span><a href="../interfaces/types.PollOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PollOptions</a>, printPid<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span>, variables<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">MacroVar</span>, verboseMode<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><a href="#startComputeJob.startComputeJob-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="startComputeJob.startComputeJob-1">start<wbr/>Compute<wbr/>Job<span class="tsd-signature-symbol">(</span>sasJob<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, config<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span>, authConfig<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">AuthConfig</span>, waitForResult<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span>, pollOptions<span class="tsd-signature-symbol">?: </span><a href="../interfaces/types.PollOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PollOptions</a>, printPid<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span>, variables<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">MacroVar</span>, verboseMode<span class="tsd-signature-symbol">?: </span><a href="../types/types.VerboseMode.html" class="tsd-signature-type" data-tsd-kind="Type alias">VerboseMode</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><a href="#startComputeJob.startComputeJob-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Kicks off execution of the given job via the compute API.</p>
 
@@ -970,12 +1016,12 @@ The access token is not required when the user is authenticated via the browser.
 <div class="tsd-comment tsd-typography"><p>an object that represents macro variables.</p>
 </div></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> verboseMode: <span class="tsd-signature-type">boolean</span></h5>
-<div class="tsd-comment tsd-typography"><p>boolean to enable verbose mode (log every HTTP response).</p>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> verboseMode: <a href="../types/types.VerboseMode.html" class="tsd-signature-type" data-tsd-kind="Type alias">VerboseMode</a></h5>
+<div class="tsd-comment tsd-typography"><p>boolean or a string equal to &#39;bleached&#39; to enable verbose mode (log every HTTP response).</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L860">SASjs.ts:860</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L880">SASjs.ts:880</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="uploadFile" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>upload<wbr/>File</span><a href="#uploadFile" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -1023,7 +1069,7 @@ resubmitted after successful login.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/sasjs/adapter/blob/8cbd292/src/SASjs.ts#L646">SASjs.ts:646</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/sasjs/adapter/blob/34135b8/src/SASjs.ts#L666">SASjs.ts:666</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -1068,6 +1114,7 @@ resubmitted after successful login.</p>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#disableVerboseMode" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>disable<wbr/>Verbose<wbr/>Mode</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#editComputeContext" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>edit<wbr/>Compute<wbr/>Context</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#enableVerboseMode" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>enable<wbr/>Verbose<wbr/>Mode</a></li>
+<li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#executeJob" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>execute<wbr/>Job</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#executeScript" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>execute<wbr/>Script</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#fetchLogFileContent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>fetch<wbr/>Log<wbr/>File<wbr/>Content</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#getAccessToken" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Access<wbr/>Token</a></li>
@@ -1091,6 +1138,7 @@ resubmitted after successful login.</p>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#request" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>request</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#setDebugState" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>set<wbr/>Debug<wbr/>State</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#setSASjsConfig" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>setSASjs<wbr/>Config</a></li>
+<li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#setVerboseMode" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>set<wbr/>Verbose<wbr/>Mode</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#startComputeJob" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>start<wbr/>Compute<wbr/>Job</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="SASjs.SASjs.html#uploadFile" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>upload<wbr/>File</a></li></ul></li></ul></nav></div></div>
 <div class="container tsd-generator">
