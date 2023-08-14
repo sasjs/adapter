@@ -448,6 +448,9 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
    */
   public setVerboseMode = (verboseMode: VerboseMode) => {
     this.verboseMode = verboseMode
+
+    if (this.verboseMode) this.enableVerboseMode()
+    else this.disableVerboseMode()
   }
 
   /**
