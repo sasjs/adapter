@@ -276,6 +276,76 @@ describe('pollJobState', () => {
     expect(delays).toEqual([pollIntervals[0], ...pollIntervals])
   })
 
+  it('should change default poll strategies after completing provided poll options', async () => {
+    const delays: number[] = []
+
+    jest.spyOn(delayModule, 'delay').mockImplementation((ms: number) => {
+      delays.push(ms)
+
+      return Promise.resolve()
+    })
+
+    const customPollOptions: PollOptions = {
+      maxPollCount: 0,
+      pollInterval: 0
+    }
+
+    const requests = [
+      { maxPollCount: 202, pollInterval: 300 },
+      { maxPollCount: 300, pollInterval: 3000 },
+      { maxPollCount: 500, pollInterval: 30000 },
+      { maxPollCount: 3400, pollInterval: 60000 }
+    ]
+
+    // ~200 requests with delay 300ms
+    let request = requests.splice(0, 1)[0]
+    let { maxPollCount, pollInterval } = request
+
+    // should be only one interval because maxPollCount is equal to 0
+    const pollIntervals = [customPollOptions.pollInterval]
+
+    pollIntervals.push(...Array(maxPollCount - 2).fill(pollInterval))
+
+    // ~300 requests with delay 3000
+    request = requests.splice(0, 1)[0]
+    let newAmount = request.maxPollCount
+    pollInterval = request.pollInterval
+
+    pollIntervals.push(...Array(newAmount - maxPollCount).fill(pollInterval))
+    pollIntervals.push(...Array(2).fill(pollInterval))
+
+    // ~500 requests with delay 30000
+    request = requests.splice(0, 1)[0]
+
+    let oldAmount = newAmount
+    newAmount = request.maxPollCount
+    pollInterval = request.pollInterval
+
+    pollIntervals.push(...Array(newAmount - oldAmount - 2).fill(pollInterval))
+    pollIntervals.push(...Array(2).fill(pollInterval))
+
+    // ~3400 requests with delay 60000
+    request = requests.splice(0, 1)[0]
+
+    oldAmount = newAmount
+    newAmount = request.maxPollCount
+    pollInterval = request.pollInterval
+
+    mockSimplePoll(newAmount)
+
+    pollIntervals.push(...Array(newAmount - oldAmount - 2).fill(pollInterval))
+
+    await pollJobState(
+      requestClient,
+      mockJob,
+      false,
+      undefined,
+      customPollOptions
+    )
+
+    expect(delays).toEqual(pollIntervals)
+  })
+
   it('should throw an error if not valid poll strategies provided', async () => {
     // INFO: 'maxPollCount' has to be > 0
     let invalidPollStrategy = {

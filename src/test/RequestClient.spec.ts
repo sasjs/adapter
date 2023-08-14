@@ -9,12 +9,14 @@ import {
   LoginRequiredError,
   AuthorizeError,
   NotFoundError,
-  InternalServerError
-} from '../types/errors'
+  InternalServerError,
+  VerboseMode
+} from '../types'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
 import { AxiosResponse } from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
+import * as UtilsModule from 'util'
 
 const axiosActual = jest.requireActual('axios')
 
@@ -232,6 +234,60 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         successCallback,
         failureCallback
       )
+    })
+  })
+
+  describe('setVerboseMode', () => {
+    it(`should set verbose mode`, () => {
+      const requestClient = new RequestClient('')
+      let verbose: VerboseMode = false
+      requestClient.setVerboseMode(verbose)
+
+      expect(requestClient['verboseMode']).toEqual(verbose)
+
+      verbose = true
+      requestClient.setVerboseMode(verbose)
+
+      expect(requestClient['verboseMode']).toEqual(verbose)
+
+      verbose = 'bleached'
+      requestClient.setVerboseMode(verbose)
+
+      expect(requestClient['verboseMode']).toEqual(verbose)
+    })
+  })
+
+  describe('prettifyString', () => {
+    it(`should call inspect without colors when verbose mode is set to 'bleached'`, () => {
+      const requestClient = new RequestClient('')
+      let verbose: VerboseMode = 'bleached'
+      requestClient.setVerboseMode(verbose)
+
+      jest.spyOn(UtilsModule, 'inspect')
+
+      const testStr = JSON.stringify({ test: 'test' })
+
+      requestClient['prettifyString'](testStr)
+
+      expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {
+        colors: false
+      })
+    })
+
+    it(`should call inspect with colors when verbose mode is set to 'true'`, () => {
+      const requestClient = new RequestClient('')
+      let verbose: VerboseMode = true
+      requestClient.setVerboseMode(verbose)
+
+      jest.spyOn(UtilsModule, 'inspect')
+
+      const testStr = JSON.stringify({ test: 'test' })
+
+      requestClient['prettifyString'](testStr)
+
+      expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {
+        colors: true
+      })
     })
   })
 

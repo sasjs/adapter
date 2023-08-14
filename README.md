@@ -155,7 +155,7 @@ The adapter will also cache the logs (if debug enabled) and even the work tables
 
 ### Verbose Mode
 
-Set `verbose` to `true` to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling `disableVerboseMode` method or enabled by `enableVerboseMode` method. Verbose mode can also be enabled/disabled by `startComputeJob` method.
+Set `verbose` to `true` to enable verbose mode that logs a summary of every HTTP response. Verbose mode can be disabled by calling `disableVerboseMode` method or enabled by `enableVerboseMode` method. Verbose mode also supports `bleached` mode that disables extra colors in req/res summary. To enable `bleached` verbose mode, pass `verbose` equal to `bleached` while instantiating an instance of `RequestClient` or to `setVerboseMode` method. Verbose mode can also be enabled/disabled by `startComputeJob` method.
 
 ### Session Manager
 

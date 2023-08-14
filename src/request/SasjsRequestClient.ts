@@ -1,19 +1,11 @@
 import { RequestClient } from './RequestClient'
 import { AxiosResponse } from 'axios'
-
-export interface SasjsParsedResponse<T> {
-  result: T
-  log: string
-  etag: string
-  status: number
-  printOutput?: string
-}
+import { SasjsParsedResponse } from '../types'
 
 /**
  * Specific request client for SASJS.
  * Append tokens in headers.
  */
-
 export class SasjsRequestClient extends RequestClient {
   getHeaders = (accessToken: string | undefined, contentType: string) => {
     const headers: any = {}

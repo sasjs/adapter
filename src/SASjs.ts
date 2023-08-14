@@ -4,7 +4,12 @@ import {
   UploadFile,
   EditContextInput,
   PollOptions,
-  LoginMechanism
+  LoginMechanism,
+  VerboseMode,
+  ErrorResponse,
+  LoginOptions,
+  LoginResult,
+  ExecutionQuery
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -29,8 +34,6 @@ import {
   Sas9JobExecutor,
   FileUploader
 } from './job-execution'
-import { ErrorResponse } from './types/errors'
-import { LoginOptions, LoginResult } from './types/Login'
 import { AxiosResponse } from 'axios'
 
 interface ExecuteScriptParams {
@@ -156,6 +159,23 @@ export default class SASjs {
         debug ? debug : this.sasjsConfig.debug
       )
     }
+  }
+
+  /**
+   * Executes job on SASJS server.
+   * @param query - an object containing job path and debug level.
+   * @param appLoc - an application path.
+   * @param authConfig - an object for authentication.
+   * @returns a promise that resolves into job execution result and log.
+   */
+  public async executeJob(
+    query: ExecutionQuery,
+    appLoc: string,
+    authConfig?: AuthConfig
+  ) {
+    this.isMethodSupported('executeScript', [ServerType.Sasjs])
+
+    return await this.sasJSApiClient?.executeJob(query, appLoc, authConfig)
   }
 
   /**
@@ -855,7 +875,7 @@ export default class SASjs {
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
-   * @param verboseMode - boolean to enable verbose mode (log every HTTP response).
+   * @param verboseMode - boolean or a string equal to 'bleached' to enable verbose mode (log every HTTP response).
    */
   public async startComputeJob(
     sasJob: string,
@@ -866,7 +886,7 @@ export default class SASjs {
     pollOptions?: PollOptions,
     printPid = false,
     variables?: MacroVar,
-    verboseMode?: boolean
+    verboseMode?: VerboseMode
   ) {
     config = {
       ...this.sasjsConfig,
@@ -880,8 +900,10 @@ export default class SASjs {
       )
     }
 
-    if (verboseMode) this.requestClient?.enableVerboseMode()
-    else if (verboseMode === false) this.requestClient?.disableVerboseMode()
+    if (verboseMode) {
+      this.requestClient?.setVerboseMode(verboseMode)
+      this.requestClient?.enableVerboseMode()
+    } else if (verboseMode === false) this.requestClient?.disableVerboseMode()
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
@@ -1159,5 +1181,13 @@ export default class SASjs {
    */
   public disableVerboseMode() {
     this.requestClient?.disableVerboseMode()
+  }
+
+  /**
+   * Sets verbose mode.
+   * @param verboseMode - value of the verbose mode, can be true, false or bleached(without extra colors).
+   */
+  public setVerboseMode = (verboseMode: VerboseMode) => {
+    this.requestClient?.setVerboseMode(verboseMode)
   }
 }
