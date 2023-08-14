@@ -8,7 +8,8 @@ import {
   VerboseMode,
   ErrorResponse,
   LoginOptions,
-  LoginResult
+  LoginResult,
+  ExecutionQuery
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -158,6 +159,23 @@ export default class SASjs {
         debug ? debug : this.sasjsConfig.debug
       )
     }
+  }
+
+  /**
+   * Executes job on SASJS server.
+   * @param query - an object containing job path and debug level.
+   * @param appLoc - an application path.
+   * @param authConfig - an object for authentication.
+   * @returns a promise that resolves into job execution result and log.
+   */
+  public async executeJob(
+    query: ExecutionQuery,
+    appLoc: string,
+    authConfig?: AuthConfig
+  ) {
+    this.isMethodSupported('executeScript', [ServerType.Sasjs])
+
+    return await this.sasJSApiClient?.executeJob(query, appLoc, authConfig)
   }
 
   /**
