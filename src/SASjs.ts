@@ -4,7 +4,11 @@ import {
   UploadFile,
   EditContextInput,
   PollOptions,
-  LoginMechanism
+  LoginMechanism,
+  VerboseMode,
+  ErrorResponse,
+  LoginOptions,
+  LoginResult
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -29,8 +33,6 @@ import {
   Sas9JobExecutor,
   FileUploader
 } from './job-execution'
-import { ErrorResponse } from './types/errors'
-import { LoginOptions, LoginResult } from './types/Login'
 import { AxiosResponse } from 'axios'
 
 interface ExecuteScriptParams {

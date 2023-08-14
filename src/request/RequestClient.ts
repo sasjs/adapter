@@ -10,7 +10,7 @@ import {
   JobExecutionError,
   CertificateError
 } from '../types/errors'
-import { VerboseMode } from '../types'
+import { SASjsRequest, HttpClient, VerboseMode } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
 import { prefixMessage } from '@sasjs/utils/error'
 import { SAS9AuthError } from '../types/errors/SAS9AuthError'
@@ -21,41 +21,6 @@ import {
 } from '../utils'
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 import { inspect } from 'util'
-
-export interface HttpClient {
-  get<T>(
-    url: string,
-    accessToken: string | undefined,
-    contentType: string,
-    overrideHeaders: { [key: string]: string | number }
-  ): Promise<{ result: T; etag: string }>
-
-  post<T>(
-    url: string,
-    data: any,
-    accessToken: string | undefined,
-    contentType: string,
-    overrideHeaders: { [key: string]: string | number }
-  ): Promise<{ result: T; etag: string }>
-
-  put<T>(
-    url: string,
-    data: any,
-    accessToken: string | undefined,
-    overrideHeaders: { [key: string]: string | number }
-  ): Promise<{ result: T; etag: string }>
-
-  delete<T>(
-    url: string,
-    accessToken: string | undefined
-  ): Promise<{ result: T; etag: string }>
-
-  getCsrfToken(type: 'general' | 'file'): CsrfToken | undefined
-  saveLocalStorageToken(accessToken: string, refreshToken: string): void
-  clearCsrfTokens(): void
-  clearLocalStorageTokens(): void
-  getBaseUrl(): string
-}
 
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []

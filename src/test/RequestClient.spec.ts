@@ -9,9 +9,9 @@ import {
   LoginRequiredError,
   AuthorizeError,
   NotFoundError,
-  InternalServerError
-} from '../types/errors'
-import { VerboseMode } from '../types'
+  InternalServerError,
+  VerboseMode
+} from '../types'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
 import { AxiosResponse } from 'axios'

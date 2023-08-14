@@ -1,4 +1,4 @@
-import { SASjsRequest } from '../types/SASjsRequest'
+import { SASjsRequest } from '../types'
 
 /**
  * Comparator for SASjs request timestamps.

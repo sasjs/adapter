@@ -1,8 +1,5 @@
-import {
-  SASJS_LOGS_SEPARATOR,
-  SasjsRequestClient,
-  SasjsParsedResponse
-} from '../SasjsRequestClient'
+import { SASJS_LOGS_SEPARATOR, SasjsRequestClient } from '../SasjsRequestClient'
+import { SasjsParsedResponse } from '../../types'
 import { AxiosResponse } from 'axios'
 
 describe('SasjsRequestClient', () => {
