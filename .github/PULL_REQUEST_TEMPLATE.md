@@ -14,7 +14,7 @@ What code changes have been made to achieve the intent.
 
 No PR (that involves a non-trivial code change) should be merged, unless all items below are confirmed!  If an urgent fix is needed - use a tar file.
 
-
+- [ ] Unit tests coverage has been increased and a new threshold is set.
 - [ ] All `sasjs-cli` unit tests are passing (`npm test`).
 - (CI Runs this) All `sasjs-tests` are passing. If you want to run it manually (instructions available [here](https://github.com/sasjs/adapter/blob/master/sasjs-tests/README.md)).
 - [ ] [Data Controller](https://datacontroller.io) builds and is functional on both SAS 9 and Viya

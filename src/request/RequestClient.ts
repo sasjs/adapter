@@ -1,4 +1,10 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse
+} from 'axios'
+import axios from 'axios'
 import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
@@ -65,6 +71,7 @@ export class RequestClient implements HttpClient {
     this.csrfToken = { headerName: '', value: '' }
     this.fileUploadCsrfToken = { headerName: '', value: '' }
   }
+
   public clearLocalStorageTokens() {
     localStorage.setItem('accessToken', '')
     localStorage.setItem('refreshToken', '')
@@ -406,10 +413,73 @@ export class RequestClient implements HttpClient {
     return bodyLines.join('\n')
   }
 
-  private defaultInterceptionCallBack = (response: AxiosResponse) => {
-    const { status, config, request, data: resData } = response
+  private defaultInterceptionCallBack = (
+    axiosResponse: AxiosResponse | AxiosError
+  ) => {
+    // Message indicating absent value.
+    const noValueMessage = 'Not provided'
+
+    // Fallback request object that can be safely used to form request summary.
+    type FallbackRequest = { _header?: string; res: { rawHeaders: string[] } }
+    // _header is not present in responses with status 1**
+    // rawHeaders are not present in responses with status 1**
+    let fallbackRequest: FallbackRequest = {
+      _header: `${noValueMessage}\n`,
+      res: { rawHeaders: [noValueMessage] }
+    }
+
+    // Fallback response object that can be safely used to form response summary.
+    type FallbackResponse = {
+      status?: number | string
+      request?: FallbackRequest
+      config: { data?: string }
+      data?: unknown
+    }
+    let fallbackResponse: FallbackResponse = axiosResponse
+
+    if (axios.isAxiosError(axiosResponse)) {
+      const { response, request, config } = axiosResponse
+
+      // Try to use axiosResponse.response to form response summary.
+      if (response) {
+        fallbackResponse = response
+      } else {
+        // Try to use axiosResponse.request to form request summary.
+        if (request) {
+          const { _header, _currentRequest } = request
+
+          // Try to use axiosResponse.request._header to form request summary.
+          if (_header) {
+            fallbackRequest._header = _header
+          }
+          // Try to use axiosResponse.request._currentRequest._header to form request summary.
+          else if (_currentRequest && _currentRequest._header) {
+            fallbackRequest._header = _currentRequest._header
+          }
+
+          const { res } = request
+
+          // Try to use axiosResponse.request.res.rawHeaders to form request summary.
+          if (res && res.rawHeaders) {
+            fallbackRequest.res.rawHeaders = res.rawHeaders
+          }
+        }
+
+        // Fallback config that can be safely used to form response summary.
+        const fallbackConfig = { data: noValueMessage }
+
+        fallbackResponse = {
+          status: noValueMessage,
+          request: fallbackRequest,
+          config: config || fallbackConfig,
+          data: noValueMessage
+        }
+      }
+    }
+
+    const { status, config, request, data: resData } = fallbackResponse
     const { data: reqData } = config
-    const { _header: reqHeaders, res } = request
+    const { _header: reqHeaders, res } = request || fallbackRequest
     const { rawHeaders } = res
 
     // Converts an array of strings into a single string with the following format:
@@ -439,7 +509,7 @@ HTTP Response (first 50 lines):
 ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 `)
 
-    return response
+    return axiosResponse
   }
 
   /**

@@ -5,6 +5,7 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
+import axios from 'axios'
 import {
   LoginRequiredError,
   AuthorizeError,
@@ -14,7 +15,7 @@ import {
 } from '../types'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
-import { AxiosResponse } from 'axios'
+import { AxiosResponse, AxiosError } from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import * as UtilsModule from 'util'
 
@@ -75,88 +76,7 @@ describe('RequestClient', () => {
   })
 
   describe('defaultInterceptionCallBack', () => {
-    beforeAll(() => {
-      ;(process as any).logger = new Logger(LogLevel.Off)
-    })
-
-    it('should log parsed response', () => {
-      jest.spyOn((process as any).logger, 'info')
-
-      const status = 200
-      const reqData = `{
-        name: 'test_job',
-        description: 'Powered by SASjs',
-        code: ['test_code'],
-        variables: {
-          SYS_JES_JOB_URI: '',
-          _program: '/Public/sasjs/jobs/jobs/test_job'
-        },
-        arguments: {
-          _contextName: 'SAS Job Execution compute context',
-          _OMITJSONLISTING: true,
-          _OMITJSONLOG: true,
-          _OMITSESSIONRESULTS: true,
-          _OMITTEXTLISTING: true,
-          _OMITTEXTLOG: true
-        }
-      }`
-      const resData = {
-        id: 'id_string',
-        name: 'name_string',
-        uri: 'uri_string',
-        createdBy: 'createdBy_string',
-        code: 'TEST CODE',
-        links: [
-          {
-            method: 'method_string',
-            rel: 'state',
-            href: 'state_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          },
-          {
-            method: 'method_string',
-            rel: 'state',
-            href: 'state_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          },
-          {
-            method: 'method_string',
-            rel: 'state',
-            href: 'state_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          },
-          {
-            method: 'method_string',
-            rel: 'state',
-            href: 'state_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          },
-          {
-            method: 'method_string',
-            rel: 'state',
-            href: 'state_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          },
-          {
-            method: 'method_string',
-            rel: 'self',
-            href: 'self_href_string',
-            uri: 'uri_string',
-            type: 'type_string'
-          }
-        ],
-        results: { '_webout.json': '_webout.json_string' },
-        logStatistics: {
-          lineCount: 1,
-          modifiedTimeStamp: 'modifiedTimeStamp_string'
-        }
-      }
-      const reqHeaders = `POST https://sas.server.com/compute/sessions/session_id/jobs HTTP/1.1
+    const reqHeaders = `POST https://sas.server.com/compute/sessions/session_id/jobs HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 User-Agent: axios/0.27.2
@@ -164,7 +84,126 @@ Content-Length: 334
 host: sas.server.io
 Connection: close
 `
-      const resHeaders = ['content-type', 'application/json']
+    const reqData = `{
+          name: 'test_job',
+          description: 'Powered by SASjs',
+          code: ['test_code'],
+          variables: {
+            SYS_JES_JOB_URI: '',
+            _program: '/Public/sasjs/jobs/jobs/test_job'
+          },
+          arguments: {
+            _contextName: 'SAS Job Execution compute context',
+            _OMITJSONLISTING: true,
+            _OMITJSONLOG: true,
+            _OMITSESSIONRESULTS: true,
+            _OMITTEXTLISTING: true,
+            _OMITTEXTLOG: true
+          }
+        }`
+
+    const resHeaders = ['content-type', 'application/json']
+    const resData = {
+      id: 'id_string',
+      name: 'name_string',
+      uri: 'uri_string',
+      createdBy: 'createdBy_string',
+      code: 'TEST CODE',
+      links: [
+        {
+          method: 'method_string',
+          rel: 'state',
+          href: 'state_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        },
+        {
+          method: 'method_string',
+          rel: 'state',
+          href: 'state_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        },
+        {
+          method: 'method_string',
+          rel: 'state',
+          href: 'state_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        },
+        {
+          method: 'method_string',
+          rel: 'state',
+          href: 'state_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        },
+        {
+          method: 'method_string',
+          rel: 'state',
+          href: 'state_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        },
+        {
+          method: 'method_string',
+          rel: 'self',
+          href: 'self_href_string',
+          uri: 'uri_string',
+          type: 'type_string'
+        }
+      ],
+      results: { '_webout.json': '_webout.json_string' },
+      logStatistics: {
+        lineCount: 1,
+        modifiedTimeStamp: 'modifiedTimeStamp_string'
+      }
+    }
+    beforeAll(() => {
+      ;(process as any).logger = new Logger(LogLevel.Off)
+      jest.spyOn((process as any).logger, 'info')
+    })
+
+    it('should log parsed response with status 1**', () => {
+      const spyIsAxiosError = jest
+        .spyOn(axios, 'isAxiosError')
+        .mockImplementation(() => true)
+
+      const mockedAxiosError = {
+        config: {
+          data: reqData
+        },
+        request: {
+          _currentRequest: {
+            _header: reqHeaders
+          }
+        }
+      } as AxiosError
+
+      const requestClient = new RequestClient('')
+      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+
+      const noValueMessage = 'Not provided'
+      const expectedLog = `HTTP Request (first 50 lines):
+${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
+
+HTTP Response Code: ${requestClient['prettifyString'](noValueMessage)}
+
+HTTP Response (first 50 lines):
+${noValueMessage}
+\n${requestClient['parseInterceptedBody'](noValueMessage)}
+`
+
+      expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
+
+      spyIsAxiosError.mockReset()
+    })
+
+    it('should log parsed response with status 2**', () => {
+      const status = getRandomStatus([
+        200, 201, 202, 203, 204, 205, 206, 207, 208, 226
+      ])
+
       const mockedResponse: AxiosResponse = {
         data: resData,
         status,
@@ -192,6 +231,138 @@ ${resHeaders[0]}: ${resHeaders[1]}${
 
       expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
     })
+
+    it('should log parsed response with status 3**', () => {
+      const status = getRandomStatus([300, 301, 302, 303, 304, 307, 308])
+
+      const mockedResponse: AxiosResponse = {
+        data: resData,
+        status,
+        statusText: '',
+        headers: {},
+        config: { data: reqData },
+        request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
+      }
+
+      const requestClient = new RequestClient('')
+      requestClient['defaultInterceptionCallBack'](mockedResponse)
+
+      const expectedLog = `HTTP Request (first 50 lines):
+${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
+
+HTTP Response Code: ${requestClient['prettifyString'](status)}
+
+HTTP Response (first 50 lines):
+${resHeaders[0]}: ${resHeaders[1]}${
+        requestClient['parseInterceptedBody'](resData)
+          ? `\n\n${requestClient['parseInterceptedBody'](resData)}`
+          : ''
+      }
+`
+
+      expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
+    })
+
+    it('should log parsed response with status 4**', () => {
+      const spyIsAxiosError = jest
+        .spyOn(axios, 'isAxiosError')
+        .mockImplementation(() => true)
+
+      const status = getRandomStatus([
+        400, 401, 402, 403, 404, 407, 408, 409, 410, 411, 412, 413, 414, 415,
+        416, 417, 418, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451
+      ])
+
+      const mockedResponse: AxiosResponse = {
+        data: resData,
+        status,
+        statusText: '',
+        headers: {},
+        config: { data: reqData },
+        request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
+      }
+      const mockedAxiosError = {
+        config: {
+          data: reqData
+        },
+        request: {
+          _currentRequest: {
+            _header: reqHeaders
+          }
+        },
+        response: mockedResponse
+      } as AxiosError
+
+      const requestClient = new RequestClient('')
+      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+
+      const expectedLog = `HTTP Request (first 50 lines):
+${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
+
+HTTP Response Code: ${requestClient['prettifyString'](status)}
+
+HTTP Response (first 50 lines):
+${resHeaders[0]}: ${resHeaders[1]}${
+        requestClient['parseInterceptedBody'](resData)
+          ? `\n\n${requestClient['parseInterceptedBody'](resData)}`
+          : ''
+      }
+`
+
+      expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
+
+      spyIsAxiosError.mockReset()
+    })
+
+    it('should log parsed response with status 5**', () => {
+      const spyIsAxiosError = jest
+        .spyOn(axios, 'isAxiosError')
+        .mockImplementation(() => true)
+
+      const status = getRandomStatus([
+        500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511
+      ])
+
+      const mockedResponse: AxiosResponse = {
+        data: resData,
+        status,
+        statusText: '',
+        headers: {},
+        config: { data: reqData },
+        request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
+      }
+      const mockedAxiosError = {
+        config: {
+          data: reqData
+        },
+        request: {
+          _currentRequest: {
+            _header: reqHeaders
+          }
+        },
+        response: mockedResponse
+      } as AxiosError
+
+      const requestClient = new RequestClient('')
+      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+
+      const expectedLog = `HTTP Request (first 50 lines):
+${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
+
+HTTP Response Code: ${requestClient['prettifyString'](status)}
+
+HTTP Response (first 50 lines):
+${resHeaders[0]}: ${resHeaders[1]}${
+        requestClient['parseInterceptedBody'](resData)
+          ? `\n\n${requestClient['parseInterceptedBody'](resData)}`
+          : ''
+      }
+`
+
+      expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
+
+      spyIsAxiosError.mockReset()
+    })
   })
 
   describe('enableVerboseMode', () => {
@@ -217,12 +388,12 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         'use'
       )
 
-      const successCallback = (response: AxiosResponse) => {
+      const successCallback = (response: AxiosResponse | AxiosError) => {
         console.log('success')
 
         return response
       }
-      const failureCallback = (response: AxiosResponse) => {
+      const failureCallback = (response: AxiosResponse | AxiosError) => {
         console.log('failure')
 
         return response
@@ -522,3 +693,11 @@ const createCertificate = async (): Promise<pem.CertificateCreationResult> => {
     )
   })
 }
+
+/**
+ * Returns a random status code.
+ * @param statuses - an array of available statuses.
+ * @returns - random item from an array of statuses.
+ */
+const getRandomStatus = (statuses: number[]) =>
+  statuses[Math.floor(Math.random() * statuses.length)]
