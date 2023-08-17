@@ -34,7 +34,7 @@ import {
   Sas9JobExecutor,
   FileUploader
 } from './job-execution'
-import { AxiosResponse } from 'axios'
+import { AxiosResponse, AxiosError } from 'axios'
 
 interface ExecuteScriptParams {
   linesOfCode: string[]
@@ -1170,8 +1170,8 @@ export default class SASjs {
    * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
    */
   public enableVerboseMode(
-    successCallBack?: (response: AxiosResponse) => AxiosResponse,
-    errorCallBack?: (response: AxiosResponse) => AxiosResponse
+    successCallBack?: (response: AxiosResponse | AxiosError) => AxiosResponse,
+    errorCallBack?: (response: AxiosResponse | AxiosError) => AxiosResponse
   ) {
     this.requestClient?.enableVerboseMode(successCallBack, errorCallBack)
   }

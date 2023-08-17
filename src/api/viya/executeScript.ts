@@ -78,7 +78,7 @@ export async function executeScript(
         const logger = process.logger || console
 
         logger.info(
-          `Triggered '${relativeJobPath}' with PID ${
+          `Triggering '${relativeJobPath}' with PID ${
             jobIdVariable.value
           } at ${timestampToYYYYMMDDHHMMSS()}`
         )
