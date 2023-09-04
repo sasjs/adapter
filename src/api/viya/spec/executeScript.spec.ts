@@ -217,14 +217,7 @@ describe('executeScript', () => {
           sasjs_tables: 'foo',
           sasjs0data: 'bar'
         },
-        arguments: {
-          _contextName: 'test context',
-          _OMITJSONLISTING: true,
-          _OMITJSONLOG: true,
-          _OMITSESSIONRESULTS: true,
-          _OMITTEXTLISTING: true,
-          _OMITTEXTLOG: true
-        }
+        version: 2
       },
       mockAuthConfig.access_token
     )
@@ -264,14 +257,7 @@ describe('executeScript', () => {
           sasjs0data: 'bar',
           _DEBUG: 131
         },
-        arguments: {
-          _contextName: 'test context',
-          _OMITJSONLISTING: true,
-          _OMITJSONLOG: true,
-          _OMITSESSIONRESULTS: false,
-          _OMITTEXTLISTING: true,
-          _OMITTEXTLOG: false
-        }
+        version: 2
       },
       mockAuthConfig.access_token
     )
