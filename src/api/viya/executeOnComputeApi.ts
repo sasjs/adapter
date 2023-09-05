@@ -15,8 +15,12 @@ import { formatDataForRequest } from '../../utils/formatDataForRequest'
 import { pollJobState, JobState } from './pollJobState'
 import { uploadTables } from './uploadTables'
 
+interface JobRequestBody {
+  [key: string]: number | string | string[]
+}
+
 /**
- * Executes code on the current SAS Viya server.
+ * Executes SAS program on the current SAS Viya server using Compute API.
  * @param jobPath - the path to the file being submitted for execution.
  * @param linesOfCode - an array of code lines to execute.
  * @param contextName - the context to execute the code in.
@@ -29,7 +33,7 @@ import { uploadTables } from './uploadTables'
  * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
  * @param variables - an object that represents macro variables.
  */
-export async function executeScript(
+export async function executeOnComputeApi(
   requestClient: RequestClient,
   sessionManager: SessionManager,
   rootFolderName: string,
@@ -46,6 +50,7 @@ export async function executeScript(
   variables?: MacroVar
 ): Promise<any> {
   let access_token = (authConfig || {}).access_token
+
   if (authConfig) {
     ;({ access_token } = await getTokens(requestClient, authConfig))
   }
@@ -85,20 +90,6 @@ export async function executeScript(
       }
     }
 
-    const jobArguments: { [key: string]: any } = {
-      _contextName: contextName,
-      _OMITJSONLISTING: true,
-      _OMITJSONLOG: true,
-      _OMITSESSIONRESULTS: true,
-      _OMITTEXTLISTING: true,
-      _OMITTEXTLOG: true
-    }
-
-    if (debug) {
-      jobArguments['_OMITTEXTLOG'] = false
-      jobArguments['_OMITSESSIONRESULTS'] = false
-    }
-
     let fileName
 
     if (isRelativePath(jobPath)) {
@@ -107,6 +98,7 @@ export async function executeScript(
       }`
     } else {
       const jobPathParts = jobPath.split('/')
+
       fileName = jobPathParts.pop()
     }
 
@@ -118,7 +110,6 @@ export async function executeScript(
     }
 
     if (variables) jobVariables = { ...jobVariables, ...variables }
-
     if (debug) jobVariables = { ...jobVariables, _DEBUG: 131 }
 
     let files: any[] = []
@@ -145,12 +136,12 @@ export async function executeScript(
     }
 
     // Execute job in session
-    const jobRequestBody = {
-      name: fileName,
+    const jobRequestBody: JobRequestBody = {
+      name: fileName || 'Default Job Name',
       description: 'Powered by SASjs',
       code: linesOfCode,
       variables: jobVariables,
-      arguments: jobArguments
+      version: 2
     }
 
     const { result: postedJob, etag } = await requestClient
@@ -279,7 +270,7 @@ export async function executeScript(
     const error = e as HttpError
 
     if (error.status === 404) {
-      return executeScript(
+      return executeOnComputeApi(
         requestClient,
         sessionManager,
         rootFolderName,

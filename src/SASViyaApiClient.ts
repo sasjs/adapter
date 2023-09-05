@@ -25,7 +25,7 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { pollJobState } from './api/viya/pollJobState'
 import { getTokens } from './auth/getTokens'
 import { uploadTables } from './api/viya/uploadTables'
-import { executeScript } from './api/viya/executeScript'
+import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 
@@ -293,7 +293,7 @@ export class SASViyaApiClient {
     printPid = false,
     variables?: MacroVar
   ): Promise<any> {
-    return executeScript(
+    return executeOnComputeApi(
       this.requestClient,
       this.sessionManager,
       this.rootFolderName,
