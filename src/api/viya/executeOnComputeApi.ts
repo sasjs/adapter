@@ -20,7 +20,7 @@ interface JobRequestBody {
 }
 
 /**
- * Executes code on the current SAS Viya server.
+ * Executes SAS program on the current SAS Viya server using Compute API.
  * @param jobPath - the path to the file being submitted for execution.
  * @param linesOfCode - an array of code lines to execute.
  * @param contextName - the context to execute the code in.
@@ -33,7 +33,7 @@ interface JobRequestBody {
  * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
  * @param variables - an object that represents macro variables.
  */
-export async function executeScript(
+export async function executeOnComputeApi(
   requestClient: RequestClient,
   sessionManager: SessionManager,
   rootFolderName: string,
@@ -270,7 +270,7 @@ export async function executeScript(
     const error = e as HttpError
 
     if (error.status === 404) {
-      return executeScript(
+      return executeOnComputeApi(
         requestClient,
         sessionManager,
         rootFolderName,

@@ -1,6 +1,6 @@
 import { RequestClient } from '../../../request/RequestClient'
 import { SessionManager } from '../../../SessionManager'
-import { executeScript } from '../executeScript'
+import { executeOnComputeApi } from '../executeOnComputeApi'
 import { mockSession, mockAuthConfig, mockJob } from './mockResponses'
 import * as pollJobStateModule from '../pollJobState'
 import * as uploadTablesModule from '../uploadTables'
@@ -25,7 +25,7 @@ describe('executeScript', () => {
   })
 
   it('should not try to get fresh tokens if an authConfig is not provided', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -38,7 +38,7 @@ describe('executeScript', () => {
   })
 
   it('should try to get fresh tokens if an authConfig is provided', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -55,7 +55,7 @@ describe('executeScript', () => {
   })
 
   it('should get a session from the session manager before executing', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -72,7 +72,7 @@ describe('executeScript', () => {
       .spyOn(sessionManager, 'getSession')
       .mockImplementation(() => Promise.reject('Test Error'))
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -85,7 +85,7 @@ describe('executeScript', () => {
   })
 
   it('should fetch the PID when printPid is true', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -113,7 +113,7 @@ describe('executeScript', () => {
       .spyOn(sessionManager, 'getVariable')
       .mockImplementation(() => Promise.reject('Test Error'))
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -139,7 +139,7 @@ describe('executeScript', () => {
         Promise.resolve([{ tableName: 'test', file: { id: 1 } }])
       )
 
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -163,7 +163,7 @@ describe('executeScript', () => {
   })
 
   it('should format data as CSV when it does not contain semicolons', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -189,7 +189,7 @@ describe('executeScript', () => {
       .spyOn(formatDataModule, 'formatDataForRequest')
       .mockImplementation(() => ({ sasjs_tables: 'foo', sasjs0data: 'bar' }))
 
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -228,7 +228,7 @@ describe('executeScript', () => {
       .spyOn(formatDataModule, 'formatDataForRequest')
       .mockImplementation(() => ({ sasjs_tables: 'foo', sasjs0data: 'bar' }))
 
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -268,7 +268,7 @@ describe('executeScript', () => {
       .spyOn(requestClient, 'post')
       .mockImplementation(() => Promise.reject('Test Error'))
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -288,7 +288,7 @@ describe('executeScript', () => {
   })
 
   it('should immediately return the session when waitForResult is false', async () => {
-    const result = await executeScript(
+    const result = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -308,7 +308,7 @@ describe('executeScript', () => {
   })
 
   it('should poll for job completion when waitForResult is true', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -338,7 +338,7 @@ describe('executeScript', () => {
       .spyOn(pollJobStateModule, 'pollJobState')
       .mockImplementation(() => Promise.reject('Poll Error'))
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -364,7 +364,7 @@ describe('executeScript', () => {
         Promise.reject({ response: { data: 'err=5113,' } })
       )
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -390,7 +390,7 @@ describe('executeScript', () => {
   })
 
   it('should fetch the logs for the job if debug is true and a log URL is available', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -415,7 +415,7 @@ describe('executeScript', () => {
   })
 
   it('should not fetch the logs for the job if debug is false', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -441,7 +441,7 @@ describe('executeScript', () => {
         Promise.resolve(pollJobStateModule.JobState.Failed)
       )
 
-    const error: ComputeJobExecutionError = await executeScript(
+    const error: ComputeJobExecutionError = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -476,7 +476,7 @@ describe('executeScript', () => {
         Promise.resolve(pollJobStateModule.JobState.Error)
       )
 
-    const error: ComputeJobExecutionError = await executeScript(
+    const error: ComputeJobExecutionError = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -505,7 +505,7 @@ describe('executeScript', () => {
   })
 
   it('should fetch the result if expectWebout is true', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -536,7 +536,7 @@ describe('executeScript', () => {
       return Promise.resolve({ result: mockJob, etag: '', status: 200 })
     })
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -570,7 +570,7 @@ describe('executeScript', () => {
   })
 
   it('should clear the session after execution is complete', async () => {
-    await executeScript(
+    await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
@@ -597,7 +597,7 @@ describe('executeScript', () => {
       .spyOn(sessionManager, 'clearSession')
       .mockImplementation(() => Promise.reject('Clear Session Error'))
 
-    const error = await executeScript(
+    const error = await executeOnComputeApi(
       requestClient,
       sessionManager,
       'test',
