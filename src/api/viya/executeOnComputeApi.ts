@@ -170,16 +170,21 @@ export async function executeOnComputeApi(
       postedJob,
       debug,
       authConfig,
-      pollOptions
+      pollOptions,
+      {
+        session,
+        sessionManager
+      }
     ).catch(async (err) => {
       const error = err?.response?.data
       const result = /err=[0-9]*,/.exec(error)
-
       const errorCode = '5113'
+
       if (result?.[0]?.slice(4, -1) === errorCode) {
+        const logCount = 1000000
         const sessionLogUrl =
           postedJob.links.find((l: any) => l.rel === 'up')!.href + '/log'
-        const logCount = 1000000
+
         err.log = await fetchLogByChunks(
           requestClient,
           access_token!,
@@ -187,6 +192,7 @@ export async function executeOnComputeApi(
           logCount
         )
       }
+
       throw prefixMessage(err, 'Error while polling job status. ')
     })
 
@@ -205,12 +211,12 @@ export async function executeOnComputeApi(
 
     let jobResult
     let log = ''
-
     const logLink = currentJob.links.find((l) => l.rel === 'log')
 
     if (debug && logLink) {
       const logUrl = `${logLink.href}/content`
       const logCount = currentJob.logStatistics?.lineCount ?? 1000000
+
       log = await fetchLogByChunks(
         requestClient,
         access_token!,
@@ -223,9 +229,7 @@ export async function executeOnComputeApi(
       throw new ComputeJobExecutionError(currentJob, log)
     }
 
-    if (!expectWebout) {
-      return { job: currentJob, log }
-    }
+    if (!expectWebout) return { job: currentJob, log }
 
     const resultLink = `/compute/sessions/${executionSessionId}/filerefs/_webout/content`
 
@@ -236,6 +240,7 @@ export async function executeOnComputeApi(
           if (logLink) {
             const logUrl = `${logLink.href}/content`
             const logCount = currentJob.logStatistics?.lineCount ?? 1000000
+
             log = await fetchLogByChunks(
               requestClient,
               access_token!,

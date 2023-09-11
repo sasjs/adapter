@@ -1,14 +1,16 @@
 import { AuthConfig } from '@sasjs/utils/types'
-import { Job, Session } from '../../../types'
+import { Job, Session, SessionState } from '../../../types'
 
 export const mockSession: Session = {
   id: 's35510n',
-  state: 'idle',
+  state: SessionState.Idle,
+  stateUrl: '',
   links: [],
   attributes: {
     sessionInactiveTimeout: 1
   },
-  creationTimeStamp: new Date().valueOf().toString()
+  creationTimeStamp: new Date().valueOf().toString(),
+  etag: 'etag-string'
 }
 
 export const mockJob: Job = {

@@ -3,7 +3,7 @@ import { RequestClient } from '../request/RequestClient'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
-import { Session, Context } from '../types'
+import { Session, SessionState, Context } from '../types'
 
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
@@ -11,21 +11,34 @@ const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
 describe('SessionManager', () => {
   dotenv.config()
+  process.env.SERVER_URL = 'https://server.com'
 
   const sessionManager = new SessionManager(
     process.env.SERVER_URL as string,
     process.env.DEFAULT_COMPUTE_CONTEXT as string,
     requestClient
   )
+  const sessionStateLink = '/compute/sessions/session-id-ses0000/state'
+  const sessionEtag = 'etag-string'
 
-  const getMockSession = () => ({
+  const getMockSession = (): Session => ({
     id: ['id', new Date().getTime(), Math.random()].join('-'),
-    state: '',
-    links: [{ rel: 'state', href: '', uri: '', type: '', method: 'GET' }],
+    state: SessionState.NoState,
+    links: [
+      {
+        href: sessionStateLink,
+        method: 'GET',
+        rel: 'state',
+        type: 'text/plain',
+        uri: sessionStateLink
+      }
+    ],
     attributes: {
       sessionInactiveTimeout: 900
     },
-    creationTimeStamp: `${new Date(new Date().getTime()).toISOString()}`
+    creationTimeStamp: `${new Date(new Date().getTime()).toISOString()}`,
+    stateUrl: sessionStateLink,
+    etag: sessionEtag
   })
 
   afterEach(() => {
@@ -89,19 +102,21 @@ describe('SessionManager', () => {
   describe('waitForSession', () => {
     const session: Session = {
       id: 'id',
-      state: '',
+      state: SessionState.NoState,
       links: [{ rel: 'state', href: '', uri: '', type: '', method: 'GET' }],
       attributes: {
         sessionInactiveTimeout: 0
       },
-      creationTimeStamp: ''
+      creationTimeStamp: '',
+      stateUrl: sessionStateLink,
+      etag: sessionEtag
     }
 
     beforeEach(() => {
       ;(process as any).logger = new Logger(LogLevel.Off)
     })
 
-    it('should reject with NoSessionStateError if SAS server did not provide session state', async () => {
+    it('should log http response code and session state if SAS server did not provide session state', async () => {
       let requestAttempt = 0
       const requestAttemptLimit = 10
       const sessionState = 'idle'
@@ -124,15 +139,17 @@ describe('SessionManager', () => {
         sessionManager['waitForSession'](session, null, 'access_token')
       ).resolves.toEqual(sessionState)
 
+      const sessionStateUrl = process.env.SERVER_URL + session.stateUrl
+
       expect(mockedAxios.get).toHaveBeenCalledTimes(requestAttemptLimit)
       expect((process as any).logger.info).toHaveBeenCalledTimes(3)
       expect((process as any).logger.info).toHaveBeenNthCalledWith(
         1,
-        `Polling: ${process.env.SERVER_URL}`
+        `Polling: ${sessionStateUrl}`
       )
       expect((process as any).logger.info).toHaveBeenNthCalledWith(
         2,
-        `Could not get session state. Server responded with 304 whilst checking state: ${process.env.SERVER_URL}`
+        `Could not get session state. Server responded with 304 whilst checking state: ${sessionStateUrl}`
       )
       expect((process as any).logger.info).toHaveBeenNthCalledWith(
         3,
@@ -142,7 +159,7 @@ describe('SessionManager', () => {
 
     it('should throw an error if there is no session link', async () => {
       const customSession = JSON.parse(JSON.stringify(session))
-      customSession.links = []
+      customSession.stateUrl = ''
 
       mockedAxios.get.mockImplementation(() =>
         Promise.resolve({ data: customSession.state, status: 200 })
@@ -156,6 +173,7 @@ describe('SessionManager', () => {
     it('should throw an error if could not get session state', async () => {
       const gettingSessionStatus = 500
       const sessionStatusError = `Getting session status timed out after 60 seconds. Request failed with status code ${gettingSessionStatus}`
+      const sessionStateUrl = process.env.SERVER_URL + session.stateUrl
 
       mockedAxios.get.mockImplementation(() =>
         Promise.reject({
@@ -168,7 +186,7 @@ describe('SessionManager', () => {
         })
       )
 
-      const expectedError = `Error while waiting for session. Error while getting session state. GET request to ${process.env.SERVER_URL}?wait=30 failed with status code ${gettingSessionStatus}. ${sessionStatusError}`
+      const expectedError = `Error while waiting for session. Error while getting session state. GET request to ${sessionStateUrl}?wait=30 failed with status code ${gettingSessionStatus}. ${sessionStatusError}`
 
       await expect(
         sessionManager['waitForSession'](session, null, 'access_token')
@@ -425,6 +443,47 @@ describe('SessionManager', () => {
       await expect(sessionManager['setCurrentContext']()).rejects.toEqual(
         expectedError
       )
+    })
+  })
+
+  describe('createAndWaitForSession', () => {
+    it('should create session with etag and stateUrl', async () => {
+      const etag = sessionEtag
+      const customSession: any = getMockSession()
+      delete customSession.etag
+      delete customSession.stateUrl
+
+      jest.spyOn(requestClient, 'post').mockImplementation(() =>
+        Promise.resolve({
+          result: customSession,
+          etag
+        })
+      )
+
+      jest
+        .spyOn(sessionManager as any, 'setCurrentContext')
+        .mockImplementation(() => Promise.resolve())
+
+      sessionManager['currentContext'] = {
+        name: 'context name',
+        id: 'string',
+        createdBy: 'string',
+        version: 1
+      }
+
+      jest
+        .spyOn(sessionManager as any, 'getSessionState')
+        .mockImplementation(() =>
+          Promise.resolve({ result: SessionState.Idle, responseStatus: 200 })
+        )
+
+      const expectedSession = await sessionManager['createAndWaitForSession']()
+
+      expect(customSession.id).toEqual(expectedSession.id)
+      expect(
+        customSession.links.find((l: any) => l.rel === 'state').href
+      ).toEqual(expectedSession.stateUrl)
+      expect(expectedSession.etag).toEqual(etag)
     })
   })
 })

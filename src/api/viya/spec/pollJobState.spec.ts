@@ -1,17 +1,25 @@
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
-import { pollJobState } from '../pollJobState'
+import { pollJobState, doPoll, JobState } from '../pollJobState'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as saveLogModule from '../saveLog'
 import * as getFileStreamModule from '../getFileStream'
 import * as isNodeModule from '../../../utils/isNode'
 import * as delayModule from '../../../utils/delay'
-import { PollOptions, PollStrategy } from '../../../types'
+import {
+  PollOptions,
+  PollStrategy,
+  SessionState,
+  JobSessionManager
+} from '../../../types'
 import { WriteStream } from 'fs'
+import { SessionManager } from '../../../SessionManager'
+import { JobStatePollError } from '../../../types'
 
 const baseUrl = 'http://localhost'
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
+const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 requestClient['httpClient'].defaults.baseURL = baseUrl
 
 const defaultStreamLog = false
@@ -420,6 +428,218 @@ describe('pollJobState', () => {
         pollStrategy: pollStrategy
       })
     ).rejects.toThrow(expectedError)
+  })
+})
+
+describe('doPoll', () => {
+  const sessionStateLink = '/compute/sessions/session-id-ses0000/state'
+  const jobSessionManager: JobSessionManager = {
+    sessionManager,
+    session: {
+      id: ['id', new Date().getTime(), Math.random()].join('-'),
+      state: SessionState.NoState,
+      links: [
+        {
+          href: sessionStateLink,
+          method: 'GET',
+          rel: 'state',
+          type: 'text/plain',
+          uri: sessionStateLink
+        }
+      ],
+      attributes: {
+        sessionInactiveTimeout: 900
+      },
+      creationTimeStamp: `${new Date(new Date().getTime()).toISOString()}`,
+      stateUrl: '',
+      etag: ''
+    }
+  }
+
+  beforeEach(() => {
+    setupMocks()
+  })
+
+  it('should check session state on every 10th job state poll', async () => {
+    const mockedGetSessionState = jest
+      .spyOn(sessionManager as any, 'getSessionState')
+      .mockImplementation(() => {
+        return Promise.resolve({
+          result: SessionState.Running,
+          responseStatus: 200
+        })
+      })
+
+    let getSessionStateCount = 0
+    jest.spyOn(requestClient, 'get').mockImplementation(() => {
+      getSessionStateCount++
+
+      return Promise.resolve({
+        result:
+          getSessionStateCount < 20 ? JobState.Running : JobState.Completed,
+        etag: 'etag-string',
+        status: 200
+      })
+    })
+
+    await doPoll(
+      requestClient,
+      mockJob,
+      JobState.Running,
+      false,
+      1,
+      defaultPollStrategy,
+      mockAuthConfig,
+      undefined,
+      undefined,
+      jobSessionManager
+    )
+
+    expect(mockedGetSessionState).toHaveBeenCalledTimes(2)
+  })
+
+  it('should handle error while checking session state', async () => {
+    const sessionStateError = 'Error while getting session state.'
+
+    jest
+      .spyOn(sessionManager as any, 'getSessionState')
+      .mockImplementation(() => {
+        return Promise.reject(sessionStateError)
+      })
+
+    jest.spyOn(requestClient, 'get').mockImplementation(() => {
+      return Promise.resolve({
+        result: JobState.Running,
+        etag: 'etag-string',
+        status: 200
+      })
+    })
+
+    await expect(
+      doPoll(
+        requestClient,
+        mockJob,
+        JobState.Running,
+        false,
+        1,
+        defaultPollStrategy,
+        mockAuthConfig,
+        undefined,
+        undefined,
+        jobSessionManager
+      )
+    ).rejects.toEqual(
+      new JobStatePollError(mockJob.id, new Error(sessionStateError))
+    )
+  })
+
+  it('should throw an error if session is not in running state', async () => {
+    const filteredSessionStates = Object.values(SessionState).filter(
+      (state) => state !== SessionState.Running
+    )
+    const randomSessionState =
+      filteredSessionStates[
+        Math.floor(Math.random() * filteredSessionStates.length)
+      ]
+
+    jest
+      .spyOn(sessionManager as any, 'getSessionState')
+      .mockImplementation(() => {
+        return Promise.resolve({
+          result: randomSessionState,
+          responseStatus: 200
+        })
+      })
+
+    jest.spyOn(requestClient, 'get').mockImplementation(() => {
+      return Promise.resolve({
+        result: JobState.Running,
+        etag: 'etag-string',
+        status: 200
+      })
+    })
+
+    const mockedClearSession = jest
+      .spyOn(sessionManager, 'clearSession')
+      .mockImplementation(() => Promise.resolve())
+
+    await expect(
+      doPoll(
+        requestClient,
+        mockJob,
+        JobState.Running,
+        false,
+        1,
+        defaultPollStrategy,
+        mockAuthConfig,
+        undefined,
+        undefined,
+        jobSessionManager
+      )
+    ).rejects.toEqual(
+      new JobStatePollError(
+        mockJob.id,
+        new Error(
+          `Session state of the job is not 'running'. Session state is '${randomSessionState}'`
+        )
+      )
+    )
+
+    expect(mockedClearSession).toHaveBeenCalledWith(
+      jobSessionManager.session.id,
+      mockAuthConfig.access_token
+    )
+  })
+
+  it('should handle throw an error if response status of session state is not 200', async () => {
+    const sessionStateResponseStatus = 500
+    jest
+      .spyOn(sessionManager as any, 'getSessionState')
+      .mockImplementation(() => {
+        return Promise.resolve({
+          result: SessionState.Running,
+          responseStatus: sessionStateResponseStatus
+        })
+      })
+
+    jest.spyOn(requestClient, 'get').mockImplementation(() => {
+      return Promise.resolve({
+        result: JobState.Running,
+        etag: 'etag-string',
+        status: 200
+      })
+    })
+
+    const mockedClearSession = jest
+      .spyOn(sessionManager, 'clearSession')
+      .mockImplementation(() => Promise.resolve())
+
+    await expect(
+      doPoll(
+        requestClient,
+        mockJob,
+        JobState.Running,
+        false,
+        1,
+        defaultPollStrategy,
+        mockAuthConfig,
+        undefined,
+        undefined,
+        jobSessionManager
+      )
+    ).rejects.toEqual(
+      new JobStatePollError(
+        mockJob.id,
+        new Error(
+          `Session response status is not 200. Session response status is ${sessionStateResponseStatus}.`
+        )
+      )
+    )
+
+    expect(mockedClearSession).toHaveBeenCalledWith(
+      jobSessionManager.session.id,
+      mockAuthConfig.access_token
+    )
   })
 })
 
