@@ -7,7 +7,7 @@ import * as uploadTablesModule from '../uploadTables'
 import * as getTokensModule from '../../../auth/getTokens'
 import * as formatDataModule from '../../../utils/formatDataForRequest'
 import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
-import { PollOptions } from '../../../types'
+import { PollOptions, JobSessionManager } from '../../../types'
 import { ComputeJobExecutionError, NotFoundError } from '../../../types/errors'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 
@@ -308,6 +308,11 @@ describe('executeScript', () => {
   })
 
   it('should poll for job completion when waitForResult is true', async () => {
+    const jobSessionManager: JobSessionManager = {
+      session: mockSession,
+      sessionManager: sessionManager
+    }
+
     await executeOnComputeApi(
       requestClient,
       sessionManager,
@@ -329,7 +334,8 @@ describe('executeScript', () => {
       mockJob,
       false,
       mockAuthConfig,
-      defaultPollOptions
+      defaultPollOptions,
+      jobSessionManager
     )
   })
 

@@ -1,4 +1,4 @@
-import { Session, Context, SessionVariable } from './types'
+import { Session, Context, SessionVariable, SessionState } from './types'
 import { NoSessionStateError } from './types/errors'
 import { asyncForEach, isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
@@ -12,6 +12,7 @@ interface ApiErrorResponse {
 
 export class SessionManager {
   private loggedErrors: NoSessionStateError[] = []
+  private sessionStateLinkError = 'Error while getting session state link. '
 
   constructor(
     private serverUrl: string,
@@ -28,7 +29,7 @@ export class SessionManager {
   private _debug: boolean = false
   private printedSessionState = {
     printed: false,
-    state: ''
+    state: SessionState.NoState
   }
 
   public get debug() {
@@ -265,6 +266,18 @@ export class SessionManager {
         )
       })
 
+    // Add response etag to Session object.
+    createdSession.etag = etag
+
+    // Get session state link.
+    const stateLink = createdSession.links.find((link) => link.rel === 'state')
+
+    // Throw error if session state link is not present.
+    if (!stateLink) throw this.sessionStateLinkError
+
+    // Add session state link to Session object.
+    createdSession.stateUrl = stateLink.href
+
     await this.waitForSession(createdSession, etag, accessToken)
 
     this.sessions.push(createdSession)
@@ -327,32 +340,30 @@ export class SessionManager {
     etag: string | null,
     accessToken?: string
   ): Promise<string> {
+    let { state: sessionState } = session
+    const { stateUrl } = session
     const logger = process.logger || console
 
-    let sessionState = session.state
-
-    const stateLink = session.links.find((l: any) => l.rel === 'state')
-
     if (
-      sessionState === 'pending' ||
-      sessionState === 'running' ||
-      sessionState === ''
+      sessionState === SessionState.Pending ||
+      sessionState === SessionState.Running ||
+      sessionState === SessionState.NoState
     ) {
-      if (stateLink) {
+      if (stateUrl) {
         if (this.debug && !this.printedSessionState.printed) {
-          logger.info(`Polling: ${this.serverUrl + stateLink.href}`)
+          logger.info(`Polling: ${this.serverUrl + stateUrl}`)
 
           this.printedSessionState.printed = true
         }
 
-        const url = `${this.serverUrl}${stateLink.href}?wait=30`
+        const url = `${this.serverUrl}${stateUrl}?wait=30`
 
         const { result: state, responseStatus: responseStatus } =
           await this.getSessionState(url, etag!, accessToken).catch((err) => {
             throw prefixMessage(err, 'Error while waiting for session. ')
           })
 
-        sessionState = state.trim()
+        sessionState = state.trim() as SessionState
 
         if (this.debug && this.printedSessionState.state !== sessionState) {
           logger.info(`Current session state is '${sessionState}'`)
@@ -364,7 +375,7 @@ export class SessionManager {
         if (!sessionState) {
           const stateError = new NoSessionStateError(
             responseStatus,
-            this.serverUrl + stateLink.href,
+            this.serverUrl + stateUrl,
             session.links.find((l: any) => l.rel === 'log')?.href as string
           )
 
@@ -386,7 +397,7 @@ export class SessionManager {
 
         return sessionState
       } else {
-        throw 'Error while getting session state link. '
+        throw this.sessionStateLinkError
       }
     } else {
       this.loggedErrors = []
@@ -413,7 +424,7 @@ export class SessionManager {
     return await this.requestClient
       .get(url, accessToken, 'text/plain', { 'If-None-Match': etag })
       .then((res) => ({
-        result: res.result as string,
+        result: res.result as SessionState,
         responseStatus: res.status
       }))
       .catch((err) => {

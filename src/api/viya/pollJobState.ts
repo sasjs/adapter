@@ -3,7 +3,7 @@ import { Job, PollOptions, PollStrategy } from '../..'
 import { getTokens } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
-import { Link, WriteStream } from '../../types'
+import { Link, WriteStream, SessionState, JobSessionManager } from '../../types'
 import { delay, isNode } from '../../utils'
 
 export enum JobState {
@@ -37,6 +37,7 @@ export enum JobState {
  *    { maxPollCount: 500, pollInterval: 30000 }, // approximately ~50.5 mins (including time to get response (~300ms))
  *    { maxPollCount: 3400, pollInterval: 60000 } // approximately ~3015 mins (~125 hours) (including time to get response (~300ms))
  * ]
+ * @param jobSessionManager - job session object containing session object and an instance of Session Manager. Job session object is used to periodically (every 10th job state poll) check parent session state.
  * @returns - a promise which resolves with a job state
  */
 export async function pollJobState(
@@ -44,7 +45,8 @@ export async function pollJobState(
   postedJob: Job,
   debug: boolean,
   authConfig?: AuthConfig,
-  pollOptions?: PollOptions
+  pollOptions?: PollOptions,
+  jobSessionManager?: JobSessionManager
 ): Promise<JobState> {
   const logger = process.logger || console
 
@@ -127,7 +129,8 @@ export async function pollJobState(
     pollOptions,
     authConfig,
     streamLog,
-    logFileStream
+    logFileStream,
+    jobSessionManager
   )
 
   currentState = result.state
@@ -158,7 +161,8 @@ export async function pollJobState(
       defaultPollOptions,
       authConfig,
       streamLog,
-      logFileStream
+      logFileStream,
+      jobSessionManager
     )
 
     currentState = result.state
@@ -208,7 +212,21 @@ const needsRetry = (state: string) =>
   state === JobState.Pending ||
   state === JobState.Unavailable
 
-const doPoll = async (
+/**
+ * Polls job state.
+ * @param requestClient - the pre-configured HTTP request client.
+ * @param postedJob - the relative or absolute path to the job.
+ * @param currentState - current job state.
+ * @param debug - sets the _debug flag in the job arguments.
+ * @param pollCount - current poll count.
+ * @param pollOptions - an object containing maxPollCount, pollInterval, streamLog and logFolderPath.
+ * @param authConfig - an access token, refresh token, client and secret for an authorized user.
+ * @param streamLog - indicates if job log should be streamed.
+ * @param logStream - job log stream.
+ * @param jobSessionManager - job session object containing session object and an instance of Session Manager. Job session object is used to periodically (every 10th job state poll) check parent session state.
+ * @returns - a promise which resolves with a job state
+ */
+export const doPoll = async (
   requestClient: RequestClient,
   postedJob: Job,
   currentState: JobState,
@@ -217,7 +235,8 @@ const doPoll = async (
   pollOptions: PollOptions,
   authConfig?: AuthConfig,
   streamLog?: boolean,
-  logStream?: WriteStream
+  logStream?: WriteStream,
+  jobSessionManager?: JobSessionManager
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollOptions
   const logger = process.logger || console
@@ -229,6 +248,35 @@ const doPoll = async (
   let startLogLine = 0
 
   while (needsRetry(state) && pollCount <= maxPollCount) {
+    // Check parent session state on every 10th job state poll.
+    if (jobSessionManager && pollCount && pollCount % 10 === 0 && authConfig) {
+      const { session, sessionManager } = jobSessionManager
+      const { stateUrl, etag, id: sessionId } = session
+      const { access_token } = authConfig
+      const { id: jobId } = postedJob
+
+      // Get session state.
+      const { result: sessionState, responseStatus } = await sessionManager[
+        'getSessionState'
+      ](stateUrl, etag, access_token).catch((err) => {
+        // Handle error while getting session state.
+        throw new JobStatePollError(jobId, err)
+      })
+
+      // Clear parent session and throw an error if session state is not
+      // 'running' or response status is not 200.
+      if (sessionState !== SessionState.Running || responseStatus !== 200) {
+        sessionManager.clearSession(sessionId, access_token)
+
+        const sessionError =
+          sessionState !== SessionState.Running
+            ? `Session state of the job is not 'running'. Session state is '${sessionState}'`
+            : `Session response status is not 200. Session response status is ${responseStatus}.`
+
+        throw new JobStatePollError(jobId, new Error(sessionError))
+      }
+    }
+
     state = await getJobState(
       requestClient,
       postedJob,
