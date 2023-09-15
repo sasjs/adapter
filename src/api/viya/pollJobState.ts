@@ -223,7 +223,7 @@ const needsRetry = (state: string) =>
  * @param authConfig - an access token, refresh token, client and secret for an authorized user.
  * @param streamLog - indicates if job log should be streamed.
  * @param logStream - job log stream.
- * @param jobSessionManager - job session object containing session object and an instance of Session Manager. Job session object is used to periodically (every 10th job state poll) check parent session state.
+ * @param jobSessionManager - job session object containing session object and an instance of Session Manager. Job session object is used to periodically (every 10th job state poll) check parent session state. Session state is considered healthy if it is equal to 'running' or 'idle'.
  * @returns - a promise which resolves with a job state
  */
 export const doPoll = async (
@@ -263,15 +263,20 @@ export const doPoll = async (
         throw new JobStatePollError(jobId, err)
       })
 
+      // Checks if session state is equal to 'running' or 'idle'.
+      const isSessionStatesHealthy = (state: string) =>
+        [SessionState.Running, SessionState.Idle].includes(
+          state as SessionState
+        )
+
       // Clear parent session and throw an error if session state is not
-      // 'running' or response status is not 200.
-      if (sessionState !== SessionState.Running || responseStatus !== 200) {
+      // 'running', 'idle' or response status is not 200.
+      if (!isSessionStatesHealthy(sessionState) || responseStatus !== 200) {
         sessionManager.clearSession(sessionId, access_token)
 
-        const sessionError =
-          sessionState !== SessionState.Running
-            ? `Session state of the job is not 'running'. Session state is '${sessionState}'`
-            : `Session response status is not 200. Session response status is ${responseStatus}.`
+        const sessionError = isSessionStatesHealthy(sessionState)
+          ? `Session response status is not 200. Session response status is ${responseStatus}.`
+          : `Session state of the job is not 'running' or 'idle'. Session state is '${sessionState}'`
 
         throw new JobStatePollError(jobId, new Error(sessionError))
       }

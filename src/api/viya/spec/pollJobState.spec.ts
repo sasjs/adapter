@@ -465,7 +465,7 @@ describe('doPoll', () => {
       .spyOn(sessionManager as any, 'getSessionState')
       .mockImplementation(() => {
         return Promise.resolve({
-          result: SessionState.Running,
+          result: SessionState.Idle,
           responseStatus: 200
         })
       })
@@ -533,9 +533,9 @@ describe('doPoll', () => {
     )
   })
 
-  it('should throw an error if session is not in running state', async () => {
+  it('should throw an error if session state is not healthy', async () => {
     const filteredSessionStates = Object.values(SessionState).filter(
-      (state) => state !== SessionState.Running
+      (state) => state !== SessionState.Running && state !== SessionState.Idle
     )
     const randomSessionState =
       filteredSessionStates[
@@ -580,7 +580,7 @@ describe('doPoll', () => {
       new JobStatePollError(
         mockJob.id,
         new Error(
-          `Session state of the job is not 'running'. Session state is '${randomSessionState}'`
+          `Session state of the job is not 'running' or 'idle'. Session state is '${randomSessionState}'`
         )
       )
     )
