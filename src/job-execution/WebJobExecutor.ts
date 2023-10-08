@@ -187,6 +187,12 @@ export class WebJobExecutor extends BaseJobExecutor {
             { result: jsonResponse, log: res.log },
             extraResponseAttributes
           )
+
+          if (this.isPublicAccessDenied(jsonResponse))
+            reject(
+              new ErrorResponse('Public access has been denied', responseObject)
+            )
+
           resolve(responseObject)
         })
         .catch(async (e: Error) => {
@@ -261,5 +267,9 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
     return uri
+  }
+
+  private isPublicAccessDenied = (response: string): boolean => {
+    return /Public access has been denied/gm.test(response)
   }
 }
