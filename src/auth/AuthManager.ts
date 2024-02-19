@@ -14,6 +14,7 @@ export class AuthManager {
   private loginUrl: string
   private logoutUrl: string
   private redirectedLoginUrl = `/SASLogon` //SAS 9 M8 no longer redirects from `/SASLogon/home` to the login page. `/SASLogon` seems to be stable enough across SAS versions
+
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
@@ -27,6 +28,8 @@ export class AuthManager {
         : this.serverType === ServerType.SasViya
         ? '/SASLogon/logout.do?'
         : '/SASLogon/logout'
+
+    this.redirectedLoginUrl = this.serverUrl + this.redirectedLoginUrl
   }
 
   /**
