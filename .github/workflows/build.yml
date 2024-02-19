@@ -22,6 +22,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      # FIXME: uncomment 'Check npm audit' step after axios version bump
       # - name: Check npm audit
       #   run: npm audit --production --audit-level=low
 
