@@ -365,7 +365,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual(userName)
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon`,
+        `${serverUrl}/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -409,7 +409,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual(userName)
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon`,
+        `${serverUrl}/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -453,7 +453,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual('')
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon`,
+        `${serverUrl}/SASLogon`,
         'SASLogon',
         {
           width: 500,
@@ -497,7 +497,7 @@ describe('AuthManager', () => {
       expect(loginResponse.userName).toEqual('')
 
       expect(openWebPageModule.openWebPage).toHaveBeenCalledWith(
-        `/SASLogon`,
+        `${serverUrl}/SASLogon`,
         'SASLogon',
         {
           width: 500,
