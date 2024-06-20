@@ -15,7 +15,9 @@ export class AuthManager {
   private logoutUrl: string
   private redirectedLoginUrl = `/SASLogon` //SAS 9 M8 no longer redirects from `/SASLogon/home` to the login page. `/SASLogon` seems to be stable enough across SAS versions
   private defaultSuccessHeaderKey = 'default'
-  private successHeaders: { [key: string]: string } = {
+
+  // The following headers provided by https://github.com/sasjs/adapter/issues/835#issuecomment-2177818601
+  private loginSuccessHeaders: { [key: string]: string } = {
     es: `Ya se ha iniciado la sesi\u00f3n.`,
     th: `\u0e04\u0e38\u0e13\u0e25\u0e07\u0e0a\u0e37\u0e48\u0e2d\u0e40\u0e02\u0e49\u0e32\u0e43\u0e0a\u0e49\u0e41\u0e25\u0e49\u0e27`,
     ja: `\u30b5\u30a4\u30f3\u30a4\u30f3\u3057\u307e\u3057\u305f\u3002`,
@@ -220,19 +222,19 @@ export class AuthManager {
     if (serverType === ServerType.Sasjs) return response?.loggedin
 
     // get default success header
-    let successHeader = this.successHeaders[this.defaultSuccessHeaderKey]
+    let successHeader = this.loginSuccessHeaders[this.defaultSuccessHeaderKey]
 
     // get user language based on language settings of the browser
     const userLang = getUserLanguage()
 
     if (userLang) {
       // get success header on exact match of the language code
-      let userLangSuccessHeader = this.successHeaders[userLang]
+      let userLangSuccessHeader = this.loginSuccessHeaders[userLang]
 
       // handle case when there is no exact match of the language code
       if (!userLangSuccessHeader) {
         // get all supported language codes
-        const headerLanguages = Object.keys(this.successHeaders)
+        const headerLanguages = Object.keys(this.loginSuccessHeaders)
 
         // find language code on partial match
         const headerLanguage = headerLanguages.find((language) =>
@@ -241,7 +243,7 @@ export class AuthManager {
 
         // reassign success header if partial match was found
         if (headerLanguage) {
-          successHeader = this.successHeaders[headerLanguage]
+          successHeader = this.loginSuccessHeaders[headerLanguage]
         }
       } else {
         successHeader = userLangSuccessHeader
