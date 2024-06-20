@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { AuthManager } from '../AuthManager'
 import * as dotenv from 'dotenv'
 import { ServerType } from '@sasjs/utils/types'
@@ -63,6 +67,12 @@ describe('AuthManager', () => {
   })
 
   describe('login - default mechanism', () => {
+    let languageGetter: any
+
+    beforeEach(() => {
+      languageGetter = jest.spyOn(window.navigator, 'language', 'get')
+    })
+
     it('should call the auth callback and return when already logged in', async () => {
       const authManager = new AuthManager(
         serverUrl,
@@ -293,6 +303,56 @@ describe('AuthManager', () => {
       expect(requestClient.authorize).toHaveBeenCalledWith(
         mockLoginAuthoriseRequiredResponse
       )
+    })
+
+    it('should check login success header based on language preferences of the browser', () => {
+      const authManager = new AuthManager(
+        serverUrl,
+        serverType,
+        requestClient,
+        authCallback
+      )
+
+      // test built in language codes
+      Object.keys(authManager['successHeaders']).forEach((key) => {
+        languageGetter.mockReturnValue(key)
+
+        expect(
+          authManager['isLogInSuccessHeaderPresent'](
+            serverType,
+            authManager['successHeaders'][key]
+          )
+        ).toBeTruthy()
+      })
+
+      // test possible longer language codes
+      const possibleLanguageCodes = [
+        { short: 'en', long: 'en-US' },
+        { short: 'fr', long: 'fr-FR' },
+        { short: 'es', long: 'es-ES' }
+      ]
+
+      possibleLanguageCodes.forEach((key) => {
+        const { short, long } = key
+        languageGetter.mockReturnValue(long)
+
+        expect(
+          authManager['isLogInSuccessHeaderPresent'](
+            serverType,
+            authManager['successHeaders'][short]
+          )
+        ).toBeTruthy()
+      })
+
+      // test falling back to default language code
+      languageGetter.mockReturnValue('WRONG-LANGUAGE')
+
+      expect(
+        authManager['isLogInSuccessHeaderPresent'](
+          serverType,
+          authManager['successHeaders'][authManager['defaultSuccessHeaderKey']]
+        )
+      ).toBeTruthy()
     })
   })
 

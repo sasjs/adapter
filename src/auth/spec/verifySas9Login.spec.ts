@@ -3,6 +3,7 @@
  */
 import { verifySas9Login } from '../verifySas9Login'
 import * as delayModule from '../../utils/delay'
+import { enLoginSuccessHeader } from '../AuthManager'
 
 describe('verifySas9Login', () => {
   const serverUrl = 'http://test-server.com'
@@ -18,7 +19,7 @@ describe('verifySas9Login', () => {
     const popup = {
       window: {
         location: { href: serverUrl + `/SASLogon` },
-        document: { body: { innerText: '<h3>You have signed in.</h3>' } }
+        document: { body: { innerText: `<h3>${enLoginSuccessHeader}</h3>` } }
       }
     } as unknown as Window
 

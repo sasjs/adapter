@@ -1,4 +1,5 @@
 import { delay } from '../utils'
+import { enLoginSuccessHeader } from './AuthManager'
 
 export async function verifySas9Login(loginPopup: Window): Promise<{
   isLoggedIn: boolean
@@ -12,7 +13,7 @@ export async function verifySas9Login(loginPopup: Window): Promise<{
 
     isLoggedIn =
       loginPopup.window.location.href.includes('SASLogon') &&
-      loginPopup.window.document.body.innerText.includes('You have signed in.')
+      loginPopup.window.document.body.innerText.includes(enLoginSuccessHeader)
     elapsedSeconds = (new Date().valueOf() - startTime.valueOf()) / 1000
   } while (!isLoggedIn && elapsedSeconds < 5 * 60)
 
