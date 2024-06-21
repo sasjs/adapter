@@ -68,12 +68,6 @@ describe('AuthManager', () => {
   })
 
   describe('login - default mechanism', () => {
-    let languageGetter: any
-
-    beforeEach(() => {
-      languageGetter = jest.spyOn(window.navigator, 'language', 'get')
-    })
-
     it('should call the auth callback and return when already logged in', async () => {
       const authManager = new AuthManager(
         serverUrl,
