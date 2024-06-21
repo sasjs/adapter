@@ -8,14 +8,15 @@ import { ServerType } from '@sasjs/utils/types'
 import axios from 'axios'
 import {
   mockedCurrentUserApi,
-  mockLoginAuthoriseRequiredResponse,
-  mockLoginSuccessResponse
+  mockLoginAuthoriseRequiredResponse
 } from './mockResponses'
 import { serialize } from '../../utils'
 import * as openWebPageModule from '../openWebPage'
 import * as verifySasViyaLoginModule from '../verifySasViyaLogin'
 import * as verifySas9LoginModule from '../verifySas9Login'
 import { RequestClient } from '../../request/RequestClient'
+import { getExpectedLogInSuccessHeader } from '../'
+
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -135,6 +136,7 @@ describe('AuthManager', () => {
         requestClient,
         authCallback
       )
+
       jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
         Promise.resolve({
           isLoggedIn: false,
@@ -143,8 +145,9 @@ describe('AuthManager', () => {
           loginForm: { name: 'test' }
         })
       )
+
       mockedAxios.post.mockImplementation(() =>
-        Promise.resolve({ data: mockLoginSuccessResponse })
+        Promise.resolve({ data: getExpectedLogInSuccessHeader() })
       )
 
       const loginResponse = await authManager.logIn(userName, password)
@@ -180,6 +183,7 @@ describe('AuthManager', () => {
         requestClient,
         authCallback
       )
+
       jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
         Promise.resolve({
           isLoggedIn: false,
@@ -188,8 +192,9 @@ describe('AuthManager', () => {
           loginForm: { name: 'test' }
         })
       )
+
       mockedAxios.post.mockImplementation(() =>
-        Promise.resolve({ data: mockLoginSuccessResponse })
+        Promise.resolve({ data: getExpectedLogInSuccessHeader() })
       )
       mockedAxios.get.mockImplementation(() => Promise.resolve({ status: 200 }))
 
@@ -303,56 +308,6 @@ describe('AuthManager', () => {
       expect(requestClient.authorize).toHaveBeenCalledWith(
         mockLoginAuthoriseRequiredResponse
       )
-    })
-
-    it('should check login success header based on language preferences of the browser', () => {
-      const authManager = new AuthManager(
-        serverUrl,
-        serverType,
-        requestClient,
-        authCallback
-      )
-
-      // test built in language codes
-      Object.keys(authManager['successHeaders']).forEach((key) => {
-        languageGetter.mockReturnValue(key)
-
-        expect(
-          authManager['isLogInSuccessHeaderPresent'](
-            serverType,
-            authManager['successHeaders'][key]
-          )
-        ).toBeTruthy()
-      })
-
-      // test possible longer language codes
-      const possibleLanguageCodes = [
-        { short: 'en', long: 'en-US' },
-        { short: 'fr', long: 'fr-FR' },
-        { short: 'es', long: 'es-ES' }
-      ]
-
-      possibleLanguageCodes.forEach((key) => {
-        const { short, long } = key
-        languageGetter.mockReturnValue(long)
-
-        expect(
-          authManager['isLogInSuccessHeaderPresent'](
-            serverType,
-            authManager['successHeaders'][short]
-          )
-        ).toBeTruthy()
-      })
-
-      // test falling back to default language code
-      languageGetter.mockReturnValue('WRONG-LANGUAGE')
-
-      expect(
-        authManager['isLogInSuccessHeaderPresent'](
-          serverType,
-          authManager['successHeaders'][authManager['defaultSuccessHeaderKey']]
-        )
-      ).toBeTruthy()
     })
   })
 

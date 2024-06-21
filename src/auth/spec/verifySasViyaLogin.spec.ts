@@ -3,7 +3,7 @@
  */
 import { verifySasViyaLogin } from '../verifySasViyaLogin'
 import * as delayModule from '../../utils/delay'
-import { enLoginSuccessHeader } from '../AuthManager'
+import { getExpectedLogInSuccessHeader } from '../'
 
 describe('verifySasViyaLogin', () => {
   const serverUrl = 'http://test-server.com'
@@ -20,7 +20,9 @@ describe('verifySasViyaLogin', () => {
     const popup = {
       window: {
         location: { href: serverUrl + `/SASLogon` },
-        document: { body: { innerText: `<h3>${enLoginSuccessHeader}</h3>` } }
+        document: {
+          body: { innerText: `<h3>${getExpectedLogInSuccessHeader()}</h3>` }
+        }
       }
     } as unknown as Window
 
