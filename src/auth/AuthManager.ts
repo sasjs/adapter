@@ -7,6 +7,7 @@ import { extractUserLongNameSas9 } from '../utils/sas9/extractUserLongNameSas9'
 import { openWebPage } from './openWebPage'
 import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
+import { isLogInSuccessHeaderPresent } from './'
 
 export class AuthManager {
   public userName = ''
@@ -132,7 +133,7 @@ export class AuthManager {
 
     let loginResponse = await this.sendLoginRequest(loginForm, loginParams)
 
-    let isLoggedIn = isLogInSuccess(this.serverType, loginResponse)
+    let isLoggedIn = isLogInSuccessHeaderPresent(this.serverType, loginResponse)
 
     if (!isLoggedIn) {
       if (isCredentialsVerifyError(loginResponse)) {
@@ -217,7 +218,7 @@ export class AuthManager {
    *  - a boolean `isLoggedIn`
    *  - a string `userName`,
    *  - a string `userFullName` and
-   *  - a form `loginForm` if not loggedin.
+   *  - a form `loginForm` if not loggedIn.
    */
   public async checkSession(): Promise<LoginResultInternal> {
     const { isLoggedIn, userName, userLongName } = await this.fetchUserName()
@@ -384,9 +385,3 @@ const isCredentialsVerifyError = (response: string): boolean =>
   /An error occurred while the system was verifying your credentials. Please enter your credentials again./gm.test(
     response
   )
-
-const isLogInSuccess = (serverType: ServerType, response: any): boolean => {
-  if (serverType === ServerType.Sasjs) return response?.loggedin
-
-  return /You have signed in/gm.test(response)
-}

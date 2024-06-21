@@ -1,17 +1,22 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { AuthManager } from '../AuthManager'
 import * as dotenv from 'dotenv'
 import { ServerType } from '@sasjs/utils/types'
 import axios from 'axios'
 import {
   mockedCurrentUserApi,
-  mockLoginAuthoriseRequiredResponse,
-  mockLoginSuccessResponse
+  mockLoginAuthoriseRequiredResponse
 } from './mockResponses'
 import { serialize } from '../../utils'
 import * as openWebPageModule from '../openWebPage'
 import * as verifySasViyaLoginModule from '../verifySasViyaLogin'
 import * as verifySas9LoginModule from '../verifySas9Login'
 import { RequestClient } from '../../request/RequestClient'
+import { getExpectedLogInSuccessHeader } from '../'
+
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -125,6 +130,7 @@ describe('AuthManager', () => {
         requestClient,
         authCallback
       )
+
       jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
         Promise.resolve({
           isLoggedIn: false,
@@ -133,8 +139,9 @@ describe('AuthManager', () => {
           loginForm: { name: 'test' }
         })
       )
+
       mockedAxios.post.mockImplementation(() =>
-        Promise.resolve({ data: mockLoginSuccessResponse })
+        Promise.resolve({ data: getExpectedLogInSuccessHeader() })
       )
 
       const loginResponse = await authManager.logIn(userName, password)
@@ -170,6 +177,7 @@ describe('AuthManager', () => {
         requestClient,
         authCallback
       )
+
       jest.spyOn(authManager, 'checkSession').mockImplementation(() =>
         Promise.resolve({
           isLoggedIn: false,
@@ -178,8 +186,9 @@ describe('AuthManager', () => {
           loginForm: { name: 'test' }
         })
       )
+
       mockedAxios.post.mockImplementation(() =>
-        Promise.resolve({ data: mockLoginSuccessResponse })
+        Promise.resolve({ data: getExpectedLogInSuccessHeader() })
       )
       mockedAxios.get.mockImplementation(() => Promise.resolve({ status: 200 }))
 
