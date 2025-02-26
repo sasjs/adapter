@@ -76,8 +76,9 @@ jobs:
           npm i
           replace-in-files --regex='"serverUrl".*' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}",' ./public/config.json
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
+          cat ./public/config.json
+          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
 
@@ -89,6 +90,7 @@ jobs:
         run: |
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
+          cat ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
           sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
