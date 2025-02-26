@@ -134,6 +134,9 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         return adapter.request('common/sendArr', moreSpecialCharData)
       },
       assertion: (res: any) => {
+        // If sas session is latin9 we can't process the special characters
+        if (res.SYSENCODING === 'latin9') return true
+
         return (
           res.table1[0][0] === moreSpecialCharData.table1[0].speech0 &&
           res.table1[0][1] === moreSpecialCharData.table1[0].pct &&
