@@ -68,6 +68,9 @@ jobs:
       - name: install pm2
         run: npm i -g pm2
 
+      - name: Fetch SASJS server
+        run: curl ${{ secrets.SASJS_SERVER_URL }}/SASjsApi/info
+
       - name: Deploy sasjs-tests
         run: |
           npm install -g replace-in-files-cli
