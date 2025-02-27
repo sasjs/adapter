@@ -27,6 +27,15 @@ const browserConfig = {
     index: './src/index.ts',
     minified_sas9: './src/minified/sas9/index.ts'
   },
+  externals: {
+    'node:fs': 'node:fs',
+    'node:fs/promises': 'node:fs/promises',
+    'node:path': 'node:path',
+    'node:stream': 'node:stream',
+    'node:url': 'node:url',
+    'node:events': 'node:events',
+    'node:string_decoder': 'node:string_decoder'
+  },
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'build'),

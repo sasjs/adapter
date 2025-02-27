@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -53,6 +53,10 @@ jobs:
           USER_KEY: ${{ secrets.USER_KEY }}
           TLS_KEY: ${{ secrets.TLS_KEY }}
 
+      - name: Chmod VPN files
+        run: |
+          chmod 600 .github/vpn/ca.crt .github/vpn/user.crt .github/vpn/user.key .github/vpn/tls.key
+
       - name: Install Open VPN
         run: |
           sudo apt install apt-transport-https
@@ -68,6 +72,9 @@ jobs:
       - name: install pm2
         run: npm i -g pm2
 
+      - name: Fetch SASJS server
+        run: curl ${{ secrets.SASJS_SERVER_URL }}/SASjsApi/info
+
       - name: Deploy sasjs-tests
         run: |
           npm install -g replace-in-files-cli
@@ -76,8 +83,10 @@ jobs:
           npm i
           replace-in-files --regex='"serverUrl".*' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}",' ./public/config.json
           replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
           replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
+          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
+          cat ./public/config.json
+
           npm run update:adapter
           pm2 start --name sasjs-test npm -- start
 
@@ -90,6 +99,9 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
+          cat ./cypress.json
+          echo "SASJS_USERNAME=${{ secrets.SASJS_USERNAME }}"
+
           sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
       # For some reason if coverage report action is run before other commands, those commands can't access the directories and files on which they depend on
