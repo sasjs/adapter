@@ -1,5 +1,5 @@
 import { isRelativePath, isUri, isUrl } from './utils'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import {
   Job,
   Session,

@@ -1,6 +1,6 @@
 import { SASJS_LOGS_SEPARATOR, SasjsRequestClient } from '../SasjsRequestClient'
 import { SasjsParsedResponse } from '../../types'
-import { AxiosResponse } from 'axios'
+import { AxiosHeaders, AxiosResponse } from 'axios'
 
 describe('SasjsRequestClient', () => {
   const requestClient = new SasjsRequestClient('')
@@ -37,7 +37,7 @@ ${SASJS_LOGS_SEPARATOR}`,
       status,
       statusText: 'ok',
       headers: { etag },
-      config: {}
+      config: { headers: new AxiosHeaders() }
     }
 
     const expectedParsedResponse: SasjsParsedResponse<string> = {
@@ -65,7 +65,7 @@ ${printOutput}`,
       status,
       statusText: 'ok',
       headers: { etag },
-      config: {}
+      config: { headers: new AxiosHeaders() }
     }
 
     const expectedParsedResponse: SasjsParsedResponse<string> = {
@@ -100,7 +100,7 @@ ${SASJS_LOGS_SEPARATOR}`,
       status,
       statusText: 'ok',
       headers: { etag },
-      config: {}
+      config: { headers: new AxiosHeaders() }
     }
 
     const expectedParsedResponse: SasjsParsedResponse<string> = {
@@ -139,7 +139,7 @@ ${printOutput}`,
       status,
       statusText: 'ok',
       headers: { etag },
-      config: {}
+      config: { headers: new AxiosHeaders() }
     }
 
     const expectedParsedResponse: SasjsParsedResponse<string> = {

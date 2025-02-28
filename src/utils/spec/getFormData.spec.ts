@@ -1,6 +1,6 @@
 import { getFormData } from '..'
 import * as isNodeModule from '../isNode'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 
 describe('getFormData', () => {
   it('should return NodeFormData if environment is Node', () => {

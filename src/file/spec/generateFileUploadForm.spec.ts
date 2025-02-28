@@ -1,6 +1,6 @@
 import { generateFileUploadForm } from '../generateFileUploadForm'
 import { convertToCSV } from '../../utils/convertToCsv'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import * as isNodeModule from '../../utils/isNode'
 
 describe('generateFileUploadForm', () => {

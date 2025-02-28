@@ -5,7 +5,7 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
-import axios from 'axios'
+import axios, { AxiosHeaders } from 'axios'
 import {
   LoginRequiredError,
   AuthorizeError,
@@ -209,7 +209,7 @@ ${noValueMessage}
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: { data: reqData, headers: new AxiosHeaders() },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
 
@@ -278,7 +278,7 @@ ${noValueMessage}
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: { data: reqData, headers: new AxiosHeaders() },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {
@@ -328,7 +328,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: { data: reqData, headers: new AxiosHeaders() },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {

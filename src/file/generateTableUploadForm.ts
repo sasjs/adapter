@@ -1,4 +1,4 @@
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import { convertToCSV, isFormatsTable } from '../utils/convertToCsv'
 import { splitChunks } from '../utils/splitChunks'
 
