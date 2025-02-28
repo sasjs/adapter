@@ -1170,8 +1170,8 @@ export default class SASjs {
    * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
    */
   public enableVerboseMode(
-    successCallBack?: (response: AxiosResponse | AxiosError) => AxiosResponse,
-    errorCallBack?: (response: AxiosResponse | AxiosError) => AxiosResponse
+    successCallBack?: (response: AxiosResponse) => AxiosResponse,
+    errorCallBack?: (response: AxiosError) => AxiosError
   ) {
     this.requestClient?.enableVerboseMode(successCallBack, errorCallBack)
   }
