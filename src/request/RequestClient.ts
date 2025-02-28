@@ -1,5 +1,6 @@
 import {
   AxiosError,
+  AxiosHeaders,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse
@@ -413,103 +414,85 @@ export class RequestClient implements HttpClient {
     return bodyLines.join('\n')
   }
 
-  private defaultInterceptionCallBack = (
-    axiosResponse: AxiosResponse | AxiosError
-  ) => {
+  private handleAxiosResponse = (response: AxiosResponse) => {
+    const { status, config, request, data } = response
+
+    const reqHeaders = request?._header ?? 'Not provided\n'
+    const rawHeaders = request?.res?.rawHeaders ?? ['Not provided']
+
+    const resHeaders = this.formatHeaders(rawHeaders)
+    const parsedResBody = this.parseInterceptedBody(data)
+
+    process.logger?.info(`HTTP Request (first 50 lines):
+  ${reqHeaders}${this.parseInterceptedBody(config.data)}
+  
+  HTTP Response Code: ${this.prettifyString(status)}
+  
+  HTTP Response (first 50 lines):
+  ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+  `)
+
+    return response
+  }
+
+  private handleAxiosError = (error: AxiosError) => {
     // Message indicating absent value.
     const noValueMessage = 'Not provided'
+    const { response, request, config } = error
 
     // Fallback request object that can be safely used to form request summary.
-    type FallbackRequest = { _header?: string; res: { rawHeaders: string[] } }
     // _header is not present in responses with status 1**
     // rawHeaders are not present in responses with status 1**
-    let fallbackRequest: FallbackRequest = {
-      _header: `${noValueMessage}\n`,
+    let fallbackRequest = {
+      _header: noValueMessage,
       res: { rawHeaders: [noValueMessage] }
     }
 
-    // Fallback response object that can be safely used to form response summary.
-    type FallbackResponse = {
-      status?: number | string
-      request?: FallbackRequest
-      config: { data?: string }
-      data?: unknown
-    }
-    let fallbackResponse: FallbackResponse = axiosResponse
-
-    if (axios.isAxiosError(axiosResponse)) {
-      const { response, request, config } = axiosResponse
-
-      // Try to use axiosResponse.response to form response summary.
-      if (response) {
-        fallbackResponse = response
-      } else {
-        // Try to use axiosResponse.request to form request summary.
-        if (request) {
-          const { _header, _currentRequest } = request
-
-          // Try to use axiosResponse.request._header to form request summary.
-          if (_header) {
-            fallbackRequest._header = _header
-          }
-          // Try to use axiosResponse.request._currentRequest._header to form request summary.
-          else if (_currentRequest && _currentRequest._header) {
-            fallbackRequest._header = _currentRequest._header
-          }
-
-          const { res } = request
-
-          // Try to use axiosResponse.request.res.rawHeaders to form request summary.
-          if (res && res.rawHeaders) {
-            fallbackRequest.res.rawHeaders = res.rawHeaders
-          }
-        }
-
-        // Fallback config that can be safely used to form response summary.
-        const fallbackConfig = { data: noValueMessage }
-
-        fallbackResponse = {
-          status: noValueMessage,
-          request: fallbackRequest,
-          config: config || fallbackConfig,
-          data: noValueMessage
-        }
+    if (request) {
+      fallbackRequest = {
+        _header:
+          request._header ?? request._currentRequest?._header ?? noValueMessage,
+        res: { rawHeaders: request.res?.rawHeaders ?? [noValueMessage] }
       }
     }
 
-    const { status, config, request, data: resData } = fallbackResponse
-    const { data: reqData } = config
-    const { _header: reqHeaders, res } = request || fallbackRequest
-    const { rawHeaders } = res
+    // Fallback response object that can be safely used to form response summary.
+    let fallbackResponse = response || {
+      status: noValueMessage,
+      request: fallbackRequest,
+      config: config || { data: noValueMessage, headers: new AxiosHeaders() },
+      data: noValueMessage
+    }
 
-    // Converts an array of strings into a single string with the following format:
-    // <headerName>: <headerValue>
-    const resHeaders = rawHeaders.reduce(
-      (acc: string, value: string, i: number) => {
-        if (i % 2 === 0) {
-          acc += `${i === 0 ? '' : '\n'}${value}`
-        } else {
-          acc += `: ${value}`
-        }
+    const { status, request: req, data: resData } = fallbackResponse
+    const { _header: reqHeaders, res } = req
 
-        return acc
-      },
-      ''
-    )
-
+    const resHeaders = this.formatHeaders(res.rawHeaders)
     const parsedResBody = this.parseInterceptedBody(resData)
 
-    // HTTP response summary.
     process.logger?.info(`HTTP Request (first 50 lines):
-${reqHeaders}${this.parseInterceptedBody(reqData)}
+  ${reqHeaders}${this.parseInterceptedBody(config?.data)}
+  
+  HTTP Response Code: ${this.prettifyString(status)}
+  
+  HTTP Response (first 50 lines):
+  ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+  `)
 
-HTTP Response Code: ${this.prettifyString(status)}
+    return error
+  }
 
-HTTP Response (first 50 lines):
-${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
-`)
-
-    return axiosResponse
+  // Converts an array of strings into a single string with the following format:
+  // <headerName>: <headerValue>
+  private formatHeaders = (rawHeaders: string[]): string => {
+    return rawHeaders.reduce((acc, value, i) => {
+      if (i % 2 === 0) {
+        acc += `${i === 0 ? '' : '\n'}${value}`
+      } else {
+        acc += `: ${value}`
+      }
+      return acc
+    }, '')
   }
 
   /**
@@ -529,8 +512,8 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
    * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
    */
   public enableVerboseMode = (
-    successCallBack = this.defaultInterceptionCallBack,
-    errorCallBack = this.defaultInterceptionCallBack
+    successCallBack = this.handleAxiosResponse,
+    errorCallBack = this.handleAxiosError
   ) => {
     this.httpInterceptor = this.httpClient.interceptors.response.use(
       successCallBack,

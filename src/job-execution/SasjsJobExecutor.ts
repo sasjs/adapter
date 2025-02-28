@@ -1,4 +1,4 @@
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import {
   AuthConfig,
   ExtraResponseAttributes,

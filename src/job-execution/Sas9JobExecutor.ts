@@ -1,6 +1,6 @@
 import * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import { ErrorResponse } from '../types/errors'
 import { convertToCSV, isRelativePath } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'

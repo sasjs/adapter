@@ -1,4 +1,4 @@
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import { convertToCSV } from '../utils/convertToCsv'
 import { isNode } from '../utils'
 
