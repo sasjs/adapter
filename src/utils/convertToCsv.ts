@@ -10,10 +10,14 @@ export const convertToCSV = (
   tableName: string
 ) => {
   if (!data[tableName]) {
-    throw prefixMessage(
+    const error = prefixMessage(
       'No table provided to be converted to CSV.',
       'Error while converting to CSV. '
     )
+
+    if (typeof error === 'string') throw new Error(error)
+
+    throw error
   }
 
   const table = data[tableName]
