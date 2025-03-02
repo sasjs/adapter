@@ -5,7 +5,7 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
-import axios, { AxiosHeaders } from 'axios'
+import axios, { AxiosRequestHeaders } from 'axios'
 import {
   LoginRequiredError,
   AuthorizeError,
@@ -165,10 +165,6 @@ Connection: close
     })
 
     it('should log parsed response with status 1**', () => {
-      const spyIsAxiosError = jest
-        .spyOn(axios, 'isAxiosError')
-        .mockImplementation(() => true)
-
       const mockedAxiosError = {
         config: {
           data: reqData
@@ -195,8 +191,6 @@ ${noValueMessage}
 `
 
       expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
-
-      spyIsAxiosError.mockReset()
     })
 
     it('should log parsed response with status 2**', () => {
@@ -209,7 +203,10 @@ ${noValueMessage}
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData, headers: new AxiosHeaders() },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
 
@@ -278,7 +275,10 @@ ${noValueMessage}
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData, headers: new AxiosHeaders() },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {
@@ -328,7 +328,10 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData, headers: new AxiosHeaders() },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {

@@ -1,8 +1,8 @@
 import {
   AxiosError,
-  AxiosHeaders,
   AxiosInstance,
   AxiosRequestConfig,
+  AxiosRequestHeaders,
   AxiosResponse
 } from 'axios'
 import axios from 'axios'
@@ -424,13 +424,13 @@ export class RequestClient implements HttpClient {
     const parsedResBody = this.parseInterceptedBody(data)
 
     process.logger?.info(`HTTP Request (first 50 lines):
-  ${reqHeaders}${this.parseInterceptedBody(config.data)}
-  
-  HTTP Response Code: ${this.prettifyString(status)}
-  
-  HTTP Response (first 50 lines):
-  ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
-  `)
+${reqHeaders}${this.parseInterceptedBody(config.data)}
+
+HTTP Response Code: ${this.prettifyString(status)}
+
+HTTP Response (first 50 lines):
+${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+`)
 
     return response
   }
@@ -444,7 +444,7 @@ export class RequestClient implements HttpClient {
     // _header is not present in responses with status 1**
     // rawHeaders are not present in responses with status 1**
     let fallbackRequest = {
-      _header: noValueMessage,
+      _header: `${noValueMessage}\n`,
       res: { rawHeaders: [noValueMessage] }
     }
 
@@ -460,7 +460,10 @@ export class RequestClient implements HttpClient {
     let fallbackResponse = response || {
       status: noValueMessage,
       request: fallbackRequest,
-      config: config || { data: noValueMessage, headers: new AxiosHeaders() },
+      config: config || {
+        data: noValueMessage,
+        headers: {} as AxiosRequestHeaders
+      },
       data: noValueMessage
     }
 
@@ -471,13 +474,13 @@ export class RequestClient implements HttpClient {
     const parsedResBody = this.parseInterceptedBody(resData)
 
     process.logger?.info(`HTTP Request (first 50 lines):
-  ${reqHeaders}${this.parseInterceptedBody(config?.data)}
-  
-  HTTP Response Code: ${this.prettifyString(status)}
-  
-  HTTP Response (first 50 lines):
-  ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
-  `)
+${reqHeaders}${this.parseInterceptedBody(config?.data)}
+
+HTTP Response Code: ${this.prettifyString(status)}
+
+HTTP Response (first 50 lines):
+${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+`)
 
     return error
   }
