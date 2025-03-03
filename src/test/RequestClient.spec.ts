@@ -24,8 +24,16 @@ const axiosActual = jest.requireActual('axios')
 jest
   .spyOn(axiosModules, 'createAxiosInstance')
   .mockImplementation((baseURL: string, httpsAgent?: https.Agent) =>
-    axiosActual.create({ baseURL, httpsAgent })
+    axiosActual.create({ baseURL, httpsAgent, withCredentials: true })
   )
+
+jest.mock('util', () => {
+  const actualUtil = jest.requireActual('util')
+  return {
+    ...actualUtil,
+    inspect: jest.fn(actualUtil.inspect)
+  }
+})
 
 const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`
@@ -432,15 +440,18 @@ ${resHeaders[0]}: ${resHeaders[1]}${
   })
 
   describe('prettifyString', () => {
+    const inspectMock = UtilsModule.inspect as unknown as jest.Mock
+
+    beforeEach(() => {
+      // Reset the mock before each test to ensure a clean slate
+      inspectMock.mockClear()
+    })
+
     it(`should call inspect without colors when verbose mode is set to 'bleached'`, () => {
       const requestClient = new RequestClient('')
-      let verbose: VerboseMode = 'bleached'
-      requestClient.setVerboseMode(verbose)
-
-      jest.spyOn(UtilsModule, 'inspect')
+      requestClient.setVerboseMode('bleached')
 
       const testStr = JSON.stringify({ test: 'test' })
-
       requestClient['prettifyString'](testStr)
 
       expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {
@@ -448,15 +459,11 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       })
     })
 
-    it(`should call inspect with colors when verbose mode is set to 'true'`, () => {
+    it(`should call inspect with colors when verbose mode is set to true`, () => {
       const requestClient = new RequestClient('')
-      let verbose: VerboseMode = true
-      requestClient.setVerboseMode(verbose)
-
-      jest.spyOn(UtilsModule, 'inspect')
+      requestClient.setVerboseMode(true)
 
       const testStr = JSON.stringify({ test: 'test' })
-
       requestClient['prettifyString'](testStr)
 
       expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {

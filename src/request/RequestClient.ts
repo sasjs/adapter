@@ -5,7 +5,6 @@ import {
   AxiosRequestHeaders,
   AxiosResponse
 } from 'axios'
-import axios from 'axios'
 import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
