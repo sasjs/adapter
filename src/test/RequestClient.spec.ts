@@ -24,7 +24,7 @@ const axiosActual = jest.requireActual('axios')
 jest
   .spyOn(axiosModules, 'createAxiosInstance')
   .mockImplementation((baseURL: string, httpsAgent?: https.Agent) =>
-    axiosActual.create({ baseURL, httpsAgent, withCredentials: true })
+    axiosActual.create({ baseURL, httpsAgent, withXSRFToken: true })
   )
 
 jest.mock('util', () => {

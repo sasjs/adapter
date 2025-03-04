@@ -50,7 +50,7 @@ export class Sas9RequestClient extends RequestClient {
     const requestConfig: AxiosRequestConfig = {
       headers,
       responseType: contentType === 'text/plain' ? 'text' : 'json',
-      withCredentials: true
+      withXSRFToken: true
     }
     if (contentType === 'text/plain') {
       requestConfig.transformResponse = undefined
@@ -103,7 +103,7 @@ export class Sas9RequestClient extends RequestClient {
     }
 
     return this.httpClient
-      .post<T>(url, data, { headers, withCredentials: true })
+      .post<T>(url, data, { headers, withXSRFToken: true })
       .then(async (response) => {
         if (response.status === 302) {
           return await this.get(

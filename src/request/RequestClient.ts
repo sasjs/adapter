@@ -160,7 +160,7 @@ export class RequestClient implements HttpClient {
     const requestConfig: AxiosRequestConfig = {
       headers,
       responseType: contentType === 'text/plain' ? 'text' : 'json',
-      withCredentials: true
+      withXSRFToken: true
     }
 
     if (contentType === 'text/plain') {
@@ -207,7 +207,7 @@ export class RequestClient implements HttpClient {
     return this.httpClient
       .post<T>(url, data, {
         headers,
-        withCredentials: true,
+        withXSRFToken: true,
         ...additionalSettings
       })
       .then((response) => {
@@ -234,7 +234,7 @@ export class RequestClient implements HttpClient {
     }
 
     return this.httpClient
-      .put<T>(url, data, { headers, withCredentials: true })
+      .put<T>(url, data, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -253,7 +253,7 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     return this.httpClient
-      .delete<T>(url, { headers, withCredentials: true })
+      .delete<T>(url, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -271,7 +271,7 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     return this.httpClient
-      .patch<T>(url, data, { headers, withCredentials: true })
+      .patch<T>(url, data, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -630,7 +630,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
       // Fetching root and creating CSRF cookie
       await this.httpClient
         .get('/', {
-          withCredentials: true
+          withXSRFToken: true
         })
         .then((response) => {
           const cookie =
