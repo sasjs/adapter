@@ -191,6 +191,13 @@ export class RequestClient implements HttpClient {
       })
   }
 
+  /**
+   * @param contentType  Newer version of Axios is more strict so if you don't
+   * set the contentType to `form data` while sending a FormData object
+   * application/json will be used by default, axios won’t treat it as FormData.
+   * Instead, it serializes data as JSON—resulting in a payload like
+   * {"sometable":{}} and we lose the multipart/form-data formatting.
+   */
   public async post<T>(
     url: string,
     data: any,

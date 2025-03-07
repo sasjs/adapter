@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
-    "build": "react-scripts build",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider craco build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
@@ -43,6 +43,8 @@
     ]
   },
   "devDependencies": {
-    "node-sass": "9.0.0"
+    "@craco/craco": "6.4.3",
+    "node-sass": "9.0.0",
+    "source-map-loader": "0.2.4"
   }
 }
