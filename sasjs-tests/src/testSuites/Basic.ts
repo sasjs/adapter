@@ -88,6 +88,20 @@ export const basicTests = (
       }
     },
     {
+      title: 'Web request',
+      description: 'Should run the request with old web approach',
+      test: async () => {
+        const config: Partial<SASjsConfig> = {
+          useComputeApi: false
+        }
+
+        return await adapter.request('common/sendArr', stringData, config)
+      },
+      assertion: (response: any) => {
+        return response.table1[0][0] === stringData.table1[0].col1
+      }
+    },
+    {
       title: 'Request with debug on',
       description:
         'Should complete successful request with debugging switched on',
@@ -158,20 +172,6 @@ export const basicTests = (
           sasjsConfig.serverType === defaultConfig.serverType &&
           sasjsConfig.debug === false
         )
-      }
-    },
-    {
-      title: 'Web request',
-      description: 'Should run the request with old web approach',
-      test: async () => {
-        const config: Partial<SASjsConfig> = {
-          useComputeApi: false
-        }
-
-        return await adapter.request('common/sendArr', stringData, config)
-      },
-      assertion: (response: any) => {
-        return response.table1[0][0] === stringData.table1[0].col1
       }
     }
   ]

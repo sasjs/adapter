@@ -24,6 +24,26 @@
         "streamServiceName": "adapter-tests",
         "assetPaths": []
       }
+    },
+    {
+      "name": "viya",
+      "serverUrl": "",
+      "serverType": "SASVIYA",
+      "httpsAgentOptions": {
+        "allowInsecureRequests": false
+      },
+      "appLoc": "/Public/app/adapter-tests",
+      "deployConfig": {
+        "deployServicePack": true,
+        "deployScripts": []
+      },
+      "streamConfig": {
+        "streamWeb": true,
+        "streamWebFolder": "webv",
+        "webSourcePath": "build",
+        "streamServiceName": "adapter-tests",
+        "assetPaths": []
+      }
     }
   ]
 }
