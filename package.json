@@ -79,7 +79,7 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@sasjs/utils": "^3.5.1",
+    "@sasjs/utils": "3.5.2",
     "axios": "1.8.1",
     "axios-cookiejar-support": "5.0.5",
     "form-data": "4.0.0",

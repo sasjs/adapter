@@ -1,0 +1,49 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: SASjs Build and Unit Test
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        node-version: [lts/hydrogen]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Check npm audit
+        run: npm audit --production --audit-level=low
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Rimraf
+        run: npm i rimraf
+
+      - name: Check code style
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build Package
+        run: npm run package:lib
+        env:
+          CI: true
+
+      # For some reason if coverage report action is run before other commands, those commands can't access the directories and files on which they depend on
+      - name: Generate coverage report
+        uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
