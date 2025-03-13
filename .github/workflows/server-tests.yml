@@ -92,7 +92,6 @@ jobs:
           replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
           replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
           replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
+          pwd
           cat ./cypress.json
           echo "SASJS_USERNAME=${{ secrets.SASJS_USERNAME }}"
-
-          sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
