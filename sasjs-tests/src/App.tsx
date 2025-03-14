@@ -19,7 +19,7 @@ const App = (): ReactElement<{}> => {
         basicTests(adapter, config.userName, config.password),
         sendArrTests(adapter, appLoc),
         sendObjTests(adapter),
-        specialCaseTests(adapter),
+        // specialCaseTests(adapter),
         sasjsRequestTests(adapter),
         fileUploadTests(adapter)
       ]

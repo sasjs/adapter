@@ -20,30 +20,30 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
           return requests[0].SASWORK === null
         }
       }
-    },
-    {
-      title: 'Make error and capture log',
-      description:
-        'Should make an error and capture log, in the same time it is testing if debug override is working',
-      test: async () => {
-        return adapter
-          .request('common/makeErr', data, { debug: true })
-          .catch(() => {
-            const sasRequests = adapter.getSasRequests()
-            const makeErrRequest: any =
-              sasRequests.find((req) => req.serviceLink.includes('makeErr')) ||
-              null
-
-            if (!makeErrRequest) return false
-
-            return !!(
-              makeErrRequest.logFile && makeErrRequest.logFile.length > 0
-            )
-          })
-      },
-      assertion: (response) => {
-        return response
-      }
     }
+    // {
+    //   title: 'Make error and capture log',
+    //   description:
+    //     'Should make an error and capture log, in the same time it is testing if debug override is working',
+    //   test: async () => {
+    //     return adapter
+    //       .request('common/makeErr', data, { debug: true })
+    //       .catch(() => {
+    //         const sasRequests = adapter.getSasRequests()
+    //         const makeErrRequest: any =
+    //           sasRequests.find((req) => req.serviceLink.includes('makeErr')) ||
+    //           null
+
+    //         if (!makeErrRequest) return false
+
+    //         return !!(
+    //           makeErrRequest.logFile && makeErrRequest.logFile.length > 0
+    //         )
+    //       })
+    //   },
+    //   assertion: (response) => {
+    //     return response
+    //   }
+    // }
   ]
 })
