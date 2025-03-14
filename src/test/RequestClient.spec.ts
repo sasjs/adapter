@@ -5,7 +5,7 @@ import { app, mockedAuthResponse } from './SAS_server_app'
 import { ServerType } from '@sasjs/utils/types'
 import SASjs from '../SASjs'
 import * as axiosModules from '../utils/createAxiosInstance'
-import axios from 'axios'
+import axios, { AxiosRequestHeaders } from 'axios'
 import {
   LoginRequiredError,
   AuthorizeError,
@@ -24,8 +24,16 @@ const axiosActual = jest.requireActual('axios')
 jest
   .spyOn(axiosModules, 'createAxiosInstance')
   .mockImplementation((baseURL: string, httpsAgent?: https.Agent) =>
-    axiosActual.create({ baseURL, httpsAgent })
+    axiosActual.create({ baseURL, httpsAgent, withXSRFToken: true })
   )
+
+jest.mock('util', () => {
+  const actualUtil = jest.requireActual('util')
+  return {
+    ...actualUtil,
+    inspect: jest.fn(actualUtil.inspect)
+  }
+})
 
 const PORT = 8000
 const SERVER_URL = `https://localhost:${PORT}/`
@@ -75,7 +83,7 @@ describe('RequestClient', () => {
     expect(rejectionErrorMessage).toEqual(expectedError.message)
   })
 
-  describe('defaultInterceptionCallBack', () => {
+  describe('defaultInterceptionCallBacks for successful requests and failed requests', () => {
     const reqHeaders = `POST https://sas.server.com/compute/sessions/session_id/jobs HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -165,10 +173,6 @@ Connection: close
     })
 
     it('should log parsed response with status 1**', () => {
-      const spyIsAxiosError = jest
-        .spyOn(axios, 'isAxiosError')
-        .mockImplementation(() => true)
-
       const mockedAxiosError = {
         config: {
           data: reqData
@@ -181,7 +185,7 @@ Connection: close
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const noValueMessage = 'Not provided'
       const expectedLog = `HTTP Request (first 50 lines):
@@ -195,8 +199,6 @@ ${noValueMessage}
 `
 
       expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
-
-      spyIsAxiosError.mockReset()
     })
 
     it('should log parsed response with status 2**', () => {
@@ -209,12 +211,15 @@ ${noValueMessage}
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
 
       const requestClient = new RequestClient('')
-      requestClient['defaultInterceptionCallBack'](mockedResponse)
+      requestClient['handleAxiosResponse'](mockedResponse)
 
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
@@ -235,29 +240,29 @@ ${resHeaders[0]}: ${resHeaders[1]}${
     it('should log parsed response with status 3**', () => {
       const status = getRandomStatus([300, 301, 302, 303, 304, 307, 308])
 
-      const mockedResponse: AxiosResponse = {
-        data: resData,
-        status,
-        statusText: '',
-        headers: {},
-        config: { data: reqData },
-        request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
-      }
+      const mockedAxiosError = {
+        config: {
+          data: reqData
+        },
+        request: {
+          _currentRequest: {
+            _header: reqHeaders
+          }
+        }
+      } as AxiosError
 
       const requestClient = new RequestClient('')
-      requestClient['defaultInterceptionCallBack'](mockedResponse)
+      requestClient['handleAxiosError'](mockedAxiosError)
 
+      const noValueMessage = 'Not provided'
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
 
-HTTP Response Code: ${requestClient['prettifyString'](status)}
+HTTP Response Code: ${requestClient['prettifyString'](noValueMessage)}
 
 HTTP Response (first 50 lines):
-${resHeaders[0]}: ${resHeaders[1]}${
-        requestClient['parseInterceptedBody'](resData)
-          ? `\n\n${requestClient['parseInterceptedBody'](resData)}`
-          : ''
-      }
+${noValueMessage}
+\n${requestClient['parseInterceptedBody'](noValueMessage)}
 `
 
       expect((process as any).logger.info).toHaveBeenCalledWith(expectedLog)
@@ -278,7 +283,10 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {
@@ -294,7 +302,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
@@ -328,7 +336,10 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         status,
         statusText: '',
         headers: {},
-        config: { data: reqData },
+        config: {
+          data: reqData,
+          headers: {} as AxiosRequestHeaders
+        },
         request: { _header: reqHeaders, res: { rawHeaders: resHeaders } }
       }
       const mockedAxiosError = {
@@ -344,7 +355,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      requestClient['defaultInterceptionCallBack'](mockedAxiosError)
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
@@ -376,8 +387,8 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       requestClient.enableVerboseMode()
 
       expect(interceptorSpy).toHaveBeenCalledWith(
-        requestClient['defaultInterceptionCallBack'],
-        requestClient['defaultInterceptionCallBack']
+        requestClient['handleAxiosResponse'],
+        requestClient['handleAxiosError']
       )
     })
 
@@ -388,12 +399,12 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         'use'
       )
 
-      const successCallback = (response: AxiosResponse | AxiosError) => {
+      const successCallback = (response: AxiosResponse) => {
         console.log('success')
 
         return response
       }
-      const failureCallback = (response: AxiosResponse | AxiosError) => {
+      const failureCallback = (response: AxiosError) => {
         console.log('failure')
 
         return response
@@ -429,15 +440,18 @@ ${resHeaders[0]}: ${resHeaders[1]}${
   })
 
   describe('prettifyString', () => {
+    const inspectMock = UtilsModule.inspect as unknown as jest.Mock
+
+    beforeEach(() => {
+      // Reset the mock before each test to ensure a clean slate
+      inspectMock.mockClear()
+    })
+
     it(`should call inspect without colors when verbose mode is set to 'bleached'`, () => {
       const requestClient = new RequestClient('')
-      let verbose: VerboseMode = 'bleached'
-      requestClient.setVerboseMode(verbose)
-
-      jest.spyOn(UtilsModule, 'inspect')
+      requestClient.setVerboseMode('bleached')
 
       const testStr = JSON.stringify({ test: 'test' })
-
       requestClient['prettifyString'](testStr)
 
       expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {
@@ -445,15 +459,11 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       })
     })
 
-    it(`should call inspect with colors when verbose mode is set to 'true'`, () => {
+    it(`should call inspect with colors when verbose mode is set to true`, () => {
       const requestClient = new RequestClient('')
-      let verbose: VerboseMode = true
-      requestClient.setVerboseMode(verbose)
-
-      jest.spyOn(UtilsModule, 'inspect')
+      requestClient.setVerboseMode(true)
 
       const testStr = JSON.stringify({ test: 'test' })
-
       requestClient['prettifyString'](testStr)
 
       expect(UtilsModule.inspect).toHaveBeenCalledWith(testStr, {

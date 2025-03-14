@@ -2,9 +2,9 @@ import {
   AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
+  AxiosRequestHeaders,
   AxiosResponse
 } from 'axios'
-import axios from 'axios'
 import * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
@@ -160,7 +160,7 @@ export class RequestClient implements HttpClient {
     const requestConfig: AxiosRequestConfig = {
       headers,
       responseType: contentType === 'text/plain' ? 'text' : 'json',
-      withCredentials: true
+      withXSRFToken: true
     }
 
     if (contentType === 'text/plain') {
@@ -191,6 +191,13 @@ export class RequestClient implements HttpClient {
       })
   }
 
+  /**
+   * @param contentType  Newer version of Axios is more strict so if you don't
+   * set the contentType to `form data` while sending a FormData object
+   * application/json will be used by default, axios won’t treat it as FormData.
+   * Instead, it serializes data as JSON—resulting in a payload like
+   * {"sometable":{}} and we lose the multipart/form-data formatting.
+   */
   public async post<T>(
     url: string,
     data: any,
@@ -207,7 +214,7 @@ export class RequestClient implements HttpClient {
     return this.httpClient
       .post<T>(url, data, {
         headers,
-        withCredentials: true,
+        withXSRFToken: true,
         ...additionalSettings
       })
       .then((response) => {
@@ -234,7 +241,7 @@ export class RequestClient implements HttpClient {
     }
 
     return this.httpClient
-      .put<T>(url, data, { headers, withCredentials: true })
+      .put<T>(url, data, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -253,7 +260,7 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     return this.httpClient
-      .delete<T>(url, { headers, withCredentials: true })
+      .delete<T>(url, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -271,7 +278,7 @@ export class RequestClient implements HttpClient {
     const headers = this.getHeaders(accessToken, 'application/json')
 
     return this.httpClient
-      .patch<T>(url, data, { headers, withCredentials: true })
+      .patch<T>(url, data, { headers, withXSRFToken: true })
       .then((response) => {
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -413,95 +420,17 @@ export class RequestClient implements HttpClient {
     return bodyLines.join('\n')
   }
 
-  private defaultInterceptionCallBack = (
-    axiosResponse: AxiosResponse | AxiosError
-  ) => {
-    // Message indicating absent value.
-    const noValueMessage = 'Not provided'
+  private handleAxiosResponse = (response: AxiosResponse) => {
+    const { status, config, request, data } = response
 
-    // Fallback request object that can be safely used to form request summary.
-    type FallbackRequest = { _header?: string; res: { rawHeaders: string[] } }
-    // _header is not present in responses with status 1**
-    // rawHeaders are not present in responses with status 1**
-    let fallbackRequest: FallbackRequest = {
-      _header: `${noValueMessage}\n`,
-      res: { rawHeaders: [noValueMessage] }
-    }
+    const reqHeaders = request?._header ?? 'Not provided\n'
+    const rawHeaders = request?.res?.rawHeaders ?? ['Not provided']
 
-    // Fallback response object that can be safely used to form response summary.
-    type FallbackResponse = {
-      status?: number | string
-      request?: FallbackRequest
-      config: { data?: string }
-      data?: unknown
-    }
-    let fallbackResponse: FallbackResponse = axiosResponse
+    const resHeaders = this.formatHeaders(rawHeaders)
+    const parsedResBody = this.parseInterceptedBody(data)
 
-    if (axios.isAxiosError(axiosResponse)) {
-      const { response, request, config } = axiosResponse
-
-      // Try to use axiosResponse.response to form response summary.
-      if (response) {
-        fallbackResponse = response
-      } else {
-        // Try to use axiosResponse.request to form request summary.
-        if (request) {
-          const { _header, _currentRequest } = request
-
-          // Try to use axiosResponse.request._header to form request summary.
-          if (_header) {
-            fallbackRequest._header = _header
-          }
-          // Try to use axiosResponse.request._currentRequest._header to form request summary.
-          else if (_currentRequest && _currentRequest._header) {
-            fallbackRequest._header = _currentRequest._header
-          }
-
-          const { res } = request
-
-          // Try to use axiosResponse.request.res.rawHeaders to form request summary.
-          if (res && res.rawHeaders) {
-            fallbackRequest.res.rawHeaders = res.rawHeaders
-          }
-        }
-
-        // Fallback config that can be safely used to form response summary.
-        const fallbackConfig = { data: noValueMessage }
-
-        fallbackResponse = {
-          status: noValueMessage,
-          request: fallbackRequest,
-          config: config || fallbackConfig,
-          data: noValueMessage
-        }
-      }
-    }
-
-    const { status, config, request, data: resData } = fallbackResponse
-    const { data: reqData } = config
-    const { _header: reqHeaders, res } = request || fallbackRequest
-    const { rawHeaders } = res
-
-    // Converts an array of strings into a single string with the following format:
-    // <headerName>: <headerValue>
-    const resHeaders = rawHeaders.reduce(
-      (acc: string, value: string, i: number) => {
-        if (i % 2 === 0) {
-          acc += `${i === 0 ? '' : '\n'}${value}`
-        } else {
-          acc += `: ${value}`
-        }
-
-        return acc
-      },
-      ''
-    )
-
-    const parsedResBody = this.parseInterceptedBody(resData)
-
-    // HTTP response summary.
     process.logger?.info(`HTTP Request (first 50 lines):
-${reqHeaders}${this.parseInterceptedBody(reqData)}
+${reqHeaders}${this.parseInterceptedBody(config.data)}
 
 HTTP Response Code: ${this.prettifyString(status)}
 
@@ -509,7 +438,70 @@ HTTP Response (first 50 lines):
 ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 `)
 
-    return axiosResponse
+    return response
+  }
+
+  private handleAxiosError = (error: AxiosError) => {
+    // Message indicating absent value.
+    const noValueMessage = 'Not provided'
+    const { response, request, config } = error
+
+    // Fallback request object that can be safely used to form request summary.
+    // _header is not present in responses with status 1**
+    // rawHeaders are not present in responses with status 1**
+    let fallbackRequest = {
+      _header: `${noValueMessage}\n`,
+      res: { rawHeaders: [noValueMessage] }
+    }
+
+    if (request) {
+      fallbackRequest = {
+        _header:
+          request._header ?? request._currentRequest?._header ?? noValueMessage,
+        res: { rawHeaders: request.res?.rawHeaders ?? [noValueMessage] }
+      }
+    }
+
+    // Fallback response object that can be safely used to form response summary.
+    let fallbackResponse = response || {
+      status: noValueMessage,
+      request: fallbackRequest,
+      config: config || {
+        data: noValueMessage,
+        headers: {} as AxiosRequestHeaders
+      },
+      data: noValueMessage
+    }
+
+    const { status, request: req, data: resData } = fallbackResponse
+    const { _header: reqHeaders, res } = req
+
+    const resHeaders = this.formatHeaders(res.rawHeaders)
+    const parsedResBody = this.parseInterceptedBody(resData)
+
+    process.logger?.info(`HTTP Request (first 50 lines):
+${reqHeaders}${this.parseInterceptedBody(config?.data)}
+
+HTTP Response Code: ${this.prettifyString(status)}
+
+HTTP Response (first 50 lines):
+${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
+`)
+
+    return error
+  }
+
+  // Converts an array of strings into a single string with the following format:
+  // <headerName>: <headerValue>
+  private formatHeaders = (rawHeaders: string[]): string => {
+    return rawHeaders.reduce((acc, value, i) => {
+      if (i % 2 === 0) {
+        acc += `${i === 0 ? '' : '\n'}${value}`
+      } else {
+        acc += `: ${value}`
+      }
+      return acc
+    }, '')
   }
 
   /**
@@ -529,8 +521,8 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
    * @param errorCallBack - function that should be triggered on every HTTP response with the status different from 2**.
    */
   public enableVerboseMode = (
-    successCallBack = this.defaultInterceptionCallBack,
-    errorCallBack = this.defaultInterceptionCallBack
+    successCallBack = this.handleAxiosResponse,
+    errorCallBack = this.handleAxiosError
   ) => {
     this.httpInterceptor = this.httpClient.interceptors.response.use(
       successCallBack,
@@ -645,7 +637,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
       // Fetching root and creating CSRF cookie
       await this.httpClient
         .get('/', {
-          withCredentials: true
+          withXSRFToken: true
         })
         .then((response) => {
           const cookie =

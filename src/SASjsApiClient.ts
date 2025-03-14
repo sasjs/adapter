@@ -1,4 +1,4 @@
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import { ExecutionQuery } from './types'

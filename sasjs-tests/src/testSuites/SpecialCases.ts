@@ -134,8 +134,19 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         return adapter.request('common/sendArr', moreSpecialCharData)
       },
       assertion: (res: any) => {
-        // If sas session is latin9 we can't process the special characters
-        if (res.SYSENCODING === 'latin9') return true
+        // If sas session is `latin9` or `wlatin1` we can't process the special characters,
+        // But it can happen that response is broken JSON, so we first need to check if
+        // it's object and then check accordingly
+
+        if (typeof res === 'object') {
+          // Valid JSON response
+          if (res.SYSENCODING === 'latin9' || res.SYSENCODING === 'wlatin1')
+            return true
+        } else {
+          // Since we got string response (broken JSON), we need to check with regex
+          const regex = /"SYSENCODING"\s*:\s*"(?:wlatin1|latin9)"/
+          if (regex.test(res)) return true
+        }
 
         return (
           res.table1[0][0] === moreSpecialCharData.table1[0].speech0 &&

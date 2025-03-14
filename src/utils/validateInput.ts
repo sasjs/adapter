@@ -52,19 +52,22 @@ export const validateInput = (
       }
     }
 
-    for (const item of data[key]) {
-      if (getType(item) !== 'object') {
-        return {
-          status: false,
-          msg: `Table ${key} contains invalid structure. ${MORE_INFO}`
-        }
-      } else {
-        const attributes = Object.keys(item)
-        for (const attribute of attributes) {
-          if (item[attribute] === undefined) {
-            return {
-              status: false,
-              msg: `A row in table ${key} contains invalid value. Can't assign undefined to ${attribute}.`
+    // ES6 is stricter so we had to include the check for the array
+    if (Array.isArray(data[key])) {
+      for (const item of data[key]) {
+        if (getType(item) !== 'object') {
+          return {
+            status: false,
+            msg: `Table ${key} contains invalid structure. ${MORE_INFO}`
+          }
+        } else {
+          const attributes = Object.keys(item)
+          for (const attribute of attributes) {
+            if (item[attribute] === undefined) {
+              return {
+                status: false,
+                msg: `A row in table ${key} contains invalid value. Can't assign undefined to ${attribute}.`
+              }
             }
           }
         }

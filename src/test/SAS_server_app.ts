@@ -1,6 +1,14 @@
 import express = require('express')
+import cors from 'cors'
 
 export const app = express()
+
+app.use(
+  cors({
+    origin: 'http://localhost', // Allow requests only from this origin
+    credentials: true // Allow credentials (cookies, auth headers, etc.)
+  })
+)
 
 export const mockedAuthResponse = {
   access_token: 'access_token',
@@ -12,11 +20,11 @@ export const mockedAuthResponse = {
   jti: 'jti'
 }
 
-app.get('/', function (req: any, res: any) {
+app.get('/', (req: any, res: any) => {
   res.send('Hello World')
 })
 
-app.post('/SASLogon/oauth/token', function (req: any, res: any) {
+app.post('/SASLogon/oauth/token', (req: any, res: any) => {
   let valid = true
 
   // capture the encoded form data

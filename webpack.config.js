@@ -13,12 +13,12 @@ const defaultPlugins = [
 ]
 
 const optimization = {
-  minimize: true,
+  minimize: false,
   minimizer: [
-    new terserPlugin({
-      parallel: true,
-      terserOptions: {}
-    })
+    // new terserPlugin({
+    //   parallel: true,
+    //   terserOptions: {}
+    // })
   ]
 }
 
@@ -44,6 +44,7 @@ const browserConfig = {
   },
   mode: 'production',
   optimization: optimization,
+  devtool: 'inline-source-map',
   module: {
     rules: [
       {

@@ -1,4 +1,4 @@
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 import {
   AuthConfig,
   ExtraResponseAttributes,
@@ -150,8 +150,10 @@ export class WebJobExecutor extends BaseJobExecutor {
     /* The NodeFormData object does not set the request header - so, set it */
     const contentType =
       formData instanceof NodeFormData && typeof FormData === 'undefined'
-        ? `multipart/form-data; boundary=${formData.getBoundary()}`
-        : undefined
+        ? `multipart/form-data; boundary=${
+            formData.getHeaders()['content-type']
+          }`
+        : 'multipart/form-data'
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(

@@ -69,5 +69,5 @@ const setupMocks = () => {
     .mockImplementation(() => Promise.resolve('Test Log'))
   jest
     .spyOn(writeStreamModule, 'writeStream')
-    .mockImplementation(() => Promise.resolve())
+    .mockImplementation(() => Promise.resolve(true))
 }

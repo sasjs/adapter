@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     "lib": ["ES2018", "DOM", "ES2019.String"],
-    "target": "es5",
+    "target": "es6",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./build",
+    "esModuleInterop": true,
     "strict": true,
     "sourceMap": true,
+    "inlineSources": true,
     "typeRoots": ["./node_modules/@types", "./src/types/system"]
   },
   "include": ["src"],

@@ -1,6 +1,6 @@
 import { getFormData } from '..'
 import * as isNodeModule from '../isNode'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 
 describe('getFormData', () => {
   it('should return NodeFormData if environment is Node', () => {
@@ -10,8 +10,8 @@ describe('getFormData', () => {
   })
 
   it('should return FormData if environment is not Node', () => {
-    const formDataMock = () => {}
-    ;(global as any).FormData = formDataMock
+    // Ensure FormData is globally available
+    ;(global as any).FormData = class FormData {}
 
     jest.spyOn(isNodeModule, 'isNode').mockImplementation(() => false)
 

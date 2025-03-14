@@ -159,7 +159,7 @@ describe('AuthManager', () => {
         `/SASLogon/login`,
         loginParams,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             Accept: '*/*'
@@ -207,7 +207,7 @@ describe('AuthManager', () => {
         `/SASLogon/login`,
         loginParams,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             Accept: '*/*'
@@ -256,7 +256,7 @@ describe('AuthManager', () => {
         `/SASLogon/login`,
         loginParams,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             Accept: '*/*'
@@ -539,7 +539,7 @@ describe('AuthManager', () => {
         1,
         `http://test-server.com/identities/users/@currentUser`,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           responseType: 'text',
           transformResponse: undefined,
           headers: {
@@ -573,7 +573,7 @@ describe('AuthManager', () => {
         1,
         `http://test-server.com/SASStoredProcess`,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           responseType: 'text',
           transformResponse: undefined,
           headers: {
@@ -602,7 +602,7 @@ describe('AuthManager', () => {
         1,
         `http://test-server.com/identities/users/@currentUser`,
         {
-          withCredentials: true,
+          withXSRFToken: true,
           responseType: 'text',
           transformResponse: undefined,
           headers: {
@@ -621,7 +621,7 @@ describe('AuthManager', () => {
 })
 
 const getHeadersJson = {
-  withCredentials: true,
+  withXSRFToken: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json'

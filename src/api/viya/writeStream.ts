@@ -3,9 +3,14 @@ import { WriteStream } from '../../types'
 export const writeStream = async (
   stream: WriteStream,
   content: string
-): Promise<void> =>
-  stream.write(content + '\n', (e: any) => {
-    if (e) return Promise.reject(e)
-
-    return Promise.resolve()
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    stream.write(content + '\n', (err: Error | null | undefined) => {
+      if (err) {
+        reject(err) // Reject on write error
+      } else {
+        resolve(true) // Resolve on successful write
+      }
+    })
   })
+}

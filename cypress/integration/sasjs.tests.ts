@@ -4,93 +4,56 @@ const password = Cypress.env('password')
 const testingFinishTimeout = Cypress.env('testingFinishTimeout')
 
 context('sasjs-tests', function () {
-  this.beforeAll(() => {
+  before(() => {
     cy.visit(sasjsTestsUrl)
   })
 
-  this.beforeEach(() => {
+  beforeEach(() => {
     cy.reload()
   })
 
-  it('Should have all tests successfull', (done) => {
+  function loginIfNeeded() {
     cy.get('body').then(($body) => {
-      cy.wait(1000).then(() => {
-        const startButton = $body.find(
-          '.ui.massive.icon.primary.left.labeled.button'
-        )[0]
-
-        if (
-          !startButton ||
-          (startButton && !Cypress.dom.isVisible(startButton))
-        ) {
-          cy.get('input[placeholder="User Name"]').type(username)
-          cy.get('input[placeholder="Password"]').type(password)
-          cy.get('.submit-button').click()
-        }
-
-        cy.get('input[placeholder="User Name"]', { timeout: 40000 })
-          .should('not.exist')
-          .then(() => {
-            cy.get('.ui.massive.icon.primary.left.labeled.button')
-              .click()
-              .then(() => {
-                cy.get('.ui.massive.loading.primary.button', {
-                  timeout: testingFinishTimeout
-                })
-                  .should('not.exist')
-                  .then(() => {
-                    cy.get('span.icon.failed')
-                      .should('not.exist')
-                      .then(() => {
-                        done()
-                      })
-                  })
-              })
-          })
-      })
+      if ($body.find('input[placeholder="User Name"]').length > 0) {
+        cy.get('input[placeholder="User Name"]')
+          .should('be.visible')
+          .type(username)
+        cy.get('input[placeholder="Password"]')
+          .should('be.visible')
+          .type(password)
+        cy.get('.submit-button').should('be.visible').click()
+        cy.get('input[placeholder="User Name"]').should('not.exist') // Wait for login to finish
+      }
     })
+  }
+
+  it('Should have all tests successful', () => {
+    loginIfNeeded()
+
+    cy.get('.ui.massive.icon.primary.left.labeled.button')
+      .should('be.visible')
+      .click()
+
+    cy.get('.ui.massive.loading.primary.button', {
+      timeout: testingFinishTimeout
+    }).should('not.exist')
+
+    cy.get('span.icon.failed').should('not.exist')
   })
 
-  it('Should have all tests successfull with debug on', (done) => {
-    cy.get('body').then(($body) => {
-      cy.wait(1000).then(() => {
-        const startButton = $body.find(
-          '.ui.massive.icon.primary.left.labeled.button'
-        )[0]
+  it('Should have all tests successful with debug on', () => {
+    loginIfNeeded()
 
-        if (
-          !startButton ||
-          (startButton && !Cypress.dom.isVisible(startButton))
-        ) {
-          cy.get('input[placeholder="User Name"]').type(username)
-          cy.get('input[placeholder="Password"]').type(password)
-          cy.get('.submit-button').click()
-        }
+    cy.get('.ui.fitted.toggle.checkbox label').should('be.visible').click()
 
-        cy.get('.ui.fitted.toggle.checkbox label')
-          .click()
-          .then(() => {
-            cy.get('input[placeholder="User Name"]', { timeout: 40000 })
-              .should('not.exist')
-              .then(() => {
-                cy.get('.ui.massive.icon.primary.left.labeled.button')
-                  .click()
-                  .then(() => {
-                    cy.get('.ui.massive.loading.primary.button', {
-                      timeout: testingFinishTimeout
-                    })
-                      .should('not.exist')
-                      .then(() => {
-                        cy.get('span.icon.failed')
-                          .should('not.exist')
-                          .then(() => {
-                            done()
-                          })
-                      })
-                  })
-              })
-          })
-      })
-    })
+    cy.get('.ui.massive.icon.primary.left.labeled.button')
+      .should('be.visible')
+      .click()
+
+    cy.get('.ui.massive.loading.primary.button', {
+      timeout: testingFinishTimeout
+    }).should('not.exist')
+
+    cy.get('span.icon.failed').should('not.exist')
   })
 })

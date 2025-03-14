@@ -1,5 +1,5 @@
 import { isNode } from './'
-import * as NodeFormData from 'form-data'
+import NodeFormData from 'form-data'
 
-export const getFormData = () =>
+export const getFormData = (): NodeFormData | FormData =>
   isNode() ? new NodeFormData() : new FormData()
