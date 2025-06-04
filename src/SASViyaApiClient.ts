@@ -29,6 +29,7 @@ import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 import { FileContentUpdate } from './types/FileContentUpdate'
+import { FileResource } from './types/FileResource'
 
 interface JobExecutionResult {
   result?: { result: object }
@@ -324,7 +325,7 @@ export class SASViyaApiClient {
     fileName: string,
     accessToken?: string
   ) {
-    const { fileUri } = await this.getFileUri(
+    const fileUri = await this.getFileUri(
       folderPath,
       fileName,
       accessToken
@@ -354,7 +355,7 @@ export class SASViyaApiClient {
     content: string,
     accessToken?: string
   ) {
-    const { fileUri, etag } = await this.getFileUri(
+    const fileUri = await this.getFileUri(
       folderPath,
       fileName,
       accessToken
@@ -365,6 +366,18 @@ export class SASViyaApiClient {
       )
     })
 
+    // Fetch the file resource details to get the Etag and content type
+    const { result: originalFileResource, etag } =
+      await this.requestClient.get<FileResource>(
+        `${this.serverUrl}${fileUri}`,
+        accessToken
+      )
+
+    if (!originalFileResource || !etag)
+      throw new Error(
+        `File ${fileName} does not have an ETag, or request failed.`
+      )
+
     return await this.requestClient
       .put<FileContentUpdate>(
         `${this.serverUrl}${fileUri}/content`,
@@ -372,7 +385,7 @@ export class SASViyaApiClient {
         accessToken,
         {
           'If-Match': etag,
-          'Content-Type': 'text/plain'
+          'Content-Type': originalFileResource.contentType
         }
       )
       .then((res) => res.result)
@@ -1024,10 +1037,7 @@ export class SASViyaApiClient {
     folderPath: string,
     fileName: string,
     accessToken?: string
-  ): Promise<{
-    fileUri: string
-    etag: string
-  }> {
+  ): Promise<string> {
     const folderMembers = await this.listFolder(folderPath, accessToken, 1000, {
       returnDetails: true
     }).catch((err) => {
@@ -1044,21 +1054,7 @@ export class SASViyaApiClient {
     if (!fileUri)
       throw new Error(`File ${fileName} not found in folder: ${folderPath}`)
 
-    // Fetch the file details to get the resource ETag
-    const { etag } = await this.requestClient.get<File>(
-      `${this.serverUrl}${fileUri}`,
-      accessToken
-    )
-
-    if (!etag)
-      throw new Error(
-        `File ${fileName} does not have an ETag, or request failed.`
-      )
-
-    return {
-      fileUri,
-      etag: etag || ''
-    }
+    return fileUri
   }
 
   private async getRecycleBinUri(accessToken?: string) {

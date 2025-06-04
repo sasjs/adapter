@@ -411,6 +411,13 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Fetches the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param accessToken - an access token for authorizing the request
+   */
   public async getFileContent(
     folderPath: string,
     fileName: string,
@@ -425,6 +432,14 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Updates the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param content - the new content to be written to the file
+   * @param accessToken - an access token for authorizing the request
+   */
   public async updateFileContent(
     folderPath: string,
     fileName: string,
