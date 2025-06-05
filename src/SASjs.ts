@@ -412,6 +412,51 @@ export default class SASjs {
   }
 
   /**
+   * Fetches the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param accessToken - an access token for authorizing the request
+   */
+  public async getFileContent(
+    folderPath: string,
+    fileName: string,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('getFileContent', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.getFileContent(
+      folderPath,
+      fileName,
+      accessToken
+    )
+  }
+
+  /**
+   * Updates the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param content - the new content to be written to the file
+   * @param accessToken - an access token for authorizing the request
+   */
+  public async updateFileContent(
+    folderPath: string,
+    fileName: string,
+    content: string,
+    accessToken?: string
+  ) {
+    this.isMethodSupported('updateFileContent', [ServerType.SasViya])
+
+    return await this.sasViyaApiClient!.updateFileContent(
+      folderPath,
+      fileName,
+      content,
+      accessToken
+    )
+  }
+
+  /**
    * Fetches a folder from the SAS file system.
    * @param folderPath - path of the folder to be fetched.
    * @param accessToken - the access token to authorize the request.
@@ -436,18 +481,23 @@ export default class SASjs {
    * Lists children folders for given Viya folder.
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
+   * @param returnDetails - when set to true, the function will return an array of objects with member details, otherwise it will return an array of member names.
    */
   public async listFolder(
     sourceFolder: string,
     accessToken?: string,
-    limit?: number
+    limit?: number,
+    returnDetails = false
   ) {
     this.isMethodSupported('listFolder', [ServerType.SasViya])
 
     return await this.sasViyaApiClient?.listFolder(
       sourceFolder,
       accessToken,
-      limit
+      limit,
+      {
+        returnDetails
+      }
     )
   }
 

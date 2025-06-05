@@ -28,6 +28,7 @@ import { uploadTables } from './api/viya/uploadTables'
 import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
+import { FileResource } from './types/FileResource'
 
 interface JobExecutionResult {
   result?: { result: object }
@@ -309,6 +310,84 @@ export class SASViyaApiClient {
       printPid,
       variables
     )
+  }
+
+  /**
+   * Fetches the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param accessToken - an access token for authorizing the request
+   */
+  public async getFileContent(
+    folderPath: string,
+    fileName: string,
+    accessToken?: string
+  ) {
+    const fileUri = await this.getFileUri(
+      folderPath,
+      fileName,
+      accessToken
+    ).catch((err) => {
+      throw prefixMessage(
+        err,
+        `Error while getting file URI for: ${fileName} in folder: ${folderPath}. `
+      )
+    })
+
+    return await this.requestClient
+      .get<string>(`${this.serverUrl}${fileUri}/content`, accessToken)
+      .then((res) => res.result)
+  }
+
+  /**
+   * Updates the file content for a file in the specified folder.
+   *
+   * @param folderPath - the full path to the folder containing the file. eg: /Public/folder1/folder2
+   * @param fileName - the name of the file in the `folderPath`
+   * @param content - the new content to be written to the file
+   * @param accessToken - an access token for authorizing the request
+   */
+  public async updateFileContent(
+    folderPath: string,
+    fileName: string,
+    content: string,
+    accessToken?: string
+  ) {
+    const fileUri = await this.getFileUri(
+      folderPath,
+      fileName,
+      accessToken
+    ).catch((err) => {
+      throw prefixMessage(
+        err,
+        `Error while getting file URI for: ${fileName} in folder: ${folderPath}. `
+      )
+    })
+
+    // Fetch the file resource details to get the Etag and content type
+    const { result: originalFileResource, etag } =
+      await this.requestClient.get<FileResource>(
+        `${this.serverUrl}${fileUri}`,
+        accessToken
+      )
+
+    if (!originalFileResource || !etag)
+      throw new Error(
+        `File ${fileName} does not have an ETag, or request failed.`
+      )
+
+    return await this.requestClient
+      .put<FileResource>(
+        `${this.serverUrl}${fileUri}/content`,
+        content,
+        accessToken,
+        {
+          'If-Match': etag,
+          'Content-Type': originalFileResource.contentType
+        }
+      )
+      .then((res) => res.result)
   }
 
   /**
@@ -941,6 +1020,7 @@ export class SASViyaApiClient {
       })
 
     if (!folder) return undefined
+
     return folder
   }
 
@@ -950,6 +1030,30 @@ export class SASViyaApiClient {
     if (!folderDetails) return undefined
 
     return `/folders/folders/${folderDetails.id}`
+  }
+
+  private async getFileUri(
+    folderPath: string,
+    fileName: string,
+    accessToken?: string
+  ): Promise<string> {
+    const folderMembers = await this.listFolder(folderPath, accessToken, 1000, {
+      returnDetails: true
+    }).catch((err) => {
+      throw prefixMessage(err, `Error while listing folder: ${folderPath}. `)
+    })
+
+    if (!folderMembers || !folderMembers.length)
+      throw new Error(`No members found in folder: ${folderPath}`)
+
+    const fileUri = folderMembers.find(
+      (member) => member.name === fileName
+    )?.uri
+
+    if (!fileUri)
+      throw new Error(`File ${fileName} not found in folder: ${folderPath}`)
+
+    return fileUri
   }
 
   private async getRecycleBinUri(accessToken?: string) {
@@ -999,14 +1103,19 @@ export class SASViyaApiClient {
   }
 
   /**
-   * Lists children folders for given Viya folder.
+   * Lists children folders/files for given Viya folder.
    * @param sourceFolder - the full path (eg `/Public/example/myFolder`) or URI of the source folder listed. Providing URI instead of path will save one extra request.
    * @param accessToken - an access token for authorizing the request.
+   * @param {Object} [options] - Additional options.
+   * @param {boolean} [options.returnDetails=false] - when set to true, the function will return an array of objects with member details, otherwise it will return an array of member names.
    */
   public async listFolder(
     sourceFolder: string,
     accessToken?: string,
-    limit: number = 20
+    limit: number = 20,
+    options?: {
+      returnDetails?: boolean
+    }
   ) {
     // checks if 'sourceFolder' is already a URI
     const sourceFolderUri = isUri(sourceFolder)
@@ -1018,11 +1127,20 @@ export class SASViyaApiClient {
       accessToken
     )
 
+    let membersToReturn = []
+
     if (members && members.items) {
-      return members.items.map((item: any) => item.name)
-    } else {
-      return []
+      // If returnDetails is true, return full member details
+      if (options?.returnDetails) {
+        membersToReturn = members.items
+      } else {
+        // If returnDetails is false, return only member names
+        membersToReturn = members.items.map((item: any) => item.name)
+      }
     }
+
+    // Return members without Etag
+    return membersToReturn
   }
 
   /**
