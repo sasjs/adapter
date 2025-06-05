@@ -28,7 +28,6 @@ import { uploadTables } from './api/viya/uploadTables'
 import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
-import { FileContentUpdate } from './types/FileContentUpdate'
 import { FileResource } from './types/FileResource'
 
 interface JobExecutionResult {
@@ -379,7 +378,7 @@ export class SASViyaApiClient {
       )
 
     return await this.requestClient
-      .put<FileContentUpdate>(
+      .put<FileResource>(
         `${this.serverUrl}${fileUri}/content`,
         content,
         accessToken,
