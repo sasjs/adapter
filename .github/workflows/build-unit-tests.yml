@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-          cache: none
+          cache: 'none'
 
        # 2. Restore npm cache manually
       - name: Restore npm cache
