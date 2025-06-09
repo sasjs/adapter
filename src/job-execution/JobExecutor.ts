@@ -51,7 +51,7 @@ export abstract class BaseJobExecutor implements JobExecutor {
 
     if (config.debug) {
       requestParams['_omittextlog'] = 'false'
-      requestParams['_omitsessionresults'] = 'false'
+      requestParams['_omitSessionResults'] = 'false'
 
       requestParams['_debug'] = 131
     }
