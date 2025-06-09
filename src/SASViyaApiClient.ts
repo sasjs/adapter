@@ -870,14 +870,14 @@ export class SASViyaApiClient {
       _webin_file_count: files.length,
       _OMITJSONLISTING: true,
       _OMITJSONLOG: true,
-      _OMITSESSIONRESULTS: true,
+      _omitSessionResults: false,
       _OMITTEXTLISTING: true,
       _OMITTEXTLOG: true
     }
 
     if (debug) {
       jobArguments['_OMITTEXTLOG'] = 'false'
-      jobArguments['_OMITSESSIONRESULTS'] = 'false'
+      jobArguments['_omitSessionResults'] = 'false'
       jobArguments['_DEBUG'] = 131
     }
 

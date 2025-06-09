@@ -104,7 +104,7 @@ Connection: close
             _contextName: 'SAS Job Execution compute context',
             _OMITJSONLISTING: true,
             _OMITJSONLOG: true,
-            _OMITSESSIONRESULTS: true,
+            _omitSessionResults: true,
             _OMITTEXTLISTING: true,
             _OMITTEXTLOG: true
           }
