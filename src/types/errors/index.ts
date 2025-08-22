@@ -1,3 +1,4 @@
+export * from './ArgumentError'
 export * from './AuthorizeError'
 export * from './CertificateError'
 export * from './ComputeJobExecutionError'

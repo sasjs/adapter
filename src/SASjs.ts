@@ -9,7 +9,8 @@ import {
   ErrorResponse,
   LoginOptions,
   LoginResult,
-  ExecutionQuery
+  ExecutionQuery,
+  Tables
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -1239,5 +1240,16 @@ export default class SASjs {
    */
   public setVerboseMode = (verboseMode: VerboseMode) => {
     this.requestClient?.setVerboseMode(verboseMode)
+  }
+
+  /**
+   * Create a tables class containing one or more tables to be sent to
+   * SAS.
+   * @param table - initial table data
+   * @param macroName - macro name
+   * @returns Tables class
+   */
+  Tables(table: Record<string, any>, macroName: string) {
+    return new Tables(table, macroName)
   }
 }
