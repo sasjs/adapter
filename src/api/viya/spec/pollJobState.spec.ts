@@ -683,8 +683,8 @@ const mockSimplePoll = (runningCount = 2) => {
         count === 0
           ? 'pending'
           : count <= runningCount
-          ? 'running'
-          : 'completed',
+            ? 'running'
+            : 'completed',
       etag: '',
       status: 200
     })

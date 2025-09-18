@@ -27,8 +27,8 @@ export class AuthManager {
       this.serverType === ServerType.Sas9
         ? '/SASLogon/logout?'
         : this.serverType === ServerType.SasViya
-        ? '/SASLogon/logout.do?'
-        : '/SASLogon/logout'
+          ? '/SASLogon/logout.do?'
+          : '/SASLogon/logout'
 
     this.redirectedLoginUrl = this.serverUrl + this.redirectedLoginUrl
   }
@@ -269,8 +269,8 @@ export class AuthManager {
       this.serverType === ServerType.SasViya
         ? `${this.serverUrl}/identities/users/@currentUser`
         : this.serverType === ServerType.Sas9
-        ? `${this.serverUrl}/SASStoredProcess`
-        : `${this.serverUrl}/SASjsApi/session`
+          ? `${this.serverUrl}/SASStoredProcess`
+          : `${this.serverUrl}/SASjsApi/session`
 
     const { result: loginResponse } = await this.requestClient
       .get<string>(url, undefined, 'text/plain')
