@@ -38,9 +38,10 @@ export class ContextManager {
 
   public async getComputeContexts(accessToken?: string) {
     const { result: contexts } = await this.requestClient
-      .get<{
-        items: Context[]
-      }>(`${this.serverUrl}/compute/contexts?limit=10000`, accessToken)
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/compute/contexts?limit=10000`,
+        accessToken
+      )
       .catch((err) => {
         throw prefixMessage(err, 'Error while getting compute contexts. ')
       })
@@ -58,9 +59,10 @@ export class ContextManager {
 
   public async getLauncherContexts(accessToken?: string) {
     const { result: contexts } = await this.requestClient
-      .get<{
-        items: Context[]
-      }>(`${this.serverUrl}/launcher/contexts?limit=10000`, accessToken)
+      .get<{ items: Context[] }>(
+        `${this.serverUrl}/launcher/contexts?limit=10000`,
+        accessToken
+      )
       .catch((err) => {
         throw prefixMessage(err, 'Error while getting launcher contexts. ')
       })
@@ -289,9 +291,7 @@ export class ContextManager {
     accessToken?: string
   ): Promise<Context> {
     const { result: contexts } = await this.requestClient
-      .get<{
-        items: Context[]
-      }>(
+      .get<{ items: Context[] }>(
         `${this.serverUrl}/compute/contexts?filter=eq(name, "${contextName}")`,
         accessToken
       )
@@ -332,9 +332,7 @@ export class ContextManager {
     authConfig?: AuthConfig
   ) {
     const { result: contexts } = await this.requestClient
-      .get<{
-        items: Context[]
-      }>(
+      .get<{ items: Context[] }>(
         `${this.serverUrl}/compute/contexts?limit=10000`,
         authConfig?.access_token
       )
