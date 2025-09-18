@@ -32,10 +32,7 @@ export class ContextManager {
     return this.defaultLauncherContexts
   }
 
-  constructor(
-    private serverUrl: string,
-    private requestClient: RequestClient
-  ) {
+  constructor(private serverUrl: string, private requestClient: RequestClient) {
     if (serverUrl) isUrl(serverUrl)
   }
 

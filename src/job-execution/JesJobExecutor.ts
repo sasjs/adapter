@@ -10,10 +10,7 @@ import { BaseJobExecutor } from './JobExecutor'
 import { appendExtraResponseAttributes } from '../utils'
 
 export class JesJobExecutor extends BaseJobExecutor {
-  constructor(
-    serverUrl: string,
-    private sasViyaApiClient: SASViyaApiClient
-  ) {
+  constructor(serverUrl: string, private sasViyaApiClient: SASViyaApiClient) {
     super(serverUrl, ServerType.SasViya)
   }
 
