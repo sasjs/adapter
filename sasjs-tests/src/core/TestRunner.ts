@@ -34,8 +34,7 @@ export class TestRunner {
 
     for (let i = 0; i < this.testSuites.length; i++) {
       const suite = this.testSuites[i]
-      const completedSuite = await this.runTestSuite(suite, i, onUpdate)
-      this.completedTestSuites.push(completedSuite)
+      await this.runTestSuite(suite, i, onUpdate)
     }
 
     this.isRunning = false
