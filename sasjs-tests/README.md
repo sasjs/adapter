@@ -26,56 +26,6 @@ There are three prerequisites to be able to run the tests:
 
 There is a `config.json` file in the `/public` folder which specifies the configuration for the SASjs adapter. You can set the values within the `sasjsConfig` property in this file to match your SAS server configuration.
 
-#### Installation
-
-```bash
-npm install
-```
-
-#### Configuration
-
-Edit `public/config.json`:
-
-```json
-{
-  "userName": "your-username",
-  "password": "your-password",
-  "sasJsConfig": {
-    "serverUrl": "https://your-sas-server.com",
-    "appLoc": "/Public/app/adapter-tests/services",
-    "serverType": "SASJS",
-    "debug": false,
-    "contextName": "sasjs adapter compute context",
-    "useComputeApi": true
-  }
-}
-```
-
-**Server Types:**
-
-- `SASJS` - SASjs Server
-- `SASVIYA` - SAS Viya
-- `SAS9` - SAS 9.4
-
-## Getting Started
-
-### Development
-
-```bash
-# Build for production
-npm run build
-
-# Watch mode (rebuild on changes)
-npm run dev
-```
-
-The built files are in `build/`:
-
-- `index.html` - App entry point
-- `index.js` - Bundled JavaScript
-- `index.css` - Global styles
-- `config.json` - Configuration
-
 ## Test Suites
 
 Tests are defined in `src/testSuites/`:
@@ -133,9 +83,44 @@ The `shadow()` command is defined in `cypress/support/commands.js`.
 npm run build
 ```
 
-This creates a `build/` folder ready for deployment.
+This creates a `dist/` folder ready for deployment.
 
 ### Deploy to SAS Server
+
+There is a `deploy` NPM script provided in the `sasjs-tests` project's `package.json`.
+
+It updates `sasjs-tests` to use the latest version of the adapter, and deploys to a specified server via SSH using the `rsync` command.
+
+To be able to run the `deploy` script, two environment variables need to be set:
+
+- `SSH_ACCOUNT` - your SSH account, this is of the form username@domain.com
+- `DEPLOY_PATH` - the path on the server where `sasjs-tests` will be deployed to, typically `/var/www/html/<some-subfolder>`.
+
+So you can run the script like so:
+
+```bash
+SSH_ACCOUNT=me@my-sas-server.com DEPLOY_PATH=/var/www/html/my-folder/sasjs-tests npm run deploy
+```
+
+If you are on `WINDOWS`, you will first need to install one dependency:
+
+```bash
+npm i -g copyfiles
+```
+
+and then run to build:
+
+```bash
+npm run update:adapter && npm run build
+```
+
+when it finishes run to deploy:
+
+```bash
+scp -rp ./build/* me@my-sas-server.com:/var/www/html/my-folder/sasjs-tests
+```
+
+If you'd like to deploy just `sasjs-tests` without changing the adapter version, you can use the `deploy:tests` script, while also setting the same environment variables as above.
 
 #### Creating the required SAS services
 
@@ -239,39 +224,7 @@ Services expected:
 
 Deploy these services using [SASjs CLI](https://cli.sasjs.io) or manually.
 
-## Troubleshooting
-
-### Build Errors
-
-- Ensure Node.js >= 18
-- Clear `node_modules` and reinstall: `rm -rf node_modules package-lock.json && npm install`
-
-### Cypress Shadow DOM Issues
-
-If Cypress can't access Shadow DOM elements:
-
-1. Verify custom `shadow()` command in `cypress/support/commands.js`
-2. Check element selectors match actual DOM structure
-
-### Test Failures
-
-- Check `config.json` credentials and server URL
-- Verify SAS services are deployed
-- Check browser console for errors
-- Enable `debug: true` in sasJsConfig for verbose logging
-
-## Development
-
-- **Pure Vanilla TS** - No React, no frameworks
-- **Custom Elements** - Web Components with Shadow DOM
-- **Zero Dependencies** - Only @sasjs/adapter + build tools
-- **Minimal Bundle** - 40KB (8KB gzipped)
-
-### Build Stack
-
-- **tsdown** - TypeScript bundler (replaces CRA/react-scripts)
-
-### UI Components (Custom Elements)
+## UI Components (Custom Elements)
 
 - `<login-form>` - SAS authentication
 - `<tests-view>` - Test orchestrator with run controls
@@ -292,12 +245,8 @@ All components use Shadow DOM for style encapsulation and expose custom events f
 Components are in `src/components/`:
 
 - Edit `.ts` file
-- Styles are in Shadow DOM `<style>` tags
+- Styles are in corresponding `.css` file
 - Rebuild with `npm run build`
-
-## License
-
-MIT
 
 ## Links
 
