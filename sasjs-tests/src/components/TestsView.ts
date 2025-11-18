@@ -146,8 +146,12 @@ export class TestsView extends HTMLElement {
     await this.testRunner.rerunTest(
       suiteIndex,
       testIndex,
-      (completedSuites) => {
-        this.renderResults(container, completedSuites)
+      (suiteIdx, testIdx, testData) => {
+        const suites = container.querySelectorAll('test-suite')
+        const suiteElement = suites[suiteIdx] as TestSuiteElement
+        if (suiteElement && suiteElement.updateTest) {
+          suiteElement.updateTest(testIdx, testData)
+        }
       }
     )
   }

@@ -32,6 +32,40 @@ export class TestSuiteElement extends HTMLElement {
     return this._suiteIndex
   }
 
+  updateTest(testIndex: number, testData: any) {
+    if (!this._suiteData) return
+
+    // Update the data
+    this._suiteData.completedTests[testIndex] = testData
+
+    // Update stats
+    this.updateStats()
+
+    // Update the specific test card
+    const testsContainer = this.shadow.getElementById('tests-container')
+    if (testsContainer) {
+      const cards = testsContainer.querySelectorAll('test-card')
+      const card = cards[testIndex] as TestCard
+      if (card) {
+        card.testData = testData
+      }
+    }
+  }
+
+  updateStats() {
+    if (!this._suiteData) return
+
+    const { completedTests } = this._suiteData
+    const passed = completedTests.filter((t) => t.status === 'passed').length
+    const failed = completedTests.filter((t) => t.status === 'failed').length
+    const running = completedTests.filter((t) => t.status === 'running').length
+
+    const statsEl = this.shadow.querySelector('.stats')
+    if (statsEl) {
+      statsEl.textContent = `Passed: ${passed} | Failed: ${failed} | Running: ${running}`
+    }
+  }
+
   render() {
     if (!this._suiteData) return
 

@@ -117,7 +117,11 @@ export class TestRunner {
   async rerunTest(
     suiteIndex: number,
     testIndex: number,
-    onUpdate?: (completedSuites: CompletedTestSuite[]) => void
+    onUpdate?: (
+      suiteIndex: number,
+      testIndex: number,
+      testData: CompletedTest
+    ) => void
   ): Promise<void> {
     const suite = this.testSuites[suiteIndex]
     const test = suite.tests[testIndex]
@@ -131,7 +135,11 @@ export class TestRunner {
     this.completedTestSuites[suiteIndex].completedTests[testIndex].status =
       'running'
     if (onUpdate) {
-      onUpdate([...this.completedTestSuites])
+      onUpdate(
+        suiteIndex,
+        testIndex,
+        this.completedTestSuites[suiteIndex].completedTests[testIndex]
+      )
     }
 
     // Execute test
@@ -147,7 +155,11 @@ export class TestRunner {
     }
 
     if (onUpdate) {
-      onUpdate([...this.completedTestSuites])
+      onUpdate(
+        suiteIndex,
+        testIndex,
+        this.completedTestSuites[suiteIndex].completedTests[testIndex]
+      )
     }
   }
 
