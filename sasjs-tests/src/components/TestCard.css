@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  border: 2px solid #ecf0f1;
+  border-radius: 6px;
+  padding: 15px;
+  background: #fafafa;
+  transition: border-color 0.2s;
+
+  &[status='passed'] {
+    border-color: #27ae60;
+    background: #f0fff4;
+  }
+
+  &[status='failed'] {
+    border-color: #e74c3c;
+    background: #fff5f5;
+  }
+
+  &[status='running'] {
+    border-color: #f39c12;
+    background: #fffbf0;
+  }
+
+  &[status='pending'] {
+    border-color: #95a5a6;
+    background: #f8f9fa;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.status-icon {
+  font-size: 20px;
+  font-weight: bold;
+
+  &.passed {
+    color: #27ae60;
+  }
+  &.failed {
+    color: #e74c3c;
+  }
+  &.running {
+    color: #f39c12;
+    animation: spin 1s linear infinite;
+  }
+  &.pending {
+    color: #95a5a6;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+h3 {
+  font-size: 16px;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.description {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.details {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.time {
+  color: #7f8c8d;
+  margin-bottom: 5px;
+}
+
+.error {
+  margin-top: 10px;
+
+  strong {
+    color: #e74c3c;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 0;
+  }
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+
+  &:hover:not(:disabled) {
+    background: #2980b9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

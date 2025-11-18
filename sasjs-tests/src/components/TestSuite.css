@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+h2 {
+  color: #2c3e50;
+  font-size: 20px;
+  margin: 0;
+}
+
+.stats {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.tests {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}

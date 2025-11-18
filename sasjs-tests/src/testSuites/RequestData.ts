@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SASjs from '@sasjs/adapter'
-import { TestSuite } from '@sasjs/test-framework'
+import type { TestSuite } from '../types'
 
 const stringData: any = { table1: [{ col1: 'first col value' }] }
 const numericData: any = { table1: [{ col1: 3.14159265 }] }

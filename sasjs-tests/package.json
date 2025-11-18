@@ -1,50 +1,25 @@
 {
-  "name": "@sasjs/tests",
-  "version": "1.0.0",
-  "homepage": ".",
+  "name": "sasjs-tests-new",
   "private": true,
-  "dependencies": {
-    "@sasjs/adapter": "file:../build/sasjs-adapter-5.0.0.tgz",
-    "@sasjs/test-framework": "1.5.7",
-    "@types/jest": "^26.0.20",
-    "@types/node": "^14.14.41",
-    "@types/react": "^16.0.1",
-    "@types/react-dom": "^16.0.0",
-    "@types/react-router-dom": "^5.1.7",
-    "react": "^16.0.1",
-    "react-dom": "^16.0.1",
-    "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.3",
-    "typescript": "^4.1.3"
-  },
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider craco build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
-    "deploy:tests": "rsync -avhe ssh ./build/* --delete $SSH_ACCOUNT:$DEPLOY_PATH || npm run deploy:tests-win",
-    "deploy:tests-win": "scp %DEPLOY_PATH% ./build/*",
+    "deploy:tests": "rsync -avhe ssh ./dist/* --delete $SSH_ACCOUNT:$DEPLOY_PATH || npm run deploy:tests-win",
+    "deploy:tests-win": "scp %DEPLOY_PATH% ./dist/*",
     "deploy": "npm run update:adapter && npm run build && npm run deploy:tests"
   },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
-    "@craco/craco": "6.4.3",
-    "node-sass": "9.0.0",
-    "source-map-loader": "0.2.4"
+    "typescript": "~5.9.3",
+    "vite": "npm:rolldown-vite@7.2.2"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@7.2.2"
+  },
+  "dependencies": {
+    "@sasjs/adapter": "^4.14.0"
   }
 }

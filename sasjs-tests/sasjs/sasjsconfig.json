@@ -20,7 +20,7 @@
       "streamConfig": {
         "streamWeb": true,
         "streamWebFolder": "webv",
-        "webSourcePath": "build",
+        "webSourcePath": "dist",
         "streamServiceName": "adapter-tests",
         "assetPaths": []
       }
@@ -40,7 +40,7 @@
       "streamConfig": {
         "streamWeb": true,
         "streamWebFolder": "webv",
-        "webSourcePath": "build",
+        "webSourcePath": "dist",
         "streamServiceName": "adapter-tests",
         "assetPaths": []
       }
