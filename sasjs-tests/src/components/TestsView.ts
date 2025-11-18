@@ -1,17 +1,24 @@
+import { appContext } from '../core/AppContext'
 import { TestRunner, type CompletedTestSuite } from '../core/TestRunner'
 import type { TestSuite } from '../types'
-import { appContext } from '../core/AppContext'
 import { TestSuiteElement } from './TestSuite'
+import styles from './TestsView.css?inline'
 
 export class TestsView extends HTMLElement {
+  private static styleSheet = new CSSStyleSheet()
   private shadow: ShadowRoot
   private testRunner: TestRunner | null = null
   private _testSuites: TestSuite[] = []
   private debugMode: boolean = false
 
+  static {
+    this.styleSheet.replaceSync(styles)
+  }
+
   constructor() {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
+    this.shadow.adoptedStyleSheets = [TestsView.styleSheet]
   }
 
   connectedCallback() {
@@ -30,10 +37,6 @@ export class TestsView extends HTMLElement {
 
   render() {
     this.shadow.innerHTML = `
-      <link rel="stylesheet" href="${new URL(
-        './TestsView.css',
-        import.meta.url
-      )}">
       <div class="header">
         <h1>SASjs Adapter Tests</h1>
         <div class="header-controls">

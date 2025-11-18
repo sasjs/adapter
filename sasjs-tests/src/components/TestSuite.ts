@@ -1,14 +1,21 @@
 import type { CompletedTestSuite } from '../core/TestRunner'
 import { TestCard } from './TestCard'
+import styles from './TestSuite.css?inline'
 
 export class TestSuiteElement extends HTMLElement {
+  private static styleSheet = new CSSStyleSheet()
   private shadow: ShadowRoot
   private _suiteData: CompletedTestSuite | null = null
   private _suiteIndex: number = 0
 
+  static {
+    this.styleSheet.replaceSync(styles)
+  }
+
   constructor() {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
+    this.shadow.adoptedStyleSheets = [TestSuiteElement.styleSheet]
   }
 
   connectedCallback() {
@@ -75,10 +82,6 @@ export class TestSuiteElement extends HTMLElement {
     const running = completedTests.filter((t) => t.status === 'running').length
 
     this.shadow.innerHTML = `
-      <link rel="stylesheet" href="${new URL(
-        './TestSuite.css',
-        import.meta.url
-      )}">
       <div class="header">
         <h2>${name}</h2>
         <div class="stats">Passed: ${passed} | Failed: ${failed} | Running: ${running}</div>

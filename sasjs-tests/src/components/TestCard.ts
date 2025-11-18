@@ -1,9 +1,15 @@
-import type { TestStatus } from '../types'
 import type { CompletedTest } from '../core/TestRunner'
+import type { TestStatus } from '../types'
+import styles from './TestCard.css?inline'
 
 export class TestCard extends HTMLElement {
+  private static styleSheet = new CSSStyleSheet()
   private shadow: ShadowRoot
   private _testData: CompletedTest | null = null
+
+  static {
+    this.styleSheet.replaceSync(styles)
+  }
 
   static get observedAttributes() {
     return ['status', 'execution-time']
@@ -12,6 +18,7 @@ export class TestCard extends HTMLElement {
   constructor() {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
+    this.shadow.adoptedStyleSheets = [TestCard.styleSheet]
   }
 
   connectedCallback() {
@@ -44,10 +51,6 @@ export class TestCard extends HTMLElement {
     const statusIcon = this.getStatusIcon(status)
 
     this.shadow.innerHTML = `
-      <link rel="stylesheet" href="${new URL(
-        './TestCard.css',
-        import.meta.url
-      )}">
       <div class="header">
         <span class="status-icon ${status}">${statusIcon}</span>
         <h3>${test.title}</h3>

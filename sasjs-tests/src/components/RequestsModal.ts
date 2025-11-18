@@ -1,13 +1,20 @@
-import { appContext } from '../core/AppContext'
 import type { SASjsRequest } from '@sasjs/adapter'
+import { appContext } from '../core/AppContext'
+import styles from './RequestsModal.css?inline'
 
 export class RequestsModal extends HTMLElement {
+  private static styleSheet = new CSSStyleSheet()
   private shadow: ShadowRoot
   private dialog: HTMLDialogElement | null = null
+
+  static {
+    this.styleSheet.replaceSync(styles)
+  }
 
   constructor() {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
+    this.shadow.adoptedStyleSheets = [RequestsModal.styleSheet]
   }
 
   connectedCallback() {
@@ -17,10 +24,6 @@ export class RequestsModal extends HTMLElement {
 
   render() {
     this.shadow.innerHTML = `
-      <link rel="stylesheet" href="${new URL(
-        './RequestsModal.css',
-        import.meta.url
-      )}">
       <dialog id="requests-dialog">
         <div class="modal-header">
           <h2 id="modal-title"></h2>

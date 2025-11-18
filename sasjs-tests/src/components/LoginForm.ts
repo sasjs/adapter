@@ -1,11 +1,18 @@
 import { appContext } from '../core/AppContext'
+import styles from './LoginForm.css?inline'
 
 export class LoginForm extends HTMLElement {
+  private static styleSheet = new CSSStyleSheet()
   private shadow: ShadowRoot
+
+  static {
+    this.styleSheet.replaceSync(styles)
+  }
 
   constructor() {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
+    this.shadow.adoptedStyleSheets = [LoginForm.styleSheet]
   }
 
   connectedCallback() {
@@ -15,10 +22,6 @@ export class LoginForm extends HTMLElement {
 
   render() {
     this.shadow.innerHTML = `
-      <link rel="stylesheet" href="${new URL(
-        './LoginForm.css',
-        import.meta.url
-      )}">
       <h1>SASjs Tests</h1>
       <form id="login-form">
         <label for="username">Username</label>
