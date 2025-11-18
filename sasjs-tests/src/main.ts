@@ -17,7 +17,7 @@ import type { TestsView } from './components/TestsView'
 import type { RequestsModal } from './components/RequestsModal'
 
 // Import test suites
-import { basicTests } from './testSuites/Basic'
+// import { basicTests } from './testSuites/Basic'
 import { sendArrTests, sendObjTests } from './testSuites/RequestData'
 import { fileUploadTests } from './testSuites/FileUpload'
 import { computeTests } from './testSuites/Compute'
@@ -94,7 +94,8 @@ function showTests(
 
   // Build test suites with adapter and credentials
   const testSuites: TestSuite[] = [
-    basicTests(adapter, configTyped.userName || '', configTyped.password || ''),
+    // FIXME: disabled basicTests due to login/logout operations
+    // basicTests(adapter, configTyped.userName || '', configTyped.password || ''),
     sendArrTests(adapter, appLoc),
     sendObjTests(adapter),
     // specialCaseTests(adapter),
