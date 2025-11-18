@@ -49,7 +49,7 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       test: () => {
         const data: any = { table1: [{ col1: 'first col value' }] }
         return adapter.startComputeJob(
-          '/Public/app/adapter-tests/services/common/sendArr',
+          `${appLoc}/common/sendArr`,
           data,
           {},
           undefined,
