@@ -53,7 +53,6 @@ export class RequestsModal extends HTMLElement {
     const adapter = appContext.getAdapter()
     if (!adapter) return
 
-    const config = adapter.getSasjsConfig()
     const requests = adapter.getSasRequests()
 
     const title = this.shadow.getElementById('modal-title')
@@ -61,17 +60,9 @@ export class RequestsModal extends HTMLElement {
 
     if (!title || !content) return
 
-    title.textContent = config.debug ? 'Last 20 requests' : ''
+    title.textContent = 'Last 20 requests'
 
-    if (!config.debug) {
-      content.innerHTML = `
-        <div class="debug-message">
-          <div class="icon">🐛</div>
-          <h3>There is no debug information available.</h3>
-          <span>Please turn on debug and re-run your tests.</span>
-        </div>
-      `
-    } else if (!requests || requests.length === 0) {
+    if (!requests || requests.length === 0) {
       content.innerHTML = `
         <div class="debug-message">
           <div class="icon">🐛</div>
