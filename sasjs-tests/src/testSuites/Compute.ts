@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SASjs from '@sasjs/adapter'
-import { TestSuite } from '@sasjs/test-framework'
+import type { TestSuite } from '../types'
 
 const stringData: any = { table1: [{ col1: 'first col value' }] }
 
@@ -48,7 +49,7 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       test: () => {
         const data: any = { table1: [{ col1: 'first col value' }] }
         return adapter.startComputeJob(
-          '/Public/app/adapter-tests/services/common/sendArr',
+          `${appLoc}/common/sendArr`,
           data,
           {},
           undefined,

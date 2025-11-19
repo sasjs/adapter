@@ -1,6 +1,8 @@
+# SASjs Tests
+
 `sasjs-tests` is a test suite for the SASjs adapter.
 
-It is a React app bootstrapped using [Create React App](https://github.com/facebook/create-react-app) and [@sasjs/test-framework](https://github.com/sasjs/test-framework).
+Browser-based integration testing for [@sasjs/adapter](https://github.com/sasjs/adapter) using TypeScript, Custom Elements, and zero dependencies.
 
 When developing on `@sasjs/adapter`, it's good practice to run the test suite against your changed version of the adapter to ensure that existing functionality has not been impacted.
 
@@ -20,11 +22,70 @@ There are three prerequisites to be able to run the tests:
 2. `sasjs-tests` deployed to your SAS server.
 3. The required SAS services created on the same server.
 
-### 1. Configuring the SASjs adapter
+### Configuring the SASjs adapter
 
 There is a `config.json` file in the `/public` folder which specifies the configuration for the SASjs adapter. You can set the values within the `sasjsConfig` property in this file to match your SAS server configuration.
 
-### 2. Deploying to your SAS server
+## Test Suites
+
+Tests are defined in `src/testSuites/`:
+
+- **Basic.ts** - Login, config, session management, debug mode
+- **RequestData.ts** - Data serialization (sendArr, sendObj) with various types
+- **FileUpload.ts** - File upload functionality (VIYA only)
+- **Compute.ts** - Compute API, JES API, executeScript (VIYA only)
+- **SasjsRequests.ts** - WORK tables, log capture
+- **SpecialCases.ts** - Edge cases (currently disabled)
+
+Each test suite follows this pattern:
+
+```typescript
+export const myTests = (adapter: SASjs): TestSuite => ({
+  name: 'My Test Suite',
+  tests: [
+    {
+      title: 'Should do something',
+      description: 'Description of what this tests',
+      test: async () => {
+        // Test logic - return a value
+        return adapter.request('service', data)
+      },
+      assertion: (response) => {
+        // Assertion - return true/false
+        return response.success === true
+      }
+    }
+  ],
+  beforeAll: async () => {
+    // Optional: runs once before all tests
+  },
+  afterAll: async () => {
+    // Optional: runs once after all tests
+  }
+})
+```
+
+### Shadow DOM Access
+
+Cypress accesses Shadow DOM using a custom command:
+
+```javascript
+cy.get('login-form').shadow().find('input#username').type('user')
+```
+
+The `shadow()` command is defined in `cypress/support/commands.js`.
+
+## Deployment
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+This creates a `dist/` folder ready for deployment.
+
+### Deploy to SAS Server
 
 There is a `deploy` NPM script provided in the `sasjs-tests` project's `package.json`.
 
@@ -42,21 +103,26 @@ SSH_ACCOUNT=me@my-sas-server.com DEPLOY_PATH=/var/www/html/my-folder/sasjs-tests
 ```
 
 If you are on `WINDOWS`, you will first need to install one dependency:
+
 ```bash
 npm i -g copyfiles
 ```
+
 and then run to build:
+
 ```bash
 npm run update:adapter && npm run build
 ```
+
 when it finishes run to deploy:
+
 ```bash
 scp -rp ./build/* me@my-sas-server.com:/var/www/html/my-folder/sasjs-tests
 ```
 
 If you'd like to deploy just `sasjs-tests` without changing the adapter version, you can use the `deploy:tests` script, while also setting the same environment variables as above.
 
-## 3. Creating the required SAS services
+#### Creating the required SAS services
 
 The below services need to be created on your SAS server, at the location specified as the `appLoc` in the SASjs configuration.
 
@@ -75,8 +141,8 @@ parmcards4;
     %let table=%scan(&sasjs_tables,&i);
     %webout(OBJ,&table,missing=STRING,showmeta=YES)
   %end;
-  %else %do i=1 %to &_webin_file_count; 
-    %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES) 
+  %else %do i=1 %to &_webin_file_count;
+    %webout(OBJ,&&_webin_name&i,missing=STRING,showmeta=YES)
   %end;
   %mend; %x()
   %webout(CLOSE)
@@ -90,8 +156,8 @@ parmcards4;
     %let table=%scan(&sasjs_tables,&i);
     %webout(ARR,&table,missing=STRING,showmeta=YES)
   %end;
-  %else %do i=1 %to &_webin_file_count; 
-    %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES) 
+  %else %do i=1 %to &_webin_file_count;
+    %webout(ARR,&&_webin_name&i,missing=STRING,showmeta=YES)
   %end;
   %mend; %x()
   %webout(CLOSE)
@@ -102,7 +168,7 @@ parmcards4;
     set sashelp.vmacro;
   run;
   %webout(OPEN)
-  %webout(OBJ,macvars) 
+  %webout(OBJ,macvars)
   %webout(CLOSE)
 ;;;;
 %mx_createwebservice(path=&apploc/services/common,name=sendMacVars)
@@ -126,23 +192,64 @@ data _null_;
 
 You should now be able to access the tests in your browser at the deployed path on your server.
 
-## Creating new tests
+#### Using SASjs CLI
 
-The `src/testSuites` folder contains all the test suites currently available.
-Each suite contains a set of specs, each of which looks like this:
-
-```javascript
-    {
-        title: "Your test title",
-        description: "A slightly more detailed description",
-        test: async () => {
-        // typically makes a request using the adapter and returns a promise
-        },
-        assertion: (response: any) =>
-        // receives the response when the test promise resolves, runs an assertion and returns a boolean
-    }
+```bash
+sasjs deploy -t <target>
 ```
 
-A test suite is an array of such objects, along with a `name` property.
+### Matrix Notifications
 
-You can add your test to one of the existing suites if suitable, or create a new file that specifies a new test suite.
+The `sasjs-cypress-run.sh` script sends Matrix chat notifications on test failure:
+
+```bash
+./sasjs-cypress-run.sh $MATRIX_ACCESS_TOKEN $PR_NUMBER
+```
+
+Notification format:
+
+```
+Automated sasjs-tests failed on the @sasjs/adapter PR: <PR_NUMBER>
+```
+
+## SAS Service Setup
+
+The tests require SAS services to be deployed at the `appLoc` specified in `config.json`.
+
+Services expected:
+
+- `common/sendArr` - Echo back array data
+- `common/sendObj` - Echo back object data
+- (Additional services per test suite)
+
+Deploy these services using [SASjs CLI](https://cli.sasjs.io) or manually.
+
+## UI Components (Custom Elements)
+
+- `<login-form>` - SAS authentication
+- `<tests-view>` - Test orchestrator with run controls
+- `<test-suite>` - Test suite display with stats
+- `<test-card>` - Individual test with status (pending/running/passed/failed)
+
+All components use Shadow DOM for style encapsulation and expose custom events for interactivity.
+
+### Adding New Test Suites
+
+1. Create file in `src/testSuites/MyNewTests.ts`
+2. Export function returning TestSuite
+3. Import in `src/index.ts`
+4. Add to `testSuites` array in `showTests()` function
+
+### Modifying UI Components
+
+Components are in `src/components/`:
+
+- Edit `.ts` file
+- Styles are in corresponding `.css` file
+- Rebuild with `npm run build`
+
+## Links
+
+- [@sasjs/adapter](https://adapter.sasjs.io)
+- [SASjs Documentation](https://sasjs.io)
+- [SASjs CLI](https://cli.sasjs.io)

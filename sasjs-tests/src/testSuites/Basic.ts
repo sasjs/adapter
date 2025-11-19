@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SASjs, { LoginMechanism, SASjsConfig } from '@sasjs/adapter'
-import { TestSuite } from '@sasjs/test-framework'
 import { ServerType } from '@sasjs/utils/types'
+import type { TestSuite } from '../types'
 
 const stringData: any = { table1: [{ col1: 'first col value' }] }
 
@@ -61,7 +63,7 @@ export const basicTests = (
         'Should fail on first attempt and should log the user in on second attempt',
       test: async () => {
         await adapter.logOut()
-        await adapter.logIn('invalid', 'invalid').catch((err: any) => {})
+        await adapter.logIn('invalid', 'invalid').catch((_err: any) => {})
         return await adapter.logIn(userName, password)
       },
       assertion: (response: any) =>

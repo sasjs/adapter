@@ -14,15 +14,23 @@ context('sasjs-tests', function () {
 
   function loginIfNeeded() {
     cy.get('body').then(($body) => {
-      if ($body.find('input[placeholder="User Name"]').length > 0) {
-        cy.get('input[placeholder="User Name"]')
+      if ($body.find('login-form').length > 0) {
+        cy.get('login-form')
+          .shadow()
+          .find('#username')
           .should('be.visible')
           .type(username)
-        cy.get('input[placeholder="Password"]')
+        cy.get('login-form')
+          .shadow()
+          .find('#password')
           .should('be.visible')
           .type(password)
-        cy.get('.submit-button').should('be.visible').click()
-        cy.get('input[placeholder="User Name"]').should('not.exist') // Wait for login to finish
+        cy.get('login-form')
+          .shadow()
+          .find('#submit-btn')
+          .should('be.visible')
+          .click()
+        cy.get('login-form').should('not.exist') // Wait for login to finish
       }
     })
   }
@@ -30,30 +38,36 @@ context('sasjs-tests', function () {
   it('Should have all tests successful', () => {
     loginIfNeeded()
 
-    cy.get('.ui.massive.icon.primary.left.labeled.button')
-      .should('be.visible')
-      .click()
+    cy.get('tests-view').shadow().find('#run-btn').should('be.visible').click()
 
-    cy.get('.ui.massive.loading.primary.button', {
-      timeout: testingFinishTimeout
-    }).should('not.exist')
+    cy.get('tests-view')
+      .shadow()
+      .find('#run-btn:disabled', {
+        timeout: testingFinishTimeout
+      })
+      .should('not.exist')
 
-    cy.get('span.icon.failed').should('not.exist')
+    cy.get('test-card').shadow().find('.status-icon.failed').should('not.exist')
   })
 
   it('Should have all tests successful with debug on', () => {
     loginIfNeeded()
 
-    cy.get('.ui.fitted.toggle.checkbox label').should('be.visible').click()
-
-    cy.get('.ui.massive.icon.primary.left.labeled.button')
+    cy.get('tests-view')
+      .shadow()
+      .find('#debug-toggle')
       .should('be.visible')
       .click()
 
-    cy.get('.ui.massive.loading.primary.button', {
-      timeout: testingFinishTimeout
-    }).should('not.exist')
+    cy.get('tests-view').shadow().find('#run-btn').should('be.visible').click()
 
-    cy.get('span.icon.failed').should('not.exist')
+    cy.get('tests-view')
+      .shadow()
+      .find('#run-btn:disabled', {
+        timeout: testingFinishTimeout
+      })
+      .should('not.exist')
+
+    cy.get('test-card').shadow().find('.status-icon.failed').should('not.exist')
   })
 })

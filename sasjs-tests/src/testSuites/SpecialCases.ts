@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SASjs from '@sasjs/adapter'
-import { TestSuite } from '@sasjs/test-framework'
+import type { TestSuite } from '../types'
 
 const specialCharData: any = {
   table1: [
@@ -325,7 +327,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         // We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
-        Object.keys(resVars).forEach((key: any, i: number) => {
+        Object.keys(resVars).forEach((key: any, _i: number) => {
           let formatValue =
             testTableWithSpecialNumeric[`$${testTable}`].formats[
               key.toLowerCase()
@@ -373,7 +375,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         // We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
-        Object.keys(resVars).forEach((key: any, i: number) => {
+        Object.keys(resVars).forEach((key: any, _i: number) => {
           let formatValue =
             testTableWithSpecialNumeric[`$${testTable}`].formats[
               key.toLowerCase()
@@ -421,7 +423,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         // We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
-        Object.keys(resVars).forEach((key: any, i: number) => {
+        Object.keys(resVars).forEach((key: any, _i: number) => {
           let formatValue =
             testTableWithSpecialNumericLowercase[`$${testTable}`].formats[
               key.toLowerCase()
@@ -478,7 +480,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         // We receive formats in response. We compare it with formats that we included in request to make sure they are equal
         const resVars = res[`$${testTable}`].vars
 
-        Object.keys(resVars).forEach((key: any, i: number) => {
+        Object.keys(resVars).forEach((key: any, _i: number) => {
           let formatValue =
             testTableWithSpecialNumeric[`$${testTable}`].formats[
               key.toLowerCase()

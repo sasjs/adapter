@@ -2,11 +2,12 @@
   "userName": "",
   "password": "",
   "sasJsConfig": {
+    "loginMechanism": "Redirected",
     "serverUrl": "",
     "appLoc": "/Public/app/adapter-tests/services",
-    "serverType": "SASJS",
+    "serverType": "SASVIYA",
     "debug": false,
-    "contextName": "sasjs adapter compute context",
+    "contextName": "SAS Job Execution compute context",
     "useComputeApi": true
   }
 }
