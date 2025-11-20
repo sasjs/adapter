@@ -36,6 +36,63 @@ interface JobExecutionResult {
   error?: object
 }
 
+interface IViyaTypesResponse {
+  accept: string
+  count: number
+  items: IViyaTypesItem[]
+  limit: number
+  links: IViyaTypesLink[]
+  name: string
+  start: number
+  version: number
+}
+
+interface IViyaTypesItem {
+  description?: string
+  extensions?: string[]
+  iconUri?: string
+  label: string
+  links: IViyaTypesLink[]
+  mappedTypes?: string[]
+  mediaType?: string
+  mediaTypes?: string[]
+  name: string
+  pluralLabel?: string
+  properties?: IViyaTypesProperties
+  resourceUri?: string
+  serviceRootUri?: string
+  tags?: string[]
+  version: number
+}
+
+/**
+ * Generic structure for a link
+ * in the links array of a Viya
+ * types/types api response
+ */
+interface IViyaTypesLink {
+  [key: string]: string
+}
+
+/**
+ * Generic structure for a type's
+ * 'properties' object from the Viya
+ * types/types api response
+ */
+interface IViyaTypesProperties {
+  [key: string]: string
+}
+
+/**
+ * Arbitrary interface for storing
+ * sufficient additional detail to
+ * create and patch a new file.
+ */
+interface IViyaTypesExtensionInfo {
+  typeDefName: string
+  properties: IViyaTypesProperties | undefined
+}
+
 /**
  * A client for interfacing with the SAS Viya REST API.
  *
@@ -61,6 +118,9 @@ export class SASViyaApiClient {
     this.requestClient
   )
   private folderMap = new Map<string, Job[]>()
+
+  private fileExtensionMap = new Map<string, IViyaTypesExtensionInfo>()
+  private boolExtensionMap = false // has the fileExtensionMap been populated yet?
 
   /**
    * A helper method used to call appendRequest method of RequestClient
@@ -434,14 +494,89 @@ export class SASViyaApiClient {
     const formData = new NodeFormData()
     formData.append('file', contentBuffer, fileName)
 
+    /** Query Viya for file metadata based on extension type.
+     *  Without providing certain properties, some versions of Viya will not
+     *  serve files as intended. Avoid this issue by applying the properties
+     *  that Viya has registered for a file extension.
+     */
+
+    // typeDefName - Viya should automatically determine this and additional
+    // properties at runtime if not provided in the file creation request.
+    let typeDefName: string | undefined = undefined
+    // Viya update 2025.09 resulted in a change to this automatic behaviour.
+    // We patch the new file to replicate the behaviour.
+    let filePatch:
+      | {
+          name: string
+          properties: IViyaTypesProperties | undefined
+        }
+      | undefined = undefined
+
+    // The patching process requires properties related to the file-extension
+    const fileExtension: string | undefined = fileName
+      .split('.')
+      .pop()
+      ?.toLowerCase()
+
+    if (fileExtension) {
+      if (!this.boolExtensionMap) {
+        // Populate the file extension map
+        // 1. Get Viya's response to this api call
+        const typesQueryUrl = `/types/types?limit=999999`
+        const response = (
+          await this.requestClient.get(typesQueryUrl, accessToken)
+        ).result as IViyaTypesResponse
+        // 2. Filter the returned items that have file extensions into a map
+        //    using forEach as an item may relate to multiple file extensions.
+        response.items
+          .filter((e) => e.extensions)
+          .forEach((e) => {
+            e.extensions?.forEach((ext) => {
+              this.fileExtensionMap.set(ext, {
+                typeDefName: e.name, // "name:" is the typeDefName value required for file creation.
+                properties: e.properties
+              })
+            })
+          })
+        // 3. Toggle the flag to avoid repeating this step
+        this.boolExtensionMap = true
+      }
+
+      const fileExtInfo = this.fileExtensionMap.get(fileExtension)
+      if (fileExtInfo) {
+        typeDefName = fileExtInfo.typeDefName
+        if (fileExtInfo.properties)
+          filePatch = { name: fileName, properties: fileExtInfo.properties }
+      }
+    }
+
     return (
-      await this.requestClient.post<File>(
-        `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=file#rawUpload`,
-        formData,
-        accessToken,
-        'multipart/form-data; boundary=' + (formData as any)._boundary,
-        headers
-      )
+      await this.requestClient
+        .post<File>(
+          `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=${
+            typeDefName ?? 'file'
+          }#rawUpload`,
+          formData,
+          accessToken,
+          'multipart/form-data; boundary=' + (formData as any)._boundary,
+          headers
+        )
+        .then(async (res) => {
+          // If a patch was created...
+          if (filePatch) {
+            // Get the URI of the newly created file
+            const fileUri = res.result.links.filter(
+              (e) => e.method == 'PATCH' && e.rel == 'patch'
+            )[0].uri
+            // and apply the patch
+            return await this.requestClient.patch<File>(
+              `${fileUri}`,
+              filePatch,
+              accessToken
+            )
+          }
+          return res
+        })
     ).result
   }
 
