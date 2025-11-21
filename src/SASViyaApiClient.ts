@@ -70,18 +70,14 @@ interface IViyaTypesItem {
  * in the links array of a Viya
  * types/types api response
  */
-interface IViyaTypesLink {
-  [key: string]: string
-}
+type IViyaTypesLink = Record<string, string>
 
 /**
  * Generic structure for a type's
  * 'properties' object from the Viya
  * types/types api response
  */
-interface IViyaTypesProperties {
-  [key: string]: string
-}
+type IViyaTypesProperties = Record<string, string>
 
 /**
  * Arbitrary interface for storing

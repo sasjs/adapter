@@ -22,6 +22,7 @@ import { sendArrTests, sendObjTests } from './testSuites/RequestData'
 import { fileUploadTests } from './testSuites/FileUpload'
 import { computeTests } from './testSuites/Compute'
 import { sasjsRequestTests } from './testSuites/SasjsRequests'
+import { viyaFileTests } from './testSuites/ViyaFile'
 
 async function init() {
   const appContainer = document.getElementById('app')
@@ -103,9 +104,10 @@ function showTests(
     fileUploadTests(adapter)
   ]
 
-  // Add compute tests for SASVIYA only
+  // Add certain tests for SASVIYA only
   if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
     testSuites.push(computeTests(adapter, appLoc))
+    testSuites.push(viyaFileTests(adapter, appLoc))
   }
 
   container.innerHTML = ''
