@@ -81,12 +81,12 @@ jobs:
         run: |
           npm install -g replace-in-files-cli
           cd sasjs-tests
-          replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"latest",' ./package.json
+          replace-in-files --regex='"@sasjs/adapter":\s*"[^"]+?([^\/"]+)"' --replacement='"@sasjs/adapter":"latest"' ./package.json
           npm i
-          replace-in-files --regex='"serverUrl".*' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}",' ./public/config.json
-          replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
-          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
+          replace-in-files --regex='"serverUrl":\s*"[^"]+?([^\/"]+)"' --replacemment='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}"' ./public/config.json
+          replace-in-files --regex='"userName":\s*"[^"]+?([^\/"]+)"' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}"' ./public/config.json
+          replace-in-files --regex='"serverType":\s*"[^"]+?([^\/"]+)"' --replacement='"serverType":"SASJS"' ./public/config.json
+          replace-in-files --regex='"password":\s*"[^"]+?([^\/"]+)"' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}"' ./public/config.json
           cat ./public/config.json
 
           npm run update:adapter
@@ -98,9 +98,9 @@ jobs:
 
       - name: Run cypress on sasjs
         run: |
-          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
-          replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
+          replace-in-files --regex='"sasjsTestsUrl":\s*"[^"]+?([^\/"]+)"' --replacement='"sasjsTestsUrl":"http://localhost:3000"' ./cypress.json
+          replace-in-files --regex='"username":\s*"[^"]+?([^\/"]+)"' --replacement='"username":"${{ secrets.SASJS_USERNAME }}"' ./cypress.json
+          replace-in-files --regex='"password":\s*"[^"]+?([^\/"]+)"' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}"' ./cypress.json
           cat ./cypress.json
           echo "SASJS_USERNAME=${{ secrets.SASJS_USERNAME }}"
 
