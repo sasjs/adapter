@@ -83,7 +83,7 @@ jobs:
           cd sasjs-tests
           replace-in-files --regex='"@sasjs/adapter":\s*"[^"]+?([^\/"]+)"' --replacement='"@sasjs/adapter":"latest"' ./package.json
           npm i
-          replace-in-files --regex='"serverUrl":\s*"[^"]+?([^\/"]+)"' --replacemment='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}"' ./public/config.json
+          replace-in-files --regex='"serverUrl":\s*"[^"]+?([^\/"]+)"' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}"' ./public/config.json
           replace-in-files --regex='"userName":\s*"[^"]+?([^\/"]+)"' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}"' ./public/config.json
           replace-in-files --regex='"serverType":\s*"[^"]+?([^\/"]+)"' --replacement='"serverType":"SASJS"' ./public/config.json
           replace-in-files --regex='"password":\s*"[^"]+?([^\/"]+)"' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}"' ./public/config.json
