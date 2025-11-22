@@ -481,10 +481,13 @@ export class SASViyaApiClient {
     if (!parentFolderUri && parentFolderPath) {
       parentFolderUri = await this.getFolderUri(parentFolderPath, accessToken)
     }
-
     const headers = {
       Accept: 'application/vnd.sas.file+json',
       'Content-Disposition': `filename="${fileName}";`
+    }
+    const patchHeaders = {
+      Accept: 'application/json',
+      'If-Match': '*'
     }
 
     const formData = new NodeFormData()
@@ -529,7 +532,8 @@ export class SASViyaApiClient {
           .forEach((e) => {
             e.extensions?.forEach((ext) => {
               this.fileExtensionMap.set(ext, {
-                typeDefName: e.name, // "name:" is the typeDefName value required for file creation.
+                // "name:" is the typeDefName value required for file creation.
+                typeDefName: e.name,
                 properties: e.properties
               })
             })
@@ -546,34 +550,38 @@ export class SASViyaApiClient {
       }
     }
 
-    return (
-      await this.requestClient
-        .post<File>(
-          `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=${
-            typeDefName ?? 'file'
-          }#rawUpload`,
-          formData,
-          accessToken,
-          'multipart/form-data; boundary=' + (formData as any)._boundary,
-          headers
-        )
-        .then(async (res) => {
-          // If a patch was created...
-          if (filePatch) {
-            // Get the URI of the newly created file
-            const fileUri = res.result.links.filter(
-              (e) => e.method == 'PATCH' && e.rel == 'patch'
-            )[0].uri
-            // and apply the patch
-            return await this.requestClient.patch<File>(
-              `${fileUri}`,
-              filePatch,
-              accessToken
-            )
-          }
-          return res
-        })
-    ).result
+    const createFileResponse = await this.requestClient.post<File>(
+      `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=${
+        typeDefName ?? 'file'
+      }#rawUpload`,
+      formData,
+      accessToken,
+      'multipart/form-data; boundary=' + (formData as any)._boundary,
+      headers
+    )
+
+    try {
+      // If a patch was created...
+      if (filePatch) {
+        // Get the URI of the newly created file
+        const fileUri = createFileResponse.result.links.filter(
+          (e) => e.method == 'PATCH' && e.rel == 'patch'
+        )[0].uri
+        // and apply the patch
+        return (
+          await this.requestClient.patch<File>(
+            `${fileUri}`,
+            filePatch,
+            accessToken,
+            'application/json',
+            patchHeaders
+          )
+        ).result
+      }
+      return createFileResponse.result
+    } catch (e: any) {
+      throw new Error(`Error patching file ${fileName}.\n${e.message}`)
+    }
   }
 
   /**
