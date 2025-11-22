@@ -12,10 +12,6 @@ body {
   background: #f5f5f5;
 }
 
-#app {
-  min-height: 100vh;
-}
-
 .app__error {
   max-width: 800px;
   margin: 50px auto;
