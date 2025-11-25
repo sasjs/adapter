@@ -79,14 +79,15 @@ jobs:
 
       - name: Deploy sasjs-tests
         run: |
-          npm install -g replace-in-files-cli
+          sudo apt install jq
           cd sasjs-tests
-          replace-in-files --regex='"@sasjs/adapter".*' --replacement='"@sasjs/adapter":"latest",' ./package.json
+          jq '.dependencies."@sasjs/adapter" |= "latest"' ./package.json > ./package.temp && mv ./package.temp ./package.json
           npm i
-          replace-in-files --regex='"serverUrl".*' --replacement='"serverUrl":"${{ secrets.SASJS_SERVER_URL }}",' ./public/config.json
-          replace-in-files --regex='"userName".*' --replacement='"userName":"${{ secrets.SASJS_USERNAME }}",' ./public/config.json
-          replace-in-files --regex='"serverType".*' --replacement='"serverType":"SASJS",' ./public/config.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./public/config.json
+          jq '.sasJsConfig.serverUrl |= "${{ secrets.SASJS_SERVER_URL }}"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
+          jq '.sasJsConfig.serverType |= "SASJS"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
+          jq '.userName |= "${{ secrets.SASJS_USERNAME }}"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
+          jq '.password |= "${{ secrets.SASJS_PASSWORD }}"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
+
           cat ./public/config.json
 
           npm run update:adapter
@@ -98,9 +99,9 @@ jobs:
 
       - name: Run cypress on sasjs
         run: |
-          replace-in-files --regex='"sasjsTestsUrl".*' --replacement='"sasjsTestsUrl":"http://localhost:3000",' ./cypress.json
-          replace-in-files --regex='"username".*' --replacement='"username":"${{ secrets.SASJS_USERNAME }}",' ./cypress.json
-          replace-in-files --regex='"password".*' --replacement='"password":"${{ secrets.SASJS_PASSWORD }}",' ./cypress.json
+          jq '.env.sasjsTestsUrl |= "http://localhost:3000"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
+          jq '.env.username |= "${{ secrets.SASJS_USERNAME }}"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
+          jq '.env.password |= "${{ secrets.SASJS_PASSWORD }}"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
           cat ./cypress.json
           echo "SASJS_USERNAME=${{ secrets.SASJS_USERNAME }}"
 

@@ -273,9 +273,13 @@ export class RequestClient implements HttpClient {
   public async patch<T>(
     url: string,
     data: any = {},
-    accessToken?: string
+    accessToken?: string,
+    overrideHeaders: { [key: string]: string | number } = {}
   ): Promise<{ result: T; etag: string }> {
-    const headers = this.getHeaders(accessToken, 'application/json')
+    const headers = {
+      ...this.getHeaders(accessToken, 'application/json'),
+      ...overrideHeaders
+    }
 
     return this.httpClient
       .patch<T>(url, data, { headers, withXSRFToken: true })
