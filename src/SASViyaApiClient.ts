@@ -57,7 +57,7 @@ interface IViyaTypesItem {
   mappedTypes?: string[]
   mediaType?: string
   mediaTypes?: string[]
-  name: string
+  name?: string | undefined
   pluralLabel?: string
   properties?: IViyaTypesProperties
   resourceUri?: string
@@ -86,7 +86,7 @@ type IViyaTypesProperties = Record<string, string>
  * create and patch a new file.
  */
 interface IViyaTypesExtensionInfo {
-  typeDefName: string
+  typeDefName: string | undefined
   properties: IViyaTypesProperties | undefined
 }
 
@@ -524,8 +524,14 @@ export class SASViyaApiClient {
           .forEach((e) => {
             e.extensions?.forEach((ext) => {
               this.fileExtensionMap.set(ext, {
-                // "name:" is the typeDefName value required for file creation.
-                typeDefName: e.name,
+                // `name` becomes the typeDefName value at file creation time.
+                // `name` is ignored here if it is not populated in the map, or
+                // has a blank/empty value.
+                typeDefName: e.name
+                  ? e.name.trim().length
+                    ? e.name.trim()
+                    : undefined
+                  : undefined,
                 properties: e.properties
               })
             })
