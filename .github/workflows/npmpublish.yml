@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/hydrogen]
+        node-version: [lts/iron]
 
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-       # 2. Restore npm cache manually
+        # 2. Restore npm cache manually
       - name: Restore npm cache
         uses: actions/cache@v3
         id: npm-cache
@@ -41,6 +41,9 @@ jobs:
 
       - name: Build Project
         run: npm run build
+
+      - name: Clean up ready for publishing
+        run: npm run publishInit
 
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v3
