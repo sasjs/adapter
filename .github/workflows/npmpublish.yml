@@ -23,12 +23,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-        # 2. Restore npm cache manually
-      - name: Restore npm cache
+        # 2. Restore npm and cypress cache manually
+      - name: Restore npm and cypress cache
         uses: actions/cache@v3
         id: npm-cache
         with:
-          path: ~/.npm
+          path: |
+            ~/.npm
+            ~/.cypress/Cypress
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
