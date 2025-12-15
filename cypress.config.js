@@ -1,8 +1,8 @@
 const { defineConfig } = require('cypress')
 
 module.exports = defineConfig({
-  includeShadowDom: true,
   e2e: {
+    includeShadowDom: true,
     chromeWebSecurity: false,
     defaultCommandTimeout: 20000,
     specPattern: 'cypress/integration/**/*.ts',
