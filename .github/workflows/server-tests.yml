@@ -111,10 +111,10 @@ jobs:
 
       - name: Run cypress on sasjs
         run: |
-          jq '.env.sasjsTestsUrl |= "http://localhost:5173"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
-          jq '.env.username |= "${{ secrets.SASJS_USERNAME }}"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
-          jq '.env.password |= "${{ secrets.SASJS_PASSWORD }}"' ./cypress.json > ./cypress.temp && mv ./cypress.temp ./cypress.json
-          cat ./cypress.json
+          sed -i "s|sasjsTestsUrl: '.*'|sasjsTestsUrl: 'http://localhost:5173'|g" ./cypress.config.js
+          sed -i "s|username: '.*'|username: '${{ secrets.SASJS_USERNAME }}'|g" ./cypress.config.js
+          sed -i "s|password: '.*'|password: '${{ secrets.SASJS_PASSWORD }}'|g" ./cypress.config.js
+          cat ./cypress.config.js
           echo "SASJS_USERNAME=${{ secrets.SASJS_USERNAME }}"
 
           sh ./sasjs-tests/sasjs-cypress-run.sh ${{ secrets.MATRIX_TOKEN }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
