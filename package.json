@@ -77,7 +77,7 @@
   "main": "index.js",
   "dependencies": {
     "@sasjs/utils": "3.5.6",
-    "axios": "1.12.2",
+    "axios": "^1.13.5",
     "axios-cookiejar-support": "5.0.5",
     "form-data": "4.0.4",
     "https": "1.0.0",
