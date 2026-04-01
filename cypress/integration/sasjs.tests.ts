@@ -13,6 +13,8 @@ context('sasjs-tests', function () {
   })
 
   function loginIfNeeded() {
+    cy.get('login-form, tests-view', { timeout: 30000 }).should('exist')
+
     cy.get('body').then(($body) => {
       if ($body.find('login-form').length > 0) {
         cy.get('login-form')
