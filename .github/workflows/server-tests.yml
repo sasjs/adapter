@@ -113,7 +113,7 @@ jobs:
         env:
           TERM: dumb
         run: |
-          sed -i "s|sasjsTestsUrl: '.*'|sasjsTestsUrl: 'http://localhost:5173'|g" ./cypress.config.js
+          sed -i "s|sasjsTestsUrl: '.*'|sasjsTestsUrl: 'http://localhost:3000'|g" ./cypress.config.js
           sed -i "s|username: '.*'|username: '${{ secrets.SASJS_USERNAME }}'|g" ./cypress.config.js
           sed -i "s|password: '.*'|password: '${{ secrets.SASJS_PASSWORD }}'|g" ./cypress.config.js
           cat ./cypress.config.js
