@@ -110,6 +110,8 @@ jobs:
         shell: bash
 
       - name: Run cypress on sasjs
+        env:
+          TERM: dumb
         run: |
           sed -i "s|sasjsTestsUrl: '.*'|sasjsTestsUrl: 'http://localhost:5173'|g" ./cypress.config.js
           sed -i "s|username: '.*'|username: '${{ secrets.SASJS_USERNAME }}'|g" ./cypress.config.js
