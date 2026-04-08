@@ -9,7 +9,7 @@ context('sasjs-tests', function () {
   })
 
   beforeEach(() => {
-    cy.reload()
+    cy.visit(sasjsTestsUrl)
   })
 
   function loginIfNeeded() {
