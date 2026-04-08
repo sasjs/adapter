@@ -9,7 +9,7 @@ module.exports = defineConfig({
     supportFile: 'cypress/support/index.js'
   },
   env: {
-    sasjsTestsUrl: 'http://localhost:5173',
+    sasjsTestsUrl: 'http://localhost:3000',
     username: '',
     password: '',
     screenshotOnRunFailure: false,
