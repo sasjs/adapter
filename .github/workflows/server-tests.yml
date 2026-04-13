@@ -93,8 +93,8 @@ jobs:
         run: |
           sudo apt install jq
           cd sasjs-tests
-          jq '.dependencies."@sasjs/adapter" |= "latest"' ./package.json > ./package.temp && mv ./package.temp ./package.json
-          npm i
+          npm i --ignore-scripts
+          npm i ../build/sasjs-adapter-5.0.0.tgz
           jq '.sasJsConfig.serverUrl |= "${{ secrets.SASJS_SERVER_URL }}"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
           jq '.sasJsConfig.serverType |= "SASJS"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
           jq '.sasJsConfig.loginMechanism |= "Default"' ./public/config.json > ./public/config.temp && mv ./public/config.temp ./public/config.json
