@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/iron]
+        node-version: [20, 22, 24]
 
     steps:
       - uses: actions/checkout@v2
@@ -53,6 +53,7 @@ jobs:
 
       # For some reason if coverage report action is run before other commands, those commands can't access the directories and files on which they depend on
       - name: Generate coverage report
+        if: matrix.node-version == 22
         uses: artiomtr/jest-coverage-report-action@v2.0-rc.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
