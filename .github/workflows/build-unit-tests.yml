@@ -32,7 +32,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Check npm audit
-        run: npm audit --production --audit-level=low
+        run: npm audit --omit=dev --audit-level=low
 
       - name: Install Dependencies
         run: npm ci

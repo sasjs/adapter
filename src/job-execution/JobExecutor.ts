@@ -17,7 +17,10 @@ export interface JobExecutor {
 }
 
 export abstract class BaseJobExecutor implements JobExecutor {
-  constructor(protected serverUrl: string, protected serverType: ServerType) {}
+  constructor(
+    protected serverUrl: string,
+    protected serverType: ServerType
+  ) {}
 
   private waitingRequests: ExecuteFunction[] = []
 
