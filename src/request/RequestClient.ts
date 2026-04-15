@@ -37,6 +37,7 @@ export class RequestClient implements HttpClient {
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
+  private isRecoveringFromNetworkError = false
 
   constructor(
     protected baseUrl: string,
@@ -75,6 +76,16 @@ export class RequestClient implements HttpClient {
   public clearLocalStorageTokens() {
     localStorage.setItem('accessToken', '')
     localStorage.setItem('refreshToken', '')
+  }
+
+  public resetInMemoryAuthState() {
+    this.clearCsrfTokens()
+    if (typeof localStorage !== 'undefined') {
+      this.clearLocalStorageTokens()
+    }
+    if (typeof document !== 'undefined') {
+      document.cookie = 'XSRF-TOKEN=; Max-Age=0; Path=/;'
+    }
   }
 
   public getBaseUrl() {
@@ -685,6 +696,24 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
     if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
       throw new CertificateError(e.message)
+    }
+
+    if (
+      e.isAxiosError &&
+      !response &&
+      e.code === 'ERR_NETWORK' &&
+      !this.isRecoveringFromNetworkError
+    ) {
+      // Opaque ERR_NETWORK usually means the server rejected stale credentials.
+      // Wipe in-memory auth state so the retry either succeeds
+      // or surfaces a clean LoginRequiredError.
+      this.resetInMemoryAuthState()
+      this.isRecoveringFromNetworkError = true
+      try {
+        return await callback()
+      } finally {
+        this.isRecoveringFromNetworkError = false
+      }
     }
 
     if (e.message) throw e

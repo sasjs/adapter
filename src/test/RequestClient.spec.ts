@@ -589,6 +589,42 @@ ${resHeaders[0]}: ${resHeaders[1]}${
         requestClient['handleError'](error, () => {}, false)
       ).resolves.toEqual(undefined)
     })
+
+    it('should clear CSRF and retry once on opaque ERR_NETWORK', async () => {
+      const networkError = {
+        isAxiosError: true,
+        code: 'ERR_NETWORK',
+        message: 'Network Error'
+      }
+      requestClient['csrfToken'] = { headerName: 'h', value: 'v' }
+      const callback = jest.fn().mockResolvedValue('ok')
+
+      await expect(
+        requestClient['handleError'](networkError, callback)
+      ).resolves.toEqual('ok')
+
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(requestClient['csrfToken']).toEqual({ headerName: '', value: '' })
+    })
+
+    it('should not loop if retry also fails with ERR_NETWORK', async () => {
+      const networkError = {
+        isAxiosError: true,
+        code: 'ERR_NETWORK',
+        message: 'Network Error'
+      }
+      const innerHandle = jest.fn(() =>
+        requestClient['handleError'](networkError, () =>
+          Promise.reject(networkError)
+        )
+      )
+
+      await expect(
+        requestClient['handleError'](networkError, innerHandle)
+      ).rejects.toEqual(networkError)
+
+      expect(innerHandle).toHaveBeenCalledTimes(1)
+    })
   })
 })
 
