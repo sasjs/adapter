@@ -84,7 +84,16 @@ export class RequestClient implements HttpClient {
       this.clearLocalStorageTokens()
     }
     if (typeof document !== 'undefined') {
-      document.cookie = 'XSRF-TOKEN=; Max-Age=0; Path=/;'
+      this.clearAllCookies()
+    }
+  }
+
+  private clearAllCookies() {
+    const cookies = document.cookie.split(';')
+    for (const cookie of cookies) {
+      const name = cookie.split('=')[0].trim()
+      if (!name) continue
+      document.cookie = `${name}=; Max-Age=0; Path=/;`
     }
   }
 
@@ -711,6 +720,10 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
       this.isRecoveringFromNetworkError = true
       try {
         return await callback()
+      } catch {
+        // Retry also failed — session is dead, surface LoginRequiredError
+        // so the app can prompt re-authentication.
+        throw new LoginRequiredError()
       } finally {
         this.isRecoveringFromNetworkError = false
       }

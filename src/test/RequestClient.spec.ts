@@ -607,7 +607,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       expect(requestClient['csrfToken']).toEqual({ headerName: '', value: '' })
     })
 
-    it('should not loop if retry also fails with ERR_NETWORK', async () => {
+    it('should throw LoginRequiredError if retry also fails with ERR_NETWORK', async () => {
       const networkError = {
         isAxiosError: true,
         code: 'ERR_NETWORK',
@@ -621,7 +621,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
 
       await expect(
         requestClient['handleError'](networkError, innerHandle)
-      ).rejects.toEqual(networkError)
+      ).rejects.toThrow(LoginRequiredError)
 
       expect(innerHandle).toHaveBeenCalledTimes(1)
     })
