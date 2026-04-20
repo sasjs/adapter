@@ -28,6 +28,9 @@ import {
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 import { inspect } from 'util'
 
+const getLogger = () =>
+  (typeof process !== 'undefined' && process.logger) || console
+
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
   private requestsLimit: number = 10
@@ -79,7 +82,7 @@ export class RequestClient implements HttpClient {
   }
 
   public resetInMemoryAuthState() {
-    const logger = process.logger || console
+    const logger = getLogger()
     const clearedCookies: string[] = []
 
     this.clearCsrfTokens()
@@ -385,7 +388,7 @@ export class RequestClient implements HttpClient {
     const csrfTokenKey = Object.keys(params).find((k) =>
       k?.toLowerCase().includes('csrf')
     )
-    const logger = process.logger || console
+    const logger = getLogger()
 
     if (csrfTokenKey) {
       this.csrfToken.value = params[csrfTokenKey]
@@ -622,7 +625,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
   protected parseAndSetCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
-    const logger = process.logger || console
+    const logger = getLogger()
 
     if (token) {
       this.csrfToken = token
@@ -652,7 +655,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
   }
 
   private logHandleError(step: string, details?: Record<string, any>) {
-    const logger = process.logger || console
+    const logger = getLogger()
     logger.warn(`[handleError] ${step}`, details || '')
   }
 
@@ -799,16 +802,43 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
       !this.isRecoveringFromNetworkError
     ) {
       // Opaque ERR_NETWORK usually means the server rejected stale credentials.
-      // Wipe in-memory auth state so the retry either succeeds
-      // or surfaces a clean LoginRequiredError.
-      this.logHandleError('ERR_NETWORK — clearing all auth state and retrying')
+      // Wipe in-memory auth state, re-establish session via GET /,
+      // then retry the original request.
+      this.logHandleError('ERR_NETWORK — clearing all auth state')
       this.resetInMemoryAuthState()
       this.isRecoveringFromNetworkError = true
       try {
+        // Re-establish session and CSRF cookie
+        this.logHandleError('ERR_NETWORK — re-establishing session via GET /')
+        const rootResponse = await this.httpClient
+          .get('/', { withXSRFToken: true })
+          .catch((err) => {
+            this.logHandleError('ERR_NETWORK — GET / failed', {
+              code: err?.code,
+              status: err?.response?.status,
+              message: err?.message
+            })
+            return err.response
+          })
+
+        if (rootResponse?.data) {
+          const cookie =
+            /<script>document.cookie = '(XSRF-TOKEN=.*; Max-Age=86400; SameSite=Strict; Path=\/;)'<\/script>/.exec(
+              rootResponse.data
+            )?.[1]
+
+          if (cookie && typeof document !== 'undefined') {
+            document.cookie = cookie
+            this.logHandleError('ERR_NETWORK — XSRF-TOKEN cookie restored')
+          }
+
+          this.parseAndSetCsrfToken(rootResponse)
+        }
+
+        this.logHandleError('ERR_NETWORK — retrying original request')
         return await callback()
       } catch (retryErr: any) {
-        // Retry also failed — session is dead, surface LoginRequiredError
-        // so the app can prompt re-authentication.
+        // Session could not be recovered — surface LoginRequiredError
         this.logHandleError(
           'ERR_NETWORK — retry failed, throwing LoginRequiredError',
           {
