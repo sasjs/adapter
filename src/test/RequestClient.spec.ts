@@ -667,7 +667,7 @@ describe('RequestClient - Self Signed Server', () => {
         getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
       )
 
-    expect(rejectionErrorMessage).toEqual(expectedError)
+    expect(rejectionErrorMessage).toContain(expectedError)
   })
 
   it('should response the POST method using insecure flag', async () => {

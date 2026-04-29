@@ -125,9 +125,8 @@ export async function executeOnComputeApi(
         jobVariables['_webin_file_count'] = files.length
 
         files.forEach((fileInfo, index) => {
-          jobVariables[
-            `_webin_fileuri${index + 1}`
-          ] = `/files/files/${fileInfo.file.id}`
+          jobVariables[`_webin_fileuri${index + 1}`] =
+            `/files/files/${fileInfo.file.id}`
           jobVariables[`_webin_name${index + 1}`] = fileInfo.tableName
         })
       } else {

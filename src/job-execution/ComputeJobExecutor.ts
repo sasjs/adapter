@@ -8,7 +8,10 @@ import {
 import { BaseJobExecutor } from './JobExecutor'
 
 export class ComputeJobExecutor extends BaseJobExecutor {
-  constructor(serverUrl: string, private sasViyaApiClient: SASViyaApiClient) {
+  constructor(
+    serverUrl: string,
+    private sasViyaApiClient: SASViyaApiClient
+  ) {
     super(serverUrl, ServerType.SasViya)
   }
 

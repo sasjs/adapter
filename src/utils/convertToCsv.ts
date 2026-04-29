@@ -110,8 +110,8 @@ export const convertToCSV = (
             longestValueForField
               ? longestValueForField
               : firstFoundType === 'chars'
-              ? '1'
-              : 'best'
+                ? '1'
+                : 'best'
           }.`
         )
       }
