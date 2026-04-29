@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/iron]
+        node-version: [22]
 
     steps:
       - name: Checkout
