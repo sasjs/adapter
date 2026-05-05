@@ -11,7 +11,7 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Compute API request',
       description: 'Should run the request with compute API approach',
       test: async () => {
-        return await adapter.request('common/sendArr', stringData)
+        return await adapter.request('services/common/sendArr', stringData)
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1
@@ -25,7 +25,11 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
           useComputeApi: false
         }
 
-        return await adapter.request('common/sendArr', stringData, config)
+        return await adapter.request(
+          'services/common/sendArr',
+          stringData,
+          config
+        )
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1
@@ -36,7 +40,10 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       description: 'Should start a compute job and return the session',
       test: () => {
         const data: any = { table1: [{ col1: 'first col value' }] }
-        return adapter.startComputeJob(`${appLoc}/common/sendArr`, data)
+        return adapter.startComputeJob(
+          `${appLoc}/services/common/sendArr`,
+          data
+        )
       },
       assertion: (res: any) => {
         const expectedProperties = ['id', 'applicationName', 'attributes']
@@ -49,7 +56,7 @@ export const computeTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       test: () => {
         const data: any = { table1: [{ col1: 'first col value' }] }
         return adapter.startComputeJob(
-          `${appLoc}/common/sendArr`,
+          `${appLoc}/services/common/sendArr`,
           data,
           {},
           undefined,
