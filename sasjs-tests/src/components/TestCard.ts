@@ -72,7 +72,7 @@ export class TestCard extends HTMLElement {
           ? `
         <div class="error">
           <strong>Error:</strong>
-          <pre>${(error as Error).message || String(error)}</pre>
+          <pre>${formatError(error)}</pre>
         </div>
       `
           : ''
@@ -107,6 +107,37 @@ export class TestCard extends HTMLElement {
       default:
         return '?'
     }
+  }
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const formatError = (err: unknown): string => {
+  if (err == null) return ''
+  if (typeof err === 'string') return escapeHtml(err)
+
+  const anyErr = err as any
+  // Adapter ErrorResponse: { error: { message, details, raw } }
+  const nestedMsg = anyErr?.error?.message
+  const directMsg = anyErr?.message
+  const msg = directMsg || nestedMsg
+
+  if (msg) {
+    const details = anyErr?.error?.details ?? anyErr?.details
+    const detailsStr =
+      details && typeof details === 'object'
+        ? `\n${JSON.stringify(details, null, 2)}`
+        : details
+          ? `\n${details}`
+          : ''
+    return escapeHtml(`${msg}${detailsStr}`)
+  }
+
+  try {
+    return escapeHtml(JSON.stringify(err, null, 2))
+  } catch {
+    return escapeHtml(String(err))
   }
 }
 

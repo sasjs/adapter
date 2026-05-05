@@ -23,6 +23,20 @@ describe('uploadTables', () => {
     )
   })
 
+  it('should skip $tablename formats metadata keys', async () => {
+    const data = {
+      tablewith2cols2rows: [{ col1: 'val1', specialMissingsCol: 'A' }],
+      $tablewith2cols2rows: { formats: { specialMissingsCol: 'best.' } }
+    }
+
+    const files = await uploadTables(requestClient, data, 't0k3n')
+
+    expect(files).toEqual([
+      { tableName: 'tablewith2cols2rows', file: 'test-file' }
+    ])
+    expect(requestClient.uploadFile).toHaveBeenCalledTimes(1)
+  })
+
   it('should throw an error when the CSV exceeds the maximum length', async () => {
     const data = { foo: 'bar' }
     jest

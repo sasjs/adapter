@@ -22,6 +22,7 @@ import { sendArrTests, sendObjTests } from './testSuites/RequestData'
 import { fileUploadTests } from './testSuites/FileUpload'
 import { computeTests } from './testSuites/Compute'
 import { sasjsRequestTests } from './testSuites/SasjsRequests'
+import { specialCaseTests } from './testSuites/SpecialCases'
 
 async function init() {
   const appContainer = document.getElementById('app')
@@ -98,7 +99,7 @@ function showTests(
     // basicTests(adapter, configTyped.userName || '', configTyped.password || ''),
     sendArrTests(adapter, appLoc),
     sendObjTests(adapter),
-    // specialCaseTests(adapter),
+    specialCaseTests(adapter),
     sasjsRequestTests(adapter),
     fileUploadTests(adapter)
   ]

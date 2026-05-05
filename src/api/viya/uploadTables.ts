@@ -1,6 +1,6 @@
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../../request/RequestClient'
-import { convertToCSV } from '../../utils/convertToCsv'
+import { convertToCSV, isFormatsTable } from '../../utils/convertToCsv'
 
 /**
  * Uploads tables to SAS as specially formatted CSVs.
@@ -18,6 +18,10 @@ export async function uploadTables(
   const uploadedFiles = []
 
   for (const tableName in data) {
+    // $tablename keys carry only column-format metadata for the matching
+    // tablename payload; they must not be uploaded as separate files.
+    if (isFormatsTable(tableName)) continue
+
     const csv = convertToCSV(data, tableName)
     if (csv === 'ERROR: LARGE STRING LENGTH') {
       throw new Error(

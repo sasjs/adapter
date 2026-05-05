@@ -111,7 +111,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Common special characters',
       description: 'Should handle common special characters',
       test: () => {
-        return adapter.request('common/sendArr', specialCharData)
+        return adapter.request('services/common/sendArr', specialCharData)
       },
       assertion: (res: any) => {
         return (
@@ -133,7 +133,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Other special characters',
       description: 'Should handle other special characters',
       test: () => {
-        return adapter.request('common/sendArr', moreSpecialCharData)
+        return adapter.request('services/common/sendArr', moreSpecialCharData)
       },
       assertion: (res: any) => {
         // If sas session is `latin9` or `wlatin1` we can't process the special characters,
@@ -169,7 +169,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Wide table with sendArr',
       description: 'Should handle data with 10000 columns',
       test: () => {
-        return adapter.request('common/sendArr', getWideData())
+        return adapter.request('services/common/sendArr', getWideData())
       },
       assertion: (res: any) => {
         const data = getWideData()
@@ -185,7 +185,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Wide table with sendObj',
       description: 'Should handle data with 10000 columns',
       test: () => {
-        return adapter.request('common/sendObj', getWideData())
+        return adapter.request('services/common/sendObj', getWideData())
       },
       assertion: (res: any) => {
         const data = getWideData()
@@ -202,7 +202,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Multiple tables',
       description: 'Should handle data with 100 tables',
       test: () => {
-        return adapter.request('common/sendArr', getTables())
+        return adapter.request('services/common/sendArr', getTables())
       },
       assertion: (res: any) => {
         const data = getTables()
@@ -222,7 +222,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Large dataset with sendObj',
       description: 'Should handle 5mb of data',
       test: () => {
-        return adapter.request('common/sendObj', getLargeDataset())
+        return adapter.request('services/common/sendObj', getLargeDataset())
       },
       assertion: (res: any) => {
         const data = getLargeDataset()
@@ -237,7 +237,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Large dataset with sendArr',
       description: 'Should handle 5mb of data',
       test: () => {
-        return adapter.request('common/sendArr', getLargeDataset())
+        return adapter.request('services/common/sendArr', getLargeDataset())
       },
       assertion: (res: any) => {
         const data = getLargeDataset()
@@ -253,7 +253,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Error and _csrf tables with sendArr',
       description: 'Should handle error and _csrf tables',
       test: () => {
-        return adapter.request('common/sendArr', errorAndCsrfData)
+        return adapter.request('services/common/sendArr', errorAndCsrfData)
       },
       assertion: (res: any) => {
         return (
@@ -272,7 +272,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Error and _csrf tables with sendObj',
       description: 'Should handle error and _csrf tables',
       test: () => {
-        return adapter.request('common/sendObj', errorAndCsrfData)
+        return adapter.request('services/common/sendObj', errorAndCsrfData)
       },
       assertion: (res: any) => {
         return (
@@ -300,7 +300,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         }
 
         return await adapter.request(
-          'common/sendArr',
+          'services/common/sendArr',
           stringData,
           config,
           undefined,
@@ -319,7 +319,10 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
       title: 'Special missing values',
       description: 'Should support special missing values',
       test: () => {
-        return adapter.request('common/sendObj', testTableWithSpecialNumeric)
+        return adapter.request(
+          'services/common/sendObj',
+          testTableWithSpecialNumeric
+        )
       },
       assertion: (res: any) => {
         let assertionRes = true
@@ -365,7 +368,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         'Should support special missing values, when one row is send',
       test: () => {
         return adapter.request(
-          'common/sendObj',
+          'services/common/sendObj',
           testTableWithSpecialNumericOneRow
         )
       },
@@ -413,7 +416,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         'Should support special missing values, when LOWERCASE value is sent',
       test: () => {
         return adapter.request(
-          'common/sendObj',
+          'services/common/sendObj',
           testTableWithSpecialNumericLowercase
         )
       },
@@ -469,7 +472,7 @@ export const specialCaseTests = (adapter: SASjs): TestSuite => ({
         'Should support special missing values, when one row is send (On VIYA Web Approach)',
       test: () => {
         return adapter.request(
-          'common/sendObj',
+          'services/common/sendObj',
           testTableWithSpecialNumericOneRow,
           { useComputeApi: undefined }
         )

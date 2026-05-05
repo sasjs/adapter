@@ -1031,11 +1031,17 @@ export class SASViyaApiClient {
       jobArguments[`_webin_name${index + 1}`] = fileInfo.tableName
     })
 
+    // Viya JES requires arguments to be Map<String,String>; coerce booleans/numbers.
+    const stringifiedArguments: { [key: string]: string } = {}
+    for (const k of Object.keys(jobArguments)) {
+      stringifiedArguments[k] = String(jobArguments[k])
+    }
+
     const postJobRequestBody = {
       name: `exec-${jobName}`,
       description: 'Powered by SASjs',
       jobDefinition,
-      arguments: jobArguments
+      arguments: stringifiedArguments
     }
 
     const { result: postedJob } = await this.requestClient.post<Job>(
