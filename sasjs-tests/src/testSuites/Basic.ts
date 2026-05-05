@@ -77,7 +77,7 @@ export const basicTests = (
         await adapter.logOut()
 
         return await adapter.request(
-          'common/sendArr',
+          'services/common/sendArr',
           stringData,
           undefined,
           async () => {
@@ -97,7 +97,11 @@ export const basicTests = (
           useComputeApi: false
         }
 
-        return await adapter.request('common/sendArr', stringData, config)
+        return await adapter.request(
+          'services/common/sendArr',
+          stringData,
+          config
+        )
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1
@@ -112,7 +116,11 @@ export const basicTests = (
           debug: true
         }
 
-        return await adapter.request('common/sendArr', stringData, config)
+        return await adapter.request(
+          'services/common/sendArr',
+          stringData,
+          config
+        )
       },
       assertion: (response: any) => {
         return response.table1[0][0] === stringData.table1[0].col1

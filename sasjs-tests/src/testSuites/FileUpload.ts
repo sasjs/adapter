@@ -22,7 +22,11 @@ export const fileUploadTests = (adapter: SASjs): TestSuite => ({
           }
         ]
 
-        return adapter.uploadFile('common/sendMacVars', filesToUpload, null)
+        return adapter.uploadFile(
+          'services/common/sendMacVars',
+          filesToUpload,
+          null
+        )
       },
       assertion: (response: any) =>
         (response.macvars as any[]).findIndex(

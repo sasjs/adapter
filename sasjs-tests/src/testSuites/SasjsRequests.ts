@@ -11,7 +11,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
       title: 'WORK tables',
       description: 'Should get WORK tables after request',
       test: async () => {
-        return adapter.request('common/sendArr', data)
+        return adapter.request('services/common/sendArr', data)
       },
       assertion: () => {
         const requests = adapter.getSasRequests()
@@ -28,7 +28,7 @@ export const sasjsRequestTests = (adapter: SASjs): TestSuite => ({
     //     'Should make an error and capture log, in the same time it is testing if debug override is working',
     //   test: async () => {
     //     return adapter
-    //       .request('common/makeErr', data, { debug: true })
+    //       .request('services/common/makeErr', data, { debug: true })
     //       .catch(() => {
     //         const sasRequests = adapter.getSasRequests()
     //         const makeErrRequest: any =
