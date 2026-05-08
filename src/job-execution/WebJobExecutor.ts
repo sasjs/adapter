@@ -147,8 +147,9 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
-    // If nothing was appended, skip form-data; some servers reject multipart
-    // with no parts.
+    // No parts → skip form-data and send text/plain. Sidesteps empty-multipart
+    // rejection on some Viya endpoints (e.g. _executionTasks=true with useComputeApi=null).
+    // Non-empty multipart on those same endpoints is a separate server-side issue.
     const hasFormContent = hasData || Object.keys(requestParams).length > 0
 
     const body = hasFormContent ? formData : undefined
