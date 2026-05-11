@@ -157,7 +157,9 @@ export class WebJobExecutor extends BaseJobExecutor {
     const contentType = !hasFormContent
       ? 'text/plain'
       : formData instanceof NodeFormData && typeof FormData === 'undefined'
-        ? formData.getHeaders()['content-type']
+        ? `multipart/form-data; boundary=${
+            formData.getHeaders()['content-type']
+          }`
         : 'multipart/form-data'
 
     const requestPromise = new Promise((resolve, reject) => {
