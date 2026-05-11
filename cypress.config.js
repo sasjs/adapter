@@ -13,6 +13,6 @@ module.exports = defineConfig({
     username: '',
     password: '',
     screenshotOnRunFailure: false,
-    testingFinishTimeout: 600000
+    testingFinishTimeout: 300000
   }
 })
