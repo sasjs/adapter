@@ -107,12 +107,6 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
-    /**
-     * Use the available form data object (FormData in Browser, NodeFormData in
-     *  Node)
-     */
-    let formData = getFormData()
-
     const stringifiedData = data ? JSON.stringify(data) : ''
     const fileUploadApproach =
       !!data &&
@@ -120,11 +114,31 @@ export class WebJobExecutor extends BaseJobExecutor {
         stringifiedData.length > 500000 ||
         stringifiedData.includes(';'))
 
+    // Viya rejects empty multipart on _executionTasks=true when no file is
+    // uploaded. Use x-www-form-urlencoded in that case; URL params stay.
+    const parsedUrl = new URL(apiUrl)
+    const isExecutionTasksEndpoint =
+      (parsedUrl.searchParams.has('_program') ||
+        parsedUrl.searchParams.has('__program')) &&
+      parsedUrl.searchParams.get('_executionTasks') === 'true'
+    const useUrlencoded = isExecutionTasksEndpoint && !fileUploadApproach
+
+    /**
+     * URLSearchParams when posting urlencoded; otherwise FormData (browser) or
+     * NodeFormData (Node).
+     */
+    let formData: FormData | NodeFormData | URLSearchParams = useUrlencoded
+      ? new URLSearchParams()
+      : getFormData()
+
     if (data) {
       if (fileUploadApproach) {
         // file upload approach
         try {
-          formData = generateFileUploadForm(formData, data)
+          formData = generateFileUploadForm(
+            formData as FormData | NodeFormData,
+            data
+          )
         } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
@@ -143,46 +157,29 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     for (const key in requestParams) {
       if (requestParams.hasOwnProperty(key)) {
-        formData.append(key, requestParams[key])
+        formData.append(key, String(requestParams[key]))
       }
     }
 
-    /* The NodeFormData object does not set the request header - so, set it */
-    let contentType =
-      formData instanceof NodeFormData && typeof FormData === 'undefined'
-        ? `multipart/form-data; boundary=${
-            formData.getHeaders()['content-type']
-          }`
-        : 'multipart/form-data'
-    let body: any = formData
-
-    // Viya rejects empty multipart on _executionTasks=true if no files are
-    // uploaded. With no file upload, repack URL params + requestParams as
-    // x-www-form-urlencoded and strip the URL query; otherwise keep multipart.
-    const parsedUrl = new URL(apiUrl)
-    const isExecutionTasksEndpoint =
-      (parsedUrl.searchParams.has('_program') ||
-        parsedUrl.searchParams.has('__program')) &&
-      parsedUrl.searchParams.get('_executionTasks') === 'true'
-
-    if (isExecutionTasksEndpoint && !fileUploadApproach) {
-      const urlParams = new URLSearchParams()
-      parsedUrl.searchParams.forEach((value, key) => {
-        urlParams.append(key, value)
-      })
-      for (const [k, v] of Object.entries(requestParams)) {
-        urlParams.append(k, String(v))
-      }
-      parsedUrl.search = ''
-      apiUrl = parsedUrl.toString()
-      body = urlParams
+    let contentType: string
+    if (useUrlencoded) {
       contentType = 'application/x-www-form-urlencoded'
+    } else if (
+      formData instanceof NodeFormData &&
+      typeof FormData === 'undefined'
+    ) {
+      /* The NodeFormData object does not set the request header - so, set it */
+      contentType = `multipart/form-data; boundary=${
+        formData.getHeaders()['content-type']
+      }`
+    } else {
+      contentType = 'multipart/form-data'
     }
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(
         apiUrl,
-        body,
+        formData,
         authConfig?.access_token,
         contentType
       )

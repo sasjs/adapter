@@ -92,13 +92,10 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
-    expect(apiUrl).not.toContain('_program=')
-    expect(apiUrl).not.toContain('_executionTasks=true')
+    expect(apiUrl).toContain('_program=/Public/app/services/common/sendArr')
+    expect(apiUrl).toContain('_executionTasks=true')
     expect(body).toBeInstanceOf(URLSearchParams)
     expect(contentType).toBe('application/x-www-form-urlencoded')
-    const params = body as URLSearchParams
-    expect(params.get('_program')).toBe('/Public/app/services/common/sendArr')
-    expect(params.get('_executionTasks')).toBe('true')
   })
 
   it('sends urlencoded body with table data when _executionTasks=true', async () => {
@@ -110,14 +107,36 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
       { ...baseConfig, serverType: ServerType.SasViya }
     )
 
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('_program=/Public/app/services/common/sendArr')
+    expect(apiUrl).toContain('_executionTasks=true')
+    expect(body).toBeInstanceOf(URLSearchParams)
+    expect(contentType).toBe('application/x-www-form-urlencoded')
+    const params = body as URLSearchParams
+    expect(params.get('sasjs_tables')).toBe('table1')
+    expect(params.get('sasjs1data')).toBeTruthy()
+  })
+
+  it('sends chunked CSV in urlencoded body when _executionTasks=true', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    // Build a row whose CSV exceeds 16k but stringified JSON stays under 500k
+    // so we land on the param-based path, and the CSV gets split into chunks.
+    const longValue = 'x'.repeat(20000)
+    await executor.execute(
+      'services/common/sendArr&_executionTasks=true',
+      { table1: [{ col1: longValue }] },
+      { ...baseConfig, serverType: ServerType.SasViya }
+    )
+
     const [, body, , contentType] = postSpy.mock.calls[0]
     expect(body).toBeInstanceOf(URLSearchParams)
     expect(contentType).toBe('application/x-www-form-urlencoded')
     const params = body as URLSearchParams
-    expect(params.get('_program')).toBe('/Public/app/services/common/sendArr')
-    expect(params.get('_executionTasks')).toBe('true')
     expect(params.get('sasjs_tables')).toBe('table1')
-    expect(params.get('sasjs1data')).toBeTruthy()
+    const chunks = params.getAll('sasjs1data')
+    expect(chunks.length).toBeGreaterThan(1)
+    expect(chunks.join('')).toContain(longValue)
   })
 
   it('uses multipart for file upload on Viya without _executionTasks', async () => {
