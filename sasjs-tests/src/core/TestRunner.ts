@@ -35,7 +35,7 @@ export class TestRunner {
       completedTests: []
     }))
 
-    await Promise.all(
+    await Promise.allSettled(
       this.testSuites.map((suite, i) => this.runTestSuite(suite, i, onUpdate))
     )
 
