@@ -113,23 +113,15 @@ export class WebJobExecutor extends BaseJobExecutor {
      */
     let formData = getFormData()
 
-    // Viya rejects empty multipart on _executionTasks=true (useComputeApi=null
-    // is already implicit by routing here). Ensure at least one part is present
-    // by injecting _program into the form body for that endpoint only.
-    if (
-      config.serverType === ServerType.SasViya &&
-      sasJob.includes('_executionTasks=true')
-    ) {
-      formData.append('_program', program)
-    }
+    const stringifiedData = data ? JSON.stringify(data) : ''
+    const fileUploadApproach =
+      !!data &&
+      (config.serverType === ServerType.Sas9 ||
+        stringifiedData.length > 500000 ||
+        stringifiedData.includes(';'))
 
     if (data) {
-      const stringifiedData = JSON.stringify(data)
-      if (
-        config.serverType === ServerType.Sas9 ||
-        stringifiedData.length > 500000 ||
-        stringifiedData.includes(';')
-      ) {
+      if (fileUploadApproach) {
         // file upload approach
         try {
           formData = generateFileUploadForm(formData, data)
@@ -156,17 +148,41 @@ export class WebJobExecutor extends BaseJobExecutor {
     }
 
     /* The NodeFormData object does not set the request header - so, set it */
-    const contentType =
+    let contentType =
       formData instanceof NodeFormData && typeof FormData === 'undefined'
         ? `multipart/form-data; boundary=${
             formData.getHeaders()['content-type']
           }`
         : 'multipart/form-data'
+    let body: any = formData
+
+    // Viya rejects empty multipart on _executionTasks=true if no files are
+    // uploaded. With no file upload, repack URL params + requestParams as
+    // x-www-form-urlencoded and strip the URL query; otherwise keep multipart.
+    const parsedUrl = new URL(apiUrl)
+    const isExecutionTasksEndpoint =
+      (parsedUrl.searchParams.has('_program') ||
+        parsedUrl.searchParams.has('__program')) &&
+      parsedUrl.searchParams.get('_executionTasks') === 'true'
+
+    if (isExecutionTasksEndpoint && !fileUploadApproach) {
+      const urlParams = new URLSearchParams()
+      parsedUrl.searchParams.forEach((value, key) => {
+        urlParams.append(key, value)
+      })
+      for (const [k, v] of Object.entries(requestParams)) {
+        urlParams.append(k, String(v))
+      }
+      parsedUrl.search = ''
+      apiUrl = parsedUrl.toString()
+      body = urlParams
+      contentType = 'application/x-www-form-urlencoded'
+    }
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(
         apiUrl,
-        formData,
+        body,
         authConfig?.access_token,
         contentType
       )

@@ -82,7 +82,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
-  it('appends _program to form body for SasViya when sasJob contains _executionTasks=true', async () => {
+  it('sends urlencoded body when _executionTasks=true and no payload', async () => {
     const { executor, postSpy } = makeExecutor(ServerType.SasViya)
 
     await executor.execute(
@@ -91,11 +91,72 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
       { ...baseConfig, serverType: ServerType.SasViya }
     )
 
-    const [, body] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect((body as NodeFormData).getBuffer().toString()).toContain(
-      'name="_program"'
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).not.toContain('_program=')
+    expect(apiUrl).not.toContain('_executionTasks=true')
+    expect(body).toBeInstanceOf(URLSearchParams)
+    expect(contentType).toBe('application/x-www-form-urlencoded')
+    const params = body as URLSearchParams
+    expect(params.get('_program')).toBe('/Public/app/services/common/sendArr')
+    expect(params.get('_executionTasks')).toBe('true')
+  })
+
+  it('sends urlencoded body with table data when _executionTasks=true', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    await executor.execute(
+      'services/common/sendArr&_executionTasks=true',
+      { table1: [{ col1: 'v' }] },
+      { ...baseConfig, serverType: ServerType.SasViya }
     )
+
+    const [, body, , contentType] = postSpy.mock.calls[0]
+    expect(body).toBeInstanceOf(URLSearchParams)
+    expect(contentType).toBe('application/x-www-form-urlencoded')
+    const params = body as URLSearchParams
+    expect(params.get('_program')).toBe('/Public/app/services/common/sendArr')
+    expect(params.get('_executionTasks')).toBe('true')
+    expect(params.get('sasjs_tables')).toBe('table1')
+    expect(params.get('sasjs1data')).toBeTruthy()
+  })
+
+  it('uses multipart for file upload on Viya without _executionTasks', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    await executor.execute(
+      'services/common/sendArr',
+      { table1: [{ col1: 'has; semicolon' }] },
+      { ...baseConfig, serverType: ServerType.SasViya }
+    )
+
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('_program=')
+    expect(apiUrl).not.toContain('_executionTasks=')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(body).not.toBeInstanceOf(URLSearchParams)
+    expect(contentType).toMatch(/^multipart\/form-data/)
+    expect(contentType).not.toBe('application/x-www-form-urlencoded')
+  })
+
+  it('sends file as multipart when _executionTasks=true with file payload', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    await executor.execute(
+      'services/common/sendArr&_executionTasks=true',
+      { table1: [{ col1: 'has; semicolon' }] },
+      { ...baseConfig, serverType: ServerType.SasViya }
+    )
+
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('_program=')
+    expect(apiUrl).toContain('_executionTasks=true')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(body).not.toBeInstanceOf(URLSearchParams)
+    expect(contentType).toMatch(/^multipart\/form-data/)
+    expect(contentType).not.toBe('application/x-www-form-urlencoded')
+    const dump = (body as NodeFormData).getBuffer().toString()
+    expect(dump).toContain('filename="table1.csv"')
+    expect(dump).toContain('Content-Type: application/csv')
   })
 
   it('does not append _program for SasViya when sasJob has no _executionTasks=true', async () => {

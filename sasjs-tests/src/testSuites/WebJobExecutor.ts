@@ -3,6 +3,7 @@ import SASjs from '@sasjs/adapter'
 import type { TestSuite } from '../types'
 
 const stringData: any = { table1: [{ col1: 'first col value' }] }
+const fileData: any = { table1: [{ col1: 'value with ; semicolon' }] }
 
 export const webJobExecutorTests = (adapter: SASjs): TestSuite => ({
   name: 'WebJobExecutor',
@@ -21,14 +22,27 @@ export const webJobExecutorTests = (adapter: SASjs): TestSuite => ({
       },
       assertion: (res: any) => res?.ok === true
     },
-    // FIXME: failing test, tmp. disabled
     {
-      title: 'Non-empty payload, useComputeApi=null, _executionTasks flag',
+      title: 'Table payload, useComputeApi=null, _executionTasks flag',
       description:
-        'WebJobExecutor (useComputeApi=null) should send multipart when payload present, even with _executionTasks=true',
+        'WebJobExecutor (useComputeApi=null) with _executionTasks=true and table payload should send urlencoded body',
       test: () => {
         return adapter
           .request('services/common/sendArr&_executionTasks=true', stringData, {
+            useComputeApi: null
+          })
+          .then((res: any) => ({ ok: true, res }))
+          .catch((e: any) => ({ ok: false, error: e }))
+      },
+      assertion: (res: any) => res?.ok === true
+    },
+    {
+      title: 'File payload, useComputeApi=null, _executionTasks flag',
+      description:
+        'WebJobExecutor (useComputeApi=null) should send multipart (file upload) when payload contains a file, with _executionTasks=true',
+      test: () => {
+        return adapter
+          .request('services/common/sendArr&_executionTasks=true', fileData, {
             useComputeApi: null
           })
           .then((res: any) => ({ ok: true, res }))
