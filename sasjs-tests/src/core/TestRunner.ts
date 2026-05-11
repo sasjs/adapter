@@ -51,7 +51,23 @@ export class TestRunner {
       currentIndex: number
     ) => void
   ): Promise<CompletedTestSuite> {
-    const completedTests: CompletedTest[] = []
+    // Seed all tests as pending so every card renders before any run starts.
+    const completedTests: CompletedTest[] = suite.tests.map((test) => ({
+      test,
+      result: false,
+      error: null,
+      executionTime: 0,
+      status: 'pending'
+    }))
+
+    if (onUpdate) {
+      this.completedTestSuites[suiteIndex] = {
+        name: suite.name,
+        completedTests: [...completedTests]
+      }
+      onUpdate([...this.completedTestSuites], suiteIndex * 1000)
+    }
+
     let context: unknown
 
     // Run beforeAll if exists
@@ -64,15 +80,14 @@ export class TestRunner {
       const test = suite.tests[i]
       const currentIndex = suiteIndex * 1000 + i
 
-      // Set status to running
-      const runningTest: CompletedTest = {
+      // Flip pending → running
+      completedTests[i] = {
         test,
         result: false,
         error: null,
         executionTime: 0,
         status: 'running'
       }
-      completedTests.push(runningTest)
 
       // Notify update
       if (onUpdate) {
