@@ -107,38 +107,22 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
-    const stringifiedData = data ? JSON.stringify(data) : ''
-    const fileUploadApproach =
-      !!data &&
-      (config.serverType === ServerType.Sas9 ||
-        stringifiedData.length > 500000 ||
-        stringifiedData.includes(';'))
-
-    // Viya rejects empty multipart on _executionTasks=true when no file is
-    // uploaded. Use x-www-form-urlencoded in that case; URL params stay.
-    const parsedUrl = new URL(apiUrl)
-    const isExecutionTasksEndpoint =
-      (parsedUrl.searchParams.has('_program') ||
-        parsedUrl.searchParams.has('__program')) &&
-      parsedUrl.searchParams.get('_executionTasks') === 'true'
-    const useUrlencoded = isExecutionTasksEndpoint && !fileUploadApproach
-
     /**
-     * URLSearchParams when posting urlencoded; otherwise FormData (browser) or
-     * NodeFormData (Node).
+     * Use the available form data object (FormData in Browser, NodeFormData in
+     *  Node)
      */
-    let formData: FormData | NodeFormData | URLSearchParams = useUrlencoded
-      ? new URLSearchParams()
-      : getFormData()
+    let formData = getFormData()
 
     if (data) {
-      if (fileUploadApproach) {
+      const stringifiedData = JSON.stringify(data)
+      if (
+        config.serverType === ServerType.Sas9 ||
+        stringifiedData.length > 500000 ||
+        stringifiedData.includes(';')
+      ) {
         // file upload approach
         try {
-          formData = generateFileUploadForm(
-            formData as FormData | NodeFormData,
-            data
-          )
+          formData = generateFileUploadForm(formData, data)
         } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
@@ -157,24 +141,17 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     for (const key in requestParams) {
       if (requestParams.hasOwnProperty(key)) {
-        formData.append(key, String(requestParams[key]))
+        formData.append(key, requestParams[key])
       }
     }
 
-    let contentType: string
-    if (useUrlencoded) {
-      contentType = 'application/x-www-form-urlencoded'
-    } else if (
-      formData instanceof NodeFormData &&
-      typeof FormData === 'undefined'
-    ) {
-      /* The NodeFormData object does not set the request header - so, set it */
-      contentType = `multipart/form-data; boundary=${
-        formData.getHeaders()['content-type']
-      }`
-    } else {
-      contentType = 'multipart/form-data'
-    }
+    /* The NodeFormData object does not set the request header - so, set it */
+    const contentType =
+      formData instanceof NodeFormData && typeof FormData === 'undefined'
+        ? `multipart/form-data; boundary=${
+            formData.getHeaders()['content-type']
+          }`
+        : 'multipart/form-data'
 
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(

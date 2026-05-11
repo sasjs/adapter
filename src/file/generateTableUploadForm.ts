@@ -3,7 +3,7 @@ import { convertToCSV, isFormatsTable } from '../utils/convertToCsv'
 import { splitChunks } from '../utils/splitChunks'
 
 export const generateTableUploadForm = (
-  formData: FormData | NodeFormData | URLSearchParams,
+  formData: FormData | NodeFormData,
   data: any
 ) => {
   const sasjsTables = []

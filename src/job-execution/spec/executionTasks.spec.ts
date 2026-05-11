@@ -4,7 +4,7 @@ import { WebJobExecutor } from '../WebJobExecutor'
 import { RequestClient } from '../../request/RequestClient'
 import { SASViyaApiClient } from '../../SASViyaApiClient'
 
-describe('WebJobExecutor.execute() Content-Type selection', () => {
+describe('WebJobExecutor _executionTasks=true behaviour', () => {
   const serverUrl = 'https://sample.server.com'
   const jobsPath = '/SASJobExecution'
 
@@ -34,7 +34,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     debug: false
   }
 
-  it('sends multipart form-data when data has content', async () => {
+  it('sends table data in body', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
@@ -48,23 +48,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
-  it('sends urlencoded body when _executionTasks=true and no payload', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    await executor.execute(
-      'services/common/sendArr&_executionTasks=true',
-      null,
-      baseConfig
-    )
-
-    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
-    expect(apiUrl).toContain('_program=/Public/app/services/common/sendArr')
-    expect(apiUrl).toContain('_executionTasks=true')
-    expect(body).toBeInstanceOf(URLSearchParams)
-    expect(contentType).toBe('application/x-www-form-urlencoded')
-  })
-
-  it('sends urlencoded body with table data when _executionTasks=true', async () => {
+  it('sends table data when _executionTasks=true', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
@@ -76,36 +60,14 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
     expect(apiUrl).toContain('_program=/Public/app/services/common/sendArr')
     expect(apiUrl).toContain('_executionTasks=true')
-    expect(body).toBeInstanceOf(URLSearchParams)
-    expect(contentType).toBe('application/x-www-form-urlencoded')
-    const params = body as URLSearchParams
-    expect(params.get('sasjs_tables')).toBe('table1')
-    expect(params.get('sasjs1data')).toBeTruthy()
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(contentType).toMatch(/^multipart\/form-data/)
+    const dump = (body as NodeFormData).getBuffer().toString()
+    expect(dump).toContain('name="sasjs_tables"')
+    expect(dump).toContain('name="sasjs1data"')
   })
 
-  it('sends chunked CSV in urlencoded body when _executionTasks=true', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    // Build a row whose CSV exceeds 16k but stringified JSON stays under 500k
-    // so we land on the param-based path, and the CSV gets split into chunks.
-    const longValue = 'x'.repeat(20000)
-    await executor.execute(
-      'services/common/sendArr&_executionTasks=true',
-      { table1: [{ col1: longValue }] },
-      baseConfig
-    )
-
-    const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(URLSearchParams)
-    expect(contentType).toBe('application/x-www-form-urlencoded')
-    const params = body as URLSearchParams
-    expect(params.get('sasjs_tables')).toBe('table1')
-    const chunks = params.getAll('sasjs1data')
-    expect(chunks.length).toBeGreaterThan(1)
-    expect(chunks.join('')).toContain(longValue)
-  })
-
-  it('uses multipart for file upload on Viya without _executionTasks', async () => {
+  it('uploads as file when payload has semicolons', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
@@ -123,7 +85,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     expect(contentType).not.toBe('application/x-www-form-urlencoded')
   })
 
-  it('sends file as multipart when _executionTasks=true with file payload', async () => {
+  it('uploads as file when _executionTasks=true and payload has semicolons', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
