@@ -30,12 +30,14 @@ export class TestRunner {
     ) => void
   ): Promise<CompletedTestSuite[]> {
     this.isRunning = true
-    this.completedTestSuites = []
+    this.completedTestSuites = this.testSuites.map((suite) => ({
+      name: suite.name,
+      completedTests: []
+    }))
 
-    for (let i = 0; i < this.testSuites.length; i++) {
-      const suite = this.testSuites[i]
-      await this.runTestSuite(suite, i, onUpdate)
-    }
+    await Promise.all(
+      this.testSuites.map((suite, i) => this.runTestSuite(suite, i, onUpdate))
+    )
 
     this.isRunning = false
     return this.completedTestSuites
