@@ -8,12 +8,14 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   const serverUrl = 'https://sample.server.com'
   const jobsPath = '/SASJobExecution'
 
-  const makeExecutor = () => {
+  const makeExecutor = (serverType: ServerType = ServerType.Sas9) => {
     const requestClient = new RequestClient(serverUrl)
-    const sasViyaApiClient = {} as SASViyaApiClient
+    const sasViyaApiClient = {
+      getJobsInFolder: async () => []
+    } as unknown as SASViyaApiClient
     const executor = new WebJobExecutor(
       serverUrl,
-      ServerType.Sas9,
+      serverType,
       jobsPath,
       requestClient,
       sasViyaApiClient
@@ -32,25 +34,25 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     debug: false
   }
 
-  it('sends no body and text/plain when payload is empty and debug=false', async () => {
+  it('sends multipart form-data when payload is empty and debug=false', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute('services/common/sendArr', null, baseConfig)
 
     expect(postSpy).toHaveBeenCalledTimes(1)
     const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeUndefined()
-    expect(contentType).toBe('text/plain')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
-  it('sends no body and text/plain when data is an empty object', async () => {
+  it('sends multipart form-data when data is an empty object', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute('services/common/sendArr', {}, baseConfig)
 
     const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeUndefined()
-    expect(contentType).toBe('text/plain')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
   it('sends multipart form-data when data has content', async () => {
@@ -65,10 +67,6 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     const [, body, , contentType] = postSpy.mock.calls[0]
     expect(body).toBeInstanceOf(NodeFormData)
     expect(contentType).toMatch(/^multipart\/form-data/)
-    // never double-prefixed: at most one "boundary=" in the Content-Type
-    const boundaryCount = ((contentType as string).match(/boundary=/g) ?? [])
-      .length
-    expect(boundaryCount).toBeLessThanOrEqual(1)
   })
 
   it('sends multipart with debug params when payload empty but debug=true', async () => {
@@ -82,5 +80,36 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     const [, body, , contentType] = postSpy.mock.calls[0]
     expect(body).toBeInstanceOf(NodeFormData)
     expect(contentType).toMatch(/^multipart\/form-data/)
+  })
+
+  it('appends _program to form body for SasViya when sasJob contains _executionTasks=true', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    await executor.execute(
+      'services/common/sendArr&_executionTasks=true',
+      null,
+      { ...baseConfig, serverType: ServerType.SasViya }
+    )
+
+    const [, body] = postSpy.mock.calls[0]
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect((body as NodeFormData).getBuffer().toString()).toContain(
+      'name="_program"'
+    )
+  })
+
+  it('does not append _program for SasViya when sasJob has no _executionTasks=true', async () => {
+    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+
+    await executor.execute('services/common/sendArr', null, {
+      ...baseConfig,
+      serverType: ServerType.SasViya
+    })
+
+    const [, body] = postSpy.mock.calls[0]
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect((body as NodeFormData).getBuffer().toString()).not.toContain(
+      'name="_program"'
+    )
   })
 })

@@ -107,15 +107,23 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
-    const hasData = !!data && Object.keys(data).length > 0
-
     /**
      * Use the available form data object (FormData in Browser, NodeFormData in
      *  Node)
      */
     let formData = getFormData()
 
-    if (hasData) {
+    // Viya rejects empty multipart on _executionTasks=true (useComputeApi=null
+    // is already implicit by routing here). Ensure at least one part is present
+    // by injecting _program into the form body for that endpoint only.
+    if (
+      config.serverType === ServerType.SasViya &&
+      sasJob.includes('_executionTasks=true')
+    ) {
+      formData.append('_program', program)
+    }
+
+    if (data) {
       const stringifiedData = JSON.stringify(data)
       if (
         config.serverType === ServerType.Sas9 ||
@@ -147,16 +155,9 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
 
-    // No parts → skip form-data and send text/plain. Sidesteps empty-multipart
-    // rejection on some Viya endpoints (e.g. _executionTasks=true with useComputeApi=null).
-    // Non-empty multipart on those same endpoints is a separate server-side issue.
-    const hasFormContent = hasData || Object.keys(requestParams).length > 0
-
-    const body = hasFormContent ? formData : undefined
     /* The NodeFormData object does not set the request header - so, set it */
-    const contentType = !hasFormContent
-      ? 'text/plain'
-      : formData instanceof NodeFormData && typeof FormData === 'undefined'
+    const contentType =
+      formData instanceof NodeFormData && typeof FormData === 'undefined'
         ? `multipart/form-data; boundary=${
             formData.getHeaders()['content-type']
           }`
@@ -165,7 +166,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     const requestPromise = new Promise((resolve, reject) => {
       this.requestClient!.post(
         apiUrl,
-        body,
+        formData,
         authConfig?.access_token,
         contentType
       )

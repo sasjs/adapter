@@ -102,12 +102,12 @@ function showTests(
     sendObjTests(adapter),
     specialCaseTests(adapter),
     sasjsRequestTests(adapter),
-    fileUploadTests(adapter),
-    webJobExecutorTests(adapter)
+    fileUploadTests(adapter)
   ]
 
-  // Add compute tests for SASVIYA only
+  // Add tests for SASVIYA only
   if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
+    testSuites.push(webJobExecutorTests(adapter))
     testSuites.push(computeTests(adapter, appLoc))
   }
 

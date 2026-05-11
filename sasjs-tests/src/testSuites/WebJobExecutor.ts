@@ -22,20 +22,20 @@ export const webJobExecutorTests = (adapter: SASjs): TestSuite => ({
       assertion: (res: any) => res?.ok === true
     },
     // FIXME: failing test, tmp. disabled
-    // {
-    //   title: 'Non-empty payload, useComputeApi=null, _executionTasks flag',
-    //   description:
-    //     'WebJobExecutor (useComputeApi=null) should send multipart when payload present, even with _executionTasks=true',
-    //   test: () => {
-    //     return adapter
-    //       .request('services/common/sendArr&_executionTasks=true', stringData, {
-    //         useComputeApi: null
-    //       })
-    //       .then((res: any) => ({ ok: true, res }))
-    //       .catch((e: any) => ({ ok: false, error: e }))
-    //   },
-    //   assertion: (res: any) => res?.ok === true
-    // },
+    {
+      title: 'Non-empty payload, useComputeApi=null, _executionTasks flag',
+      description:
+        'WebJobExecutor (useComputeApi=null) should send multipart when payload present, even with _executionTasks=true',
+      test: () => {
+        return adapter
+          .request('services/common/sendArr&_executionTasks=true', stringData, {
+            useComputeApi: null
+          })
+          .then((res: any) => ({ ok: true, res }))
+          .catch((e: any) => ({ ok: false, error: e }))
+      },
+      assertion: (res: any) => res?.ok === true
+    },
     {
       title: 'Empty payload, useComputeApi=null, no _executionTasks flag',
       description:
