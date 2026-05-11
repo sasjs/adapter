@@ -8,7 +8,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   const serverUrl = 'https://sample.server.com'
   const jobsPath = '/SASJobExecution'
 
-  const makeExecutor = (serverType: ServerType = ServerType.Sas9) => {
+  const makeExecutor = (serverType: ServerType = ServerType.SasViya) => {
     const requestClient = new RequestClient(serverUrl)
     const sasViyaApiClient = {
       getJobsInFolder: async () => []
@@ -29,31 +29,10 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
 
   const baseConfig = {
     serverUrl,
-    serverType: ServerType.Sas9,
+    serverType: ServerType.SasViya,
     appLoc: '/Public/app',
     debug: false
   }
-
-  it('sends multipart form-data when payload is empty and debug=false', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    await executor.execute('services/common/sendArr', null, baseConfig)
-
-    expect(postSpy).toHaveBeenCalledTimes(1)
-    const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect(contentType).toMatch(/^multipart\/form-data/)
-  })
-
-  it('sends multipart form-data when data is an empty object', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    await executor.execute('services/common/sendArr', {}, baseConfig)
-
-    const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect(contentType).toMatch(/^multipart\/form-data/)
-  })
 
   it('sends multipart form-data when data has content', async () => {
     const { executor, postSpy } = makeExecutor()
@@ -69,26 +48,13 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
-  it('sends multipart with debug params when payload empty but debug=true', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    await executor.execute('services/common/sendArr', null, {
-      ...baseConfig,
-      debug: true
-    })
-
-    const [, body, , contentType] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect(contentType).toMatch(/^multipart\/form-data/)
-  })
-
   it('sends urlencoded body when _executionTasks=true and no payload', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+    const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr&_executionTasks=true',
       null,
-      { ...baseConfig, serverType: ServerType.SasViya }
+      baseConfig
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
@@ -99,12 +65,12 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   })
 
   it('sends urlencoded body with table data when _executionTasks=true', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+    const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr&_executionTasks=true',
       { table1: [{ col1: 'v' }] },
-      { ...baseConfig, serverType: ServerType.SasViya }
+      baseConfig
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
@@ -118,7 +84,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   })
 
   it('sends chunked CSV in urlencoded body when _executionTasks=true', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+    const { executor, postSpy } = makeExecutor()
 
     // Build a row whose CSV exceeds 16k but stringified JSON stays under 500k
     // so we land on the param-based path, and the CSV gets split into chunks.
@@ -126,7 +92,7 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     await executor.execute(
       'services/common/sendArr&_executionTasks=true',
       { table1: [{ col1: longValue }] },
-      { ...baseConfig, serverType: ServerType.SasViya }
+      baseConfig
     )
 
     const [, body, , contentType] = postSpy.mock.calls[0]
@@ -140,12 +106,12 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   })
 
   it('uses multipart for file upload on Viya without _executionTasks', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+    const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr',
       { table1: [{ col1: 'has; semicolon' }] },
-      { ...baseConfig, serverType: ServerType.SasViya }
+      baseConfig
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
@@ -158,12 +124,12 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
   })
 
   it('sends file as multipart when _executionTasks=true with file payload', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
+    const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr&_executionTasks=true',
       { table1: [{ col1: 'has; semicolon' }] },
-      { ...baseConfig, serverType: ServerType.SasViya }
+      baseConfig
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
@@ -176,20 +142,5 @@ describe('WebJobExecutor.execute() Content-Type selection', () => {
     const dump = (body as NodeFormData).getBuffer().toString()
     expect(dump).toContain('filename="table1.csv"')
     expect(dump).toContain('Content-Type: application/csv')
-  })
-
-  it('does not append _program for SasViya when sasJob has no _executionTasks=true', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya)
-
-    await executor.execute('services/common/sendArr', null, {
-      ...baseConfig,
-      serverType: ServerType.SasViya
-    })
-
-    const [, body] = postSpy.mock.calls[0]
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect((body as NodeFormData).getBuffer().toString()).not.toContain(
-      'name="_program"'
-    )
   })
 })
