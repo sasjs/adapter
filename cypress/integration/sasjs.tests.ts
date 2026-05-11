@@ -12,6 +12,26 @@ context('sasjs-tests', function () {
     cy.visit(sasjsTestsUrl)
   })
 
+  function assertNoFailedTests() {
+    cy.get('test-card').then(($cards) => {
+      const failures: string[] = []
+      $cards.each((_, card) => {
+        const shadow = (card as HTMLElement).shadowRoot
+        if (!shadow) return
+        if (!shadow.querySelector('.status-icon.failed')) return
+        const title =
+          shadow.querySelector('.header h3')?.textContent?.trim() ?? '(unknown)'
+        const error =
+          shadow.querySelector('.error pre')?.textContent?.trim() ?? ''
+        failures.push(error ? `- ${title}\n    ${error}` : `- ${title}`)
+      })
+      expect(
+        failures,
+        `${failures.length} test(s) failed:\n${failures.join('\n')}`
+      ).to.be.empty
+    })
+  }
+
   function loginIfNeeded() {
     cy.get('login-form, tests-view', { timeout: 30000 }).should('exist')
 
@@ -49,7 +69,7 @@ context('sasjs-tests', function () {
       })
       .should('not.exist')
 
-    cy.get('test-card').shadow().find('.status-icon.failed').should('not.exist')
+    assertNoFailedTests()
   })
 
   it('Should have all tests successful with debug on', () => {
@@ -70,6 +90,6 @@ context('sasjs-tests', function () {
       })
       .should('not.exist')
 
-    cy.get('test-card').shadow().find('.status-icon.failed').should('not.exist')
+    assertNoFailedTests()
   })
 })
