@@ -18,7 +18,8 @@ import {
   parseSasViyaDebugResponse,
   appendExtraResponseAttributes,
   parseWeboutResponse,
-  getFormData
+  getFormData,
+  isNode
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
@@ -112,6 +113,25 @@ export class WebJobExecutor extends BaseJobExecutor {
      *  Node)
      */
     let formData = getFormData()
+
+    // FIXME(viya - SAS Track CS0409737): remove when Viya stops rejecting empty multipart on
+    // _executionTasks=true. Dummy file keeps the body non-empty
+    const hasExecutionTasksFlag =
+      sasJob.includes('_executionTasks=true') || config.runAsTask === true
+    if (config.serverType === ServerType.SasViya && hasExecutionTasksFlag) {
+      if (isNode()) {
+        ;(formData as NodeFormData).append('_sasjs_noop', '', {
+          filename: '_sasjs_noop.txt',
+          contentType: 'text/plain'
+        })
+      } else {
+        ;(formData as FormData).append(
+          '_sasjs_noop',
+          new Blob([''], { type: 'text/plain' }),
+          '_sasjs_noop.txt'
+        )
+      }
+    }
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
