@@ -23,6 +23,7 @@ import { fileUploadTests } from './testSuites/FileUpload'
 import { computeTests } from './testSuites/Compute'
 import { sasjsRequestTests } from './testSuites/SasjsRequests'
 import { specialCaseTests } from './testSuites/SpecialCases'
+import { executionTasksTests } from './testSuites/executionTasks'
 
 async function init() {
   const appContainer = document.getElementById('app')
@@ -104,8 +105,9 @@ function showTests(
     fileUploadTests(adapter)
   ]
 
-  // Add compute tests for SASVIYA only
+  // Add tests for SASVIYA only
   if (adapter.getSasjsConfig().serverType === 'SASVIYA') {
+    testSuites.push(executionTasksTests(adapter))
     testSuites.push(computeTests(adapter, appLoc))
   }
 
