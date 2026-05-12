@@ -102,6 +102,10 @@ export class WebJobExecutor extends BaseJobExecutor {
       apiUrl += config.contextName?.trim()
         ? `&_contextname=${encodeURIComponent(config.contextName)}`
         : ''
+
+      if (config.runAsTask === true) {
+        apiUrl += '&_executionTasks=true'
+      }
     }
 
     let requestParams = {
@@ -116,8 +120,7 @@ export class WebJobExecutor extends BaseJobExecutor {
 
     // FIXME(viya - SAS Track CS0409737): remove when Viya stops rejecting empty multipart on
     // _executionTasks=true. Dummy file keeps the body non-empty
-    const hasExecutionTasksFlag =
-      sasJob.includes('_executionTasks=true') || config.runAsTask === true
+    const hasExecutionTasksFlag = config.runAsTask === true
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
