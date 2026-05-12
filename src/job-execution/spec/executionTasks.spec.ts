@@ -4,7 +4,7 @@ import { WebJobExecutor } from '../WebJobExecutor'
 import { RequestClient } from '../../request/RequestClient'
 import { SASViyaApiClient } from '../../SASViyaApiClient'
 
-describe('WebJobExecutor _executionTasks=true behaviour', () => {
+describe('WebJobExecutor runAsTask behaviour', () => {
   const serverUrl = 'https://sample.server.com'
   const jobsPath = '/SASJobExecution'
 
@@ -31,35 +31,63 @@ describe('WebJobExecutor _executionTasks=true behaviour', () => {
     serverUrl,
     serverType: ServerType.SasViya,
     appLoc: '/Public/app',
+    useComputeApi: false,
     debug: false
   }
 
-  it('sends table data in body', async () => {
+  it('sends table data in body (runAsTask=false)', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr',
       { table1: [{ col1: 'v' }] },
-      baseConfig
+      { ...baseConfig, runAsTask: false }
     )
 
-    const [, body, , contentType] = postSpy.mock.calls[0]
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).not.toContain('_executionTasks=true')
     expect(body).toBeInstanceOf(NodeFormData)
     expect(contentType).toMatch(/^multipart\/form-data/)
   })
 
-  it('sends table data when _executionTasks=true', async () => {
+  it('uploads as file when payload has semicolons (runAsTask=false)', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
-      'services/common/sendArr&_executionTasks=true',
-      { table1: [{ col1: 'v' }] },
-      baseConfig
+      'services/common/sendArr',
+      { table1: [{ col1: 'has; semicolon' }] },
+      { ...baseConfig, runAsTask: false }
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
-    expect(apiUrl).toContain('_program=/Public/app/services/common/sendArr')
-    expect(apiUrl).toContain('_executionTasks=true')
+    expect(apiUrl).not.toContain('_executionTasks=')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(contentType).toMatch(/^multipart\/form-data/)
+  })
+
+  it('appends &_executionTasks=true to URL when runAsTask=true and no data', async () => {
+    const { executor, postSpy } = makeExecutor()
+
+    await executor.execute('services/common/sendArr', null, {
+      ...baseConfig,
+      runAsTask: true
+    })
+
+    const [apiUrl] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('&_executionTasks=true')
+  })
+
+  it('appends &_executionTasks=true and sends table data when runAsTask=true with one input table', async () => {
+    const { executor, postSpy } = makeExecutor()
+
+    await executor.execute(
+      'services/common/sendArr',
+      { table1: [{ col1: 'v' }] },
+      { ...baseConfig, runAsTask: true }
+    )
+
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('&_executionTasks=true')
     expect(body).toBeInstanceOf(NodeFormData)
     expect(contentType).toMatch(/^multipart\/form-data/)
     const dump = (body as NodeFormData).getBuffer().toString()
@@ -67,42 +95,52 @@ describe('WebJobExecutor _executionTasks=true behaviour', () => {
     expect(dump).toContain('name="sasjs1data"')
   })
 
-  it('uploads as file when payload has semicolons', async () => {
+  it('appends &_executionTasks=true to URL when runAsTask=true with multiple input tables', async () => {
+    const { executor, postSpy } = makeExecutor()
+
+    await executor.execute(
+      'services/common/sendArr',
+      { table1: [{ col1: 'v' }], table2: [{ col2: 'w' }] },
+      { ...baseConfig, runAsTask: true }
+    )
+
+    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
+    expect(apiUrl).toContain('&_executionTasks=true')
+    expect(body).toBeInstanceOf(NodeFormData)
+    expect(contentType).toMatch(/^multipart\/form-data/)
+    const dump = (body as NodeFormData).getBuffer().toString()
+    expect(dump).toContain('name="sasjs_tables"')
+    expect(dump).toMatch(/table1\s+table2/)
+  })
+
+  it('uploads as file when runAsTask=true and payload has semicolons', async () => {
     const { executor, postSpy } = makeExecutor()
 
     await executor.execute(
       'services/common/sendArr',
       { table1: [{ col1: 'has; semicolon' }] },
-      baseConfig
+      { ...baseConfig, runAsTask: true }
     )
 
     const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
-    expect(apiUrl).toContain('_program=')
-    expect(apiUrl).not.toContain('_executionTasks=')
+    expect(apiUrl).toContain('&_executionTasks=true')
     expect(body).toBeInstanceOf(NodeFormData)
-    expect(body).not.toBeInstanceOf(URLSearchParams)
     expect(contentType).toMatch(/^multipart\/form-data/)
-    expect(contentType).not.toBe('application/x-www-form-urlencoded')
-  })
-
-  it('uploads as file when _executionTasks=true and payload has semicolons', async () => {
-    const { executor, postSpy } = makeExecutor()
-
-    await executor.execute(
-      'services/common/sendArr&_executionTasks=true',
-      { table1: [{ col1: 'has; semicolon' }] },
-      baseConfig
-    )
-
-    const [apiUrl, body, , contentType] = postSpy.mock.calls[0]
-    expect(apiUrl).toContain('_program=')
-    expect(apiUrl).toContain('_executionTasks=true')
-    expect(body).toBeInstanceOf(NodeFormData)
-    expect(body).not.toBeInstanceOf(URLSearchParams)
-    expect(contentType).toMatch(/^multipart\/form-data/)
-    expect(contentType).not.toBe('application/x-www-form-urlencoded')
     const dump = (body as NodeFormData).getBuffer().toString()
     expect(dump).toContain('filename="table1.csv"')
     expect(dump).toContain('Content-Type: application/csv')
+  })
+
+  it('does NOT append _executionTasks=true to URL when runAsTask=false', async () => {
+    const { executor, postSpy } = makeExecutor()
+
+    await executor.execute(
+      'services/common/sendArr',
+      { table1: [{ col1: 'v' }] },
+      { ...baseConfig, runAsTask: false }
+    )
+
+    const [apiUrl] = postSpy.mock.calls[0]
+    expect(apiUrl).not.toContain('_executionTasks=true')
   })
 })
