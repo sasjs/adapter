@@ -31,6 +31,20 @@ var blob = new Blob([\`{"SYSDATE" : "13MAY26"
     expect(result).toEqual(resultData)
   })
 
+  it('should extract and parse JSON wrapped in weboutBEGIN/END (text/plain blob)', async () => {
+    const resultData = { SYSCC: '1012', SYSERRORTEXT: 'File missing.' }
+    const response = `<script>
+var blob = new Blob([\`>>weboutBEGIN<<
+${JSON.stringify(resultData)}
+>>weboutEND<<
+\`], {type: 'text/plain'});
+</script>`
+
+    const result = await parseSasViyaLogDebugResponse(response)
+
+    expect(result).toEqual(resultData)
+  })
+
   it('should throw an error if blob is not found', async () => {
     const response = `<html><body>No blob here</body></html>`
 
