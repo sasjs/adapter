@@ -16,6 +16,7 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
+  parseSasViyaLogDebugResponse,
   appendExtraResponseAttributes,
   parseWeboutResponse,
   getFormData,
@@ -188,11 +189,14 @@ export class WebJobExecutor extends BaseJobExecutor {
           if (config.debug) {
             switch (this.serverType) {
               case ServerType.SasViya:
-                jsonResponse = await parseSasViyaDebugResponse(
-                  res.result,
-                  this.requestClient,
-                  this.serverUrl
-                )
+                jsonResponse =
+                  config.useComputeApi === null && config.runAsTask === true
+                    ? await parseSasViyaLogDebugResponse(res.result)
+                    : await parseSasViyaDebugResponse(
+                        res.result,
+                        this.requestClient,
+                        this.serverUrl
+                      )
                 break
               case ServerType.Sas9:
                 jsonResponse =
