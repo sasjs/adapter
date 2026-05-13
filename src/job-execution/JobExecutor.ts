@@ -60,7 +60,7 @@ export abstract class BaseJobExecutor implements JobExecutor {
         config.useComputeApi === null &&
         config.serverType === ServerType.SasViya &&
         config.runAsTask === true
-          ? 'log'
+          ? 128
           : 131
     }
 
