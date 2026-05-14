@@ -55,13 +55,7 @@ export abstract class BaseJobExecutor implements JobExecutor {
     if (config.debug) {
       requestParams['_omittextlog'] = 'false'
       requestParams['_omitSessionResults'] = 'false'
-
-      requestParams['_debug'] =
-        config.useComputeApi === null &&
-        config.serverType === ServerType.SasViya &&
-        config.runAsTask === true
-          ? 128
-          : 131
+      requestParams['_debug'] = 131
     }
 
     return requestParams

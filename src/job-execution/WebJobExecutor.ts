@@ -123,6 +123,22 @@ export class WebJobExecutor extends BaseJobExecutor {
     // _executionTasks=true. Dummy file keeps the body non-empty
     const hasExecutionTasksFlag = config.runAsTask === true
 
+    // Move debug params to URL for viya; viya seems to honor them more
+    // reliably in the query string than the multipart body.
+    if (
+      hasExecutionTasksFlag &&
+      config.debug &&
+      config.serverType === ServerType.SasViya
+    ) {
+      const debugKeys = ['_debug', '_omitSessionResults']
+      debugKeys.forEach((key) => {
+        if (requestParams[key] !== undefined) {
+          apiUrl += `&${key}=${encodeURIComponent(requestParams[key])}`
+          delete requestParams[key]
+        }
+      })
+    }
+
     if (data) {
       const stringifiedData = JSON.stringify(data)
       if (
@@ -253,6 +269,23 @@ export class WebJobExecutor extends BaseJobExecutor {
     })
 
     return requestPromise
+  }
+
+  protected getRequestParams(config: any): any {
+    const requestParams = super.getRequestParams(config)
+
+    // FIXME(viya - possible issue with default debug flags)
+    // runAsTask on Viya: use _debug=128 (not 131) and omit _omittextlog
+    if (
+      config.debug &&
+      config.serverType === ServerType.SasViya &&
+      config.runAsTask === true
+    ) {
+      requestParams['_debug'] = 128
+      delete requestParams['_omittextlog']
+    }
+
+    return requestParams
   }
 
   private async getJobUri(sasJob: string) {
