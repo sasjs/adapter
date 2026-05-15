@@ -250,6 +250,7 @@ ABCD,X,.
 <li><code>verbose</code> - optional, if <code>true</code> then a summary of every HTTP response is logged.</li>
 <li><code>loginMechanism</code> - either <code>Default</code> or <code>Redirected</code>. See <a href="#sas-logon">SAS Logon</a> section.</li>
 <li><code>useComputeApi</code> - Only relevant when the serverType is <code>SASVIYA</code>. If <code>true</code> the <a href="#using-the-compute-api">Compute API</a> is used. If <code>false</code> the <a href="#using-the-jes-api">JES API</a> is used. If <code>null</code> or <code>undefined</code> the <a href="#using-jes-web-app">Web</a> approach is used.</li>
+<li><code>runAsTask</code> - Only relevant for serverType <code>SASVIYA</code> and useComputeApi <code>null</code>.  Will add the <code>_EXECUTIONTASKS=true</code> URL param and thus execute jobs as Compute Tasks.</li>
 <li><code>contextName</code> - Compute context on which the requests will be called. If missing or not provided, defaults to <code>Job Execution Compute context</code>.</li>
 <li><code>requestHistoryLimit</code> - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled. Default is 10.</li>
 </ul>
