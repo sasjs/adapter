@@ -16,9 +16,11 @@ import { SASViyaApiClient } from '../SASViyaApiClient'
 import {
   isRelativePath,
   parseSasViyaDebugResponse,
+  parseSasViyaLogDebugResponse,
   appendExtraResponseAttributes,
   parseWeboutResponse,
-  getFormData
+  getFormData,
+  isNode
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
 
@@ -101,6 +103,10 @@ export class WebJobExecutor extends BaseJobExecutor {
       apiUrl += config.contextName?.trim()
         ? `&_contextname=${encodeURIComponent(config.contextName)}`
         : ''
+
+      if (config.runAsTask === true) {
+        apiUrl += '&_executionTasks=true'
+      }
     }
 
     let requestParams = {
@@ -112,6 +118,26 @@ export class WebJobExecutor extends BaseJobExecutor {
      *  Node)
      */
     let formData = getFormData()
+
+    // FIXME(viya - SAS Track CS0409737): remove when Viya stops rejecting empty multipart on
+    // _executionTasks=true. Dummy file keeps the body non-empty
+    const hasExecutionTasksFlag = config.runAsTask === true
+
+    // Move debug params to URL for viya; viya seems to honor them more
+    // reliably in the query string than the multipart body.
+    if (
+      hasExecutionTasksFlag &&
+      config.debug &&
+      config.serverType === ServerType.SasViya
+    ) {
+      const debugKeys = ['_debug', '_omitSessionResults']
+      debugKeys.forEach((key) => {
+        if (requestParams[key] !== undefined) {
+          apiUrl += `&${key}=${encodeURIComponent(requestParams[key])}`
+          delete requestParams[key]
+        }
+      })
+    }
 
     if (data) {
       const stringifiedData = JSON.stringify(data)
@@ -133,9 +159,20 @@ export class WebJobExecutor extends BaseJobExecutor {
             generateTableUploadForm(formData, data)
           formData = newFormData
           requestParams = { ...requestParams, ...params }
+
+          if (
+            config.serverType === ServerType.SasViya &&
+            hasExecutionTasksFlag
+          ) {
+            addDummyFile(formData)
+          }
         } catch (e: any) {
           return Promise.reject(new ErrorResponse(e?.message, e))
         }
+      }
+    } else {
+      if (config.serverType === ServerType.SasViya && hasExecutionTasksFlag) {
+        addDummyFile(formData)
       }
     }
 
@@ -168,11 +205,14 @@ export class WebJobExecutor extends BaseJobExecutor {
           if (config.debug) {
             switch (this.serverType) {
               case ServerType.SasViya:
-                jsonResponse = await parseSasViyaDebugResponse(
-                  res.result,
-                  this.requestClient,
-                  this.serverUrl
-                )
+                jsonResponse =
+                  config.useComputeApi === null && config.runAsTask === true
+                    ? await parseSasViyaLogDebugResponse(res.result)
+                    : await parseSasViyaDebugResponse(
+                        res.result,
+                        this.requestClient,
+                        this.serverUrl
+                      )
                 break
               case ServerType.Sas9:
                 jsonResponse =
@@ -231,6 +271,23 @@ export class WebJobExecutor extends BaseJobExecutor {
     return requestPromise
   }
 
+  protected getRequestParams(config: any): any {
+    const requestParams = super.getRequestParams(config)
+
+    // FIXME(viya - possible issue with default debug flags)
+    // runAsTask on Viya: use _debug=128 (not 131) and omit _omittextlog
+    if (
+      config.debug &&
+      config.serverType === ServerType.SasViya &&
+      config.runAsTask === true
+    ) {
+      requestParams['_debug'] = 128
+      delete requestParams['_omittextlog']
+    }
+
+    return requestParams
+  }
+
   private async getJobUri(sasJob: string) {
     if (!this.sasViyaApiClient) return ''
     let uri = ''
@@ -261,5 +318,20 @@ export class WebJobExecutor extends BaseJobExecutor {
       }
     }
     return uri
+  }
+}
+
+function addDummyFile(formData: NodeFormData | FormData) {
+  if (isNode()) {
+    ;(formData as NodeFormData).append('_sasjs_noop', '', {
+      filename: '_sasjs_noop.txt',
+      contentType: 'text/plain'
+    })
+  } else {
+    ;(formData as FormData).append(
+      '_sasjs_noop',
+      new Blob([''], { type: 'text/plain' }),
+      '_sasjs_noop.txt'
+    )
   }
 }

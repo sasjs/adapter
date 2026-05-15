@@ -11,6 +11,13 @@ export const generateTableUploadForm = (
   let tableCounter = 0
 
   for (const tableName in data) {
+    if (
+      isFormatsTable(tableName) &&
+      Object.keys(data).includes(tableName.replace(/^\$/, ''))
+    ) {
+      continue
+    }
+
     tableCounter++
 
     // Formats table should not be sent as part of 'sasjs_tables'

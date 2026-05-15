@@ -66,10 +66,11 @@ export class TestSuiteElement extends HTMLElement {
     const passed = completedTests.filter((t) => t.status === 'passed').length
     const failed = completedTests.filter((t) => t.status === 'failed').length
     const running = completedTests.filter((t) => t.status === 'running').length
+    const pending = completedTests.filter((t) => t.status === 'pending').length
 
     const statsEl = this.shadow.querySelector('.stats')
     if (statsEl) {
-      statsEl.textContent = `Passed: ${passed} | Failed: ${failed} | Running: ${running}`
+      statsEl.textContent = `Passed: ${passed} | Failed: ${failed} | Running: ${running} | Pending: ${pending}`
     }
   }
 
@@ -80,11 +81,12 @@ export class TestSuiteElement extends HTMLElement {
     const passed = completedTests.filter((t) => t.status === 'passed').length
     const failed = completedTests.filter((t) => t.status === 'failed').length
     const running = completedTests.filter((t) => t.status === 'running').length
+    const pending = completedTests.filter((t) => t.status === 'pending').length
 
     this.shadow.innerHTML = `
       <div class="header">
         <h2>${name}</h2>
-        <div class="stats">Passed: ${passed} | Failed: ${failed} | Running: ${running}</div>
+        <div class="stats">Passed: ${passed} | Failed: ${failed} | Running: ${running} | Pending: ${pending}</div>
       </div>
       <div class="tests" id="tests-container"></div>
     `

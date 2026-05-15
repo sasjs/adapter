@@ -79,6 +79,14 @@ export class SASjsConfig {
    * may affect browser performance, especially with debug (logs) enabled.
    */
   requestHistoryLimit?: number = 10
+  /**
+   * Optional setting. When `true`, the request runs as a Viya execution task —
+   * appends `_executionTasks=true` to the request URL. Only applies to the Viya
+   * web jobs path, i.e. when `serverType === SASVIYA` AND
+   * `useComputeApi` is `null`/`undefined`. Has no effect when `useComputeApi`
+   * is explicitly set to `true` or `false`.
+   */
+  runAsTask?: boolean = false
 }
 
 export enum LoginMechanism {
