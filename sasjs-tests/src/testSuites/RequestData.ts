@@ -53,7 +53,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Absolute paths',
       description: 'Should work with absolute paths to SAS jobs',
       test: () => {
-        return adapter.request(`${appLoc}/common/sendArr`, stringData)
+        return adapter.request(`${appLoc}/services/common/sendArr`, stringData)
       },
       assertion: (res: any) => {
         return res.table1[0][0] === stringData.table1[0].col1
@@ -63,7 +63,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Single string value',
       description: 'Should send an array with a single string value',
       test: () => {
-        return adapter.request('common/sendArr', stringData)
+        return adapter.request('services/common/sendArr', stringData)
       },
       assertion: (res: any) => {
         return res.table1[0][0] === stringData.table1[0].col1
@@ -74,7 +74,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       description:
         'Should send an array with a long string value under 32765 characters',
       test: () => {
-        return adapter.request('common/sendArr', getLongStringData())
+        return adapter.request('services/common/sendArr', getLongStringData())
       },
       assertion: (res: any) => {
         const longStringData = getLongStringData()
@@ -87,7 +87,9 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
         'Should error out with long string values over 32765 characters',
       test: () => {
         const data = getLongStringData(32767)
-        return adapter.request('common/sendArr', data).catch((e: any) => e)
+        return adapter
+          .request('services/common/sendArr', data)
+          .catch((e: any) => e)
       },
       assertion: (error: any) => {
         return !!error && !!error.error && !!error.error.message
@@ -97,7 +99,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Single numeric value',
       description: 'Should send an array with a single numeric value',
       test: () => {
-        return adapter.request('common/sendArr', numericData)
+        return adapter.request('services/common/sendArr', numericData)
       },
       assertion: (res: any) => {
         return res.table1[0][0] === numericData.table1[0].col1
@@ -107,7 +109,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Multiple columns',
       description: 'Should handle data with multiple columns',
       test: () => {
-        return adapter.request('common/sendArr', multiColumnData)
+        return adapter.request('services/common/sendArr', multiColumnData)
       },
       assertion: (res: any) => {
         return (
@@ -122,7 +124,7 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Multiple rows with nulls',
       description: 'Should handle data with multiple rows with null values',
       test: () => {
-        return adapter.request('common/sendArr', multipleRowsWithNulls)
+        return adapter.request('services/common/sendArr', multipleRowsWithNulls)
       },
       assertion: (res: any) => {
         let result = true
@@ -148,7 +150,10 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       title: 'Multiple columns with nulls',
       description: 'Should handle data with multiple columns with null values',
       test: () => {
-        return adapter.request('common/sendArr', multipleColumnsWithNulls)
+        return adapter.request(
+          'services/common/sendArr',
+          multipleColumnsWithNulls
+        )
       },
       assertion: (res: any) => {
         let result = true
@@ -184,7 +189,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           '1InvalidTable': [{ col1: 42 }]
         }
         return adapter
-          .request('common/sendObj', invalidData)
+          .request('services/common/sendObj', invalidData)
           .catch((e: any) => e)
       },
       assertion: (error: any) =>
@@ -198,7 +203,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           'an invalidTable': [{ col1: 42 }]
         }
         return adapter
-          .request('common/sendObj', invalidData)
+          .request('services/common/sendObj', invalidData)
           .catch((e: any) => e)
       },
       assertion: (error: any) =>
@@ -212,7 +217,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           'anInvalidTable#': [{ col1: 42 }]
         }
         return adapter
-          .request('common/sendObj', invalidData)
+          .request('services/common/sendObj', invalidData)
           .catch((e: any) => e)
       },
       assertion: (error: any) =>
@@ -227,7 +232,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         }
 
         return adapter
-          .request('common/sendObj', invalidData)
+          .request('services/common/sendObj', invalidData)
           .catch((e: any) => e)
       },
       assertion: (error: any) =>
@@ -241,7 +246,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
           inData: [[{ data: 'value' }]]
         }
         return adapter
-          .request('common/sendObj', invalidData)
+          .request('services/common/sendObj', invalidData)
           .catch((e: any) => e)
       },
       assertion: (error: any) =>
@@ -251,7 +256,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Single string value',
       description: 'Should send an object with a single string value',
       test: () => {
-        return adapter.request('common/sendObj', stringData)
+        return adapter.request('services/common/sendObj', stringData)
       },
       assertion: (res: any) => {
         return res.table1[0].COL1 === stringData.table1[0].col1
@@ -262,7 +267,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       description:
         'Should send an object with a long string value under 32765 characters',
       test: () => {
-        return adapter.request('common/sendObj', getLongStringData())
+        return adapter.request('services/common/sendObj', getLongStringData())
       },
       assertion: (res: any) => {
         const longStringData = getLongStringData()
@@ -275,7 +280,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
         'Should error out with long string values over 32765 characters',
       test: () => {
         return adapter
-          .request('common/sendObj', getLongStringData(32767))
+          .request('services/common/sendObj', getLongStringData(32767))
           .catch((e: any) => e)
       },
       assertion: (error: any) => {
@@ -286,7 +291,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Single numeric value',
       description: 'Should send an object with a single numeric value',
       test: () => {
-        return adapter.request('common/sendObj', numericData)
+        return adapter.request('services/common/sendObj', numericData)
       },
       assertion: (res: any) => {
         return res.table1[0].COL1 === numericData.table1[0].col1
@@ -297,7 +302,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Large data volume',
       description: 'Should send an object with a large amount of data',
       test: () => {
-        return adapter.request('common/sendObj', getLargeObjectData())
+        return adapter.request('services/common/sendObj', getLargeObjectData())
       },
       assertion: (res: any) => {
         const data = getLargeObjectData()
@@ -308,7 +313,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Multiple columns',
       description: 'Should handle data with multiple columns',
       test: () => {
-        return adapter.request('common/sendObj', multiColumnData)
+        return adapter.request('services/common/sendObj', multiColumnData)
       },
       assertion: (res: any) => {
         return (
@@ -323,7 +328,7 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Multiple rows with nulls',
       description: 'Should handle data with multiple rows with null values',
       test: () => {
-        return adapter.request('common/sendObj', multipleRowsWithNulls)
+        return adapter.request('services/common/sendObj', multipleRowsWithNulls)
       },
       assertion: (res: any) => {
         let result = true
@@ -349,7 +354,10 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       title: 'Multiple columns with nulls',
       description: 'Should handle data with multiple columns with null values',
       test: () => {
-        return adapter.request('common/sendObj', multipleColumnsWithNulls)
+        return adapter.request(
+          'services/common/sendObj',
+          multipleColumnsWithNulls
+        )
       },
       assertion: (res: any) => {
         let result = true

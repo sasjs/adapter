@@ -288,6 +288,7 @@ Configuration on the client side involves passing an object on startup, which ca
 - `verbose` - optional, if `true` then a summary of every HTTP response is logged.
 - `loginMechanism` - either `Default` or `Redirected`. See [SAS Logon](#sas-logon) section.
 - `useComputeApi` - Only relevant when the serverType is `SASVIYA`. If `true` the [Compute API](#using-the-compute-api) is used. If `false` the [JES API](#using-the-jes-api) is used. If `null` or `undefined` the [Web](#using-jes-web-app) approach is used.
+- `runAsTask` - Only relevant for serverType `SASVIYA` and useComputeApi `null`.  Will add the `_EXECUTIONTASKS=true` URL param and thus execute jobs as Compute Tasks.
 - `contextName` - Compute context on which the requests will be called. If missing or not provided, defaults to `Job Execution Compute context`.
 - `requestHistoryLimit` - Request history limit. Increasing this limit may affect browser performance, especially with debug (logs) enabled. Default is 10.
 

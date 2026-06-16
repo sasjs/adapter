@@ -4,8 +4,8 @@
   "sasJsConfig": {
     "loginMechanism": "Redirected",
     "serverUrl": "",
-    "appLoc": "/Public/app/adapter-tests/services",
-    "serverType": "SASVIYA",
+    "appLoc": "/Public/app/adapter-tests",
+    "serverType": "SASJS",
     "debug": false,
     "contextName": "SAS Job Execution compute context",
     "useComputeApi": true
