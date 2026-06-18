@@ -23,6 +23,13 @@ export class Sas9RequestClient extends RequestClient {
     }
   }
 
+  public resetInMemoryAuthState() {
+    super.resetInMemoryAuthState()
+    if (this.httpClient.defaults.jar) {
+      ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookiesSync()
+    }
+  }
+
   public async login(username: string, password: string, jobsPath: string) {
     const codeInjectorPath = `/User Folders/${username}/My Folder/sasjs/runner`
     if (this.httpClient.defaults.jar) {

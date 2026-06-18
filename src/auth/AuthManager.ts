@@ -375,7 +375,7 @@ export class AuthManager {
    *
    */
   public async logOut() {
-    this.requestClient.clearCsrfTokens()
+    this.requestClient.resetInMemoryAuthState()
 
     return this.requestClient.get(this.logoutUrl, undefined).then(() => true)
   }

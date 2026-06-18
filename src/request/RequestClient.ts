@@ -28,6 +28,9 @@ import {
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 import { inspect } from 'util'
 
+const getLogger = () =>
+  (typeof process !== 'undefined' && process.logger) || console
+
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
   private requestsLimit: number = 10
@@ -37,6 +40,7 @@ export class RequestClient implements HttpClient {
   protected csrfToken: CsrfToken = { headerName: '', value: '' }
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
+  private isRecoveringFromNetworkError = false
 
   constructor(
     protected baseUrl: string,
@@ -75,6 +79,25 @@ export class RequestClient implements HttpClient {
   public clearLocalStorageTokens() {
     localStorage.setItem('accessToken', '')
     localStorage.setItem('refreshToken', '')
+  }
+
+  public resetInMemoryAuthState() {
+    this.clearCsrfTokens()
+    if (typeof localStorage !== 'undefined') {
+      this.clearLocalStorageTokens()
+    }
+    if (typeof document !== 'undefined') {
+      this.clearAllCookies()
+    }
+  }
+
+  private clearAllCookies() {
+    const cookies = document.cookie.split(';')
+    for (const cookie of cookies) {
+      const name = cookie.split('=')[0].trim()
+      if (!name) continue
+      document.cookie = `${name}=; Max-Age=0; Path=/;`
+    }
   }
 
   public getBaseUrl() {
@@ -354,6 +377,7 @@ export class RequestClient implements HttpClient {
     const csrfTokenKey = Object.keys(params).find((k) =>
       k?.toLowerCase().includes('csrf')
     )
+
     if (csrfTokenKey) {
       this.csrfToken.value = params[csrfTokenKey]
       this.csrfToken.headerName = this.csrfToken.headerName || 'x-csrf-token'
@@ -378,7 +402,7 @@ export class RequestClient implements HttpClient {
       })
       .then((res) => res.data)
       .catch((error) => {
-        const logger = process.logger || console
+        const logger = getLogger()
         logger.error(error)
       })
   }
@@ -685,6 +709,45 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
     if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
       throw new CertificateError(e.message)
+    }
+
+    if (
+      e.isAxiosError &&
+      !response &&
+      e.code === 'ERR_NETWORK' &&
+      !this.isRecoveringFromNetworkError
+    ) {
+      // Opaque ERR_NETWORK usually means the server rejected stale credentials.
+      // Wipe in-memory auth state, re-establish session via GET /,
+      // then retry the original request.
+      this.resetInMemoryAuthState()
+      this.isRecoveringFromNetworkError = true
+      try {
+        // Re-establish session and CSRF cookie
+        const rootResponse = await this.httpClient
+          .get('/', { withXSRFToken: true })
+          .catch((err) => err.response)
+
+        if (rootResponse?.data) {
+          const cookie =
+            /<script>document.cookie = '(XSRF-TOKEN=.*; Max-Age=86400; SameSite=Strict; Path=\/;)'<\/script>/.exec(
+              rootResponse.data
+            )?.[1]
+
+          if (cookie && typeof document !== 'undefined') {
+            document.cookie = cookie
+          }
+
+          this.parseAndSetCsrfToken(rootResponse)
+        }
+
+        return await callback()
+      } catch {
+        // Session could not be recovered — surface LoginRequiredError
+        throw new LoginRequiredError()
+      } finally {
+        this.isRecoveringFromNetworkError = false
+      }
     }
 
     if (e.message) throw e
