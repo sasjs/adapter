@@ -13,21 +13,37 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
+      id-token: write       # required for npm provenance (trusted publisher)
+      issues: write         # optional: lets @semantic-release/github comment on issues
+      pull-requests: write  # optional: lets @semantic-release/github comment on PRs
 
     strategy:
       matrix:
         node-version: [22]
 
     steps:
+      # 1. Mint a short-lived GitHub App token (bypass-capable)
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # 2. Checkout using the app token so the release commit can be pushed
       - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+          fetch-depth: 0      # semantic-release needs full history + tags
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.npmjs.org
 
-        # 2. Restore npm cache manually
+        # 3. Restore npm cache manually
       - name: Restore npm cache
         uses: actions/cache@v4
         id: npm-cache
@@ -52,7 +68,7 @@ jobs:
       - name: Semantic Release
         run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
 
       - name: Publish to npm with trusted publisher
         if: success()
