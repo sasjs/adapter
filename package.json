@@ -48,10 +48,10 @@
     "viya",
     "sasjs"
   ],
-  "author": "Allan Bowe <support@macropeople.com>",
+  "author": "support@4gl.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sasjs/adapter"
+    "url": "git+https://github.com/sasjs/adapter.git"
   },
   "license": "ISC",
   "devDependencies": {

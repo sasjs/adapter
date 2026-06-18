@@ -22,7 +22,7 @@ jobs:
         node-version: [22]
 
     steps:
-      # 1. Mint a short-lived GitHub App token (bypass-capable)
+      # Mint a short-lived GitHub App token (bypass-capable)
       - name: Generate token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -30,7 +30,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      # 2. Checkout using the app token so the release commit can be pushed
+      # Checkout using the app token so the release commit can be pushed
       - uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -43,7 +43,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.npmjs.org
 
-        # 3. Restore npm cache manually
+      # Node 22 ships npm 10.x — OIDC trusted publishing needs npm >= 11.5.1
+      - name: Update npm
+        run: npm install -g npm@latest
+
+        # Restore npm cache manually
       - name: Restore npm cache
         uses: actions/cache@v4
         id: npm-cache
@@ -72,9 +76,7 @@ jobs:
 
       - name: Publish to npm with trusted publisher
         if: success()
-        env:
-          NPM_CONFIG_PROVENANCE: true
-        run: npm publish --access public --provenance
+        run: npm publish --access public
 
       - name: Send Matrix message
         run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
