@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
 
     strategy:
       matrix:
@@ -19,9 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org
 
         # 2. Restore npm cache manually
       - name: Restore npm cache
@@ -49,7 +53,7 @@ jobs:
         uses: cycjimmy/semantic-release-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       - name: Send Matrix message
         run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
