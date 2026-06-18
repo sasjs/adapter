@@ -31,15 +31,6 @@
           "prepareCmd": "npm version ${nextRelease.version} --no-git-tag-version"
         }
       ],
-      [
-        "@semantic-release/git",
-        {
-          "assets": [
-            "package.json",
-            "package-lock.json"
-          ]
-        }
-      ],
       "@semantic-release/github"
     ]
   },
@@ -57,7 +48,6 @@
   "devDependencies": {
     "@cypress/webpack-preprocessor": "5.9.1",
     "@semantic-release/exec": "6.0.3",
-    "@semantic-release/git": "10.0.1",
     "@types/cors": "^2.8.17",
     "@types/express": "4.17.13",
     "@types/jest": "29.5.14",
