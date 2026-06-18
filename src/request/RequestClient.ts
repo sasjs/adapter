@@ -82,33 +82,22 @@ export class RequestClient implements HttpClient {
   }
 
   public resetInMemoryAuthState() {
-    const logger = getLogger()
-    const clearedCookies: string[] = []
-
     this.clearCsrfTokens()
     if (typeof localStorage !== 'undefined') {
       this.clearLocalStorageTokens()
     }
     if (typeof document !== 'undefined') {
-      clearedCookies.push(...this.clearAllCookies())
+      this.clearAllCookies()
     }
-
-    logger.warn('[resetInMemoryAuthState] cleared', {
-      cookies: clearedCookies,
-      localStorage: typeof localStorage !== 'undefined'
-    })
   }
 
-  private clearAllCookies(): string[] {
+  private clearAllCookies() {
     const cookies = document.cookie.split(';')
-    const cleared: string[] = []
     for (const cookie of cookies) {
       const name = cookie.split('=')[0].trim()
       if (!name) continue
       document.cookie = `${name}=; Max-Age=0; Path=/;`
-      cleared.push(name)
     }
-    return cleared
   }
 
   public getBaseUrl() {
@@ -388,14 +377,10 @@ export class RequestClient implements HttpClient {
     const csrfTokenKey = Object.keys(params).find((k) =>
       k?.toLowerCase().includes('csrf')
     )
-    const logger = getLogger()
 
     if (csrfTokenKey) {
       this.csrfToken.value = params[csrfTokenKey]
       this.csrfToken.headerName = this.csrfToken.headerName || 'x-csrf-token'
-      logger.warn('[authorize] CSRF from form', {
-        headerName: this.csrfToken.headerName
-      })
     }
 
     const formData = new FormData()
@@ -410,23 +395,15 @@ export class RequestClient implements HttpClient {
       throw new Error('Auth Form URL is null or undefined.')
     }
 
-    logger.warn('[authorize] posting to', { authUrl })
-
     return await this.httpClient
       .post(authUrl, formData, {
         responseType: 'text',
         headers: { Accept: '*/*', 'Content-Type': 'text/plain' }
       })
-      .then((res) => {
-        logger.warn('[authorize] success', { status: res.status })
-        return res.data
-      })
+      .then((res) => res.data)
       .catch((error) => {
-        logger.error('[authorize] failed', {
-          code: error?.code,
-          status: error?.response?.status,
-          message: error?.message
-        })
+        const logger = getLogger()
+        logger.error(error)
       })
   }
 
@@ -625,16 +602,9 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
   protected parseAndSetCsrfToken = (response: AxiosResponse) => {
     const token = this.parseCsrfToken(response)
-    const logger = getLogger()
 
     if (token) {
       this.csrfToken = token
-      logger.warn('[parseAndSetCsrfToken] set', {
-        headerName: token.headerName,
-        hasValue: !!token.value
-      })
-    } else {
-      logger.warn('[parseAndSetCsrfToken] no token found in response')
     }
   }
 
@@ -654,11 +624,6 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
   }
 
-  private logHandleError(step: string, details?: Record<string, any>) {
-    const logger = getLogger()
-    logger.warn(`[handleError] ${step}`, details || '')
-  }
-
   protected handleError = async (
     e: any,
     callback: any,
@@ -666,19 +631,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
   ) => {
     const response = e.response as AxiosResponse
 
-    this.logHandleError('entered', {
-      errorType: e?.constructor?.name,
-      code: e?.code,
-      status: response?.status,
-      url: e?.config?.url || response?.config?.url,
-      hasResponse: !!response,
-      isRecovering: this.isRecoveringFromNetworkError
-    })
-
     if (e instanceof AuthorizeError) {
-      this.logHandleError('AuthorizeError — fetching confirmUrl', {
-        confirmUrl: e.confirmUrl
-      })
       const res = await this.httpClient
         .get(e.confirmUrl, {
           responseType: 'text',
@@ -688,24 +641,13 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
           throw prefixMessage(err, 'Error while getting error confirmUrl. ')
         })
 
-      const needsAuthorize = isAuthorizeFormRequired(res?.data as string)
-      this.logHandleError(
-        'AuthorizeError — authorize form required: ' + needsAuthorize
-      )
-
-      if (needsAuthorize) {
+      if (isAuthorizeFormRequired(res?.data as string)) {
         await this.authorize(res.data as string).catch((err) => {
           throw prefixMessage(err, 'Error while authorizing request. ')
         })
       }
 
-      this.logHandleError('AuthorizeError — retrying callback')
       return await callback().catch((err: any) => {
-        this.logHandleError('AuthorizeError — callback failed', {
-          errorType: err?.constructor?.name,
-          code: err?.code,
-          message: err?.message
-        })
         throw prefixMessage(
           err,
           'Error while executing callback in handleError. '
@@ -714,14 +656,12 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
 
     if (e instanceof LoginRequiredError) {
-      this.logHandleError('LoginRequiredError — clearing CSRF and re-throwing')
       this.clearCsrfTokens()
 
       throw e
     }
 
     if (e instanceof InvalidSASjsCsrfError) {
-      this.logHandleError('InvalidSASjsCsrfError — re-fetching CSRF cookie')
       // Fetching root and creating CSRF cookie
       await this.httpClient
         .get('/', {
@@ -733,22 +673,13 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
               response.data
             )?.[1]
 
-          this.logHandleError(
-            'InvalidSASjsCsrfError — cookie found: ' + !!cookie
-          )
           if (cookie) document.cookie = cookie
         })
         .catch((err) => {
           throw prefixMessage(err, 'Error while re-fetching CSRF token.')
         })
 
-      this.logHandleError('InvalidSASjsCsrfError — retrying callback')
       return await callback().catch((err: any) => {
-        this.logHandleError('InvalidSASjsCsrfError — callback failed', {
-          errorType: err?.constructor?.name,
-          code: err?.code,
-          message: err?.message
-        })
         throw prefixMessage(
           err,
           'Error while executing callback in handleError. '
@@ -759,20 +690,8 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     if (response?.status === 403 || response?.status === 449) {
       this.parseAndSetCsrfToken(response)
 
-      const hasToken = !!(this.csrfToken.headerName && this.csrfToken.value)
-      this.logHandleError('403/449 — parsed CSRF from response', {
-        hasToken,
-        headerName: this.csrfToken.headerName
-      })
-
-      if (hasToken) {
-        this.logHandleError('403/449 — retrying callback with new CSRF')
+      if (this.csrfToken.headerName && this.csrfToken.value) {
         return await callback().catch((err: any) => {
-          this.logHandleError('403/449 — callback failed', {
-            errorType: err?.constructor?.name,
-            code: err?.code,
-            message: err?.message
-          })
           throw prefixMessage(
             err,
             'Error while executing callback in handleError. '
@@ -780,9 +699,6 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
         })
       }
 
-      this.logHandleError(
-        '403/449 — no CSRF in response, throwing original error'
-      )
       throw e
     } else if (response?.status === 404) {
       throw new NotFoundError(response.config.url!)
@@ -804,22 +720,13 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
       // Opaque ERR_NETWORK usually means the server rejected stale credentials.
       // Wipe in-memory auth state, re-establish session via GET /,
       // then retry the original request.
-      this.logHandleError('ERR_NETWORK — clearing all auth state')
       this.resetInMemoryAuthState()
       this.isRecoveringFromNetworkError = true
       try {
         // Re-establish session and CSRF cookie
-        this.logHandleError('ERR_NETWORK — re-establishing session via GET /')
         const rootResponse = await this.httpClient
           .get('/', { withXSRFToken: true })
-          .catch((err) => {
-            this.logHandleError('ERR_NETWORK — GET / failed', {
-              code: err?.code,
-              status: err?.response?.status,
-              message: err?.message
-            })
-            return err.response
-          })
+          .catch((err) => err.response)
 
         if (rootResponse?.data) {
           const cookie =
@@ -829,34 +736,20 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
           if (cookie && typeof document !== 'undefined') {
             document.cookie = cookie
-            this.logHandleError('ERR_NETWORK — XSRF-TOKEN cookie restored')
           }
 
           this.parseAndSetCsrfToken(rootResponse)
         }
 
-        this.logHandleError('ERR_NETWORK — retrying original request')
         return await callback()
-      } catch (retryErr: any) {
+      } catch {
         // Session could not be recovered — surface LoginRequiredError
-        this.logHandleError(
-          'ERR_NETWORK — retry failed, throwing LoginRequiredError',
-          {
-            errorType: retryErr?.constructor?.name,
-            code: retryErr?.code,
-            message: retryErr?.message
-          }
-        )
         throw new LoginRequiredError()
       } finally {
         this.isRecoveringFromNetworkError = false
       }
     }
 
-    this.logHandleError('unhandled — throwing as-is', {
-      message: e?.message,
-      code: e?.code
-    })
     if (e.message) throw e
     else throw prefixMessage(e, 'Error while handling error. ')
   }
