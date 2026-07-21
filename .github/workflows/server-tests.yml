@@ -86,8 +86,30 @@ jobs:
       - name: install pm2
         run: npm i -g pm2
 
+      - name: Diagnose VPN connectivity
+        run: |
+          echo "--- openvpn3 sessions-list ---"
+          openvpn3 sessions-list
+          echo "--- openvpn3 session-stats ---"
+          openvpn3 session-stats --config .github/vpn/config.ovpn
+          echo "--- ip addr (tun interface) ---"
+          ip addr show tun0 || echo "no tun0 interface found"
+          echo "--- ip route ---"
+          ip route
+          echo "--- DNS resolution check for target host (host/IP not printed) ---"
+          TARGET_HOST="$(echo '${{ secrets.SASJS_SERVER_URL }}' | sed -E 's#^[a-z]+://##; s#[:/].*##')"
+          if getent hosts "$TARGET_HOST" > /dev/null; then
+            echo "DNS resolution: OK"
+          else
+            echo "DNS resolution: FAILED"
+          fi
+        shell: bash
+
       - name: Fetch SASJS server
-        run: curl ${{ secrets.SASJS_SERVER_URL }}/SASjsApi/info
+        run: |
+          curl -sS --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 15 --max-time 30 \
+            -o /dev/null -w "HTTP status: %{http_code}\n" \
+            "${{ secrets.SASJS_SERVER_URL }}/SASjsApi/info"
 
       - name: Deploy sasjs-tests
         run: |
