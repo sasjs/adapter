@@ -16,6 +16,7 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { SASjsApiClient, SASjsAuthResponse } from './SASjsApiClient'
 import { AuthManager } from './auth'
+import { OnTokensRefreshed } from './auth/getTokens'
 import {
   ServerType,
   MacroVar,
@@ -45,6 +46,7 @@ interface ExecuteScriptParams {
   authConfig?: AuthConfig
   authConfigSas9?: AuthConfigSas9
   debug?: boolean
+  onTokensRefreshed?: OnTokensRefreshed
 }
 
 const defaultConfig: SASjsConfig = {
@@ -109,7 +111,8 @@ export default class SASjs {
     runTime,
     authConfig,
     authConfigSas9,
-    debug
+    debug,
+    onTokensRefreshed
   }: ExecuteScriptParams) {
     this.isMethodSupported('executeScript', [
       ServerType.Sas9,
@@ -157,7 +160,13 @@ export default class SASjs {
         contextName,
         authConfig,
         null,
-        debug ? debug : this.sasjsConfig.debug
+        debug ? debug : this.sasjsConfig.debug,
+        false,
+        true,
+        undefined,
+        false,
+        undefined,
+        onTokensRefreshed
       )
     }
   }

@@ -1,6 +1,6 @@
-import { AuthConfig } from '@sasjs/utils/types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { Job, PollOptions, PollStrategy } from '../..'
-import { getTokens } from '../../auth/getTokens'
+import { getTokens, OnTokensRefreshed } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
 import { Link, WriteStream, SessionState, JobSessionManager } from '../../types'
@@ -46,7 +46,8 @@ export async function pollJobState(
   debug: boolean,
   authConfig?: AuthConfig,
   pollOptions?: PollOptions,
-  jobSessionManager?: JobSessionManager
+  jobSessionManager?: JobSessionManager,
+  onTokensRefreshed?: OnTokensRefreshed
 ): Promise<JobState> {
   const logger = process.logger || console
 
@@ -130,7 +131,8 @@ export async function pollJobState(
     authConfig,
     streamLog,
     logFileStream,
-    jobSessionManager
+    jobSessionManager,
+    onTokensRefreshed
   )
 
   currentState = result.state
@@ -162,7 +164,8 @@ export async function pollJobState(
       authConfig,
       streamLog,
       logFileStream,
-      jobSessionManager
+      jobSessionManager,
+      onTokensRefreshed
     )
 
     currentState = result.state
@@ -179,14 +182,21 @@ const getJobState = async (
   job: Job,
   currentState: string,
   debug: boolean,
-  authConfig?: AuthConfig
+  authConfig?: AuthConfig,
+  onTokensRefreshed?: OnTokensRefreshed
 ): Promise<JobState> => {
   const stateLink = job.links.find((l: any) => l.rel === 'state')!
 
   if (needsRetry(currentState)) {
     let tokens
 
-    if (authConfig) tokens = await getTokens(requestClient, authConfig)
+    if (authConfig)
+      tokens = await getTokens(
+        requestClient,
+        authConfig,
+        ServerType.SasViya,
+        onTokensRefreshed
+      )
 
     const { result: jobState } = await requestClient
       .get<string>(
@@ -236,7 +246,8 @@ export const doPoll = async (
   authConfig?: AuthConfig,
   streamLog?: boolean,
   logStream?: WriteStream,
-  jobSessionManager?: JobSessionManager
+  jobSessionManager?: JobSessionManager,
+  onTokensRefreshed?: OnTokensRefreshed
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollOptions
   const logger = process.logger || console
@@ -287,7 +298,8 @@ export const doPoll = async (
       postedJob,
       state,
       debug,
-      authConfig
+      authConfig,
+      onTokensRefreshed
     ).catch((err) => {
       errorCount++
 

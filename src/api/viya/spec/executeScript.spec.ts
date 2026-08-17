@@ -10,6 +10,7 @@ import * as fetchLogsModule from '../../../utils/fetchLogByChunks'
 import { PollOptions, JobSessionManager } from '../../../types'
 import { ComputeJobExecutionError, NotFoundError } from '../../../types/errors'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
+import { ServerType } from '@sasjs/utils/types'
 
 const sessionManager = new (<jest.Mock<SessionManager>>SessionManager)()
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
@@ -50,7 +51,9 @@ describe('executeScript', () => {
 
     expect(getTokensModule.getTokens).toHaveBeenCalledWith(
       requestClient,
-      mockAuthConfig
+      mockAuthConfig,
+      ServerType.SasViya,
+      undefined
     )
   })
 
@@ -335,7 +338,8 @@ describe('executeScript', () => {
       false,
       mockAuthConfig,
       defaultPollOptions,
-      jobSessionManager
+      jobSessionManager,
+      undefined
     )
   })
 
