@@ -28,8 +28,8 @@ describe('getAccessTokenForViya', () => {
 
     await getAccessTokenForViya(
       requestClient,
-      authConfig.client,
-      authConfig.secret,
+      authConfig.client!,
+      authConfig.secret!,
       authConfig.refresh_token
     )
 
@@ -61,8 +61,8 @@ describe('getAccessTokenForViya', () => {
 
     const error = await getAccessTokenForViya(
       requestClient,
-      authConfig.client,
-      authConfig.secret,
+      authConfig.client!,
+      authConfig.secret!,
       authConfig.refresh_token
     ).catch((e: any) => e)
 
