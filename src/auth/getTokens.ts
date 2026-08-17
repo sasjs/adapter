@@ -40,11 +40,20 @@ export async function getTokens(
     secret = ''
   }
 
-  if (
-    isAccessTokenExpiring(access_token) ||
-    isRefreshTokenExpiring(refresh_token)
-  ) {
-    if (hasTokenExpired(refresh_token)) {
+  // Refresh tokens are not always decodable JWTs - some servers issue
+  // opaque tokens. Undecodable tokens are treated as still valid.
+  let isRefreshTokenExpired = false
+  try {
+    isRefreshTokenExpired = hasTokenExpired(refresh_token)
+  } catch (_) {}
+
+  let isRefreshTokenExpiringSoon = false
+  try {
+    isRefreshTokenExpiringSoon = isRefreshTokenExpiring(refresh_token)
+  } catch (_) {}
+
+  if (isAccessTokenExpiring(access_token) || isRefreshTokenExpiringSoon) {
+    if (isRefreshTokenExpired) {
       const error =
         'Unable to obtain new access token. Your refresh token has expired.'
 
