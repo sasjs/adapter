@@ -153,6 +153,58 @@ describe('getTokens', () => {
     expect(onTokensRefreshed).not.toHaveBeenCalled()
   })
 
+  it('should surface a useful error when refresh fails with an opaque refresh token', async () => {
+    setupMocks()
+    jest
+      .spyOn(refreshTokensModule, 'refreshTokensForViya')
+      .mockRejectedValue(new Error('Invalid refresh token'))
+    const access_token = generateToken(30)
+    const refresh_token = 'opaque-refresh-token'
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+
+    const error = await getTokens(requestClient, authConfig).catch(
+      (e: any) => e
+    )
+
+    expect(error.message).toEqual('Invalid refresh token')
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenCalledWith(
+      requestClient,
+      authConfig.client,
+      authConfig.secret,
+      refresh_token
+    )
+  })
+
+  it('should not fail the refresh when the onTokensRefreshed handler throws', async () => {
+    setupMocks()
+    const access_token = generateToken(30)
+    const refresh_token = generateToken(86400000)
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+    const onTokensRefreshed = jest
+      .fn()
+      .mockRejectedValue(new Error('disk write failed'))
+
+    const result = await getTokens(
+      requestClient,
+      authConfig,
+      ServerType.SasViya,
+      onTokensRefreshed
+    )
+
+    expect(result.access_token).toEqual(mockAuthResponse.access_token)
+    expect(result.refresh_token).toEqual(mockAuthResponse.refresh_token)
+  })
+
   it('should throw an error if the refresh token has already expired', async () => {
     setupMocks()
     const access_token = generateToken(86400000)

@@ -34,23 +34,29 @@ export async function getTokens(
 
   // Tokens minted without a registered OAuth client (e.g. via the password
   // grant against the built-in public client) can still be refreshed using
-  // that same secret-less client.
-  if (serverType === ServerType.SasViya && !client) {
+  // that same secret-less client. The fallback only fires when neither a
+  // client nor a secret was provided.
+  if (serverType === ServerType.SasViya && !client && !secret) {
     client = 'sas.cli'
     secret = ''
   }
 
   // Refresh tokens are not always decodable JWTs - some servers issue
-  // opaque tokens. Undecodable tokens are treated as still valid.
+  // opaque tokens. jwt-decode throws InvalidTokenError for these; only in
+  // that case is the token treated as still valid.
   let isRefreshTokenExpired = false
   try {
     isRefreshTokenExpired = hasTokenExpired(refresh_token)
-  } catch (_) {}
+  } catch (e) {
+    if ((e as Error).name !== 'InvalidTokenError') throw e
+  }
 
   let isRefreshTokenExpiringSoon = false
   try {
     isRefreshTokenExpiringSoon = isRefreshTokenExpiring(refresh_token)
-  } catch (_) {}
+  } catch (e) {
+    if ((e as Error).name !== 'InvalidTokenError') throw e
+  }
 
   if (isAccessTokenExpiring(access_token) || isRefreshTokenExpiringSoon) {
     if (isRefreshTokenExpired) {
@@ -75,7 +81,13 @@ export async function getTokens(
         : await refreshTokensForSasjs(requestClient, refresh_token)
     ;({ access_token, refresh_token } = tokens)
 
-    await onTokensRefreshed?.({ access_token, refresh_token })
+    // A failing persistence handler must not turn a successful refresh into
+    // an auth failure - log the error and return the fresh pair regardless.
+    try {
+      await onTokensRefreshed?.({ access_token, refresh_token })
+    } catch (e) {
+      logger.error('onTokensRefreshed handler failed:', e)
+    }
   }
 
   return { access_token, refresh_token, client, secret }
