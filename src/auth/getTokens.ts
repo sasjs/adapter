@@ -14,14 +14,31 @@ import { refreshTokensForSasjs } from './refreshTokensForSasjs'
  * @param requestClient - the pre-configured HTTP request client
  * @param authConfig - an object containing a client ID, secret, access token and refresh token
  * @param serverType - server type for which refreshing the tokens, defaults to SASVIYA
+ * @param onTokensRefreshed - optional callback invoked with the rotated token
+ * pair after a successful internal refresh. Viya refresh tokens are
+ * single-use/rotating, so consumers that persist tokens (e.g. the CLI writing
+ * `.env.{target}`) should pass a handler here to avoid the persisted pair
+ * going stale.
  */
 export async function getTokens(
   requestClient: RequestClient,
   authConfig: AuthConfig,
-  serverType: ServerType = ServerType.SasViya
+  serverType: ServerType = ServerType.SasViya,
+  onTokensRefreshed?: (tokens: {
+    access_token: string
+    refresh_token: string
+  }) => void | Promise<void>
 ): Promise<AuthConfig> {
   const logger = process.logger || console
   let { access_token, refresh_token, client, secret } = authConfig
+
+  // Tokens minted without a registered OAuth client (e.g. via the password
+  // grant against the built-in public client) can still be refreshed using
+  // that same secret-less client.
+  if (serverType === ServerType.SasViya && !client) {
+    client = 'sas.cli'
+    secret = ''
+  }
 
   if (
     isAccessTokenExpiring(access_token) ||
@@ -48,6 +65,8 @@ export async function getTokens(
           )
         : await refreshTokensForSasjs(requestClient, refresh_token)
     ;({ access_token, refresh_token } = tokens)
+
+    await onTokensRefreshed?.({ access_token, refresh_token })
   }
 
   return { access_token, refresh_token, client, secret }

@@ -1,4 +1,4 @@
-import { AuthConfig } from '@sasjs/utils/types'
+import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import * as refreshTokensModule from '../refreshTokensForViya'
 import { generateToken, mockAuthResponse } from './mockResponses'
 import { getTokens } from '../getTokens'
@@ -47,6 +47,110 @@ describe('getTokens', () => {
       authConfig.secret,
       authConfig.refresh_token
     )
+  })
+
+  it('should fall back to the sas.cli public client when no client is configured', async () => {
+    setupMocks()
+    const access_token = generateToken(30)
+    const refresh_token = generateToken(86400000)
+    const authConfig = {
+      access_token,
+      refresh_token
+    } as unknown as AuthConfig
+
+    const result = await getTokens(requestClient, authConfig)
+
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenCalledWith(
+      requestClient,
+      'sas.cli',
+      '',
+      authConfig.refresh_token
+    )
+    expect(result.client).toEqual('sas.cli')
+    expect(result.secret).toEqual('')
+  })
+
+  it('should not attempt to refresh when the access token is fresh and no client is configured', async () => {
+    setupMocks()
+    const access_token = generateToken(86400000)
+    const refresh_token = generateToken(86400000)
+    const authConfig = {
+      access_token,
+      refresh_token
+    } as unknown as AuthConfig
+
+    const result = await getTokens(requestClient, authConfig)
+
+    expect(refreshTokensModule.refreshTokensForViya).not.toHaveBeenCalled()
+    expect(result.access_token).toEqual(access_token)
+  })
+
+  it('should attempt to refresh with an opaque refresh token and an expiring access token', async () => {
+    setupMocks()
+    const access_token = generateToken(30)
+    const refresh_token = 'opaque-refresh-token'
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+
+    await getTokens(requestClient, authConfig)
+
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenCalledWith(
+      requestClient,
+      authConfig.client,
+      authConfig.secret,
+      refresh_token
+    )
+  })
+
+  it('should invoke onTokensRefreshed with the rotated pair after a refresh', async () => {
+    setupMocks()
+    const access_token = generateToken(30)
+    const refresh_token = generateToken(86400000)
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+    const onTokensRefreshed = jest.fn()
+
+    await getTokens(
+      requestClient,
+      authConfig,
+      ServerType.SasViya,
+      onTokensRefreshed
+    )
+
+    expect(onTokensRefreshed).toHaveBeenCalledWith({
+      access_token: mockAuthResponse.access_token,
+      refresh_token: mockAuthResponse.refresh_token
+    })
+  })
+
+  it('should not invoke onTokensRefreshed when no refresh occurred', async () => {
+    setupMocks()
+    const access_token = generateToken(86400000)
+    const refresh_token = generateToken(86400000)
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+    const onTokensRefreshed = jest.fn()
+
+    await getTokens(
+      requestClient,
+      authConfig,
+      ServerType.SasViya,
+      onTokensRefreshed
+    )
+
+    expect(onTokensRefreshed).not.toHaveBeenCalled()
   })
 
   it('should throw an error if the refresh token has already expired', async () => {
