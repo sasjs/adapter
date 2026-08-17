@@ -35,19 +35,24 @@ export async function getTokens(
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<AuthConfig> {
   const logger = process.logger || console
-  let { access_token, refresh_token, client, secret } = authConfig
+  // Note: client/secret are NOT mutated. The sas.cli public-client fallback
+  // is applied only to the refresh call itself, so a caller that round-trips
+  // the returned AuthConfig into persistent storage never ends up saving
+  // fabricated CLIENT/SECRET values.
+  let { access_token, refresh_token } = authConfig
+  const { client, secret } = authConfig
 
-  // Tokens minted without a registered OAuth client (e.g. via the password
-  // grant against the built-in public client) can still be refreshed using
-  // that same secret-less client.
-  if (serverType === ServerType.SasViya) {
-    client = client || 'sas.cli'
-    secret = secret || ''
+  // Tokens are not always decodable JWTs - some servers issue opaque tokens.
+  // jwt-decode throws InvalidTokenError for these; only in that case is the
+  // token treated as still valid (the server is the authority on expiry and
+  // will reject a genuinely expired token on use/refresh).
+  let isAccessTokenExpiringSoon = false
+  try {
+    isAccessTokenExpiringSoon = isAccessTokenExpiring(access_token)
+  } catch (e) {
+    if ((e as Error).name !== 'InvalidTokenError') throw e
   }
 
-  // Refresh tokens are not always decodable JWTs - some servers issue
-  // opaque tokens. jwt-decode throws InvalidTokenError for these; only in
-  // that case is the token treated as still valid.
   let isRefreshTokenExpired = false
   try {
     isRefreshTokenExpired = hasTokenExpired(refresh_token)
@@ -62,7 +67,7 @@ export async function getTokens(
     if ((e as Error).name !== 'InvalidTokenError') throw e
   }
 
-  if (isAccessTokenExpiring(access_token) || isRefreshTokenExpiringSoon) {
+  if (isAccessTokenExpiringSoon || isRefreshTokenExpiringSoon) {
     if (isRefreshTokenExpired) {
       const error =
         'Unable to obtain new access token. Your refresh token has expired.'
@@ -74,12 +79,16 @@ export async function getTokens(
 
     logger.info('Refreshing access and refresh tokens.')
 
+    // Tokens minted without a registered OAuth client (e.g. via the
+    // password grant against the built-in public client) can still be
+    // refreshed using that same secret-less client. A configured client
+    // with a missing secret is treated as a public client (empty secret).
     const tokens =
       serverType === ServerType.SasViya
         ? await refreshTokensForViya(
             requestClient,
-            client as string,
-            secret as string,
+            client || 'sas.cli',
+            secret || '',
             refresh_token
           )
         : await refreshTokensForSasjs(requestClient, refresh_token)

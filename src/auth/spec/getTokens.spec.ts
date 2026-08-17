@@ -66,8 +66,11 @@ describe('getTokens', () => {
       '',
       authConfig.refresh_token
     )
-    expect(result.client).toEqual('sas.cli')
-    expect(result.secret).toEqual('')
+    // The public-client fallback is applied to the refresh call only - the
+    // returned config must not carry fabricated client/secret values, so a
+    // caller persisting the result never stores CLIENT=sas.cli.
+    expect(result.client).toBeUndefined()
+    expect(result.secret).toBeUndefined()
   })
 
   it('should not attempt to refresh when the access token is fresh and no client is configured', async () => {
@@ -83,6 +86,9 @@ describe('getTokens', () => {
 
     expect(refreshTokensModule.refreshTokensForViya).not.toHaveBeenCalled()
     expect(result.access_token).toEqual(access_token)
+    // No refresh, no fallback: the returned config is returned as provided.
+    expect(result.client).toBeUndefined()
+    expect(result.secret).toBeUndefined()
   })
 
   it('should attempt to refresh with an opaque refresh token and an expiring access token', async () => {
@@ -151,6 +157,23 @@ describe('getTokens', () => {
     )
 
     expect(onTokensRefreshed).not.toHaveBeenCalled()
+  })
+
+  it('should tolerate an opaque (non-JWT) access token and treat it as usable', async () => {
+    setupMocks()
+    const authConfig: AuthConfig = {
+      access_token: 'opaque-access-token',
+      refresh_token: 'opaque-refresh-token',
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+
+    const result = await getTokens(requestClient, authConfig)
+
+    // Opaque tokens cannot be expiry-checked client-side - they are assumed
+    // usable, so no refresh is attempted and no error is thrown.
+    expect(refreshTokensModule.refreshTokensForViya).not.toHaveBeenCalled()
+    expect(result.access_token).toEqual('opaque-access-token')
   })
 
   it('should surface a useful error when refresh fails with an opaque refresh token', async () => {
