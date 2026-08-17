@@ -18,12 +18,17 @@ import {
 } from './types/errors'
 import { SessionManager } from './SessionManager'
 import { ContextManager } from './ContextManager'
-import { SasAuthResponse, MacroVar, AuthConfig } from '@sasjs/utils/types'
+import {
+  SasAuthResponse,
+  MacroVar,
+  AuthConfig,
+  ServerType
+} from '@sasjs/utils/types'
 import { isAuthorizeFormRequired } from './auth/isAuthorizeFormRequired'
 import { RequestClient } from './request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
 import { pollJobState } from './api/viya/pollJobState'
-import { getTokens } from './auth/getTokens'
+import { getTokens, OnTokensRefreshed } from './auth/getTokens'
 import { uploadTables } from './api/viya/uploadTables'
 import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
@@ -337,6 +342,7 @@ export class SASViyaApiClient {
    * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
+   * @param onTokensRefreshed - optional callback invoked with the rotated token pair after a successful internal refresh, so consumers that persist tokens can store the new pair.
    */
   public async executeScript(
     jobPath: string,
@@ -349,7 +355,8 @@ export class SASViyaApiClient {
     waitForResult = true,
     pollOptions?: PollOptions,
     printPid = false,
-    variables?: MacroVar
+    variables?: MacroVar,
+    onTokensRefreshed?: OnTokensRefreshed
   ): Promise<any> {
     return executeOnComputeApi(
       this.requestClient,
@@ -365,7 +372,8 @@ export class SASViyaApiClient {
       waitForResult,
       pollOptions,
       printPid,
-      variables
+      variables,
+      onTokensRefreshed
     )
   }
 
@@ -864,11 +872,17 @@ export class SASViyaApiClient {
     expectWebout = false,
     pollOptions?: PollOptions,
     printPid = false,
-    variables?: MacroVar
+    variables?: MacroVar,
+    onTokensRefreshed?: OnTokensRefreshed
   ) {
     let access_token = (authConfig || {}).access_token
     if (authConfig) {
-      ;({ access_token } = await getTokens(this.requestClient, authConfig))
+      ;({ access_token } = await getTokens(
+        this.requestClient,
+        authConfig,
+        ServerType.SasViya,
+        onTokensRefreshed
+      ))
     }
 
     if (isRelativePath(sasJob) && !this.rootFolderName) {
@@ -943,7 +957,8 @@ export class SASViyaApiClient {
       waitForResult,
       pollOptions,
       printPid,
-      variables
+      variables,
+      onTokensRefreshed
     )
   }
 

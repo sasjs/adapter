@@ -1,5 +1,5 @@
 import { timestampToYYYYMMDDHHMMSS } from '@sasjs/utils/time'
-import { AuthConfig, MacroVar } from '@sasjs/utils/types'
+import { AuthConfig, MacroVar, ServerType } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import {
   PollOptions,
@@ -7,7 +7,7 @@ import {
   ComputeJobExecutionError,
   NotFoundError
 } from '../..'
-import { getTokens } from '../../auth/getTokens'
+import { getTokens, OnTokensRefreshed } from '../../auth/getTokens'
 import { RequestClient } from '../../request/RequestClient'
 import { SessionManager } from '../../SessionManager'
 import { isRelativePath, fetchLogByChunks } from '../../utils'
@@ -32,6 +32,7 @@ interface JobRequestBody {
  * @param pollOptions - an object that represents poll interval(milliseconds) and maximum amount of attempts. Object example: { maxPollCount: 24 * 60 * 60, pollInterval: 1000 }. More information available at src/api/viya/pollJobState.ts.
  * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
  * @param variables - an object that represents macro variables.
+ * @param onTokensRefreshed - optional callback invoked with the rotated token pair after a successful internal refresh, so consumers that persist tokens can store the new pair.
  */
 export async function executeOnComputeApi(
   requestClient: RequestClient,
@@ -47,12 +48,18 @@ export async function executeOnComputeApi(
   waitForResult = true,
   pollOptions?: PollOptions,
   printPid = false,
-  variables?: MacroVar
+  variables?: MacroVar,
+  onTokensRefreshed?: OnTokensRefreshed
 ): Promise<any> {
   let access_token = (authConfig || {}).access_token
 
   if (authConfig) {
-    ;({ access_token } = await getTokens(requestClient, authConfig))
+    ;({ access_token } = await getTokens(
+      requestClient,
+      authConfig,
+      ServerType.SasViya,
+      onTokensRefreshed
+    ))
   }
 
   const logger = process.logger || console
@@ -173,7 +180,8 @@ export async function executeOnComputeApi(
       {
         session,
         sessionManager
-      }
+      },
+      onTokensRefreshed
     ).catch(async (err) => {
       const error = err?.response?.data
       const result = /err=[0-9]*,/.exec(error)
@@ -196,7 +204,12 @@ export async function executeOnComputeApi(
     })
 
     if (authConfig) {
-      ;({ access_token } = await getTokens(requestClient, authConfig))
+      ;({ access_token } = await getTokens(
+        requestClient,
+        authConfig,
+        ServerType.SasViya,
+        onTokensRefreshed
+      ))
     }
 
     const { result: currentJob } = await requestClient

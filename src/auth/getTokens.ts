@@ -9,25 +9,30 @@ import { refreshTokensForViya } from './refreshTokensForViya'
 import { refreshTokensForSasjs } from './refreshTokensForSasjs'
 
 /**
+ * Callback invoked with the rotated token pair after a successful internal
+ * refresh. Viya refresh tokens are single-use/rotating, so consumers that
+ * persist tokens (e.g. the CLI writing `.env.{target}`) should pass a handler
+ * wherever this is accepted to avoid the persisted pair going stale.
+ */
+export type OnTokensRefreshed = (tokens: {
+  access_token: string
+  refresh_token: string
+}) => void | Promise<void>
+
+/**
  * Returns the auth configuration, refreshing the tokens if necessary.
  * This function can only be used by Node, if a server type is SASVIYA.
  * @param requestClient - the pre-configured HTTP request client
  * @param authConfig - an object containing a client ID, secret, access token and refresh token
  * @param serverType - server type for which refreshing the tokens, defaults to SASVIYA
  * @param onTokensRefreshed - optional callback invoked with the rotated token
- * pair after a successful internal refresh. Viya refresh tokens are
- * single-use/rotating, so consumers that persist tokens (e.g. the CLI writing
- * `.env.{target}`) should pass a handler here to avoid the persisted pair
- * going stale.
+ * pair after a successful internal refresh.
  */
 export async function getTokens(
   requestClient: RequestClient,
   authConfig: AuthConfig,
   serverType: ServerType = ServerType.SasViya,
-  onTokensRefreshed?: (tokens: {
-    access_token: string
-    refresh_token: string
-  }) => void | Promise<void>
+  onTokensRefreshed?: OnTokensRefreshed
 ): Promise<AuthConfig> {
   const logger = process.logger || console
   let { access_token, refresh_token, client, secret } = authConfig
