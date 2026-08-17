@@ -30,8 +30,8 @@ describe('refreshTokensForViya', () => {
 
     await refreshTokensForViya(
       requestClient,
-      authConfig.client,
-      authConfig.secret,
+      authConfig.client!,
+      authConfig.secret!,
       authConfig.refresh_token
     )
 
@@ -65,8 +65,8 @@ describe('refreshTokensForViya', () => {
 
     const error = await refreshTokensForViya(
       requestClient,
-      authConfig.client,
-      authConfig.secret,
+      authConfig.client!,
+      authConfig.secret!,
       authConfig.refresh_token
     ).catch((e: any) =>
       getTokenRequestErrorPrefixResponse(e, ServerType.SasViya)
