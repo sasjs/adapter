@@ -16,6 +16,7 @@ import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { SASjsApiClient, SASjsAuthResponse } from './SASjsApiClient'
 import { AuthManager } from './auth'
+import { OnTokensRefreshed } from './auth/getTokens'
 import {
   ServerType,
   MacroVar,
@@ -45,6 +46,7 @@ interface ExecuteScriptParams {
   authConfig?: AuthConfig
   authConfigSas9?: AuthConfigSas9
   debug?: boolean
+  onTokensRefreshed?: OnTokensRefreshed
 }
 
 const defaultConfig: SASjsConfig = {
@@ -101,6 +103,7 @@ export default class SASjs {
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute scripts.
    * @param authConfigSas9 - (required for server type sas9) a valid username and password that are authorised to execute scripts.
    * @param debug - (optional) if true, global debug config will be overriden
+   * @param onTokensRefreshed - (optional, SAS Viya only) callback invoked with the rotated token pair after a successful internal refresh, so consumers that persist tokens can store the new pair.
    */
   public async executeScript({
     linesOfCode,
@@ -109,7 +112,8 @@ export default class SASjs {
     runTime,
     authConfig,
     authConfigSas9,
-    debug
+    debug,
+    onTokensRefreshed
   }: ExecuteScriptParams) {
     this.isMethodSupported('executeScript', [
       ServerType.Sas9,
@@ -157,7 +161,13 @@ export default class SASjs {
         contextName,
         authConfig,
         null,
-        debug ? debug : this.sasjsConfig.debug
+        debug ? debug : this.sasjsConfig.debug,
+        false,
+        true,
+        undefined,
+        false,
+        undefined,
+        onTokensRefreshed
       )
     }
   }

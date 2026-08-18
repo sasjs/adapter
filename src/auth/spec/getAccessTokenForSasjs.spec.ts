@@ -24,7 +24,7 @@ describe('getAccessTokenForSasjs', () => {
 
     await getAccessTokenForSasjs(
       requestClient,
-      authConfig.client,
+      authConfig.client!,
       authConfig.refresh_token
     )
 
@@ -51,7 +51,7 @@ describe('getAccessTokenForSasjs', () => {
 
     const error = await getAccessTokenForSasjs(
       requestClient,
-      authConfig.client,
+      authConfig.client!,
       authConfig.refresh_token
     ).catch((e: any) => e)
 

@@ -1,4 +1,5 @@
 import { Logger, LogLevel } from '@sasjs/utils/logger'
+import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../../../request/RequestClient'
 import { mockAuthConfig, mockJob } from './mockResponses'
 import { pollJobState, doPoll, JobState } from '../pollJobState'
@@ -42,7 +43,9 @@ describe('pollJobState', () => {
 
     expect(getTokensModule.getTokens).toHaveBeenCalledWith(
       requestClient,
-      mockAuthConfig
+      mockAuthConfig,
+      ServerType.SasViya,
+      undefined
     )
   })
 
