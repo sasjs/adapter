@@ -24,7 +24,7 @@ describe('getTokens', () => {
       requestClient,
       authConfig.client,
       authConfig.secret,
-      authConfig.refresh_token
+      refresh_token
     )
   })
 
@@ -45,7 +45,7 @@ describe('getTokens', () => {
       requestClient,
       authConfig.client,
       authConfig.secret,
-      authConfig.refresh_token
+      refresh_token
     )
   })
 
@@ -64,7 +64,7 @@ describe('getTokens', () => {
       requestClient,
       'sas.cli',
       '',
-      authConfig.refresh_token
+      refresh_token
     )
     // The public-client fallback is applied to the refresh call only - the
     // returned config must not carry fabricated client/secret values, so a
@@ -226,6 +226,64 @@ describe('getTokens', () => {
 
     expect(result.access_token).toEqual(mockAuthResponse.access_token)
     expect(result.refresh_token).toEqual(mockAuthResponse.refresh_token)
+  })
+
+  it('should mutate the passed-in authConfig with the rotated tokens after a refresh', async () => {
+    setupMocks()
+    const access_token = generateToken(30)
+    const refresh_token = generateToken(86400000)
+    const authConfig: AuthConfig = {
+      access_token,
+      refresh_token,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+
+    await getTokens(requestClient, authConfig)
+
+    // Callers throughout the compute-execution chain (executeOnComputeApi,
+    // pollJobState's poll loop, executeComputeJob -> executeJob, etc.) all
+    // share this same authConfig object by reference and call getTokens
+    // again later in the same execution. If the object itself isn't updated,
+    // those later calls re-read the now-stale, already-rotated refresh_token.
+    expect(authConfig.access_token).toEqual(mockAuthResponse.access_token)
+    expect(authConfig.refresh_token).toEqual(mockAuthResponse.refresh_token)
+  })
+
+  it('should not reuse an already-rotated refresh token on a second call sharing the same authConfig', async () => {
+    setupMocks()
+    const initialRefreshToken = generateToken(86400000)
+    const authConfig: AuthConfig = {
+      access_token: generateToken(30),
+      refresh_token: initialRefreshToken,
+      client: 'cl13nt',
+      secret: 's3cr3t'
+    }
+
+    // First internal refresh (e.g. before posting a job).
+    await getTokens(requestClient, authConfig)
+
+    // Second internal refresh using the very same authConfig reference
+    // (e.g. a subsequent poll-loop iteration, or the post-poll getTokens
+    // call). The access token is expiring again to force another refresh.
+    authConfig.access_token = generateToken(30)
+
+    await getTokens(requestClient, authConfig)
+
+    expect(refreshTokensModule.refreshTokensForViya).toHaveBeenLastCalledWith(
+      requestClient,
+      authConfig.client,
+      authConfig.secret,
+      mockAuthResponse.refresh_token
+    )
+    expect(
+      refreshTokensModule.refreshTokensForViya
+    ).not.toHaveBeenLastCalledWith(
+      requestClient,
+      authConfig.client,
+      authConfig.secret,
+      initialRefreshToken
+    )
   })
 
   it('should throw an error if the refresh token has already expired', async () => {

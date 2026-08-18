@@ -94,6 +94,17 @@ export async function getTokens(
         : await refreshTokensForSasjs(requestClient, refresh_token)
     ;({ access_token, refresh_token } = tokens)
 
+    // Viya refresh tokens are single-use/rotating. Callers throughout the
+    // compute-execution chain (executeOnComputeApi, pollJobState's poll
+    // loop, executeComputeJob -> executeJob, etc.) share this same
+    // authConfig object by reference and call getTokens again later in the
+    // same execution - update it in place so a later call in the same chain
+    // refreshes with the token that was just issued, not the one that was
+    // just consumed. client/secret are deliberately left untouched (see
+    // note above).
+    authConfig.access_token = access_token
+    authConfig.refresh_token = refresh_token
+
     // A failing persistence handler must not turn a successful refresh into
     // an auth failure - log the error and return the fresh pair regardless.
     try {
