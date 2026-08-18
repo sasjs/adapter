@@ -46,9 +46,18 @@ export async function getTokens(
   // jwt-decode throws InvalidTokenError for these; only in that case is the
   // token treated as still valid (the server is the authority on expiry and
   // will reject a genuinely expired token on use/refresh).
+  // Use a 300 s (5 min) safety margin instead of the isAccessTokenExpiring
+  // default of 3600 s (1 h).  Some Viya estates issue access tokens with a
+  // 1-hour TTL; with the 3600 s default a brand-new 1 h token is immediately
+  // considered "expiring", causing a redundant refresh even when the CLI has
+  // already refreshed the token moments earlier.  300 s is short enough that a
+  // fresh 1 h token (TTL ≈ 3600 ≫ 300) is NOT considered expiring, yet long
+  // enough to let a single API call complete before the token actually expires.
+  // Long-running jobs are protected because pollJobState calls getTokens on
+  // every poll, so a token that does expire mid-job is refreshed in-place.
   let isAccessTokenExpiringSoon = false
   try {
-    isAccessTokenExpiringSoon = isAccessTokenExpiring(access_token)
+    isAccessTokenExpiringSoon = isAccessTokenExpiring(access_token, 300)
   } catch (e) {
     if ((e as Error).name !== 'InvalidTokenError') throw e
   }
