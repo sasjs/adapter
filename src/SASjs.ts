@@ -937,6 +937,7 @@ export default class SASjs {
    * @param printPid - a boolean that indicates whether the function should print (PID) of the started job.
    * @param variables - an object that represents macro variables.
    * @param verboseMode - boolean or a string equal to 'bleached' to enable verbose mode (log every HTTP response).
+   * @param onTokensRefreshed - (optional, SAS Viya only) callback invoked with the rotated token pair after a successful internal refresh, so consumers that persist tokens can store the new pair.
    */
   public async startComputeJob(
     sasJob: string,
@@ -947,7 +948,8 @@ export default class SASjs {
     pollOptions?: PollOptions,
     printPid = false,
     variables?: MacroVar,
-    verboseMode?: VerboseMode
+    verboseMode?: VerboseMode,
+    onTokensRefreshed?: OnTokensRefreshed
   ) {
     config = {
       ...this.sasjsConfig,
@@ -976,7 +978,8 @@ export default class SASjs {
       false,
       pollOptions,
       printPid,
-      variables
+      variables,
+      onTokensRefreshed
     )
   }
 
