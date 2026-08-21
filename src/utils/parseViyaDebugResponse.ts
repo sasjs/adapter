@@ -1,5 +1,6 @@
 import { RequestClient } from '../request/RequestClient'
 import { getValidJson } from '../utils'
+import { extractWeboutBlob } from './extractWeboutBlob'
 
 /**
  * When querying a Viya job using the Web approach (as opposed to using the APIs) with _DEBUG enabled,
@@ -25,11 +26,19 @@ export const parseSasViyaDebugResponse = async (
   const jsonUrl = iframeStart
     ? iframeStart.split(/"><\/iframe>|><\/iframe>/)[0]
     : null
-  if (!jsonUrl) {
-    throw new Error('Unable to find webout file URL.')
+
+  if (jsonUrl) {
+    return requestClient
+      .get(serverUrl + jsonUrl, undefined, 'text/plain')
+      .then((res: any) => getValidJson(res.result))
   }
 
-  return requestClient
-    .get(serverUrl + jsonUrl, undefined, 'text/plain')
-    .then((res: any) => getValidJson(res.result))
+  // Fallback: some Viya configurations inline the webout via a
+  // script-constructed Blob instead of an iframe src URL, e.g. when the
+  // _debug=128 format is served on a path expecting the older _debug=131
+  // iframe-URL format.
+  const blobResult = extractWeboutBlob(response)
+  if (blobResult !== null) return blobResult
+
+  throw new Error('Unable to find webout file URL.')
 }

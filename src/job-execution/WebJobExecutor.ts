@@ -113,6 +113,15 @@ export class WebJobExecutor extends BaseJobExecutor {
       ...this.getRequestParams(config)
     }
 
+    // The single source of truth for which debug response format the server
+    // will actually send back - captured now, before _debug is potentially
+    // moved into the URL query string below. Response parsing keys off this
+    // value directly (see the `config.debug` branch further down) rather
+    // than re-deriving it from runAsTask, so the two can't drift out of sync
+    // if the _debug=128 workaround (added for a SAS platform bug) is ever
+    // reverted to _debug=131 while runAsTask stays true.
+    const debugParamValue = requestParams['_debug']
+
     /**
      * Use the available form data object (FormData in Browser, NodeFormData in
      *  Node)
@@ -205,8 +214,18 @@ export class WebJobExecutor extends BaseJobExecutor {
           if (config.debug) {
             switch (this.serverType) {
               case ServerType.SasViya:
+                // useComputeApi is guaranteed null/undefined here - this
+                // class (WebJobExecutor) is only ever reached from
+                // SASjs.request() when useComputeApi is not set (see
+                // SASjs.ts). Route on the actual _debug value sent (see
+                // debugParamValue above), not on runAsTask/useComputeApi -
+                // those determine _debug's value today, but
+                // parseSasViyaDebugResponse also falls back to blob
+                // extraction if its iframe-URL format isn't found (see
+                // parseViyaDebugResponse.ts), hardening against a mismatch
+                // too, should that mapping ever change.
                 jsonResponse =
-                  config.useComputeApi === null && config.runAsTask === true
+                  debugParamValue === 128
                     ? await parseSasViyaLogDebugResponse(res.result)
                     : await parseSasViyaDebugResponse(
                         res.result,

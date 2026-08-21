@@ -62,8 +62,43 @@ describe('parseSasViyaDebugResponse', () => {
     expect(result).toEqual(resultData)
   })
 
-  it('should throw an error if iframe URL is not found', async () => {
-    const response = `<html><body>No iframe here</body></html>`
+  it('falls back to weboutBEGIN/END blob extraction if no iframe URL is found', async () => {
+    const resultData = { SYSCC: '0', result: [{ STATUS: 'configured' }] }
+    const response = `<script>
+var blob = new Blob([\`>>weboutBEGIN<<
+${JSON.stringify(resultData)}
+>>weboutEND<<
+\`], {type: 'text/plain'});
+</script>`
+
+    const result = await parseSasViyaDebugResponse(
+      response,
+      requestClient,
+      serverUrl
+    )
+
+    expect(result).toEqual(resultData)
+    expect(requestClient.get).not.toHaveBeenCalled()
+  })
+
+  it('falls back to a raw (unwrapped) JSON blob if no iframe URL is found', async () => {
+    const resultData = { message: 'success' }
+    const response = `<script>
+var blob = new Blob([\`${JSON.stringify(resultData)}\`], {type: 'application/json'});
+</script>`
+
+    const result = await parseSasViyaDebugResponse(
+      response,
+      requestClient,
+      serverUrl
+    )
+
+    expect(result).toEqual(resultData)
+    expect(requestClient.get).not.toHaveBeenCalled()
+  })
+
+  it('should throw an error if neither an iframe URL nor a webout blob is found', async () => {
+    const response = `<html><body>No iframe or blob here</body></html>`
 
     await expect(
       parseSasViyaDebugResponse(response, requestClient, serverUrl)
