@@ -74,9 +74,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
 
+      # semantic-release only releases when it finds a releasable commit, and the
+      # angular convention it is configured with does not treat `build:` or
+      # `chore:` as one. This step ran on `if: success()` regardless, so a merge
+      # with no releasable commit published the version already in package.json,
+      # which npm rejects with "You cannot publish over the previously published
+      # versions". Compare against the registry instead, and publish only when
+      # there is something new.
       - name: Publish to npm with trusted publisher
+        id: publish
         if: success()
-        run: npm publish --access public
+        run: |
+          local_version=$(node -p "require('./package.json').version")
+          published_version=$(npm view @sasjs/adapter version 2>/dev/null || echo "")
+
+          if [ "$local_version" = "$published_version" ]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing to publish - $local_version is already on npm"
+            exit 0
+          fi
+
+          npm publish --access public
+          echo "released=true" >> "$GITHUB_OUTPUT"
 
       - name: Send Matrix message
+        if: steps.publish.outputs.released == 'true'
         run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
