@@ -1,0 +1,25 @@
+# Hooks for the pre-commit framework - https://pre-commit.com
+#
+# The repo also ships native hooks in .git-hooks/: a prettier check before the
+# commit, and the Conventional Commits and release checks on the message. The
+# `prepare` script activates them by setting core.hooksPath - but .npmrc sets
+# ignore-scripts=true, so `npm i` never runs it and a fresh clone commits
+# unchecked.
+#
+# This file is the standard route instead: install the framework once with
+# `pre-commit install`, and the secret scan and the message check run on every
+# commit. gitleaks is pinned to an exact release tag, and the message hook
+# calls the script the native hooks already use, so there is one implementation
+# of the rules.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: commit-msg
+        name: conventional commit, with a release-bearing type
+        entry: .git-hooks/commit-msg
+        language: script
+        stages: [commit-msg]
