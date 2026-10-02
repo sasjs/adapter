@@ -89,8 +89,6 @@ export class WebJobExecutor extends BaseJobExecutor {
         })
       }
 
-      apiUrl += jobUri.length > 0 ? '&_job=' + jobUri : ''
-
       if (jobUri.length > 0) {
         apiUrl += '&_job=' + jobUri
         /**

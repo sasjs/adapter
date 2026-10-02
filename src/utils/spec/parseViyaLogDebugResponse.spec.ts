@@ -52,4 +52,12 @@ ${JSON.stringify(resultData)}
       'Unable to find webout blob in debug log response.'
     )
   })
+
+  it('should pass an already parsed response straight through', async () => {
+    const resultData = { SYSCC: '0', result: [{ STATUS: 'configured' }] }
+
+    await expect(parseSasViyaLogDebugResponse(resultData)).resolves.toEqual(
+      resultData
+    )
+  })
 })

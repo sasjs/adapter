@@ -47,4 +47,8 @@ describe('jsonValidator', () => {
     }
     expect(test).toThrow(InvalidJsonError)
   })
+
+  it('should return an empty object for an empty string', () => {
+    expect(getValidJson('')).toEqual({})
+  })
 })
