@@ -1,6 +1,10 @@
 node_modules
 build
 
+# build staging directory - a copy of src that webpack builds from, removed by
+# the build script on success and left behind when a build fails
+/node
+
 docs
 
 .env

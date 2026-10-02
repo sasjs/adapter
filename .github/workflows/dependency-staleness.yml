@@ -1,0 +1,46 @@
+name: Dependency Staleness
+
+# Dependabot is not enabled on this repo, so nothing surfaces stale
+# dependencies. The CI audit gate only fails on known-vulnerable packages; it
+# says nothing about being behind. This runs weekly and writes the list of
+# outdated direct dependencies to the run summary.
+#
+# It deliberately exits 0 either way. A scheduled job that goes red every week
+# trains people to ignore red; the summary is the signal, and a human decides
+# whether to bump.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # Mondays, 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Report outdated direct dependencies
+        run: |
+          {
+            echo '## Outdated direct dependencies'
+            echo
+            echo 'Direct dependencies whose latest published version differs from'
+            echo 'the pinned one. Dependabot is disabled on this repo, so this is'
+            echo 'the substitute - review it and bump deliberately.'
+            echo
+            echo '```'
+            npm outdated --depth=0 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
