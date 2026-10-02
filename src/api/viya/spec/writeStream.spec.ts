@@ -42,8 +42,7 @@ describe('writeStream', () => {
         (
           chunk: any,
           encodingOrCb?:
-            | BufferEncoding
-            | ((error: Error | null | undefined) => void),
+            BufferEncoding | ((error: Error | null | undefined) => void),
           cb?: (error: Error | null | undefined) => void
         ) => {
           const callback =
