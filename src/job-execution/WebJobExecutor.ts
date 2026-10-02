@@ -60,7 +60,7 @@ export class WebJobExecutor extends BaseJobExecutor {
     if (config.serverType === ServerType.SasViya) {
       let jobUri
       try {
-        jobUri = await this.getJobUri(sasJob)
+        jobUri = await this.getJobUri(program)
       } catch (e: any) {
         return new Promise(async (resolve, reject) => {
           if (e instanceof LoginRequiredError) {
@@ -300,17 +300,13 @@ export class WebJobExecutor extends BaseJobExecutor {
     if (!this.sasViyaApiClient) return ''
     let uri = ''
 
-    let folderPath
-    let jobName: string
-    if (isRelativePath(sasJob)) {
-      const folderPathParts = sasJob.split('/')
-      folderPath = folderPathParts.length > 1 ? folderPathParts[0] : ''
-      jobName = folderPathParts.length > 1 ? folderPathParts[1] : ''
-    } else {
-      const folderPathParts = sasJob.split('/')
-      jobName = folderPathParts.pop() || ''
-      folderPath = folderPathParts.join('/')
-    }
+    // sasJob arrives with the appLoc already applied, so the folder is
+    // everything before the last segment. Reading the first two segments only
+    // would look up folder 'services' and job 'common' for a job like
+    // services/common/configure.
+    const folderPathParts = sasJob.split('/')
+    const jobName = folderPathParts.pop() || ''
+    const folderPath = folderPathParts.join('/')
 
     if (!jobName) {
       throw new Error('Job name is empty, null or undefined.')

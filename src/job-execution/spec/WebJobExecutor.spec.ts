@@ -61,9 +61,10 @@ describe('WebJobExecutor', () => {
   afterEach(() => jest.clearAllMocks())
 
   it('sends the job uri as _job once and renames _program to __program', async () => {
-    const { executor, postSpy } = makeExecutor(ServerType.SasViya, [
-      jobDefinition
-    ])
+    const { executor, postSpy, sasViyaApiClient } = makeExecutor(
+      ServerType.SasViya,
+      [jobDefinition]
+    )
     postSpy.mockResolvedValue({ result: { ok: true }, etag: '' } as any)
 
     await executor.execute('common/configure', null, {
@@ -71,12 +72,45 @@ describe('WebJobExecutor', () => {
       contextName: 'Compute Reusable'
     })
 
+    expect(sasViyaApiClient.getJobsInFolder).toHaveBeenCalledWith(
+      '/Public/app/common'
+    )
     const url = postSpy.mock.calls[0][0] as string
     expect(url).toContain('_job=/jobs/jobs/1234')
     expect(url.match(/_job=/g)).toHaveLength(1)
     expect(url).toContain('__program=')
     expect(url).not.toContain('&_program=')
     expect(url).toContain('_contextname=Compute%20Reusable')
+  })
+
+  it('looks up the whole folder path for a job nested below the appLoc', async () => {
+    const { executor, postSpy, sasViyaApiClient } = makeExecutor(
+      ServerType.SasViya,
+      [jobDefinition]
+    )
+    postSpy.mockResolvedValue({ result: { ok: true }, etag: '' } as any)
+
+    await executor.execute('services/common/configure', null, baseConfig)
+
+    expect(sasViyaApiClient.getJobsInFolder).toHaveBeenCalledWith(
+      '/Public/app/services/common'
+    )
+    const url = postSpy.mock.calls[0][0] as string
+    expect(url).toContain('_job=/jobs/jobs/1234')
+  })
+
+  it('looks up the appLoc itself for a job at the root', async () => {
+    const { executor, postSpy, sasViyaApiClient } = makeExecutor(
+      ServerType.SasViya,
+      [{ name: 'myJob', contentType: 'jobDefinition', uri: '/jobs/jobs/7' }]
+    )
+    postSpy.mockResolvedValue({ result: { ok: true }, etag: '' } as any)
+
+    await executor.execute('myJob', null, baseConfig)
+
+    expect(sasViyaApiClient.getJobsInFolder).toHaveBeenCalledWith('/Public/app')
+    const url = postSpy.mock.calls[0][0] as string
+    expect(url).toContain('_job=/jobs/jobs/7')
   })
 
   it('leaves _program in place when no job definition matches', async () => {
