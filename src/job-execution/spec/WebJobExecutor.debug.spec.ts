@@ -54,6 +54,11 @@ ${JSON.stringify(resultData)}
 </body>
 </html>`
 
+  // The iframe-URL response shape: the webout is a file the caller fetches
+  // separately.
+  const iframeUrl = '/path/to/log.json'
+  const iframeHtml = `<html><body><iframe style="width: 99%; height: 500px" src="${iframeUrl}"></iframe></body></html>`
+
   it('parses a successful response when debug + runAsTask=true and useComputeApi is undefined', async () => {
     const { executor, postSpy } = makeExecutor()
     postSpy.mockResolvedValue({ result: debug128Html, etag: '' } as any)
@@ -88,9 +93,7 @@ ${JSON.stringify(resultData)}
 
   it('still routes the non-runAsTask (_debug=131) path through the iframe-URL parser', async () => {
     const { executor, postSpy, requestClient } = makeExecutor()
-    const iframeUrl = '/path/to/log.json'
-    const debug131Html = `<html><body><iframe style="width: 99%; height: 500px" src="${iframeUrl}"></iframe></body></html>`
-    postSpy.mockResolvedValue({ result: debug131Html, etag: '' } as any)
+    postSpy.mockResolvedValue({ result: iframeHtml, etag: '' } as any)
     const getSpy = jest
       .spyOn(requestClient, 'get')
       .mockResolvedValue({ result: JSON.stringify(resultData) } as any)
@@ -113,20 +116,16 @@ ${JSON.stringify(resultData)}
     expect(response).toEqual(resultData)
   })
 
-  it('routes on the actual _debug value sent, not on runAsTask, if the two are ever decoupled', async () => {
+  it('routes on the response shape, so an iframe-URL response is parsed as one whatever _debug value was sent', async () => {
     // Simulates a future revert of the _debug=128 workaround (added for a
-    // SAS platform bug) back to _debug=131 while runAsTask stays true.
-    // Response parsing must follow whatever _debug value was actually sent,
-    // not runAsTask, so this can't silently break again if that mapping
-    // changes.
+    // SAS platform bug) back to _debug=131 while runAsTask stays true. The
+    // parser follows the response, not the _debug value, so this can't
+    // silently break again if that mapping changes.
     const { executor, postSpy, requestClient } = makeExecutor()
     jest
       .spyOn(executor as any, 'getRequestParams')
       .mockReturnValue({ _debug: 131, _omitSessionResults: 'false' })
-
-    const iframeUrl = '/path/to/log.json'
-    const debug131Html = `<html><body><iframe style="width: 99%; height: 500px" src="${iframeUrl}"></iframe></body></html>`
-    postSpy.mockResolvedValue({ result: debug131Html, etag: '' } as any)
+    postSpy.mockResolvedValue({ result: iframeHtml, etag: '' } as any)
     const getSpy = jest
       .spyOn(requestClient, 'get')
       .mockResolvedValue({ result: JSON.stringify(resultData) } as any)
@@ -137,6 +136,37 @@ ${JSON.stringify(resultData)}
       {
         ...baseConfig,
         runAsTask: true, // still true - only the resulting _debug value changed
+        useComputeApi: undefined
+      }
+    )
+
+    expect(getSpy).toHaveBeenCalledWith(
+      serverUrl + iframeUrl,
+      undefined,
+      'text/plain'
+    )
+    expect(response).toEqual(resultData)
+  })
+
+  it('parses the iframe form even when the request sent _debug=128', async () => {
+    // Observed on Viya 4: a _debug=128 request without _EXECUTIONTASKS comes
+    // back in the iframe form rather than as an inline blob, so the value sent
+    // cannot be used to pick the parser.
+    const { executor, postSpy, requestClient } = makeExecutor()
+    jest
+      .spyOn(executor as any, 'getRequestParams')
+      .mockReturnValue({ _debug: 128, _omitSessionResults: 'false' })
+    postSpy.mockResolvedValue({ result: iframeHtml, etag: '' } as any)
+    const getSpy = jest
+      .spyOn(requestClient, 'get')
+      .mockResolvedValue({ result: JSON.stringify(resultData) } as any)
+
+    const response: any = await executor.execute(
+      'services/common/configure',
+      null,
+      {
+        ...baseConfig,
+        runAsTask: true,
         useComputeApi: undefined
       }
     )

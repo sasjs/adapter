@@ -102,6 +102,22 @@ var blob = new Blob([\`${JSON.stringify(resultData)}\`], {type: 'application/jso
 
     await expect(
       parseSasViyaDebugResponse(response, requestClient, serverUrl)
-    ).rejects.toThrow('Unable to find webout file URL.')
+    ).rejects.toThrow('Unable to find webout content')
+  })
+
+  it('accepts a blob whose type is double quoted and spaced differently', async () => {
+    const resultData = { message: 'success' }
+    const response = `<script>
+var blob = new Blob([\`${JSON.stringify(resultData)}\`], { type: "application/json" });
+</script>`
+
+    const result = await parseSasViyaDebugResponse(
+      response,
+      requestClient,
+      serverUrl
+    )
+
+    expect(result).toEqual(resultData)
+    expect(requestClient.get).not.toHaveBeenCalled()
   })
 })

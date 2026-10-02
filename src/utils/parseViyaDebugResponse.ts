@@ -40,5 +40,7 @@ export const parseSasViyaDebugResponse = async (
   const blobResult = extractWeboutBlob(response)
   if (blobResult !== null) return blobResult
 
-  throw new Error('Unable to find webout file URL.')
+  throw new Error(
+    'Unable to find webout content - no iframe URL and no inline blob.'
+  )
 }
