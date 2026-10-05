@@ -33,6 +33,10 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Check npm audit
+        # Prod-scoped on purpose: this gate covers what actually ships. The dev
+        # tree carries advisories from jest's own tree and the webpack
+        # toolchain, none of which has a patched release yet, so gating on them
+        # would mean a permanently red build.
         run: npm audit --omit=dev --audit-level=low
 
       - name: Install Dependencies
