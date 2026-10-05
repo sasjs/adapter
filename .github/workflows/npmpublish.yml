@@ -70,7 +70,12 @@ jobs:
         run: npm run publishInit
 
       - name: Semantic Release
-        run: npx semantic-release
+        # semantic-release is not a devDependency: its tree is where the
+        # unfixable advisories live (micromatch -> braces, and the npm package
+        # @semantic-release/npm bundles). npx fetches the pinned trio for the
+        # release run only, so none of it enters the lockfile. Same shape as
+        # sasjs/cli, which has released this way since 4.20.5.
+        run: npx -p @semantic-release/exec@7.1.0 -p @semantic-release/git@11.0.1 -p semantic-release@25.0.9 -- semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
 
