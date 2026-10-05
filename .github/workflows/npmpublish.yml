@@ -76,6 +76,12 @@ jobs:
         # release/audit.mjs.
         run: node release/audit.mjs
 
+      - name: Check what the package would carry
+        # Guards the tarball-leak shape: a broad allowlist glob ("**/*.d.ts")
+        # also matched the release toolchain's node_modules, which shipped 1330
+        # files and 24 MB. Fails on any node_modules/ or release/ path.
+        run: node release/pack-check.mjs
+
       - name: Install the release tooling
         # Its own locked tree, installed here rather than carried as a
         # devDependency: that tree is where the unfixable advisories live

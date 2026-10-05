@@ -91,7 +91,8 @@
     "!**/*.spec.d.ts",
     "!**/spec/**",
     "!**/test/**",
-    "!src/**"
+    "!src/**",
+    "!release/**"
   ],
   "dependencies": {
     "@sasjs/utils": "3.7.0",
