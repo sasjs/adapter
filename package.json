@@ -82,11 +82,13 @@
     "webpack-cli": "4.9.2"
   },
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "/index.js",
     "/minified_sas9.js",
     "node/**",
     "**/*.d.ts",
+    "!**/*.spec.d.ts",
     "!**/spec/**",
     "!**/test/**",
     "!src/**"
