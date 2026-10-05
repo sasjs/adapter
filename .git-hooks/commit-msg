@@ -29,10 +29,19 @@ fi
 # This is not hypothetical. @sasjs/utils#274 carried two `chore(ci): ...
 # [skip release]` subjects, so the squashed commit on main was filtered out
 # whole, the crypto fix merged, and no version was ever published.
-if (echo "$subject" | grep -Eq "\[skip (release|ci)\]") then
-   echo "${RED}❌ The commit subject contains [skip release] or [skip ci]!"
+# Mirrors the upstream filters rather than a subset of them:
+#   - semantic-release drops any commit matching
+#     /\[skip\s+release]|\[release\s+skip]/i (lib/definitions/plugins.js), so the
+#     match is case-insensitive and accepts any run of whitespace
+#   - GitHub skips the push or pull_request run entirely for [skip ci],
+#     [ci skip], [no ci], [skip actions] and [actions skip], case-insensitively
+# A narrower pattern let "[SKIP RELEASE]" and "[release skip]" through, and both
+# still suppressed the release.
+if (echo "$subject" | grep -Eqi "\[(skip\s+release|release\s+skip|skip\s+ci|ci\s+skip|no\s+ci|skip\s+actions|actions\s+skip)\]") then
+   echo "${RED}❌ The commit subject carries a skip marker!"
    echo "Under squash-merge that suppresses the release for the whole PR, not"
-   echo "just this commit. Drop the marker - a conventional type is enough:"
+   echo "just this commit, and [skip ci] stops the workflow running at all."
+   echo "Drop the marker - a conventional type is enough:"
    echo "  chore(deps): refresh the lockfile"
    exit 1
 fi

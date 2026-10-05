@@ -46,14 +46,21 @@ jobs:
         # release/audit.mjs.
         run: node release/audit.mjs
 
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install the release toolchain
+        # So the pack-check below packs the same tree the publish job does. The
+        # toolchain is not a dependency of this package - see release/audit.mjs.
+        run: npm ci --prefix release --ignore-scripts
+
       - name: Check what the package would carry
         # Guards the tarball-leak shape: a broad allowlist glob ("**/*.d.ts")
         # also matched the release toolchain's node_modules, which shipped 1330
-        # files and 24 MB. Fails on any node_modules/ or release/ path.
+        # files and 24 MB. Fails on any node_modules/ or release/ path. The
+        # install above is what makes that visible - without it this packed 3
+        # files and passed while the leak was present.
         run: node release/pack-check.mjs
-
-      - name: Install Dependencies
-        run: npm ci
 
       - name: Install Rimraf
         run: npm i rimraf
