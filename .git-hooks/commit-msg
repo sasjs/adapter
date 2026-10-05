@@ -6,34 +6,44 @@ GREEN="\033[1;32m"
 # temporary file which holds the message).
 commit_message=$(cat "$1")
 
-if (echo "$commit_message" | grep -Eq "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 -\*]+\))?!?: .+$") then
-   :
-else
-   echo "${RED}❌ Commit message does not meet the Conventional Commit standard!"
-   echo "An example of a valid message is:"
-   echo "  feat(login): add the 'remember me' button"
-   echo "ℹ More details at: https://www.conventionalcommits.org/en/v1.0.0/#summary"
+# Only the subject reaches the squashed commit's body, so that is what gets
+# checked - see the marker check below.
+subject=$(printf '%s\n' "$commit_message" | head -n 1)
+
+# semantic-release's own release commit is `chore(release): X [skip ci]`. It is
+# pushed straight to the release branch, never squash-merged, so the marker is
+# harmless there and is allowed through.
+if (echo "$subject" | grep -Eq "^chore\(release\): ") then
+   echo "${GREEN} ✔ Release commit written by semantic-release"
+   exit 0
+fi
+
+# `[skip release]` and `[skip ci]` must not appear in a commit subject. GitHub
+# builds the squashed commit's body from the list of subjects, and both markers
+# act on the WHOLE squashed commit rather than on the one commit that carries
+# them: semantic-release drops any commit whose message matches `[skip release]`
+# (lib/definitions/plugins.js), and `[skip ci]` makes GitHub skip the
+# push-triggered workflow outright. Either one silently suppresses the release
+# for the entire PR.
+#
+# This is not hypothetical. @sasjs/utils#274 carried two `chore(ci): ...
+# [skip release]` subjects, so the squashed commit on main was filtered out
+# whole, the crypto fix merged, and no version was ever published.
+if (echo "$subject" | grep -Eq "\[skip (release|ci)\]") then
+   echo "${RED}❌ The commit subject contains [skip release] or [skip ci]!"
+   echo "Under squash-merge that suppresses the release for the whole PR, not"
+   echo "just this commit. Drop the marker - a conventional type is enough:"
+   echo "  chore(deps): refresh the lockfile"
    exit 1
 fi
 
-# semantic-release releases only feat, fix and perf, plus any type carrying a
-# breaking `!`. Every other type merges without a release, which leaves the
-# publish job with nothing to publish - so say so, and require the author to
-# opt out in the message when that is what they intend.
-# `[skip ci]` is accepted alongside `[skip release]` because the release commit
-# semantic-release writes itself is a `chore` that carries it.
-if (echo "$commit_message" | grep -Eq "^(feat|fix|perf)(\([a-z0-9 -\*]+\))?!?: .+$") then
+if (echo "$subject" | grep -Eq "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9 -\*]+\))?!?: .+$") then
    echo "${GREEN} ✔ Commit message meets Conventional Commit standards"
    exit 0
 fi
 
-if (echo "$commit_message" | grep -Eq "\[skip (release|ci)\]") then
-   echo "${GREEN} ✔ Conventional commit, marked as not for release"
-   exit 0
-fi
-
-echo "${RED}❌ Commit type would not produce a release!"
-echo "semantic-release releases only feat, fix and perf (or a breaking ! change)."
-echo "If this commit is not meant to release, say so in the message:"
-echo "  chore(deps): refresh the lockfile [skip release]"
+echo "${RED}❌ Commit message does not meet the Conventional Commit standard!"
+echo "An example of a valid message is:"
+echo "  feat(login): add the 'remember me' button"
+echo "ℹ More details at: https://www.conventionalcommits.org/en/v1.0.0/#summary"
 exit 1
