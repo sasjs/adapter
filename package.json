@@ -86,6 +86,15 @@
     "webpack-cli": "4.9.2"
   },
   "main": "index.js",
+  "files": [
+    "/index.js",
+    "/minified_sas9.js",
+    "node/**",
+    "**/*.d.ts",
+    "!**/spec/**",
+    "!**/test/**",
+    "!src/**"
+  ],
   "dependencies": {
     "@sasjs/utils": "3.7.0",
     "axios": "1.20.0",

@@ -58,18 +58,6 @@ const browserConfig = {
   ]
 }
 
-const browserConfigWithDevTool = {
-  ...browserConfig,
-  entry: './src/index.ts',
-  output: {
-    filename: 'index-dev.js',
-    path: path.resolve(__dirname, 'build'),
-    libraryTarget: 'umd',
-    library: 'SASjs'
-  },
-  devtool: 'inline-source-map'
-}
-
 const browserConfigWithoutProcessPlugin = {
   entry: browserConfig.entry,
   devtool: browserConfig.devtool,
@@ -92,4 +80,4 @@ const nodeConfig = {
   }
 }
 
-module.exports = [browserConfig, browserConfigWithDevTool, nodeConfig]
+module.exports = [browserConfig, nodeConfig]
