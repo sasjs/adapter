@@ -16,6 +16,10 @@
  *
  * Uses --package-lock-only, so it needs no install and runs cheaply on a PR.
  *
+ * Kept byte-identical in adapter, cli, sas-language, utils and vscode-extension,
+ * so a fix here belongs in all five. It is formatted with sas-language's
+ * prettier config (printWidth 100), the only one of the five that checks it.
+ *
  * Run with `node release/audit.mjs`.
  */
 import { execFileSync } from 'node:child_process'
@@ -48,43 +52,21 @@ const EXEMPT = new Map([
     'GHSA-6j4f-fj2g-mc7p',
     'brace-expansion, inside the npm package that @semantic-release/npm bundles.'
   ],
-  [
-    'GHSA-rpw4-54j3-4h4q',
-    'ip-address, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-2vr4-cq9g-pvrc',
-    'ip-address, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-j6r3-76f7-8jcv',
-    'ip-address, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-h3mg-xc3c-68pw',
-    'ip-address, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-3wwx-pv8p-q78v',
-    'undici, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-r53p-7pc4-xj5r',
-    'undici, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-rfgv-xxqx-mfg5',
-    'undici, inside the npm package that @semantic-release/npm bundles.'
-  ]
+  ['GHSA-rpw4-54j3-4h4q', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-2vr4-cq9g-pvrc', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-j6r3-76f7-8jcv', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-h3mg-xc3c-68pw', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-3wwx-pv8p-q78v', 'undici, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-r53p-7pc4-xj5r', 'undici, inside the npm package that @semantic-release/npm bundles.'],
+  ['GHSA-rfgv-xxqx-mfg5', 'undici, inside the npm package that @semantic-release/npm bundles.']
 ])
 
 const run = () => {
   try {
-    return execFileSync(
-      'npm',
-      ['audit', '--package-lock-only', '--json', '--prefix', releaseDir],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
-    )
+    return execFileSync('npm', ['audit', '--package-lock-only', '--json', '--prefix', releaseDir], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
   } catch (error) {
     // npm audit exits non-zero when it finds anything, which is the case we are
     // here to read, so the report on stdout is the payload either way.
