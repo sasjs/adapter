@@ -1,0 +1,63 @@
+name: PR deployables
+
+# Builds a deployable copy of the adapter-tests app with THIS pull request's
+# adapter baked into the frontend bundle, publishes it to bin.4gl.io, and
+# comments the links on the PR.
+#
+# The deploy is deliberately left to a human: this job holds no credential for
+# any SAS platform, and never will. It builds; the reviewer deploys and reports.
+#
+# See .github/scripts/build-deployables.sh and publish-deployables.mjs.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deployables:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build the deployables
+        # A streamed app only works from the appLoc it was built against, so
+        # each run gets its own path. That also keeps two PRs from colliding,
+        # and avoids the redeploy conflict on Viya.
+        env:
+          APPLOC: /Public/app/adapter-tests/pr-${{ github.event.pull_request.number || github.run_number }}
+        run: |
+          bash .github/scripts/build-deployables.sh "$APPLOC" "$RUNNER_TEMP/deployables"
+
+      - name: Publish and comment
+        # Skipped when there is no pull request to comment on (a manual run
+        # from a branch), and when the token cannot write - which is the case
+        # for pull requests from forks.
+        if: github.event.pull_request.number && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLOC: /Public/app/adapter-tests/pr-${{ github.event.pull_request.number }}
+        run: |
+          node .github/scripts/publish-deployables.mjs \
+            "$RUNNER_TEMP/deployables" \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            "$APPLOC"
+
+      - name: Keep the artefacts too
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adapter-tests-deployables
+          path: ${{ runner.temp }}/deployables/
+          if-no-files-found: warn
+          retention-days: 7

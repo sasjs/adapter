@@ -13,6 +13,8 @@
     "deploy": "npm run update:adapter && npm run build && npm run deploy:tests"
   },
   "devDependencies": {
+    "@sasjs/cli": "4.20.9",
+    "@sasjs/core": "5.3.1",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.2.2"
   },
