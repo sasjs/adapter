@@ -37,7 +37,7 @@ cd "$REPO_ROOT"
 # A fresh checkout has no node_modules, and `npm run package:lib` needs the
 # adapter's own devDependencies (copyfiles, webpack). CI starts clean, so
 # install first - a pre-populated local tree hides this.
-if [ -f package-lock.json ]; then npm ci --silent; else npm i --silent; fi
+if [ -f package-lock.json ]; then npm ci; else npm i; fi
 npm run package:lib
 TARBALL="$(ls -t "$REPO_ROOT"/build/sasjs-adapter-*.tgz | head -1)"
 echo "   tarball: $TARBALL"
@@ -64,8 +64,8 @@ echo "== 3. install and build the app against that adapter =="
 # this manifest and its lockfile. Floating them to latest would mean two runs of
 # the same PR produced different artefacts, and the deployable would stop
 # testing only this PR's adapter.
-npm ci --ignore-scripts --silent
-npm i "$TARBALL" --ignore-scripts --silent
+npm ci --ignore-scripts
+npm i "$TARBALL" --ignore-scripts
 echo "   adapter inside the app: $(python3 -c "import json;print(json.load(open('node_modules/@sasjs/adapter/package.json'))['version'])")"
 npm run build
 echo "   dist: $(find dist -type f | wc -l) files"
