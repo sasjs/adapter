@@ -131,8 +131,14 @@ CI holds no credential for either platform by design: it builds, you deploy.
 `
 
 // One comment per PR, updated in place rather than accumulating.
-const api = (path, init = {}) =>
-  fetch(`https://api.github.com${path}`, {
+//
+// Every response is checked. Without this a 401 (no pull-requests scope), a 403
+// secondary rate limit or a 404 yields an error body with no `id`, the script
+// logs "created comment undefined" and still exits 0 - so the job is green
+// while the comment it exists to post never lands, and the coverage quietly
+// disappears.
+const api = async (path, init = {}) => {
+  const res = await fetch(`https://api.github.com${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -142,6 +148,14 @@ const api = (path, init = {}) =>
       ...(init.headers ?? {})
     }
   })
+  if (!res.ok) {
+    throw new Error(
+      `GitHub API ${init.method ?? 'GET'} ${path} failed: ${res.status} ${res.statusText}\n` +
+        `${await res.text()}`
+    )
+  }
+  return res
+}
 
 const existing = await (
   await api(`/repos/${owner}/${repo}/issues/${prNumber}/comments?per_page=100`)
@@ -161,5 +175,8 @@ if (mine) {
       body: JSON.stringify({ body })
     })
   ).json()
+  if (!created?.id) {
+    throw new Error(`comment was not created: ${JSON.stringify(created)}`)
+  }
   console.log(`created comment ${created.id} -> ${created.html_url}`)
 }

@@ -60,9 +60,12 @@ PY
 
 echo
 echo "== 3. install and build the app against that adapter =="
-npm i --ignore-scripts --silent
+# npm ci, not npm i: the build tools (@sasjs/cli, @sasjs/core) are pinned in
+# this manifest and its lockfile. Floating them to latest would mean two runs of
+# the same PR produced different artefacts, and the deployable would stop
+# testing only this PR's adapter.
+npm ci --ignore-scripts --silent
 npm i "$TARBALL" --ignore-scripts --silent
-npm i --ignore-scripts --silent @sasjs/core @sasjs/cli
 echo "   adapter inside the app: $(python3 -c "import json;print(json.load(open('node_modules/@sasjs/adapter/package.json'))['version'])")"
 npm run build
 echo "   dist: $(find dist -type f | wc -l) files"
