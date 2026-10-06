@@ -37,7 +37,7 @@ fi
 #     [ci skip], [no ci], [skip actions] and [actions skip], case-insensitively
 # A narrower pattern let "[SKIP RELEASE]" and "[release skip]" through, and both
 # still suppressed the release.
-if (echo "$subject" | grep -Eqi "\[(skip\s+release|release\s+skip|skip\s+ci|ci\s+skip|no\s+ci|skip\s+actions|actions\s+skip)\]") then
+if (echo "$subject" | grep -Eqi "\[(skip[[:space:]]+release|release[[:space:]]+skip|skip[[:space:]]+ci|ci[[:space:]]+skip|no[[:space:]]+ci|skip[[:space:]]+actions|actions[[:space:]]+skip)\]") then
    echo "${RED}❌ The commit subject carries a skip marker!"
    echo "Under squash-merge that suppresses the release for the whole PR, not"
    echo "just this commit, and [skip ci] stops the workflow running at all."
