@@ -38,7 +38,7 @@ cd "$REPO_ROOT"
 # adapter's own devDependencies (copyfiles, webpack). CI starts clean, so
 # install first - a pre-populated local tree hides this.
 if [ -f package-lock.json ]; then npm ci --silent; else npm i --silent; fi
-npm run package:lib 2>&1 | tail -3
+npm run package:lib
 TARBALL="$(ls -t "$REPO_ROOT"/build/sasjs-adapter-*.tgz | head -1)"
 echo "   tarball: $TARBALL"
 echo "   sha256:  $(sha256sum "$TARBALL" | cut -d' ' -f1)"
@@ -64,15 +64,15 @@ npm i --ignore-scripts --silent
 npm i "$TARBALL" --ignore-scripts --silent
 npm i --ignore-scripts --silent @sasjs/core @sasjs/cli
 echo "   adapter inside the app: $(python3 -c "import json;print(json.load(open('node_modules/@sasjs/adapter/package.json'))['version'])")"
-npm run build 2>&1 | tail -4
+npm run build
 echo "   dist: $(find dist -type f | wc -l) files"
 
 echo
 echo "== 4. sasjs build + web for both targets (both offline) =="
 for target in 4gl viya; do
   echo "   --- $target ---"
-  npx sasjs build -t "$target" 2>&1 | tail -2
-  npx sasjs web   -t "$target" 2>&1 | tail -2
+  npx sasjs build -t "$target"
+  npx sasjs web   -t "$target"
 done
 # Re-run build so the deploy programmes reference the web services just written.
 for target in 4gl viya; do npx sasjs build -t "$target" >/dev/null 2>&1; done
