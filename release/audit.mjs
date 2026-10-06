@@ -52,6 +52,10 @@ const EXEMPT = new Map([
     'GHSA-6j4f-fj2g-mc7p',
     'brace-expansion, inside the npm package that @semantic-release/npm bundles.'
   ],
+  [
+    'GHSA-rj75-hqrm-r3gf',
+    'postcss-selector-parser, inside the npm package that @semantic-release/npm bundles. Affected through 7.1.5. npm ships its own bundled copy, so no resolver change reaches it - 11.21.0 is the last 11.x and @semantic-release/npm requires ^11 - and the eventual fix is that plugin moving to npm 12. Unreachable here: the parser reads this repo\'s own release config, not the commits being matched.'
+  ],
   ['GHSA-rpw4-54j3-4h4q', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
   ['GHSA-2vr4-cq9g-pvrc', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
   ['GHSA-j6r3-76f7-8jcv', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
