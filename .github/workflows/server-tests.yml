@@ -112,26 +112,37 @@ jobs:
         run: openvpn3 session-start --background --config .github/vpn/config.ovpn
 
       - name: Wait for the tunnel
-        # Bounded and loud, so a failure here reads as a failure rather than a
-        # hang. Prints the session state on every attempt.
+        # Bounded and loud, and deliberately does NOT fail the job - the
+        # diagnosis below decides, so that it always gets to run.
+        #
+        # Every openvpn3 call is wrapped in `timeout`: sessions-list talks to
+        # the openvpn3 D-Bus session manager, which the apt install does not
+        # start, and without a timeout it blocks forever. That is what hung the
+        # first run of this step.
         run: |
           for i in $(seq 1 12); do
-            if ip addr show tun0 > /dev/null 2>&1; then
+            if timeout 10 ip addr show tun0 > /dev/null 2>&1; then
               echo "tun0 is up after $((i * 5))s"
-              ip addr show tun0
+              timeout 10 ip addr show tun0
               exit 0
             fi
             echo "--- attempt $i of 12: no tun0 yet ---"
-            openvpn3 sessions-list || true
+            timeout 15 openvpn3 sessions-list || echo "(sessions-list timed out or failed)"
             sleep 5
           done
-          echo "::error::tun0 did not come up within 60s"
-          echo "--- sessions-list ---"
-          openvpn3 sessions-list || true
-          echo "--- session log ---"
-          path=$(openvpn3 sessions-list | awk '/Path:/{print $2; exit}')
-          [ -n "$path" ] && openvpn3 log --session-path "$path" --log-level 4 | tail -40 || true
-          exit 1
+          echo "::warning::tun0 did not come up within 60s - see the diagnosis step below"
+        shell: bash
+
+      - name: VPN session log
+        # Whatever the session did, at a level that says why.
+        run: |
+          path=$(timeout 15 openvpn3 sessions-list 2>/dev/null | awk '/Path:/{print $2; exit}' || true)
+          echo "session path: ${path:-none}"
+          if [ -n "$path" ]; then
+            timeout 20 openvpn3 log --session-path "$path" --log-level 4 2>&1 | tail -60 || true
+          fi
+          echo "--- openvpn3 services ---"
+          systemctl list-units --type=service --all 2>/dev/null | grep -i openvpn || echo "(none)"
         shell: bash
 
       - name: install pm2
@@ -140,9 +151,9 @@ jobs:
       - name: Diagnose VPN connectivity
         run: |
           echo "--- openvpn3 sessions-list ---"
-          openvpn3 sessions-list
+          timeout 15 openvpn3 sessions-list || echo "(sessions-list timed out or failed)"
           echo "--- openvpn3 session-stats ---"
-          openvpn3 session-stats --config .github/vpn/config.ovpn
+          timeout 15 openvpn3 session-stats --config .github/vpn/config.ovpn || echo "(session-stats timed out or failed)"
           echo "--- ip addr (tun interface) ---"
           ip addr show tun0 || echo "no tun0 interface found"
           echo "--- ip route ---"
@@ -153,6 +164,13 @@ jobs:
             echo "DNS resolution: OK"
           else
             echo "DNS resolution: FAILED"
+          fi
+          echo "--- verdict ---"
+          if timeout 10 ip addr show tun0 > /dev/null 2>&1; then
+            echo "tun0 is up - the tunnel came up"
+          else
+            echo "::error::tun0 is not up, so the VPN did not establish. The session log and sessions-list above say why; the job cannot reach the SAS server without it."
+            exit 1
           fi
         shell: bash
 
