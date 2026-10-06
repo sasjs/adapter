@@ -32,8 +32,12 @@ echo "== appLoc:  $APPLOC"
 echo "== output:  $OUT"
 
 echo
-echo "== 1. build the adapter from this checkout =="
+echo "== 1. install and build the adapter from this checkout =="
 cd "$REPO_ROOT"
+# A fresh checkout has no node_modules, and `npm run package:lib` needs the
+# adapter's own devDependencies (copyfiles, webpack). CI starts clean, so
+# install first - a pre-populated local tree hides this.
+if [ -f package-lock.json ]; then npm ci --silent; else npm i --silent; fi
 npm run package:lib 2>&1 | tail -3
 TARBALL="$(ls -t "$REPO_ROOT"/build/sasjs-adapter-*.tgz | head -1)"
 echo "   tarball: $TARBALL"
