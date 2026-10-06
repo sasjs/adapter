@@ -4,11 +4,18 @@
 name: SASjs Build and Server Tests
 
 on:
-  pull_request:
+  # Manual only. This job needs the 4GL VPN and a live SAS server, and it has
+  # never completed unattended: the last attempt sat on the VPN step for six
+  # hours until GitHub cancelled it, which also left every PR with a red check
+  # that says nothing. Trigger it from the Actions UI when a server-side check
+  # is actually wanted.
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-22.04
+    # A stall here used to run to GitHub's six-hour default.
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -71,6 +78,23 @@ jobs:
         run: |
           chmod 600 .github/vpn/ca.crt .github/vpn/user.crt .github/vpn/user.key .github/vpn/tls.key
 
+      - name: Check the VPN files are not empty
+        # A secret that was never set still writes a file, so "Write VPN Files"
+        # succeeds and the problem only shows up as a tunnel that never comes
+        # up. Fail here, where the cause is obvious.
+        run: |
+          failed=0
+          for f in ca.crt user.crt user.key tls.key; do
+            size=$(stat -c%s ".github/vpn/$f")
+            echo ".github/vpn/$f: $size bytes"
+            if [ "$size" -eq 0 ]; then
+              echo "::error::.github/vpn/$f is empty - its secret is not set"
+              failed=1
+            fi
+          done
+          exit $failed
+        shell: bash
+
       - name: Install Open VPN
         run: |
           sudo apt install apt-transport-https
@@ -81,7 +105,34 @@ jobs:
           sudo apt install openvpn3=17~betaUb22042+jammy
 
       - name: Start Open VPN 3
-        run: openvpn3 session-start --config .github/vpn/config.ovpn
+        # --background so the step returns. Without it session-start stays in
+        # the foreground streaming the session log, which is why this step hung
+        # and the diagnostics below - the ones that would say what went wrong -
+        # never ran.
+        run: openvpn3 session-start --background --config .github/vpn/config.ovpn
+
+      - name: Wait for the tunnel
+        # Bounded and loud, so a failure here reads as a failure rather than a
+        # hang. Prints the session state on every attempt.
+        run: |
+          for i in $(seq 1 12); do
+            if ip addr show tun0 > /dev/null 2>&1; then
+              echo "tun0 is up after $((i * 5))s"
+              ip addr show tun0
+              exit 0
+            fi
+            echo "--- attempt $i of 12: no tun0 yet ---"
+            openvpn3 sessions-list || true
+            sleep 5
+          done
+          echo "::error::tun0 did not come up within 60s"
+          echo "--- sessions-list ---"
+          openvpn3 sessions-list || true
+          echo "--- session log ---"
+          path=$(openvpn3 sessions-list | awk '/Path:/{print $2; exit}')
+          [ -n "$path" ] && openvpn3 log --session-path "$path" --log-level 4 | tail -40 || true
+          exit 1
+        shell: bash
 
       - name: install pm2
         run: npm i -g pm2
