@@ -102,9 +102,16 @@ jobs:
       # `chore:` as one. This step ran on `if: success()` regardless, so a merge
       # with no releasable commit published the version already in package.json,
       # which npm rejects with "You cannot publish over the previously published
-      # versions". Compare against the registry instead, and publish only when
+      # versions". Compare against the registry instead, and stage only when
       # there is something new.
-      - name: Publish to npm with trusted publisher
+      #
+      # `npm stage publish`, not `npm publish`: the package declares dual-use
+      # content (contentPolicy in package.json, DISCLOSURE at the root), and
+      # npm's dual-use policy does not permit direct publishing through trusted
+      # publishing - only staging, with a maintainer promoting it under 2FA.
+      # The staged version is not installable until it is approved, so the
+      # version guard below still compares against the live registry version.
+      - name: Stage the release on npm
         id: publish
         if: success()
         run: |
@@ -113,13 +120,16 @@ jobs:
 
           if [ "$local_version" = "$published_version" ]; then
             echo "released=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing to publish - $local_version is already on npm"
+            echo "Nothing to stage - $local_version is already on npm"
             exit 0
           fi
 
-          npm publish --access public
+          npm stage publish
           echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "Staged $local_version. A maintainer must approve it with 2FA"
+          echo "(npmjs.com -> @sasjs/adapter -> Staged Packages, or"
+          echo "npm stage approve @sasjs/adapter@$local_version) before it is live."
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
-        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
+        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"A new version of @sasjs/adapter has been STAGED on npm and needs a 2FA approval before it is live (npmjs.com -> Staged Packages, or npm stage approve). \\n Please deploy and run 'dctests' with the new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
