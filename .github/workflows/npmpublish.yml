@@ -126,10 +126,11 @@ jobs:
 
           npm stage publish
           echo "released=true" >> "$GITHUB_OUTPUT"
-          echo "Staged $local_version. A maintainer must approve it with 2FA"
-          echo "(npmjs.com -> @sasjs/adapter -> Staged Packages, or"
-          echo "npm stage approve @sasjs/adapter@$local_version) before it is live."
+          echo "Staged $local_version. A maintainer must approve it with 2FA:"
+          echo "  https://www.npmjs.com/settings/~/staged-packages"
+          echo "  or: npm stage list, then npm stage approve <stage-id>"
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
-        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"A new version of @sasjs/adapter has been STAGED on npm and needs a 2FA approval before it is live (npmjs.com -> Staged Packages, or npm stage approve). \\n Please deploy and run 'dctests' with the new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
+        run: |
+          curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"A new version of @sasjs/adapter has been STAGED on npm and needs a maintainer's 2FA approval before it is live - https://www.npmjs.com/settings/~/staged-packages \\n (CLI: npm stage list, then npm stage approve <stage-id>) \\n Please deploy and run 'dctests' with the new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
