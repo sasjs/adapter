@@ -6,7 +6,7 @@ Browser-based integration testing for [@sasjs/adapter](https://github.com/sasjs/
 
 When developing on `@sasjs/adapter`, it's good practice to run the test suite against your changed version of the adapter to ensure that existing functionality has not been impacted.
 
-> **Note:** `@sasjs/adapter` is not listed as a dependency in `package.json` - it is installed from a local build. After cloning or running `npm install`, you must run `update:adapter` before building.
+> **Note:** `@sasjs/adapter` is declared as a devDependency at the published version, so a plain `npm ci` builds against that release. To build against the adapter from this checkout instead, run `update:adapter`, which builds the local tarball and installs it into `node_modules` without touching the manifest.
 
 ```bash
     npm run update:adapter

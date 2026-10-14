@@ -1,0 +1,10 @@
+{
+  "name": "sasjs-adapter-release-tooling",
+  "private": true,
+  "description": "The release toolchain, in its own locked tree. Kept out of the package's own dependencies so its unfixable advisories never reach `npm audit`, and locked so the resolved versions and their integrity hashes are pinned rather than fetched fresh at release time. Installed by the publish workflow with `npm ci --prefix release`.",
+  "devDependencies": {
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "11.0.1",
+    "semantic-release": "25.0.9"
+  }
+}

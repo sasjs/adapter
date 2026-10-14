@@ -27,6 +27,22 @@ const multipleColumnsWithNulls: any = {
   ]
 }
 
+/**
+ * Fold every representation of a SAS missing value onto `null`.
+ *
+ * A blank is the missing value for a character column, and SAS pads a character
+ * value to the width of the column - so a value sent as `null` or `''` comes
+ * back as one or more spaces (Viya returns a single space for a length-1
+ * column). A missing numeric comes back as `null`. Comparing the raw values
+ * would assert the rendering of each platform rather than the round trip, so
+ * both sides of a comparison go through here.
+ */
+const normaliseSasValue = (value: any) => {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string' && value.trim() === '') return null
+  return value
+}
+
 const getLongStringData = (length = 32764) => {
   let x = 'X'
   for (let i = 1; i <= length; i++) {
@@ -128,20 +144,16 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       },
       assertion: (res: any) => {
         let result = true
-        multipleRowsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleRowsWithNulls.table1.forEach((row: any, index: number) => {
+          const got = res.table1[index]
           result =
-            result &&
-            res.table1[index][0] === multipleRowsWithNulls.table1[index].col1
+            result && normaliseSasValue(got[0]) === normaliseSasValue(row.col1)
           result =
-            result &&
-            res.table1[index][1] === multipleRowsWithNulls.table1[index].col2
+            result && normaliseSasValue(got[1]) === normaliseSasValue(row.col2)
           result =
-            result &&
-            res.table1[index][2] === multipleRowsWithNulls.table1[index].col3
+            result && normaliseSasValue(got[2]) === normaliseSasValue(row.col3)
           result =
-            result &&
-            res.table1[index][3] ===
-              (multipleRowsWithNulls.table1[index].col4 || '')
+            result && normaliseSasValue(got[3]) === normaliseSasValue(row.col4)
         })
         return result
       }
@@ -157,20 +169,16 @@ export const sendArrTests = (adapter: SASjs, appLoc: string): TestSuite => ({
       },
       assertion: (res: any) => {
         let result = true
-        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleColumnsWithNulls.table1.forEach((row: any, index: number) => {
+          const got = res.table1[index]
           result =
-            result &&
-            res.table1[index][0] === multipleColumnsWithNulls.table1[index].col1
+            result && normaliseSasValue(got[0]) === normaliseSasValue(row.col1)
           result =
-            result &&
-            res.table1[index][1] === multipleColumnsWithNulls.table1[index].col2
+            result && normaliseSasValue(got[1]) === normaliseSasValue(row.col2)
           result =
-            result &&
-            res.table1[index][2] === multipleColumnsWithNulls.table1[index].col3
+            result && normaliseSasValue(got[2]) === normaliseSasValue(row.col3)
           result =
-            result &&
-            res.table1[index][3] ===
-              (multipleColumnsWithNulls.table1[index].col4 || '')
+            result && normaliseSasValue(got[3]) === normaliseSasValue(row.col4)
         })
         return result
       }
@@ -332,20 +340,20 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       },
       assertion: (res: any) => {
         let result = true
-        multipleRowsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleRowsWithNulls.table1.forEach((row: any, index: number) => {
+          const got = res.table1[index]
           result =
             result &&
-            res.table1[index].COL1 === multipleRowsWithNulls.table1[index].col1
+            normaliseSasValue(got.COL1) === normaliseSasValue(row.col1)
           result =
             result &&
-            res.table1[index].COL2 === multipleRowsWithNulls.table1[index].col2
+            normaliseSasValue(got.COL2) === normaliseSasValue(row.col2)
           result =
             result &&
-            res.table1[index].COL3 === multipleRowsWithNulls.table1[index].col3
+            normaliseSasValue(got.COL3) === normaliseSasValue(row.col3)
           result =
             result &&
-            res.table1[index].COL4 ===
-              (multipleRowsWithNulls.table1[index].col4 || '')
+            normaliseSasValue(got.COL4) === normaliseSasValue(row.col4)
         })
         return result
       }
@@ -361,23 +369,20 @@ export const sendObjTests = (adapter: SASjs): TestSuite => ({
       },
       assertion: (res: any) => {
         let result = true
-        multipleColumnsWithNulls.table1.forEach((_: any, index: number) => {
+        multipleColumnsWithNulls.table1.forEach((row: any, index: number) => {
+          const got = res.table1[index]
           result =
             result &&
-            res.table1[index].COL1 ===
-              multipleColumnsWithNulls.table1[index].col1
+            normaliseSasValue(got.COL1) === normaliseSasValue(row.col1)
           result =
             result &&
-            res.table1[index].COL2 ===
-              multipleColumnsWithNulls.table1[index].col2
+            normaliseSasValue(got.COL2) === normaliseSasValue(row.col2)
           result =
             result &&
-            res.table1[index].COL3 ===
-              multipleColumnsWithNulls.table1[index].col3
+            normaliseSasValue(got.COL3) === normaliseSasValue(row.col3)
           result =
             result &&
-            res.table1[index].COL4 ===
-              (multipleColumnsWithNulls.table1[index].col4 || '')
+            normaliseSasValue(got.COL4) === normaliseSasValue(row.col4)
         })
         return result
       }
