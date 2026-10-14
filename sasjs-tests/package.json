@@ -7,14 +7,16 @@
     "start": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i ../build/sasjs-adapter-5.0.0.tgz",
+    "update:adapter": "cd .. && npm run package:lib && cd sasjs-tests && npm i --no-save ../build/sasjs-adapter-5.0.0.tgz",
     "deploy:tests": "rsync -avhe ssh ./dist/* --delete $SSH_ACCOUNT:$DEPLOY_PATH || npm run deploy:tests-win",
     "deploy:tests-win": "scp %DEPLOY_PATH% ./dist/*",
     "deploy": "npm run update:adapter && npm run build && npm run deploy:tests"
   },
   "devDependencies": {
+    "@sasjs/adapter": "4.19.4",
     "@sasjs/cli": "4.20.9",
     "@sasjs/core": "5.3.1",
+    "@sasjs/utils": "3.7.1",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.2.2"
   },

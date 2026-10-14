@@ -27,6 +27,18 @@ APP_DIR="$REPO_ROOT/sasjs-tests"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
 
+# Leave the checkout as we found it, on the failure path as well as the success
+# one. set -euo pipefail aborts on the first error, so a restore at the end of
+# the script never runs on the path that actually dirties the tree - step 2
+# rewrites the app's sasjsconfig.json, and any later failure would leave that
+# rewrite in the working tree. The manifest and lockfile are restored too, as
+# belt-and-braces for an npm that does not honour --no-save.
+cleanup() {
+  git -C "$REPO_ROOT" checkout -- sasjs-tests/sasjs/sasjsconfig.json 2>/dev/null || true
+  git -C "$REPO_ROOT" checkout -- sasjs-tests/package.json sasjs-tests/package-lock.json 2>/dev/null || true
+}
+trap cleanup EXIT
+
 echo "== repo:    $REPO_ROOT"
 echo "== appLoc:  $APPLOC"
 echo "== output:  $OUT"
@@ -65,7 +77,10 @@ echo "== 3. install and build the app against that adapter =="
 # the same PR produced different artefacts, and the deployable would stop
 # testing only this PR's adapter.
 npm ci --ignore-scripts
-npm i "$TARBALL" --ignore-scripts
+# --no-save: this install puts the PR's adapter into node_modules, it does not
+# declare a file: dependency on a transient build artefact. Without it npm
+# rewrites both the manifest and the lockfile.
+npm i "$TARBALL" --ignore-scripts --no-save
 echo "   adapter inside the app: $(python3 -c "import json;print(json.load(open('node_modules/@sasjs/adapter/package.json'))['version'])")"
 npm run build
 echo "   dist: $(find dist -type f | wc -l) files"
@@ -143,8 +158,6 @@ echo
 echo "== 7. checksums =="
 cd "$OUT" && sha256sum adapter-tests-deployable.zip adaptertestssasjs.json adaptertestsviya.sas
 
-# Leave the checkout as we found it - in CI this is throwaway, but a local run
-# should not leave the appLoc rewritten in the working tree.
+# The cleanup trap restores the rewritten appLoc and the manifest/lockfile on
+# the way out, on both the success and the failure path.
 cd "$REPO_ROOT"
-git checkout -- sasjs-tests/sasjs/sasjsconfig.json 2>/dev/null || true
-git checkout -- sasjs-tests/package.json sasjs-tests/package-lock.json 2>/dev/null || true
