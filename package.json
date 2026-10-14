@@ -19,9 +19,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "contentPolicy": {
-    "class": "dual-use"
-  },
   "release": {
     "plugins": [
       "@semantic-release/commit-analyzer",
@@ -89,7 +86,6 @@
   "files": [
     "/index.js",
     "/minified_sas9.js",
-    "DISCLOSURE",
     "node/**",
     "**/*.d.ts",
     "!**/*.spec.d.ts",

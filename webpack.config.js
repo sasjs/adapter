@@ -4,12 +4,7 @@ const terserPlugin = require('terser-webpack-plugin')
 const nodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 const defaultPlugins = [
-  new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
-  new webpack.SourceMapDevToolPlugin({
-    filename: null,
-    exclude: [/node_modules/],
-    test: /\.ts($|\?)/i
-  })
+  new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/)
 ]
 
 const optimization = {
@@ -35,7 +30,7 @@ const browserConfig = {
   },
   mode: 'production',
   optimization: optimization,
-  devtool: 'inline-source-map',
+  devtool: false,
   module: {
     rules: [
       {
