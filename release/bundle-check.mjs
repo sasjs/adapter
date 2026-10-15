@@ -61,7 +61,11 @@ const POLYFILL_SIGNATURES = [
     'the vm shim (vm-browserify), which is where the dynamic code execution comes from'
   ],
   ['process.binding is not supported', 'the process/browser polyfill'],
-  ['process.chdir is not supported', 'the process/browser polyfill']
+  ['process.chdir is not supported', 'the process/browser polyfill'],
+  [
+    'inspect.styles',
+    'the util npm polyfill, which a bare `util` request resolves to unless the config maps util to nothing'
+  ]
 ]
 
 /**

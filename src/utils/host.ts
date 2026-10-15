@@ -1,33 +1,33 @@
 import type { Logger } from '@sasjs/utils/logger'
+import { isNode } from './isNode'
 
 /**
  * The logger a host attaches to `process`, or the console when there is none.
  *
- * The browser build has no process object at all, so reading `process.logger`
- * directly throws a ReferenceError there. Every logger lookup goes through
- * here so that the same source runs in both environments.
+ * The browser build injects a process stub into every module (webpack's
+ * ProvidePlugin, browser-shims/process.js), so `process` is always defined and
+ * `typeof process === 'undefined'` never distinguishes the environments.
+ * `isNode()` reads `process.versions.node`, which the stub leaves undefined.
+ * Every logger lookup goes through here so that the same source runs in both.
  */
-export const getLogger = (): Logger | Console => {
-  const hostProcess = typeof process === 'undefined' ? undefined : process
-
-  return hostProcess?.logger || console
-}
+export const getLogger = (): Logger | Console =>
+  isNode() ? process.logger || console : console
 
 /**
- * The working directory, or '.' where there is no process to ask - the browser
+ * The working directory, or '.' where there is no node to ask - the browser
  * case. Only node paths call this, but the guard keeps the reference safe to
  * carry in a browser bundle.
  */
-export const getCwd = (): string =>
-  typeof process === 'undefined' ? '.' : process.cwd()
+export const getCwd = (): string => (isNode() ? process.cwd() : '.')
 
 /**
  * Pretty-prints a value for verbose logging. Node's util.inspect gives the
- * coloured output the CLI displays; a browser has no util module, so JSON is
- * the fallback there rather than a bundled shim.
+ * coloured output the CLI displays. A browser has no util module - the browser
+ * build maps `util` to nothing, see resolve.alias in webpack.config.js - so
+ * JSON is the fallback there rather than a bundled shim.
  */
 export const inspectValue = (value: unknown, colors: boolean): string => {
-  if (typeof process !== 'undefined') {
+  if (isNode()) {
     const { inspect } = require('util')
 
     return inspect(value, { colors })

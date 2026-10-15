@@ -6,15 +6,23 @@ const webpack = require('webpack')
 // in package.json points bundlers here, and script-tag and CDN consumers load
 // dist/sasjs-adapter.js directly.
 //
-// No Node polyfills. The source guards every node-only access - getLogger and
-// getCwd in utils/host, isNode around the node code paths - and the one module
-// that is node-only by contract, @sasjs/utils/file, is aliased away rather than
-// shimmed. Its call sites are behind isNode(), so a browser never reaches them.
+// No Node polyfills. The source guards every node-only access with isNode() -
+// getLogger, getCwd and inspectValue in utils/host, and the node code paths -
+// and the one module that is node-only by contract, @sasjs/utils/file, is
+// aliased away rather than shimmed. Its call sites are behind isNode(), so a
+// browser never reaches them.
 //
-// A process stub is still needed: code in the bundle reads process.platform,
-// process.nextTick and process.env, in @sasjs/utils and in readable-stream.
-// browser-shims/process.js answers those reads in about twenty lines, where the
-// node-stdlib polyfill tree answered them with bundled copies of Node internals.
+// `util` is mapped to nothing for the same reason: the one require of it
+// (host.inspectValue) is isNode()-guarded, and resolving it instead lands on the
+// util npm package, which is 28 KiB of Node's own util source carried in the
+// bundle for a call a browser never makes.
+//
+// A process stub is still needed, and webpack's ProvidePlugin puts it in every
+// module: code in the bundle reads process.platform, process.nextTick and
+// process.env, in @sasjs/utils and in readable-stream. browser-shims/process.js
+// answers those reads in about twenty lines, where the node-stdlib polyfill
+// tree answered them with bundled copies of Node internals. Its empty
+// `versions` object is what keeps isNode() false in a browser.
 const defaultPlugins = [
   new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
   new webpack.ProvidePlugin({
@@ -56,9 +64,17 @@ const browserConfig = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
-    // Node builtins the source references only inside node-guarded code.
+    // Node builtins the source references only inside node-guarded code. These
+    // have no package of their own in the tree, so a `false` fallback is enough.
     fallback: { https: false, fs: false, readline: false, path: false },
-    alias: { '@sasjs/utils/file': false }
+    // `util` needs an alias rather than a fallback: webpack only consults the
+    // fallback when a request does not resolve, and the util npm package is
+    // installed (a dependency of the toolchain), so a bare require resolves to
+    // that polyfill - 28 KiB of Node's own util source carried into the bundle
+    // for a call a browser never makes. The only requester is
+    // host.inspectValue, behind isNode(). '@sasjs/utils/file' is aliased for
+    // the same reason.
+    alias: { '@sasjs/utils/file': false, util: false }
   },
   plugins: defaultPlugins
 }
