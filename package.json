@@ -86,6 +86,7 @@
   "files": [
     "/index.js",
     "/index.d.ts",
+    "DISCLOSURE",
     "/ContextManager.*",
     "/SAS9ApiClient.*",
     "/SASViyaApiClient.*",
