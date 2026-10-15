@@ -1,32 +1,33 @@
 const path = require('path')
 const webpack = require('webpack')
-const terserPlugin = require('terser-webpack-plugin')
 const nodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
+// Browser bundles live in dist/. The package root is compiled CommonJS from
+// tsc, so the browser file is no longer the package entry: the `browser` field
+// in package.json points bundlers here, and script-tag and CDN consumers load
+// dist/sasjs-adapter.js directly.
 const defaultPlugins = [
   new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/)
 ]
 
 const optimization = {
   minimize: false,
-  minimizer: [
-    // new terserPlugin({
-    //   parallel: true,
-    //   terserOptions: {}
-    // })
-  ]
+  minimizer: []
 }
 
 const browserConfig = {
   entry: {
-    index: './src/index.ts',
+    'sasjs-adapter': './src/index.ts',
     minified_sas9: './src/minified/sas9/index.ts'
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'build'),
+    path: path.resolve(__dirname, 'build', 'dist'),
     libraryTarget: 'umd',
-    library: 'SASjs'
+    library: 'SASjs',
+    // Without this webpack's runtime carries `new Function('return this')()`
+    // as its globalThis fallback.
+    globalObject: 'globalThis'
   },
   mode: 'production',
   optimization: optimization,
@@ -53,26 +54,4 @@ const browserConfig = {
   ]
 }
 
-const browserConfigWithoutProcessPlugin = {
-  entry: browserConfig.entry,
-  devtool: browserConfig.devtool,
-  mode: browserConfig.mode,
-  optimization: optimization,
-  module: browserConfig.module,
-  resolve: browserConfig.resolve,
-  output: browserConfig.output,
-  plugins: defaultPlugins
-}
-
-const nodeConfig = {
-  ...browserConfigWithoutProcessPlugin,
-  target: 'node',
-  entry: './node/index.ts',
-  output: {
-    ...browserConfig.output,
-    path: path.resolve(__dirname, 'build', 'node'),
-    filename: 'index.js'
-  }
-}
-
-module.exports = [browserConfig, nodeConfig]
+module.exports = [browserConfig]
