@@ -1,7 +1,8 @@
 // The browser build has no process object, and code in the bundle reads it:
-// @sasjs/utils/formatter/regexp.js reads process.platform to pick a line
-// ending, readable-stream reads process.nextTick, and util-deprecate reads
-// process.env and the deprecation flags.
+// readable-stream reads process.nextTick, util-deprecate reads process.env and
+// the deprecation flags, and a bundled `asap` helper falls back to
+// process.nextTick when queueMicrotask is missing. @sasjs/utils reads
+// process.platform too, though it guards that read itself.
 //
 // This stub answers those reads. It replaces the Node stdlib polyfill tree the
 // browser build used to bundle, which carried thousands of lines of shimmed
