@@ -5,7 +5,7 @@ import {
   AxiosRequestHeaders,
   AxiosResponse
 } from 'axios'
-import * as https from 'https'
+import type * as https from 'https'
 import { CsrfToken } from '..'
 import { isAuthorizeFormRequired, isLogInRequired } from '../auth'
 import {
@@ -26,10 +26,8 @@ import {
   createAxiosInstance
 } from '../utils'
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
-import { inspect } from 'util'
-
-const getLogger = () =>
-  (typeof process !== 'undefined' && process.logger) || console
+import { getLogger, inspectValue } from '../utils/host'
+import { isNode } from '../utils/isNode'
 
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
@@ -414,7 +412,7 @@ export class RequestClient implements HttpClient {
    * @returns - prettified string
    */
   private prettifyString = (str: any) =>
-    inspect(str, { colors: this.verboseMode !== 'bleached' })
+    inspectValue(str, this.verboseMode !== 'bleached')
 
   /**
    * Formats HTTP request/response body.
@@ -457,7 +455,7 @@ export class RequestClient implements HttpClient {
     const resHeaders = this.formatHeaders(rawHeaders)
     const parsedResBody = this.parseInterceptedBody(data)
 
-    process.logger?.info(`HTTP Request (first 50 lines):
+    getLogger().info(`HTTP Request (first 50 lines):
 ${reqHeaders}${this.parseInterceptedBody(config.data)}
 
 HTTP Response Code: ${this.prettifyString(status)}
@@ -507,7 +505,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     const resHeaders = this.formatHeaders(res.rawHeaders)
     const parsedResBody = this.parseInterceptedBody(resData)
 
-    process.logger?.info(`HTTP Request (first 50 lines):
+    getLogger().info(`HTTP Request (first 50 lines):
 ${reqHeaders}${this.parseInterceptedBody(config?.data)}
 
 HTTP Response Code: ${this.prettifyString(status)}
@@ -797,9 +795,11 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     baseUrl: string,
     httpsAgentOptions?: https.AgentOptions
   ) {
-    const httpsAgent = httpsAgentOptions
-      ? new https.Agent(httpsAgentOptions)
-      : undefined
+    // Node only: a browser has no https module, and axios uses XHR there.
+    const httpsAgent =
+      isNode() && httpsAgentOptions
+        ? new (require('https').Agent)(httpsAgentOptions)
+        : undefined
 
     this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
 

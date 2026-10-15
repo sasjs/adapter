@@ -1,4 +1,4 @@
-import * as https from 'https'
+import type * as https from 'https'
 import { AxiosRequestConfig } from 'axios'
 import { wrapper } from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'

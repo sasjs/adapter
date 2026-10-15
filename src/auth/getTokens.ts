@@ -7,6 +7,7 @@ import { AuthConfig, ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
 import { refreshTokensForViya } from './refreshTokensForViya'
 import { refreshTokensForSasjs } from './refreshTokensForSasjs'
+import { getLogger } from '../utils/host'
 
 /**
  * Callback invoked with the rotated token pair after a successful internal
@@ -34,7 +35,7 @@ export async function getTokens(
   serverType: ServerType = ServerType.SasViya,
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<AuthConfig> {
-  const logger = process.logger || console
+  const logger = getLogger()
   // Note: client/secret are NOT mutated. The sas.cli public-client fallback
   // is applied only to the refresh call itself, so a caller that round-trips
   // the returned AuthConfig into persistent storage never ends up saving

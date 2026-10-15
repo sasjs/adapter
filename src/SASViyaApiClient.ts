@@ -34,6 +34,7 @@ import { executeOnComputeApi } from './api/viya/executeOnComputeApi'
 import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 import { FileResource } from './types/FileResource'
+import { getLogger } from './utils/host'
 
 interface JobExecutionResult {
   result?: { result: object }
@@ -614,7 +615,7 @@ export class SASViyaApiClient {
     accessToken?: string,
     isForced?: boolean
   ): Promise<Folder> {
-    const logger = process.logger || console
+    const logger = getLogger()
 
     if (!parentFolderPath && !parentFolderUri) {
       throw new Error('Path or URI of the parent folder is required.')

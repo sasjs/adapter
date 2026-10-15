@@ -1,4 +1,4 @@
-import { WriteStream as FsWriteStream } from 'fs'
+import type { WriteStream as FsWriteStream } from 'fs'
 
 export interface WriteStream extends FsWriteStream {
   write(

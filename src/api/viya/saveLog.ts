@@ -3,6 +3,7 @@ import { RequestClient } from '../../request/RequestClient'
 import { fetchLog } from '../../utils'
 import { WriteStream } from '../../types'
 import { writeStream } from './writeStream'
+import { getLogger } from '../../utils/host'
 
 /**
  * Appends logs to a supplied write stream.
@@ -35,7 +36,7 @@ export async function saveLog(
     )
   }
 
-  const logger = process.logger || console
+  const logger = getLogger()
   const jobLogUrl = job.links.find((l) => l.rel === 'log')
 
   if (!jobLogUrl) {

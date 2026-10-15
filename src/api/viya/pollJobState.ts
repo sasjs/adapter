@@ -5,6 +5,7 @@ import { RequestClient } from '../../request/RequestClient'
 import { JobStatePollError } from '../../types/errors'
 import { Link, WriteStream, SessionState, JobSessionManager } from '../../types'
 import { delay, isNode } from '../../utils'
+import { getLogger } from '../../utils/host'
 
 export enum JobState {
   Completed = 'completed',
@@ -49,7 +50,7 @@ export async function pollJobState(
   jobSessionManager?: JobSessionManager,
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<JobState> {
-  const logger = process.logger || console
+  const logger = getLogger()
 
   const streamLog = pollOptions?.streamLog || false
 
@@ -250,7 +251,7 @@ export const doPoll = async (
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollOptions
-  const logger = process.logger || console
+  const logger = getLogger()
   const stateLink = postedJob.links.find((l: Link) => l.rel === 'state')!
   let maxErrorCount = 5
   let errorCount = 0

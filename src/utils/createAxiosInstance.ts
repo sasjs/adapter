@@ -1,5 +1,5 @@
 import axios from 'axios'
-import * as https from 'https'
+import type * as https from 'https'
 
 export const createAxiosInstance = (
   baseURL: string,

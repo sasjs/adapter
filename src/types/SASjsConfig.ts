@@ -1,4 +1,4 @@
-import * as https from 'https'
+import type * as https from 'https'
 import { ServerType } from '@sasjs/utils/types'
 import { VerboseMode } from '../types'
 

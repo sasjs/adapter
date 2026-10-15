@@ -8,6 +8,7 @@ import { openWebPage } from './openWebPage'
 import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
 import { isLogInSuccessHeaderPresent } from './'
+import { getLogger } from '../utils/host'
 
 export class AuthManager {
   public userName = ''
@@ -47,7 +48,7 @@ export class AuthManager {
     } = await this.fetchUserName()
 
     if (isLoggedInAlready) {
-      const logger = process.logger || console
+      const logger = getLogger()
       logger.log('login was not attempted as a valid session already exists')
 
       await this.loginCallback()
@@ -117,7 +118,7 @@ export class AuthManager {
     } = await this.checkSession()
 
     if (isLoggedInAlready) {
-      const logger = process.logger || console
+      const logger = getLogger()
       logger.log('login was not attempted as a valid session already exists')
 
       await this.loginCallback()
