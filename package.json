@@ -5,8 +5,8 @@
   "scripts": {
     "nodeVersionMessage": "echo \u001b[33m make sure you are running node lts version \u001b[0m",
     "build": "npm run nodeVersionMessage && npx rimraf build && npx rimraf node && mkdir node && copyfiles -u 1 \"./src/**/*\" ./node && webpack && npx rimraf build/src && npx rimraf node",
-    "package:lib": "npm run build && copyfiles ./package.json build && cd build && npm version --allow-same-version \"5.0.0\" && npm pack",
-    "publish:lib": "npm run build && cd build && npm publish",
+    "package:lib": "npm run build && copyfiles ./package.json ./README.md ./LICENSE ./DISCLOSURE build && cd build && npm pack",
+    "publish:lib": "npm run package:lib && cd build && npm stage publish",
     "lint:fix": "npx prettier --log-level silent --write \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --log-level silent --write \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --log-level silent --write \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "lint": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --check \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
     "lint:silent": "npx prettier --log-level silent --check \"src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --log-level silent --check \"sasjs-tests/src/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\" && npx prettier --log-level silent --check \"cypress/**/*.{ts,tsx,js,jsx,html,css,sass,less,json,yml,md,graphql}\"",
@@ -18,6 +18,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "contentPolicy": {
+    "class": "dual-use"
   },
   "release": {
     "plugins": [
@@ -86,6 +89,7 @@
   "files": [
     "/index.js",
     "/minified_sas9.js",
+    "DISCLOSURE",
     "node/**",
     "**/*.d.ts",
     "!**/*.spec.d.ts",

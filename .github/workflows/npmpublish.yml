@@ -102,9 +102,24 @@ jobs:
       # `chore:` as one. This step ran on `if: success()` regardless, so a merge
       # with no releasable commit published the version already in package.json,
       # which npm rejects with "You cannot publish over the previously published
-      # versions". Compare against the registry instead, and publish only when
+      # versions". Compare against the registry instead, and stage only when
       # there is something new.
-      - name: Publish to npm with trusted publisher
+      #
+      # `npm stage publish`, not `npm publish`: the package declares dual-use
+      # content (`contentPolicy` in package.json, DISCLOSURE at the root of the
+      # tarball). npm's dual-use policy does not permit direct publishing
+      # through trusted publishing - staging with a maintainer's 2FA promotion
+      # is the permitted automated path. The staged version is not installable
+      # until it is approved, so the version guard compares against the live
+      # registry version.
+      #
+      # `npm stage publish` is always an allowed action for a trusted publisher,
+      # independent of `npm publish` and `npm dist-tag`. This package's trust
+      # relationship already stages: 5.0.2 was staged through this same OIDC
+      # path on 2026-10-14. A trust entry predating the allowed-actions setting
+      # would need stage publish enabled in the package's Trusted Publisher
+      # settings before this step can authenticate.
+      - name: Stage the release on npm
         id: publish
         if: success()
         run: |
@@ -113,13 +128,32 @@ jobs:
 
           if [ "$local_version" = "$published_version" ]; then
             echo "released=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing to publish - $local_version is already on npm"
+            echo "Nothing to stage - $local_version is already on npm"
             exit 0
           fi
 
-          npm publish --access public
+          # A staged version shares the semver index with published versions but
+          # is invisible to `npm view`, so a re-run while an approval is pending
+          # (a later step failing after a successful stage, say) passes the guard
+          # and meets an already-staged error. That is the state this step wants,
+          # so report it as staged rather than failing the build.
+          if ! stage_output=$(npm stage publish 2>&1); then
+            printf '%s\n' "$stage_output"
+            if printf '%s' "$stage_output" | grep -qiE 'already[ -]?staged|already exists|EPUBLISHCONFLICT'; then
+              echo "released=true" >> "$GITHUB_OUTPUT"
+              echo "$local_version is already staged and awaiting approval."
+              echo "(https://www.npmjs.com/settings/~/staged-packages)"
+              exit 0
+            fi
+            exit 1
+          fi
+
+          printf '%s\n' "$stage_output"
           echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "Staged $local_version. A maintainer must approve it with 2FA"
+          echo "(https://www.npmjs.com/settings/~/staged-packages) before it is live."
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
-        run: curl -XPOST -d "{\"msgtype\":\"m.text\", \"body\":\"New version of @sasjs/adapter has been released! \\n Please deploy and run 'dctests' with new adapter to make sure everything is still in place.\"}" https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
+        run: |
+          curl -XPOST -d '{"msgtype":"m.text", "body":"A new version of @sasjs/adapter has been STAGED on npm and needs a 2FA approval before it is live. Approve it at https://www.npmjs.com/settings/~/staged-packages \n Please deploy and run dctests with the new adapter to make sure everything is still in place."}' https://matrix.4gl.io/_matrix/client/r0/rooms/!jRebyiGmHZlpfDwYXN:4gl.io/send/m.room.message?access_token=${{ secrets.MATRIX_TOKEN }}
