@@ -7,18 +7,30 @@
  * with publish credentials, so it must not be invisible either. This reports it
  * in its own scope, by name.
  *
- * Every advisory below is unfixable from this repo: the ranges cover the newest
- * published version, so no bump clears them. They are also unreachable in this
- * usage - the braces denial of service needs an attacker-controlled brace
- * PATTERN, and the patterns come from this repo's own release config (branch
- * globs and releaseRules), not from the commits being matched. So they are named
- * here, and anything else fails the build.
+ * Anything not listed in EXEMPT fails the build, and so does an exemption that
+ * stops appearing: the list is a claim about the locked tree, and a claim that
+ * no longer holds is deleted rather than left to rot. Both are failures because
+ * a stale entry is invisible in a passing build, and a list that only warns
+ * drifts out of step with the tree it describes.
+ *
+ * The list is short because the locked npm is current: npm 11.21.1 vendors
+ * fixed brace-expansion, http-cache-semantics, ip-address,
+ * postcss-selector-parser and undici, so the advisories against those do not
+ * appear. A lockfile that pinned npm back would bring them back, and they would
+ * fail this gate until they are listed again.
+ *
+ * Every exemption carries its own argument - where the affected code sits,
+ * whether this repo's release path runs it, and whose input reaches it. An
+ * advisory whose input arrives from outside this repo is a risk acceptance
+ * rather than a non-issue, and its entry says so rather than claiming
+ * unreachability.
  *
  * Uses --package-lock-only, so it needs no install and runs cheaply on a PR.
  *
- * Kept byte-identical in adapter, cli, sas-language, utils and vscode-extension,
- * so a fix here belongs in all five. It is formatted with sas-language's
- * prettier config (printWidth 100), the only one of the five that checks it.
+ * The same script ships in adapter, cli, sas-language, utils and
+ * vscode-extension. EXEMPT describes the tree it sits in, so each repo carries
+ * its own list: a lockfile bump that clears an entry in one has to land in the
+ * others before theirs can shrink.
  *
  * Run with `node release/audit.mjs`.
  */
@@ -34,43 +46,20 @@ const releaseDir = dirname(fileURLToPath(import.meta.url))
 const EXEMPT = new Map([
   [
     'GHSA-vfj7-8cjw-p6xm',
-    'braces, reached via semantic-release -> micromatch. Affected through 3.0.3, which is the latest release.'
-  ],
-  [
-    'GHSA-ch52-4w7c-c8xp',
-    'http-cache-semantics, inside the npm package that @semantic-release/npm bundles. Affected through 4.2.0.'
-  ],
-  [
-    'GHSA-q2hr-2g5m-vwhr',
-    'brace-expansion, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-qhr7-859c-m2p7',
-    'brace-expansion, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-6j4f-fj2g-mc7p',
-    'brace-expansion, inside the npm package that @semantic-release/npm bundles.'
-  ],
-  [
-    'GHSA-rj75-hqrm-r3gf',
-    "postcss-selector-parser, inside the npm package that @semantic-release/npm bundles. Affected through 7.1.5. npm ships its own bundled copy, so no resolver change reaches it - 11.21.0 is the last 11.x and @semantic-release/npm requires ^11 - and the eventual fix is that plugin moving to npm 12. Unreachable here: the parser reads this repo's own release config, not the commits being matched."
-  ],
-  ['GHSA-rpw4-54j3-4h4q', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-2vr4-cq9g-pvrc', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-j6r3-76f7-8jcv', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-h3mg-xc3c-68pw', 'ip-address, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-3wwx-pv8p-q78v', 'undici, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-r53p-7pc4-xj5r', 'undici, inside the npm package that @semantic-release/npm bundles.'],
-  ['GHSA-rfgv-xxqx-mfg5', 'undici, inside the npm package that @semantic-release/npm bundles.']
+    "braces 3.0.3, reached via semantic-release -> micromatch. Affected through 3.0.3, which is the latest release, so no bump clears it. NOT REACHABLE HERE: the stack exhaustion needs a deeply nested brace PATTERN, and the patterns the release flow matches against come from this repo's own release config (branch globs and releaseRules), not from the commits being matched."
+  ]
 ])
 
 const run = () => {
   try {
-    return execFileSync('npm', ['audit', '--package-lock-only', '--json', '--prefix', releaseDir], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore']
-    })
+    return execFileSync(
+      'npm',
+      ['audit', '--package-lock-only', '--json', '--prefix', releaseDir],
+      {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore']
+      }
+    )
   } catch (error) {
     // npm audit exits non-zero when it finds anything, which is the case we are
     // here to read, so the report on stdout is the payload either way.
@@ -117,17 +106,17 @@ console.log(`release toolchain: ${found.size} advisory(s)`)
 for (const entry of found.values()) {
   const mark = EXEMPT.has(entry.id) ? 'exempt' : 'FAIL  '
   console.log(
-    `  ${mark} ${entry.severity.padEnd(8)} ${entry.id}  ${[...entry.packages].join(', ')}`
+    `  ${mark} ${entry.severity.padEnd(8)} ${entry.id}  ${[
+      ...entry.packages
+    ].join(', ')}`
   )
   console.log(`         ${entry.title}`)
 }
 
 // An exemption that is no longer needed should be deleted, not left to rot.
+// Aggregated with the failing gate, so an unexempted advisory is never masked
+// by a stale-exemption report (or vice versa).
 const stale = [...EXEMPT.keys()].filter((id) => !found.has(id))
-if (stale.length) {
-  console.log('\nexempt advisories that no longer appear, so the exemption can go:')
-  for (const id of stale) console.log(`  ${id}  ${EXEMPT.get(id)}`)
-}
 
 if (failing.length) {
   console.error(
@@ -140,8 +129,16 @@ if (failing.length) {
     '\nThe toolchain is not shipped, but it runs with publish credentials. Fix it,\n' +
       'or add it to EXEMPT in release/audit.mjs with the reason it cannot be fixed.'
   )
-  process.exit(1)
 }
+
+if (stale.length) {
+  console.error(
+    '\nexempt advisories that no longer appear, so the exemption can go:'
+  )
+  for (const id of stale) console.error(`  ${id}  ${EXEMPT.get(id)}`)
+}
+
+if (failing.length || stale.length) process.exit(1)
 
 console.log(
   `\nno advisory in the release toolchain outside the documented exemptions` +
