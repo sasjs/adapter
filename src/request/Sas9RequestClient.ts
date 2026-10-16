@@ -5,6 +5,23 @@ import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
 import { JobExecutionError, UnsafeRedirectError } from '../types/errors'
+import { getLogger } from '../utils/host'
+
+let hasWarnedAboutSas9Login = false
+
+/**
+ * Warns once per process rather than per request: a job that runs repeatedly
+ * through the SAS 9 credential path should not repeat this on every call, and
+ * a single line is enough for the reader to find the README note.
+ */
+const warnDeprecatedSas9Login = () => {
+  if (hasWarnedAboutSas9Login) return
+  hasWarnedAboutSas9Login = true
+
+  getLogger().warn(
+    'The SAS 9 username / password login is deprecated and will be removed in a future major version. It appends the credentials to the _program query string, which SAS 9 only accepts when the platform is configured to allow URL credentials.'
+  )
+}
 
 /**
  * Specific request client for SAS9 in Node.js environments.
@@ -30,7 +47,18 @@ export class Sas9RequestClient extends RequestClient {
     }
   }
 
+  /**
+   * Logs into SAS 9 by appending the credentials to a `_program` call.
+   *
+   * @deprecated The credentials travel in the query string, and SAS 9 only
+   * accepts them when the platform is configured to allow URL credentials -
+   * which is why this was never usable without a server-side change. There is
+   * no drop-in replacement for the mechanism itself; it will be removed in a
+   * future major version, so new work should not depend on it.
+   */
   public async login(username: string, password: string, jobsPath: string) {
+    if (username && password) warnDeprecatedSas9Login()
+
     const codeInjectorPath = `/User Folders/${username}/My Folder/sasjs/runner`
     if (this.httpClient.defaults.jar) {
       ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookies()

@@ -10,6 +10,7 @@ describe('Sas9RequestClient', () => {
   let client: Sas9RequestClient
   let getSpy: jest.SpyInstance
   let postSpy: jest.SpyInstance
+  let warnSpy: jest.SpyInstance
 
   /**
    * The 302 is what this spec is about: `maxRedirects` is 0, so axios returns
@@ -31,6 +32,9 @@ describe('Sas9RequestClient', () => {
     client = new Sas9RequestClient(baseUrl)
     getSpy = jest.spyOn(client['httpClient'], 'get')
     postSpy = jest.spyOn(client['httpClient'], 'post')
+    // getLogger() falls back to the console when no logger is attached to the
+    // process, which is the case here.
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   describe('redirects', () => {
@@ -130,6 +134,44 @@ describe('Sas9RequestClient', () => {
 
       expect(getSpy).toHaveBeenCalledTimes(1)
       expect(getSpy.mock.calls[0][0]).toBe(`${baseUrl}/SASStoredProcess/do`)
+    })
+  })
+
+  describe('deprecated SAS 9 username / password login', () => {
+    // The warning is once per process, so these run in order: the first proves
+    // the flag starts clear, the second that it fires, the third that it does
+    // not fire again.
+    const deprecationWarnings = () =>
+      warnSpy.mock.calls.filter((call) =>
+        String(call[0]).includes('SAS 9 username / password login')
+      )
+
+    it('should not warn when no credentials are supplied', async () => {
+      getSpy.mockResolvedValueOnce(response(200, ''))
+
+      await client.login(
+        undefined as unknown as string,
+        undefined as unknown as string,
+        '/SASStoredProcess/do'
+      )
+
+      expect(deprecationWarnings()).toHaveLength(0)
+    })
+
+    it('should warn once when credentials are supplied', async () => {
+      getSpy.mockResolvedValueOnce(response(200, ''))
+
+      await client.login('user', 'password', '/SASStoredProcess/do')
+
+      expect(deprecationWarnings()).toHaveLength(1)
+    })
+
+    it('should not warn again for a later call in the same process', async () => {
+      getSpy.mockResolvedValueOnce(response(200, ''))
+
+      await client.login('user', 'password', '/SASStoredProcess/do')
+
+      expect(deprecationWarnings()).toHaveLength(0)
     })
   })
 })
