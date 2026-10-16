@@ -36,15 +36,19 @@ const FORBIDDEN = [
   ['release/', 'the release toolchain, which is not shipped']
 ]
 
-/** Files the published package must carry, whatever the allowlist says. */
+/**
+ * Files the published package must carry that the allowlist can actually
+ * break. A name belongs here only if a `files` edit could drop it from the
+ * tarball, which rules out package.json, README and LICENSE: npm includes
+ * those three in every tarball whatever `files` says, so asserting on them
+ * cannot fail and would make this list read as broader than the allowlist's
+ * real reach. Today the one entry that was broken is the one entry here.
+ */
 const REQUIRED = [
   [
     'DISCLOSURE',
     'the dual-use declaration, which npm wants at the root of the tarball and npmpublish.yml stages the release on the basis of'
-  ],
-  ['LICENSE', 'the licence text'],
-  ['README.md', 'the readme npm renders on the package page'],
-  ['package.json', 'the manifest']
+  ]
 ]
 
 const pack = () => {
