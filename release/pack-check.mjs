@@ -76,7 +76,28 @@ try {
   process.exit(1)
 }
 
-const files = (report[0]?.files ?? []).map((entry) => entry.path)
+/**
+ * The packed file list, from whichever shape `npm pack --json` reports: an
+ * array of results through npm 11, and an object keyed by package name from
+ * npm 12. Reading only the array shape yielded an empty list, so every entry
+ * was reported missing - the publish job failed naming DISCLOSURE, which sends
+ * the reader to the allowlist rather than to the parse.
+ *
+ * Returns null when no entry carries a file list, so an unrecognised shape
+ * fails as a parse error rather than silently checking nothing.
+ */
+const packedFiles = (report) => {
+  const results = Array.isArray(report) ? report : Object.values(report ?? {})
+  const entry = results.find((result) => Array.isArray(result?.files))
+
+  return entry ? entry.files.map((file) => file.path) : null
+}
+
+const files = packedFiles(report)
+if (files === null) {
+  console.error('could not read the file list from the pack report')
+  process.exit(1)
+}
 const offences = []
 for (const [prefix, why] of FORBIDDEN) {
   const hits = files.filter(
