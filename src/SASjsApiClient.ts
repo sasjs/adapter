@@ -6,6 +6,7 @@ import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
 import { getTokens } from './auth/getTokens'
+import { isNode } from './utils/isNode'
 
 // TODO: move to sasjs/utils
 export interface SASjsAuthResponse {
@@ -68,12 +69,17 @@ export class SASjsApiClient {
 
   /**
    * Creates/updates files within SASjs drive using uploaded json compressed file.
+   * This method can only be used by Node.
    * @param zipFilePath - Compressed file path; file should only contain one JSON file and
    * should have same name as of compressed file e.g. deploy.JSON should be compressed to deploy.JSON.zip
    * Any other file or JSON file in zipped will be ignored!
    * @param authConfig - (optional) a valid client, secret, refresh and access tokens that are authorised to execute compute jobs.
    */
   public async deployZipFile(zipFilePath: string, authConfig?: AuthConfig) {
+    if (!isNode()) {
+      throw new Error(`Method 'deployZipFile' can only be used by Node.`)
+    }
+
     const { createReadStream } = require('@sasjs/utils/file')
     const access_token = await this.getAccessTokenForRequest(authConfig)
 

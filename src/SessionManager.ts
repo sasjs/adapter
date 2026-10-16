@@ -3,6 +3,7 @@ import { NoSessionStateError } from './types/errors'
 import { asyncForEach, isUrl } from './utils'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from './request/RequestClient'
+import { getLogger } from './utils/host'
 
 const MAX_SESSION_COUNT = 1
 
@@ -342,7 +343,7 @@ export class SessionManager {
   ): Promise<string> {
     let { state: sessionState } = session
     const { stateUrl } = session
-    const logger = process.logger || console
+    const logger = getLogger()
 
     if (
       sessionState === SessionState.Pending ||

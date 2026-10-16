@@ -69,6 +69,16 @@ jobs:
       - name: Clean up ready for publishing
         run: npm run publishInit
 
+      - name: Check the browser bundle
+        # What ships, so it runs after publishInit put dist/ at the package root.
+        # The bundle must stay free of the Node polyfill tree - webpack aliasing
+        # `crypto` and `constants` to crypto-browserify pulled ~555 KB of
+        # AES/RSA/ECDSA polyfills and the vm shim's dynamic code execution into
+        # it - and browser-reachable source must not import the utils barrel,
+        # which is the other way the crypto chain reaches the bundle
+        # (sasjs/utils#275).
+        run: node release/bundle-check.mjs
+
       - name: Audit the release toolchain
         # Its own scope: the toolchain is not shipped, so it must not gate the
         # package, but it runs with publish credentials, so it must not be

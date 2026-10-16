@@ -1,5 +1,6 @@
 import { RequestClient } from '../request/RequestClient'
 import { prefixMessage } from '@sasjs/utils/error'
+import { getLogger } from './host'
 
 /**
  * Fetches content of the log file
@@ -34,7 +35,7 @@ export const fetchLog = async (
   start: number,
   end: number
 ): Promise<string> => {
-  const logger = process.logger || console
+  const logger = getLogger()
 
   let log: string = ''
 

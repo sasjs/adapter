@@ -14,6 +14,7 @@ import { isRelativePath, fetchLogByChunks } from '../../utils'
 import { formatDataForRequest } from '../../utils/formatDataForRequest'
 import { pollJobState, JobState } from './pollJobState'
 import { uploadTables } from './uploadTables'
+import { getLogger } from '../../utils/host'
 
 interface JobRequestBody {
   [key: string]: number | string | string[]
@@ -62,7 +63,7 @@ export async function executeOnComputeApi(
     ))
   }
 
-  const logger = process.logger || console
+  const logger = getLogger()
 
   try {
     let executionSessionId: string
@@ -87,7 +88,7 @@ export async function executeOnComputeApi(
           ? jobPath.split(rootFolderName).join('').replace(/^\//, '')
           : jobPath
 
-        const logger = process.logger || console
+        const logger = getLogger()
 
         logger.info(
           `Triggering '${relativeJobPath}' with PID ${

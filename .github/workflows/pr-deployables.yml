@@ -12,6 +12,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+    inputs:
+      apploc:
+        description: Base appLoc for the deployable; a /pr-<n> suffix is appended
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -22,6 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    env:
+      # A streamed app only works from the appLoc it was built against, so each
+      # run gets its own path - that keeps two PRs from colliding and avoids the
+      # redeploy conflict on Viya. The base is configurable because the appLoc is
+      # baked into the artefact: whoever deploys it needs a path their own
+      # account can write to, and /Public/... is not writable for a user-scoped
+      # Viya account. Set the repository variable ADAPTER_TESTS_APPLOC, or pass
+      # `apploc` to a manual run, and re-run this workflow.
+      APPLOC: ${{ inputs.apploc || vars.ADAPTER_TESTS_APPLOC || '/Public/app/adapter-tests' }}/pr-${{ github.event.pull_request.number || github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +45,6 @@ jobs:
           node-version: 22
 
       - name: Build the deployables
-        # A streamed app only works from the appLoc it was built against, so
-        # each run gets its own path. That also keeps two PRs from colliding,
-        # and avoids the redeploy conflict on Viya.
-        env:
-          APPLOC: /Public/app/adapter-tests/pr-${{ github.event.pull_request.number || github.run_number }}
         run: |
           bash .github/scripts/build-deployables.sh "$APPLOC" "$RUNNER_TEMP/deployables"
 
@@ -45,7 +55,6 @@ jobs:
         if: github.event.pull_request.number && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLOC: /Public/app/adapter-tests/pr-${{ github.event.pull_request.number }}
         run: |
           node .github/scripts/publish-deployables.mjs \
             "$RUNNER_TEMP/deployables" \

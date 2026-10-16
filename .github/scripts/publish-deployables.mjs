@@ -105,6 +105,8 @@ Built from **${headSha.slice(0, 10)}**. The adapter from this commit is baked in
 
 **App location:** \`${appLoc}\` - per-run on purpose, so two PRs cannot collide and a redeploy never hits the "already exists" conflict.
 
+Built for that path, because a streamed app only works from the appLoc it was built against. If your account cannot write there, set the repository variable \`ADAPTER_TESTS_APPLOC\` (or pass \`apploc\` to a manual run of the *PR deployables* workflow) to a base path you own, and re-run it - the \`/pr-<number>\` suffix is added for you.
+
 | Artefact | Link | Use |
 |---|---|---|
 | Deployable package | ${zip ? zip.url : '(missing)'} | unzip, then \`npx @sasjs/cli deploy -t <target>\` |

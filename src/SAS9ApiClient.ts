@@ -1,4 +1,4 @@
-import * as https from 'https'
+import type * as https from 'https'
 import { generateTimestamp } from '@sasjs/utils/time'
 import NodeFormData from 'form-data'
 import { Sas9RequestClient } from './request/Sas9RequestClient'

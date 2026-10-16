@@ -6,6 +6,7 @@ import {
 } from '../SASjsApiClient'
 import { AuthConfig, ServicePackSASjs } from '@sasjs/utils/types'
 import { ExecutionQuery } from '../types'
+import * as IsNodeModule from '../utils/isNode'
 
 // Create a mock request client with a post method.
 const mockPost = jest.fn()
@@ -107,6 +108,24 @@ describe('SASjsApiClient', () => {
       const callArgs = mockPost.mock.calls[0]
       expect(callArgs[0]).toBe('SASjsApi/drive/deploy/upload')
       expect(result).toEqual(dummyResult)
+    })
+
+    it('should refuse to run in a browser, where there is no filesystem to read from', async () => {
+      // The browser bundle aliases @sasjs/utils/file away, so an unguarded
+      // require there leaves createReadStream undefined rather than throwing
+      // anything a caller can act on.
+      const isNodeSpy = jest
+        .spyOn(IsNodeModule, 'isNode')
+        .mockReturnValue(false)
+
+      try {
+        await expect(
+          client.deployZipFile('path/to/deploy.zip')
+        ).rejects.toThrow(`Method 'deployZipFile' can only be used by Node.`)
+        expect(mockPost).not.toHaveBeenCalled()
+      } finally {
+        isNodeSpy.mockRestore()
+      }
     })
   })
 

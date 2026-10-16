@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./build",
+    "declaration": true,
+    "sourceMap": false,
+    "inlineSources": false,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "src/**/spec/**",
+    "src/**/*.spec.ts",
+    "src/test/**",
+    "src/**/__mocks__/**"
+  ]
+}
