@@ -22,6 +22,18 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Update npm
+        # The same pin as the Update npm step in npmpublish.yml, and it is here
+        # for the pack-check below. npm 12 changed the shape of
+        # `npm pack --json` from an array of results to an object keyed by
+        # package name, so a parser written against npm 11 reported every entry
+        # missing. The release job installs npm 12 and parses that report;
+        # without this step a pull request parses it with whatever npm the
+        # runner ships (10.x on node 22, 11.x on node 24) and stays green -
+        # which is how the break reached a release run instead of a PR.
+        # Bump both together.
+        run: npm install -g npm@12.2.0
+
         # 2. Restore npm cache manually
       - name: Restore npm cache
         uses: actions/cache@v4
