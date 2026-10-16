@@ -43,9 +43,17 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.npmjs.org
 
-      # Node 22 ships npm 10.x — OIDC trusted publishing needs npm >= 11.5.1
+      # Node 22 ships npm 10.x - OIDC trusted publishing needs npm >= 11.5.1.
+      # Pinned rather than @latest so the toolchain that publishes the package
+      # is the one this commit was reviewed with: @latest would adopt a new npm
+      # major into the release path without a commit here. 12.2.0 is what
+      # @latest resolved to when this was pinned.
+      # Keep this at the same version as the Update npm step in
+      # build-unit-tests.yml - that pairing is what makes a pull request read
+      # the pack report with the npm the release job uses. npm 12 changed the
+      # shape of `npm pack --json` and nothing noticed until a release failed.
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@12.2.0
 
         # Restore npm cache manually
       - name: Restore npm cache
