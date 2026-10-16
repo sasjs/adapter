@@ -4,7 +4,7 @@ import { wrapper } from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
-import { JobExecutionError } from '../types/errors'
+import { JobExecutionError, UnsafeRedirectError } from '../types/errors'
 
 /**
  * Specific request client for SAS9 in Node.js environments.
@@ -42,6 +42,38 @@ export class Sas9RequestClient extends RequestClient {
     }
   }
 
+  /**
+   * A 302 is followed by hand rather than by axios (maxRedirects is 0), and the
+   * request carries the access token, so the token would otherwise travel to
+   * whatever host the response names. Only a redirect to the origin of the
+   * request is followed.
+   *
+   * Resolving against `url` and `baseUrl` is what makes the check hold for
+   * every form a Location can take: a relative path or a protocol-relative
+   * value resolves to the origin it was resolved against, and an absolute one
+   * that leaves it is refused. The Location is passed through unchanged, so a
+   * same-origin redirect behaves exactly as it did before.
+   */
+  private assertSafeRedirect(location: string | undefined, url: string) {
+    if (!location) {
+      throw new UnsafeRedirectError(
+        url,
+        'the response carried no Location header'
+      )
+    }
+
+    const requested = new URL(url, this.baseUrl)
+    const target = new URL(location, requested)
+
+    if (target.origin !== requested.origin) {
+      throw new UnsafeRedirectError(
+        url,
+        `${target.origin} is not the origin of the request`,
+        location
+      )
+    }
+  }
+
   public async get<T>(
     url: string,
     accessToken: string | undefined,
@@ -67,11 +99,10 @@ export class Sas9RequestClient extends RequestClient {
       .get<T>(url, requestConfig)
       .then((response) => {
         if (response.status === 302) {
-          return this.get(
-            response.headers['location'],
-            accessToken,
-            contentType
-          )
+          const location = response.headers['location']
+          this.assertSafeRedirect(location, url)
+
+          return this.get(location, accessToken, contentType)
         }
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -113,8 +144,11 @@ export class Sas9RequestClient extends RequestClient {
       .post<T>(url, data, { headers, withXSRFToken: true })
       .then(async (response) => {
         if (response.status === 302) {
+          const location = response.headers['location']
+          this.assertSafeRedirect(location, url)
+
           return await this.get(
-            response.headers['location'],
+            location,
             undefined,
             contentType,
             overrideHeaders
