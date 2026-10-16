@@ -8,7 +8,10 @@
 %webout(FETCH)
 %webout(OPEN)
 %macro x();
-  %if %symexist(sasjs_tables) %then
+  /* sasjs_tables is empty when the request carries no input tables, so it
+     must be tested for length as well as existence - countw() with no
+     argument is a macro error. */
+  %if %symexist(sasjs_tables) and %length(&sasjs_tables) %then
   %do i=1 %to %sysfunc(countw(&sasjs_tables));
     %let table=%scan(&sasjs_tables,&i);
     %webout(OBJ,&table,missing=STRING,showmeta=YES)
