@@ -14,6 +14,18 @@ on:
   # no workflow run at all.
   workflow_dispatch:
 
+# One release at a time. Both triggers publish: the push trigger fires on every
+# release commit @semantic-release/git pushes back to master, and the dispatch
+# trigger exists precisely so a stranded release can be recovered by hand. With
+# no gate the two can overlap, and two semantic-release processes racing the
+# same tag and the same npm stage is a new way to strand a release - the failure
+# class the retry above repairs. `cancel-in-progress: false` queues the second
+# run rather than cancelling the first, because cancelling a run midway through
+# a release is itself a way to leave a tag pushed and the release missing.
+concurrency:
+  group: npmpublish
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
