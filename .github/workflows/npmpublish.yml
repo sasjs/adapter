@@ -133,6 +133,15 @@ jobs:
         # there is nothing to release, exit 0 and leave the step green with the
         # release still missing - so require the tag to be absent from the remote
         # as well.
+        #
+        # Only a definitive answer counts. `git ls-remote --exit-code` exits 2 for
+        # an absent ref but 128 when the query itself fails (network, auth,
+        # unreachable remote), and treating every non-zero exit as "absent" would
+        # retry on the transient GitHub-side failures that are the very class of
+        # incident this retry repairs - deleting the local tag, letting
+        # semantic-release's fetch restore it, finding nothing to release and
+        # exiting 0 with the release still missing. So 2 retries, 0 and anything
+        # else fail the step.
         run: |
           if release/node_modules/.bin/semantic-release; then
             exit 0
@@ -145,8 +154,16 @@ jobs:
             exit 1
           fi
 
-          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; then
+          ls_rc=0
+          git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1 || ls_rc=$?
+
+          if [ "$ls_rc" -eq 0 ]; then
             echo "v$version is already on the remote, so the failure came after the tag push - not retrying." >&2
+            exit 1
+          fi
+
+          if [ "$ls_rc" -ne 2 ]; then
+            echo "Could not establish whether v$version is on the remote (git ls-remote exited $ls_rc) - not retrying." >&2
             exit 1
           fi
 
