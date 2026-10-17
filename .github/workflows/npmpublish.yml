@@ -7,6 +7,12 @@ on:
   push:
     branches:
       - master
+  # A release should not depend on the push trigger firing, and a run that
+  # strands a release should be recoverable without a new commit. This makes
+  # the release reachable from the Actions UI or the API. Same reason as
+  # sasjs/utils publish.yml, which gained it after the merge of #277 produced
+  # no workflow run at all.
+  workflow_dispatch:
 
 jobs:
   build:
@@ -111,7 +117,31 @@ jobs:
         run: node release/pack-check.mjs
 
       - name: Semantic Release
-        run: release/node_modules/.bin/semantic-release
+        # semantic-release pushes twice: @semantic-release/git pushes the release
+        # commit to the branch, then core pushes the tag in a second, tags-only
+        # push. GitHub rejected that second push on 2026-10-17 -
+        # "! [remote rejected] v5.1.1 -> v5.1.1 (missing necessary objects)" -
+        # which left master carrying the release commit (package.json at 5.1.1)
+        # with no v5.1.1 tag: no GitHub release, no npm stage, and every later
+        # run dying in the exec plugin's `npm version` with "Version not changed".
+        #
+        # The tag push runs after the tag exists locally and the branch is
+        # already updated, so one more attempt has only the tag to push. Retry
+        # exactly that case: with no local tag for the version the failure came
+        # from an earlier step, and a second attempt fails the same way.
+        run: |
+          if release/node_modules/.bin/semantic-release; then
+            exit 0
+          fi
+
+          version=$(node -p "require('./package.json').version")
+          if ! git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            exit 1
+          fi
+
+          echo "Retrying: the $version tag exists locally, so the failure was the tag push."
+          git tag -d "v$version"
+          release/node_modules/.bin/semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
 
