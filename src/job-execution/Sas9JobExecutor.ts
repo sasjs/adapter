@@ -12,6 +12,11 @@ import { RequestClient } from '../request/RequestClient'
  * Initiates login with the provided username and password from the config
  * The cookies are stored in the request client and used in subsequent
  * job execution requests.
+ *
+ * The username and password are deprecated with the SAS 9 username / password
+ * login: they are appended to the `_program` query string, which SAS 9 only
+ * accepts when the platform is configured to allow URL credentials. See the
+ * "SAS 9 credentials" note in the README.
  */
 export class Sas9JobExecutor extends BaseJobExecutor {
   private sas9RequestClient: Sas9RequestClient
