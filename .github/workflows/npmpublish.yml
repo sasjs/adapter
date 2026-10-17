@@ -125,21 +125,32 @@ jobs:
         # with no v5.1.1 tag: no GitHub release, no npm stage, and every later
         # run dying in the exec plugin's `npm version` with "Version not changed".
         #
-        # The tag push runs after the tag exists locally and the branch is
-        # already updated, so one more attempt has only the tag to push. Retry
-        # exactly that case: with no local tag for the version the failure came
-        # from an earlier step, and a second attempt fails the same way.
+        # The tag push runs after the tag exists locally and after the branch is
+        # updated, so one more attempt has only the tag to push. Retry exactly
+        # that case: a local tag alone does not identify it, because the tag is
+        # also there when the failure came later (the GitHub release). Retrying
+        # that would find the tag restored by semantic-release's own fetch, decide
+        # there is nothing to release, exit 0 and leave the step green with the
+        # release still missing - so require the tag to be absent from the remote
+        # as well.
         run: |
           if release/node_modules/.bin/semantic-release; then
             exit 0
           fi
 
           version=$(node -p "require('./package.json').version")
+
           if ! git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "No local v$version tag, so the failure came before the tag was created - not retrying." >&2
             exit 1
           fi
 
-          echo "Retrying: the $version tag exists locally, so the failure was the tag push."
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "v$version is already on the remote, so the failure came after the tag push - not retrying." >&2
+            exit 1
+          fi
+
+          echo "Retrying: v$version exists locally but not on the remote, so the tag push is what failed."
           git tag -d "v$version"
           release/node_modules/.bin/semantic-release
         env:
