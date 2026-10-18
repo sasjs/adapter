@@ -116,6 +116,20 @@ sasJs.logIn('USERNAME','PASSWORD'
 
 More examples of using authentication, and more, can be found in the [SASjs Seed Apps](https://github.com/search?q=topic%3Asasjs-app+org%3Asasjs+fork%3Atrue) on github.
 
+### SAS 9 credentials (deprecated)
+
+Earlier versions logged into SAS 9 by passing a username and password, which were appended to the `_program` URL as `_username` and `_password`. This is deprecated.
+
+It puts the credentials in a query string - where they are recorded by server logs, proxies, and anything else that logs request URLs - and SAS 9 only accepts them when the platform is configured to allow URL credentials, so it never worked without a server-side change. There is no drop-in replacement for the mechanism itself, and it will be removed in a future major version.
+
+It surfaces in three places:
+
+- `authConfigSas9` on `executeScript()`
+- the `userName` and `password` arguments of `SAS9ApiClient.executeScript()`
+- `username` and `password` in the job-execution config for `serverType: 'SAS9'`
+
+Using it logs a single deprecation warning per process.
+
 ### Request / Response
 
 A simple request can be sent to SAS in the following fashion:

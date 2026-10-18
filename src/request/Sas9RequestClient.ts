@@ -4,7 +4,24 @@ import { wrapper } from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient, throwIfError } from './RequestClient'
-import { JobExecutionError } from '../types/errors'
+import { JobExecutionError, UnsafeRedirectError } from '../types/errors'
+import { getLogger } from '../utils/host'
+
+let hasWarnedAboutSas9Login = false
+
+/**
+ * Warns once per process rather than per request: a job that runs repeatedly
+ * through the SAS 9 credential path should not repeat this on every call, and
+ * a single line is enough for the reader to find the README note.
+ */
+const warnDeprecatedSas9Login = () => {
+  if (hasWarnedAboutSas9Login) return
+  hasWarnedAboutSas9Login = true
+
+  getLogger().warn(
+    'The SAS 9 username / password login is deprecated and will be removed in a future major version. It appends the credentials to the _program query string, which SAS 9 only accepts when the platform is configured to allow URL credentials.'
+  )
+}
 
 /**
  * Specific request client for SAS9 in Node.js environments.
@@ -30,7 +47,18 @@ export class Sas9RequestClient extends RequestClient {
     }
   }
 
+  /**
+   * Logs into SAS 9 by appending the credentials to a `_program` call.
+   *
+   * @deprecated The credentials travel in the query string, and SAS 9 only
+   * accepts them when the platform is configured to allow URL credentials -
+   * which is why this was never usable without a server-side change. There is
+   * no drop-in replacement for the mechanism itself; it will be removed in a
+   * future major version, so new work should not depend on it.
+   */
   public async login(username: string, password: string, jobsPath: string) {
+    if (username && password) warnDeprecatedSas9Login()
+
     const codeInjectorPath = `/User Folders/${username}/My Folder/sasjs/runner`
     if (this.httpClient.defaults.jar) {
       ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookies()
@@ -38,6 +66,38 @@ export class Sas9RequestClient extends RequestClient {
         `${jobsPath}?_program=${codeInjectorPath}&_username=${username}&_password=${password}`,
         undefined,
         'text/plain'
+      )
+    }
+  }
+
+  /**
+   * A 302 is followed by hand rather than by axios (maxRedirects is 0), and the
+   * request carries the access token, so the token would otherwise travel to
+   * whatever host the response names. Only a redirect to the origin of the
+   * request is followed.
+   *
+   * Resolving against `url` and `baseUrl` is what makes the check hold for
+   * every form a Location can take: a relative path or a protocol-relative
+   * value resolves to the origin it was resolved against, and an absolute one
+   * that leaves it is refused. The Location is passed through unchanged, so a
+   * same-origin redirect behaves exactly as it did before.
+   */
+  private assertSafeRedirect(location: string | undefined, url: string) {
+    if (!location) {
+      throw new UnsafeRedirectError(
+        url,
+        'the response carried no Location header'
+      )
+    }
+
+    const requested = new URL(url, this.baseUrl)
+    const target = new URL(location, requested)
+
+    if (target.origin !== requested.origin) {
+      throw new UnsafeRedirectError(
+        url,
+        `${target.origin} is not the origin of the request`,
+        location
       )
     }
   }
@@ -67,11 +127,10 @@ export class Sas9RequestClient extends RequestClient {
       .get<T>(url, requestConfig)
       .then((response) => {
         if (response.status === 302) {
-          return this.get(
-            response.headers['location'],
-            accessToken,
-            contentType
-          )
+          const location = response.headers['location']
+          this.assertSafeRedirect(location, url)
+
+          return this.get(location, accessToken, contentType)
         }
         throwIfError(response)
         return this.parseResponse<T>(response)
@@ -113,8 +172,11 @@ export class Sas9RequestClient extends RequestClient {
       .post<T>(url, data, { headers, withXSRFToken: true })
       .then(async (response) => {
         if (response.status === 302) {
+          const location = response.headers['location']
+          this.assertSafeRedirect(location, url)
+
           return await this.get(
-            response.headers['location'],
+            location,
             undefined,
             contentType,
             overrideHeaders
