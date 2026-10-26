@@ -1,0 +1,5 @@
+{
+  "peerDependencies": {
+    "@sasjs/lint": "^4.3.2"
+  }
+}

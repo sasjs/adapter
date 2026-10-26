@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@sasjs/sas-language": ">=0.3.3 <1.0.0"
+  }
+}

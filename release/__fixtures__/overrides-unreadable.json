@@ -1,0 +1,7 @@
+{
+  "overrides": {
+    "@sasjs/utils": {
+      "peer": true
+    }
+  }
+}

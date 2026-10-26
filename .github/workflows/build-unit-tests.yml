@@ -58,6 +58,13 @@ jobs:
         # release/audit.mjs.
         run: node release/audit.mjs
 
+      - name: Check @sasjs dependencies are ranges
+        # An exact pin on a shared package nests a second copy in every consumer
+        # that resolves a different version - adapter pinned @sasjs/utils at
+        # 4.0.1 and did exactly that. Runs before the install because it reads
+        # package.json only.
+        run: node release/dep-range-check.mjs
+
       - name: Install Dependencies
         run: npm ci
 

@@ -1,0 +1,7 @@
+{
+  "overrides": {
+    "@sasjs/cli": {
+      "axios": "1.2.3"
+    }
+  }
+}
