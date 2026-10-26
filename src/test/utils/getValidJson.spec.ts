@@ -23,7 +23,7 @@ describe('jsonValidator', () => {
     const test = () => {
       getValidJson(json)
     }
-    expect(test).toThrowError(InvalidJsonError)
+    expect(test).toThrow(InvalidJsonError)
   })
 
   it('should throw an error when an array is passed', () => {

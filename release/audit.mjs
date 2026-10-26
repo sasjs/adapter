@@ -20,6 +20,12 @@
  * listed again. The ip-address advisory published after that npm release does
  * appear - npm vendors the affected version - and is exempted below.
  *
+ * Removed 2026-10-26: GHSA-vfj7-8cjw-p6xm (braces). The advisory was withdrawn
+ * upstream on 2026-10-23 (`withdrawn_at`), so `npm audit` no longer reports it
+ * against the resolved 3.0.3 and keeping the entry would fail this gate's stale
+ * rule. Nothing was hidden by a bump - the lockfile still resolves braces 3.0.3,
+ * which is the newest published version.
+ *
  * Every exemption carries its own argument - where the affected code sits,
  * whether this repo's release path runs it, and whose input reaches it. An
  * advisory whose input arrives from outside this repo is a risk acceptance
@@ -46,12 +52,16 @@ const releaseDir = dirname(fileURLToPath(import.meta.url))
  */
 const EXEMPT = new Map([
   [
-    'GHSA-vfj7-8cjw-p6xm',
-    "braces 3.0.3, reached via semantic-release -> micromatch. Affected through 3.0.3, which is the latest release, so no bump clears it. NOT REACHABLE HERE: the stack exhaustion needs a deeply nested brace PATTERN, and the patterns the release flow matches against come from this repo's own release config (branch globs and releaseRules), not from the commits being matched."
-  ],
-  [
     'GHSA-rxp7-6hxx-x8q5',
     'ip-address 10.7.2, bundled inside npm 11.21.1, which @semantic-release/npm resolves from its npm ^11.6.2 range. 11.21.1 is the newest 11.x, and the version npm bundles cannot be overridden from here - adding `overrides` for ip-address to release/package.json leaves the lockfile at 10.7.2, which was measured. RISK ACCEPTANCE, not unreachability: the parse runs only on a proxy address that carries an Address6 zone identifier; the exposure is a stall during publish, and that string can arrive from standard npm proxy configuration (`npm_config_proxy`, `HTTPS_PROXY`), so the input path is reachable and the accepted risk is a publish-time stall rather than a package-supplied one. No bump in this repo moves it: forcing npm 12.2.1 inside the toolchain was measured too, and its own bundled tree still vendors ip-address 10.7.2. It clears only when npm ships ip-address >= 10.7.4 in its own bundled tree; the advisory then disappears and this entry fails the gate until it is deleted.'
+  ],
+  [
+    'GHSA-4qv8-2p9j-2685',
+    "undici 6.29.0, bundled inside npm 11.21.1 and reached through @semantic-release/npm. The advisory range is >=6.5.0 <6.29.1, and the copies this repo resolves are outside it - node_modules/undici 7.30.1 and the 6.29.1 under @actions/http-client - so what fails here is npm's own vendored copy, which no `overrides` entry can reach (measured for ip-address above; forcing npm 12 inside the toolchain does not move it either). RISK ACCEPTANCE: the parser runs inside npm's own network operations during the publish step, on responses from the registry over TLS, so the input path is reachable and the exposure is a publish-time stall. It clears when npm ships undici >= 6.29.1 in its bundle, and this entry then fails the gate until it is deleted."
+  ],
+  [
+    'GHSA-xjj6-f33q-929c',
+    'Same undici 6.29.0 bundled inside npm 11.21.1 (range >=6.23.0 <6.29.1), same reasoning as GHSA-4qv8-2p9j-2685: the copies this repo resolves are 7.30.1 and 6.29.1, both outside the affected range, and the vendored one cannot be overridden. RISK ACCEPTANCE, exposure is a publish-time stall.'
   ]
 ])
 

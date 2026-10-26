@@ -128,6 +128,12 @@ jobs:
         # install it packed 3 files and passed while the leak was present.
         run: node release/pack-check.mjs
 
+      - name: Check @sasjs dependencies are ranges
+        # The PR workflow gates this too, but this is the path that publishes: a
+        # change that reaches the release branch without a PR would otherwise
+        # ship a pin that nests a second copy in every consumer.
+        run: node release/dep-range-check.mjs
+
       - name: Semantic Release
         # semantic-release pushes twice: @semantic-release/git pushes the release
         # commit to the branch, then core pushes the tag in a second, tags-only

@@ -23,7 +23,7 @@ describe('openWebPage', () => {
     it(`should return new Window popup - using default adapter's dialog`, async () => {
       await expect(openWebPage(serverUrl)).resolves.toBeDefined()
 
-      expect(mockedOpen).toBeCalled()
+      expect(mockedOpen).toHaveBeenCalled()
     })
   })
 
@@ -45,8 +45,8 @@ describe('openWebPage', () => {
         .mockImplementation(() => Promise.resolve(true))
 
       await expect(openWebPage(serverUrl)).resolves.toBeDefined()
-      expect(loginPromptModule.openLoginPrompt).toBeCalled()
-      expect(mockedOpen).toBeCalled()
+      expect(loginPromptModule.openLoginPrompt).toHaveBeenCalled()
+      expect(mockedOpen).toHaveBeenCalled()
     })
 
     it(`should return new Window popup - using frontend's provided onloggedOut`, async () => {
@@ -57,8 +57,8 @@ describe('openWebPage', () => {
       await expect(
         openWebPage(serverUrl, undefined, undefined, onLoggedOut)
       ).resolves.toBeDefined()
-      expect(onLoggedOut).toBeCalled()
-      expect(mockedOpen).toBeCalled()
+      expect(onLoggedOut).toHaveBeenCalled()
+      expect(mockedOpen).toHaveBeenCalled()
     })
   })
 })
