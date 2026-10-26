@@ -15,15 +15,15 @@ async function createTSDocs() {
       'Typedoc error: out option is missing in typedoc configuration.'
     )
   }
-  const app = new td.Application()
-  app.options.addReader(new td.TSConfigReader())
 
-  app.bootstrap({
+  // typedoc 0.28 builds the application through the static bootstrap; the
+  // constructor no longer accepts an empty configuration
+  const app = await td.Application.bootstrapWithPlugins({
     ...typedocJson,
     tsconfig: 'tsconfig.json'
   })
 
-  const project = app.converter.convert(app.getEntryPoints() ?? [])
+  const project = await app.convert()
 
   if (project) {
     await app.generateDocs(project, typedocJson.out)

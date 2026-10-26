@@ -41,6 +41,13 @@ describe('SessionManager', () => {
     etag: sessionEtag
   })
 
+  // the pool outlives a case: a mock that pushed a session is not undone by
+  // restoreAllMocks, so each case starts from an empty pool
+  beforeEach(() => {
+    sessionManager['sessions'].length = 0
+    jest.restoreAllMocks()
+  })
+
   afterEach(() => {
     jest.restoreAllMocks()
   })
@@ -269,40 +276,39 @@ describe('SessionManager', () => {
       expect(sessionManager['sessions'].length).toEqual(1)
     })
 
-    it.concurrent(
-      'should throw an error if session creation request returned 500',
-      async () => {
-        const sessionCreationStatus = 500
-        const sessionCreationError = `The process initialization for the Compute server with the ID 'ed40398a-ec8a-422b-867a-61493ee8a57f' timed out after 60 seconds. Request failed with status code ${sessionCreationStatus}`
+    // not concurrent: this case spies on shared state (the session manager and
+    // the request client) that a sibling running in parallel also drives
+    it('should throw an error if session creation request returned 500', async () => {
+      const sessionCreationStatus = 500
+      const sessionCreationError = `The process initialization for the Compute server with the ID 'ed40398a-ec8a-422b-867a-61493ee8a57f' timed out after 60 seconds. Request failed with status code ${sessionCreationStatus}`
 
-        jest.spyOn(requestClient, 'post').mockImplementation(() =>
-          Promise.reject({
-            response: {
-              status: sessionCreationStatus,
-              data: {
-                message: sessionCreationError
-              }
+      jest.spyOn(requestClient, 'post').mockImplementation(() =>
+        Promise.reject({
+          response: {
+            status: sessionCreationStatus,
+            data: {
+              message: sessionCreationError
             }
-          })
-        )
+          }
+        })
+      )
 
-        const contextId = 'testContextId'
-        const context: Context = {
-          name: 'testContext',
-          id: contextId,
-          createdBy: 'createdBy',
-          version: 1
-        }
-
-        sessionManager['currentContext'] = context
-
-        const expectedError = new Error(
-          `Error while creating session. POST request to ${process.env.SERVER_URL}/compute/contexts/${contextId}/sessions failed with status code ${sessionCreationStatus}. ${sessionCreationError}`
-        )
-
-        await expect(sessionManager.getSession()).rejects.toEqual(expectedError)
+      const contextId = 'testContextId'
+      const context: Context = {
+        name: 'testContext',
+        id: contextId,
+        createdBy: 'createdBy',
+        version: 1
       }
-    )
+
+      sessionManager['currentContext'] = context
+
+      const expectedError = new Error(
+        `Error while creating session. POST request to ${process.env.SERVER_URL}/compute/contexts/${contextId}/sessions failed with status code ${sessionCreationStatus}. ${sessionCreationError}`
+      )
+
+      await expect(sessionManager.getSession()).rejects.toEqual(expectedError)
+    })
   })
 
   describe('clearSession', () => {

@@ -63,9 +63,7 @@ describe('formatDataForRequest', () => {
       [`$${testTable}`]: { formats: { var: 'best.' } }
     }
 
-    expect(() =>
-      formatDataForRequest(tableWithMissingValues)
-    ).not.toThrowError()
+    expect(() => formatDataForRequest(tableWithMissingValues)).not.toThrow()
   })
 
   it('should throw an error if special missing values is not valid', () => {

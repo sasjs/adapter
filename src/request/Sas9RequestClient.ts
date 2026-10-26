@@ -1,5 +1,5 @@
 import type * as https from 'https'
-import { AxiosRequestConfig } from 'axios'
+import { AxiosInstance, AxiosRequestConfig } from 'axios'
 import { wrapper } from 'axios-cookiejar-support'
 import * as tough from 'tough-cookie'
 import { prefixMessage } from '@sasjs/utils/error'
@@ -27,6 +27,16 @@ const warnDeprecatedSas9Login = () => {
  * Specific request client for SAS9 in Node.js environments.
  * Handles redirects and cookie management.
  */
+/**
+ * The cookie wrapper carries its jar on the request config, and axios types
+ * `defaults` as a separate shape, so the property is named here rather than
+ * relied on through the package's module augmentation.
+ */
+const jarredDefaults = (
+  client: AxiosInstance
+): AxiosInstance['defaults'] & { jar?: tough.CookieJar } =>
+  client.defaults as AxiosInstance['defaults'] & { jar?: tough.CookieJar }
+
 export class Sas9RequestClient extends RequestClient {
   constructor(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
     super(baseUrl, httpsAgentOptions)
@@ -35,16 +45,18 @@ export class Sas9RequestClient extends RequestClient {
       status >= 200 && status < 303
 
     if (wrapper) {
-      wrapper(this.httpClient)
-      this.httpClient.defaults.jar = new tough.CookieJar()
+      // the published signature is a union over axios's two declaration files,
+      // which TypeScript resolves as distinct types here; the call is unchanged
+      ;(wrapper as (client: AxiosInstance) => AxiosInstance)(this.httpClient)
+      jarredDefaults(this.httpClient).jar = new tough.CookieJar()
     }
   }
 
   public resetInMemoryAuthState() {
     super.resetInMemoryAuthState()
-    if (this.httpClient.defaults.jar) {
-      ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookiesSync()
-    }
+    const jar = jarredDefaults(this.httpClient).jar
+
+    if (jar) jar.removeAllCookiesSync()
   }
 
   /**
@@ -60,8 +72,10 @@ export class Sas9RequestClient extends RequestClient {
     if (username && password) warnDeprecatedSas9Login()
 
     const codeInjectorPath = `/User Folders/${username}/My Folder/sasjs/runner`
-    if (this.httpClient.defaults.jar) {
-      ;(this.httpClient.defaults.jar as tough.CookieJar).removeAllCookies()
+    const jar = jarredDefaults(this.httpClient).jar
+
+    if (jar) {
+      jar.removeAllCookies()
       await this.get(
         `${jobsPath}?_program=${codeInjectorPath}&_username=${username}&_password=${password}`,
         undefined,
