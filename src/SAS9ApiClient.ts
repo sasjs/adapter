@@ -40,8 +40,8 @@ export class SAS9ApiClient {
   /**
    * Executes code on a SAS9 server.
    * @param linesOfCode - an array of code lines to execute.
-   * @param userName - the user name to log into the current SAS server.
-   * @param password - the password to log into the current SAS server.
+   * @param userName - the user name to log into the current SAS server. Deprecated with the SAS 9 username / password login - see the "SAS 9 credentials" note in the README.
+   * @param password - the password to log into the current SAS server. Deprecated with the SAS 9 username / password login - see the "SAS 9 credentials" note in the README.
    */
   public async executeScript(
     linesOfCode: string[],
