@@ -83,6 +83,19 @@
 </code></pre>
 <p>More examples of using authentication, and more, can be found in the <a href="https://github.com/search?q=topic%3Asasjs-app+org%3Asasjs+fork%3Atrue">SASjs Seed Apps</a> on github.</p>
 
+<a href="#sas-9-credentials-deprecated" id="sas-9-credentials-deprecated" style="color: inherit; text-decoration: none;">
+  <h3>SAS 9 credentials (deprecated)</h3>
+</a>
+<p>Earlier versions logged into SAS 9 by passing a username and password, which were appended to the <code>_program</code> URL as <code>_username</code> and <code>_password</code>. This is deprecated.</p>
+<p>It puts the credentials in a query string - where they are recorded by server logs, proxies, and anything else that logs request URLs - and SAS 9 only accepts them when the platform is configured to allow URL credentials, so it never worked without a server-side change. There is no drop-in replacement for the mechanism itself, and it will be removed in a future major version.</p>
+<p>It surfaces in three places:</p>
+<ul>
+<li><code>authConfigSas9</code> on <code>executeScript()</code></li>
+<li>the <code>userName</code> and <code>password</code> arguments of <code>SAS9ApiClient.executeScript()</code></li>
+<li><code>username</code> and <code>password</code> in the job-execution config for <code>serverType: &#39;SAS9&#39;</code></li>
+</ul>
+<p>Using it logs a single deprecation warning per process.</p>
+
 <a href="#request--response" id="request--response" style="color: inherit; text-decoration: none;">
   <h3>Request / Response</h3>
 </a>
