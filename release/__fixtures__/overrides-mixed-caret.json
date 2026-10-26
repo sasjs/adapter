@@ -1,8 +1,0 @@
-{
-  "overrides": {
-    "@sasjs/cli": {
-      ".": "^9.0.0",
-      "@sasjs/utils": "^4.0.1"
-    }
-  }
-}

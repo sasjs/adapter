@@ -1,8 +1,0 @@
-{
-  "devDependencies": {
-    "@sasjs/utils": "4.0.1"
-  },
-  "dependencies": {
-    "@sasjs/utils": "^4.0.1"
-  }
-}
