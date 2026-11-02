@@ -1,7 +1,15 @@
 import NodeFormData from 'form-data'
-import { AuthConfig, ServerType, ServicePackSASjs } from '@sasjs/utils/types'
+import {
+  AuthConfig,
+  MacroVar,
+  ServerType,
+  ServicePackSASjs
+} from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
-import { ExecutionQuery } from './types'
+import { ExecutionQuery, Job, PollOptions } from './types'
+import { OnTokensRefreshed } from './auth/getTokens'
+import { pollJobState, JobState, StateReader } from './api/viya/pollJobState'
+import { ComputeJobExecutionError } from './types/errors'
 import { RequestClient } from './request/RequestClient'
 import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
@@ -18,6 +26,22 @@ export interface ScriptExecutionResult {
   log: string
   webout?: string
   printOutput?: string
+}
+
+/**
+ * How SASjs Server reports the state of a triggered program.
+ *
+ * Two differences from Viya, both its own to know: the body is JSON with a
+ * `state` member (`{ "state": "running" }`) rather than plain text, and
+ * `initialising` - a session that exists before the program has started - has
+ * no Viya equivalent and is not a terminal state.
+ */
+export const readSasjsState: StateReader = (body) => {
+  const state = typeof body === 'string' ? body.trim() : (body as any)?.state
+
+  if (state === 'initialising') return JobState.Pending
+
+  return (state ?? '') as JobState
 }
 
 export class SASjsApiClient {
@@ -171,6 +195,141 @@ export class SASjsApiClient {
     authCode: string
   ): Promise<SASjsAuthResponse> {
     return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
+  }
+
+  /**
+   * Starts a stored program and returns the job it runs in.
+   *
+   * The result is the shape a Viya compute job has - an id and `links` with
+   * `state` and `log` relations - because that is what `pollJobState`,
+   * `fetchLogFileContent` and everything written against them already follow.
+   * A caller therefore does not need to know which of the two servers it is
+   * talking to.
+   *
+   * @param sasJob - the path of the program, relative to `appLoc` unless it starts with `/`.
+   * @param data - values passed to the program as macro variables.
+   * @param config - the SASjs config for this call; `debug` turns on `_debug`.
+   * @param authConfig - an access token, or the tokens to mint one from.
+   * @param waitForResult - poll until the program finishes before resolving.
+   * @param pollOptions - poll interval and maximum attempts, see `pollJobState`.
+   * @param printPid - include the OS process id in the job, while it is running.
+   * @param variables - macro variables, merged with `data`.
+   * @param onTokensRefreshed - called with the rotated token pair after a refresh.
+   */
+  public async startComputeJob(
+    sasJob: string,
+    data: any,
+    config: any,
+    authConfig?: AuthConfig,
+    waitForResult = true,
+    pollOptions?: PollOptions,
+    printPid = false,
+    variables?: MacroVar,
+    onTokensRefreshed?: OnTokensRefreshed
+  ): Promise<{ job: Job; log: string }> {
+    const access_token = await this.getAccessTokenForRequest(authConfig)
+
+    const _program = sasJob.startsWith('/')
+      ? sasJob
+      : `${config.appLoc ?? ''}/${sasJob}`
+
+    // Every query parameter becomes a macro variable, the same way the
+    // synchronous execute endpoint builds them. `_program` and `_debug` are
+    // reserved: they are set below from the arguments, so a payload or a macro
+    // variable set that happens to carry either key cannot redirect the call to
+    // a different program.
+    const query = new URLSearchParams()
+    const reserved = new Set(['_program', '_debug'])
+
+    for (const [key, value] of Object.entries({
+      ...(data ?? {}),
+      ...(variables ?? {})
+    }))
+      if (!reserved.has(key) && value !== undefined && value !== null)
+        query.set(key, String(value))
+
+    query.set('_program', _program)
+
+    if (config.debug) query.set('_debug', '131')
+
+    const { result } = await this.requestClient
+      .post<{
+        sessionId: string
+        pid?: number
+        status?: string
+        message?: string
+        error?: string
+      }>(`SASjsApi/stp/trigger?${query.toString()}`, {}, access_token)
+      .catch((err) => {
+        throw prefixMessage(err, 'Error while triggering the program. ')
+      })
+
+    // The trigger answers 200 with a failure body when the program cannot be
+    // found or the runtime refuses it, so a missing session id is the only
+    // signal that the call did not start anything. Without this the caller gets
+    // links built from `undefined` and the failure surfaces later as a 404 on a
+    // state URL.
+    if (!result?.sessionId)
+      throw new Error(
+        `Error while triggering the program. ${
+          result?.error ?? result?.message ?? 'No session id was returned.'
+        }`
+      )
+
+    // absolute paths, as Viya job links are: a caller composes `${serverUrl}${href}`
+    // to fetch a log, so a relative href turns into `https://hostsasjsapi/...`
+    const links = [
+      {
+        rel: 'state',
+        href: `/SASjsApi/session/${result.sessionId}/state`,
+        method: 'GET'
+      },
+      {
+        rel: 'log',
+        href: `/SASjsApi/session/${result.sessionId}/log`,
+        method: 'GET'
+      },
+      {
+        rel: 'self',
+        href: `/SASjsApi/session/${result.sessionId}`,
+        method: 'GET'
+      }
+    ]
+
+    const job = {
+      id: result.sessionId,
+      links,
+      ...(printPid && result.pid !== undefined ? { pid: result.pid } : {})
+    } as unknown as Job
+
+    if (!waitForResult) return { job, log: '' }
+
+    const state = await pollJobState(
+      this.requestClient,
+      job,
+      !!config.debug,
+      authConfig,
+      pollOptions,
+      undefined,
+      onTokensRefreshed,
+      ServerType.Sasjs,
+      readSasjsState
+    )
+
+    const { result: log } = await this.requestClient
+      .get<string>(
+        `SASjsApi/session/${result.sessionId}/log`,
+        access_token,
+        'text/plain'
+      )
+      .catch(() => ({ result: '' }))
+
+    const finished = { ...job, state } as unknown as Job
+
+    if (state === JobState.Failed || state === JobState.Error)
+      throw new ComputeJobExecutionError(finished, log ?? '')
+
+    return { job: finished, log: log ?? '' }
   }
 
   /**

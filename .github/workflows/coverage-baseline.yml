@@ -1,0 +1,64 @@
+name: Coverage baseline
+
+# Publishes the coverage a pull request is measured against. It runs on every
+# push to master, so the baseline is the tree the next pull request is diffed
+# against, and on demand, so it can be refreshed after a failed run.
+#
+# The pull request workflow (.github/workflows/build-unit-tests.yml, steps
+# "Find the coverage baseline" through "Fail on a coverage regression")
+# downloads this artifact and fails a pull request that lowers any metric.
+# The same mechanism runs in sasjs/cli and sasjs/vscode-extension.
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Deliberately not cancel-in-progress: a baseline is per commit, and a pull
+  # request based on that commit needs it after a newer commit on master has
+  # landed. Cancelling the older run would leave that commit with no baseline at
+  # all, which is worse than running two suites a few minutes apart.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # the same pin as build-unit-tests.yml and npmpublish.yml
+  NPM_VERSION: 12.2.0
+
+jobs:
+  baseline:
+    name: baseline
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Update npm
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate the coverage summary
+        # plain jest, not the report action: there is no pull request to comment
+        # on here, and an action's failure would skip the upload. The
+        # json-summary reporter in jest.config.js is what writes the file.
+        run: npx jest --silent --runInBand --ci --coverage
+
+      - name: Publish the coverage baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+          retention-days: 90

@@ -44,6 +44,42 @@ describe('SASjs.startComputeJob', () => {
     jest.restoreAllMocks()
   })
 
+  it('routes a SASjs Server job to the SASjs client, with no context name', async () => {
+    // SASjs Server has no compute contexts and no job definitions: the program
+    // is a file in the drive. The contextName requirement is a Viya one, so a
+    // missing context must not stop a SASjs trigger.
+    const sasjsClient = new SASjs({
+      serverUrl: 'https://test.com',
+      serverType: ServerType.Sasjs
+    })
+
+    const startSpy = jest
+      .spyOn((sasjsClient as any).sasJSApiClient, 'startComputeJob')
+      .mockImplementation(() => Promise.resolve({ job: {}, log: '' }))
+
+    await sasjsClient.startComputeJob(
+      '/Public/test/job',
+      null,
+      {},
+      mockAuthConfig
+    )
+
+    expect(startSpy).toHaveBeenCalledWith(
+      '/Public/test/job',
+      null,
+      expect.anything(),
+      mockAuthConfig,
+      false,
+      undefined,
+      false,
+      undefined,
+      undefined
+    )
+
+    // and the Viya path was not touched
+    expect(executeComputeJobSpy).not.toHaveBeenCalled()
+  })
+
   it('should forward onTokensRefreshed to executeComputeJob', async () => {
     const onTokensRefreshed: OnTokensRefreshed = jest.fn()
 

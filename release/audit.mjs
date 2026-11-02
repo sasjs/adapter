@@ -62,6 +62,26 @@ const EXEMPT = new Map([
   [
     'GHSA-xjj6-f33q-929c',
     'Same undici 6.29.0 bundled inside npm 11.21.1 (range >=6.23.0 <6.29.1), same reasoning as GHSA-4qv8-2p9j-2685: the copies this repo resolves are 7.30.1 and 6.29.1, both outside the affected range, and the vendored one cannot be overridden. RISK ACCEPTANCE, exposure is a publish-time stall.'
+  ],
+  [
+    'GHSA-3g3m-2fjr-6pw4',
+    "glob 13.0.6, bundled inside npm 11.21.1 (advisory range >= 9.0.0, patched 14.0.2) and reached through @semantic-release/npm. 11.21.1 is the newest 11.x and npm's vendored copies cannot be overridden from here - `overrides` does not reach them, which was measured for ip-address above. RISK ACCEPTANCE: the affected path is a glob walk that npm runs over its own tree during the publish step; the input is a path this repository set, over a local filesystem, so what an outside party could reach is not the traversal itself. It clears when npm ships glob >= 14.0.2 in its bundle, and this entry then fails the gate until it is deleted."
+  ],
+  [
+    'GHSA-g3hv-75wg-m249',
+    "minimatch 10.2.5, bundled inside npm 11.21.1 (advisory range < 11.0.1) and reached through @semantic-release/npm. Same position as glob above: npm's own dependency, newest 11.x, not overridable from this repo. RISK ACCEPTANCE: the amplification is a denial of service on a glob pattern; the patterns npm matches with it during publish come from this repository's configuration, not from a caller, so the exposure is a stalled publish and not a package-supplied input. It clears when npm ships minimatch >= 11.0.1 in its bundle."
+  ],
+  [
+    'GHSA-2m5v-pch6-74hx',
+    "undici 6.29.0, bundled inside npm 11.21.1 (advisory range >= 4.0.0 < 6.29.1). The copies this repository resolves are outside the range - node_modules/undici 7.30.1 and 6.29.1 under @actions/http-client - so what fails here is npm's vendored copy, which no `overrides` entry can reach. RISK ACCEPTANCE: the affected code is the Agent's TLS option handling, exercised by npm's own registry traffic during publish over TLS to the registry this repository names. It clears when npm ships undici >= 6.29.1 in its bundle."
+  ],
+  [
+    'GHSA-qrxm-fqhp-jwvm',
+    'undici 6.29.0, bundled inside npm 11.21.1 (advisory range >= 4.2.1 < 6.29.1), same vendored copy as GHSA-2m5v-pch6-74hx. RISK ACCEPTANCE: the renegotiation case needs a server that requests TLS 1.2 renegotiation; the publish step talks to the registry over a connection this repository does not control the server end of, so the risk accepted is a stalled publish rather than anything package-supplied.'
+  ],
+  [
+    'GHSA-9fm3-97px-rjf6',
+    "undici 6.29.0, bundled inside npm 11.21.1 (advisory range >= 5.15.0 < 6.29.1), same vendored copy. RISK ACCEPTANCE: the affected path is the WebSocket client, which npm's publish path does not open - it is reachable only if npm's own code does, and no step of this release toolchain drives a WebSocket."
   ]
 ])
 

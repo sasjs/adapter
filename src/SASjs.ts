@@ -961,17 +961,37 @@ export default class SASjs {
       ...config
     }
 
-    this.isMethodSupported('startComputeJob', [ServerType.SasViya])
-    if (!config.contextName) {
-      throw new Error(
-        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
-      )
-    }
+    this.isMethodSupported('startComputeJob', [
+      ServerType.SasViya,
+      ServerType.Sasjs
+    ])
 
     if (verboseMode) {
       this.requestClient?.setVerboseMode(verboseMode)
       this.requestClient?.enableVerboseMode()
     } else if (verboseMode === false) this.requestClient?.disableVerboseMode()
+
+    // A SASjs Server has no compute contexts and no job definitions: the program
+    // is a file in the drive, triggered by path. The result carries the same
+    // `links` a Viya compute job does, so polling and log retrieval are shared.
+    if (this.sasjsConfig.serverType === ServerType.Sasjs)
+      return this.sasJSApiClient?.startComputeJob(
+        sasJob,
+        data,
+        config,
+        authConfig,
+        !!waitForResult,
+        pollOptions,
+        printPid,
+        variables,
+        onTokensRefreshed
+      )
+
+    if (!config.contextName) {
+      throw new Error(
+        'Context name is undefined. Please set a `contextName` in your SASjs or override config.'
+      )
+    }
 
     return this.sasViyaApiClient?.executeComputeJob(
       sasJob,
