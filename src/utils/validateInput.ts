@@ -1,5 +1,5 @@
 export const MORE_INFO =
-  'For more info see https://sasjs.io/sasjs-adapter/#request-response'
+  'For more info see the SASjs adapter documentation, under Request / Response'
 export const INVALID_TABLE_STRUCTURE = `Parameter data contains invalid table structure. ${MORE_INFO}`
 
 /**
