@@ -7,6 +7,22 @@ import { Link, WriteStream, SessionState, JobSessionManager } from '../../types'
 import { delay, isNode } from '../../utils'
 import { getLogger } from '../../utils/host'
 
+/**
+ * How a caller's server reports the state of a job.
+ *
+ * The poller follows a job's `state` link and hands the body to this function,
+ * so a server that answers differently - or has states of its own - says so at
+ * the call site rather than teaching this module about itself.
+ */
+export type StateReader = (body: unknown) => JobState
+
+/**
+ * The Viya compute API answers the state link with plain text: the state name,
+ * padded with a newline.
+ */
+export const readViyaState: StateReader = (body) =>
+  String(body ?? '').trim() as JobState
+
 export enum JobState {
   Completed = 'completed',
   Running = 'running',
@@ -18,6 +34,16 @@ export enum JobState {
 }
 
 /**
+ * Polls a job that carries `links`, following the one with `rel === 'state'`
+ * until it stops being running, pending or unavailable.
+ *
+ * The shape it follows is the Viya compute API's - that is where the `state`
+ * link, the `?_action=wait` query and the parent-session health check come from
+ * - but the shape itself is now a contract two servers answer: SASjs Server
+ * returns the same links for a triggered program, so the same poll loop drives
+ * both. What differs between them is how the state body is read, and that is a
+ * `StateReader` the caller supplies rather than something this module decides.
+ *
  * Polls job status using default or provided poll options.
  * @param requestClient - the pre-configured HTTP request client.
  * @param postedJob - the relative or absolute path to the job.
@@ -48,7 +74,9 @@ export async function pollJobState(
   authConfig?: AuthConfig,
   pollOptions?: PollOptions,
   jobSessionManager?: JobSessionManager,
-  onTokensRefreshed?: OnTokensRefreshed
+  onTokensRefreshed?: OnTokensRefreshed,
+  serverType: ServerType = ServerType.SasViya,
+  readState: StateReader = readViyaState
 ): Promise<JobState> {
   const logger = getLogger()
 
@@ -99,7 +127,9 @@ export async function pollJobState(
     postedJob,
     JobState.NoState,
     debug,
-    authConfig
+    authConfig,
+    serverType,
+    readState
   ).catch((err) => {
     logger.error(
       `Error fetching job state from ${stateLink.href}. Starting poll, assuming job to be running.`,
@@ -133,7 +163,9 @@ export async function pollJobState(
     streamLog,
     logFileStream,
     jobSessionManager,
-    onTokensRefreshed
+    onTokensRefreshed,
+    serverType,
+    readState
   )
 
   currentState = result.state
@@ -166,7 +198,9 @@ export async function pollJobState(
       streamLog,
       logFileStream,
       jobSessionManager,
-      onTokensRefreshed
+      onTokensRefreshed,
+      serverType,
+      readState
     )
 
     currentState = result.state
@@ -184,6 +218,8 @@ const getJobState = async (
   currentState: string,
   debug: boolean,
   authConfig?: AuthConfig,
+  serverType: ServerType = ServerType.SasViya,
+  readState: StateReader = readViyaState,
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<JobState> => {
   const stateLink = job.links.find((l: any) => l.rel === 'state')!
@@ -195,12 +231,12 @@ const getJobState = async (
       tokens = await getTokens(
         requestClient,
         authConfig,
-        ServerType.SasViya,
+        serverType,
         onTokensRefreshed
       )
 
     const { result: jobState } = await requestClient
-      .get<string>(
+      .get<any>(
         `${stateLink.href}?_action=wait&wait=300`,
         tokens?.access_token,
         'text/plain',
@@ -211,7 +247,7 @@ const getJobState = async (
         throw new JobStatePollError(job.id, err)
       })
 
-    return jobState.trim() as JobState
+    return readState(jobState)
   } else {
     return currentState as JobState
   }
@@ -248,7 +284,9 @@ export const doPoll = async (
   streamLog?: boolean,
   logStream?: WriteStream,
   jobSessionManager?: JobSessionManager,
-  onTokensRefreshed?: OnTokensRefreshed
+  onTokensRefreshed?: OnTokensRefreshed,
+  serverType: ServerType = ServerType.SasViya,
+  readState: StateReader = readViyaState
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollOptions
   const logger = getLogger()
@@ -300,6 +338,8 @@ export const doPoll = async (
       state,
       debug,
       authConfig,
+      serverType,
+      readState,
       onTokensRefreshed
     ).catch((err) => {
       errorCount++

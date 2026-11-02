@@ -49,6 +49,39 @@ describe('pollJobState', () => {
     )
   })
 
+  // A server that answers the state link differently says so at the call site:
+  // the poller itself knows only the Viya plain-text body, and hands the body to
+  // whatever reader the caller passed.
+  it('reads the state with the reader the caller passes', async () => {
+    jest
+      .spyOn(requestClient, 'get')
+      .mockImplementation(() =>
+        Promise.resolve({ result: { state: JobState.Running } } as any)
+      )
+
+    const reader = jest.fn((body: any) => body.state as JobState)
+
+    await pollJobState(
+      requestClient,
+      mockJob,
+      false,
+      undefined,
+      {
+        maxPollCount: 1,
+        pollInterval: 1,
+        streamLog: defaultStreamLog,
+        pollStrategy: []
+      },
+      undefined,
+      undefined,
+      ServerType.Sasjs,
+      reader
+    )
+
+    expect(reader).toHaveBeenCalled()
+    expect(reader.mock.calls[0][0]).toEqual({ state: JobState.Running })
+  }, 10000)
+
   it('should not attempt to get tokens if the authConfig has not been provided', async () => {
     await pollJobState(
       requestClient,
