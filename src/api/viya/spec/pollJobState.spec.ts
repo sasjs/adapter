@@ -49,6 +49,60 @@ describe('pollJobState', () => {
     )
   })
 
+  // A SASjs Server answers the state link with JSON (`{ "state": "running" }`)
+  // rather than the plain text Viya returns, and it has one state Viya does not
+  // have: `initialising`, which is not terminal.
+  it('reads a JSON state body, as SASjs Server sends', async () => {
+    jest
+      .spyOn(requestClient, 'get')
+      .mockImplementation(() =>
+        Promise.resolve({ result: { state: JobState.Completed } } as any)
+      )
+
+    const state = await pollJobState(
+      requestClient,
+      mockJob,
+      false,
+      undefined,
+      { ...defaultPollStrategy, streamLog: defaultStreamLog },
+      undefined,
+      undefined,
+      ServerType.Sasjs
+    )
+
+    expect(state).toEqual(JobState.Completed)
+  })
+
+  it('keeps polling while a session is initialising', async () => {
+    jest
+      .spyOn(requestClient, 'get')
+      .mockImplementation(() =>
+        Promise.resolve({ result: { state: 'initialising' } } as any)
+      )
+
+    const state = await pollJobState(
+      requestClient,
+      mockJob,
+      false,
+      undefined,
+      // no fallback strategy, so the poll ends after maxPollCount rather than
+      // walking the default chain for hours
+      {
+        maxPollCount: 1,
+        pollInterval: 1,
+        streamLog: defaultStreamLog,
+        pollStrategy: []
+      },
+      undefined,
+      undefined,
+      ServerType.Sasjs
+    )
+
+    // not treated as terminal: it ran out of polls rather than completing on
+    // the first 'initialising'
+    expect(state).toEqual(JobState.Pending)
+  }, 10000)
+
   it('should not attempt to get tokens if the authConfig has not been provided', async () => {
     await pollJobState(
       requestClient,

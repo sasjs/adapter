@@ -48,7 +48,8 @@ export async function pollJobState(
   authConfig?: AuthConfig,
   pollOptions?: PollOptions,
   jobSessionManager?: JobSessionManager,
-  onTokensRefreshed?: OnTokensRefreshed
+  onTokensRefreshed?: OnTokensRefreshed,
+  serverType: ServerType = ServerType.SasViya
 ): Promise<JobState> {
   const logger = getLogger()
 
@@ -99,7 +100,8 @@ export async function pollJobState(
     postedJob,
     JobState.NoState,
     debug,
-    authConfig
+    authConfig,
+    serverType
   ).catch((err) => {
     logger.error(
       `Error fetching job state from ${stateLink.href}. Starting poll, assuming job to be running.`,
@@ -133,7 +135,8 @@ export async function pollJobState(
     streamLog,
     logFileStream,
     jobSessionManager,
-    onTokensRefreshed
+    onTokensRefreshed,
+    serverType
   )
 
   currentState = result.state
@@ -166,7 +169,8 @@ export async function pollJobState(
       streamLog,
       logFileStream,
       jobSessionManager,
-      onTokensRefreshed
+      onTokensRefreshed,
+      serverType
     )
 
     currentState = result.state
@@ -184,6 +188,7 @@ const getJobState = async (
   currentState: string,
   debug: boolean,
   authConfig?: AuthConfig,
+  serverType: ServerType = ServerType.SasViya,
   onTokensRefreshed?: OnTokensRefreshed
 ): Promise<JobState> => {
   const stateLink = job.links.find((l: any) => l.rel === 'state')!
@@ -195,12 +200,12 @@ const getJobState = async (
       tokens = await getTokens(
         requestClient,
         authConfig,
-        ServerType.SasViya,
+        serverType,
         onTokensRefreshed
       )
 
     const { result: jobState } = await requestClient
-      .get<string>(
+      .get<any>(
         `${stateLink.href}?_action=wait&wait=300`,
         tokens?.access_token,
         'text/plain',
@@ -211,7 +216,18 @@ const getJobState = async (
         throw new JobStatePollError(job.id, err)
       })
 
-    return jobState.trim() as JobState
+    // Viya answers this request as plain text; SASjs Server answers JSON with a
+    // `state` member (`{ "state": "running" }`), the shape its compute API
+    // clients already poll. Both are read here so the poller does not care
+    // which server it is following.
+    const state =
+      typeof jobState === 'string' ? jobState.trim() : jobState?.state
+
+    // 'initialising' is a SASjs Server state with no Viya equivalent: the
+    // session exists but the program has not started, so it is not terminal
+    if (state === 'initialising') return JobState.Pending
+
+    return (state ?? '') as JobState
   } else {
     return currentState as JobState
   }
@@ -248,7 +264,8 @@ export const doPoll = async (
   streamLog?: boolean,
   logStream?: WriteStream,
   jobSessionManager?: JobSessionManager,
-  onTokensRefreshed?: OnTokensRefreshed
+  onTokensRefreshed?: OnTokensRefreshed,
+  serverType: ServerType = ServerType.SasViya
 ): Promise<{ state: JobState; pollCount: number }> => {
   const { maxPollCount, pollInterval } = pollOptions
   const logger = getLogger()
@@ -300,6 +317,7 @@ export const doPoll = async (
       state,
       debug,
       authConfig,
+      serverType,
       onTokensRefreshed
     ).catch((err) => {
       errorCount++
