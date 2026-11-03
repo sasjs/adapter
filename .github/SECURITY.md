@@ -3,7 +3,7 @@
 Security is an extremely high priority when it comes to the SASjs product suite. We take a number of steps across all repositories to minimise risk, such as:
 
 - Regular dependency updates - Dependabot, for the GitHub Actions this repository runs
-- A dependency audit in CI that fails on any known advisory where the tree allows it
+- A dependency audit in CI that fails on any advisory not carried as a reviewed, dated exemption next to the gate
 - Keeping the production dependency surface small
 
 ## Supported Versions
