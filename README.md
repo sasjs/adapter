@@ -1,3 +1,5 @@
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sasjs/adapter/badge)](https://scorecard.dev/viewer/?uri=github.com/sasjs/adapter)
+
 # @sasjs/adapter
 
 [![npm package][npm-image]][npm-url]

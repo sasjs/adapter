@@ -1,0 +1,11 @@
+version: 2
+updates:
+
+  # The workflows pin their actions to a commit SHA - that is what the scorecard's
+  # Pinned-Dependencies check rewards, and it makes a compromised tag useless - so
+  # something has to move those pins, or they rot.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
