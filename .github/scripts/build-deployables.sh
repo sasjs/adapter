@@ -47,7 +47,7 @@ echo
 echo "== 1. install and build the adapter from this checkout =="
 cd "$REPO_ROOT"
 # A fresh checkout has no node_modules, and `npm run package:lib` needs the
-# adapter's own devDependencies (copyfiles, webpack). CI starts clean, so
+# adapter's own devDependencies (rimraf, typescript, webpack). CI starts clean, so
 # install first - a pre-populated local tree hides this.
 # npm ci, not npm i: the lockfile is what pins the devDependencies, and the scorecard
 # reads a bare `npm i` as an unpinned dependency
