@@ -111,6 +111,23 @@
     "form-data": "4.0.6",
     "tough-cookie": "6.0.2"
   },
+  "overrides": {
+    "es-define-property": "npm:@socketregistry/es-define-property@1.0.7",
+    "es-set-tostringtag": "npm:@socketregistry/es-set-tostringtag@1.0.10",
+    "function-bind": "npm:@socketregistry/function-bind@1.0.7",
+    "gopd": "npm:@socketregistry/gopd@1.0.7",
+    "has-symbols": "npm:@socketregistry/has-symbols@1.0.7",
+    "has-tostringtag": "npm:@socketregistry/has-tostringtag@1.0.7",
+    "hasown": "npm:@socketregistry/hasown@1.0.7",
+    "is-core-module": "npm:@socketregistry/is-core-module@1.0.11",
+    "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@1.0.5",
+    "isarray": "npm:@socketregistry/isarray@1.0.8",
+    "object-assign": "npm:@socketregistry/object-assign@1.0.5",
+    "path-parse": "npm:@socketregistry/path-parse@1.0.8",
+    "safe-buffer": "npm:@socketregistry/safe-buffer@1.0.9",
+    "safer-buffer": "npm:@socketregistry/safer-buffer@1.0.10",
+    "side-channel": "npm:@socketregistry/side-channel@1.0.10"
+  },
   "version": "0.0.0-semantically-released",
   "engines": {
     "node": ">=22"
