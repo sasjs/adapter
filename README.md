@@ -1,14 +1,6 @@
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sasjs/adapter/badge)](https://scorecard.dev/viewer/?uri=github.com/sasjs/adapter)
-
 # @sasjs/adapter
 
-[![npm package][npm-image]][npm-url]
-[![Github Workflow][githubworkflow-image]][githubworkflow-url]
-[![npm](https://img.shields.io/npm/dt/@sasjs/adapter)]()
-![GitHub License](https://img.shields.io/github/license/sasjs/adapter)
-![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter)
-![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter)
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
+[![npm package][npm-image]][npm-url] [![Github Workflow][githubworkflow-image]][githubworkflow-url] [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sasjs/adapter/badge)](https://scorecard.dev/viewer/?uri=github.com/sasjs/adapter) [![npm](https://img.shields.io/npm/dt/@sasjs/adapter)]() ![GitHub License](https://img.shields.io/github/license/sasjs/adapter) ![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter) ![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter) [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
 
 [npm-image]: https://img.shields.io/npm/v/@sasjs/adapter.svg
 [npm-url]: http://npmjs.org/package/@sasjs/adapter
