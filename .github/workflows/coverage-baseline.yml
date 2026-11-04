@@ -26,10 +26,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  # the same pin as build-unit-tests.yml and npmpublish.yml
-  NPM_VERSION: 12.2.0
-
 jobs:
   baseline:
     name: baseline
@@ -37,15 +33,14 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Use Node.js 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Update npm
-        run: npm install -g npm@${{ env.NPM_VERSION }}
+        run: npm install -g npm@12.2.0
 
       - name: Install Dependencies
         run: npm ci
