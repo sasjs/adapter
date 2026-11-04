@@ -31,17 +31,22 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Update npm
-        # The same pin as the Update npm step in npmpublish.yml, and it is here
+      - name: Pin the npm the release path uses
+        # The same table as the Pin npm step in npmpublish.yml, and it is here
         # for the pack-check below. npm 12 changed the shape of
         # `npm pack --json` from an array of results to an object keyed by
-        # package name, so a parser written against npm 11 reported every entry
-        # missing. The release job installs npm 12 and parses that report;
-        # without this step a pull request parses it with whatever npm the
-        # runner ships (10.x on node 22, 11.x on node 24) and stays green -
-        # which is how the break reached a release run instead of a PR.
-        # Bump both together.
-        run: npm install -g npm@12.2.0
+        # package name, so a parser written against npm 11 reports every entry
+        # missing. The release job runs npm 12 and parses that report; without
+        # this step a pull request parses it with whatever npm the runner ships
+        # (10.x on node 22, 11.x on node 24) and stays green - which is how the
+        # break reached a release run instead of a PR.
+        #
+        # The script fetches the tarball by version and verifies a recorded
+        # sha512, rather than installing it: `npm install -g` re-resolves the
+        # version against the registry on every run and cannot be attested to,
+        # so it is unpinnable by construction.
+        # Bump the version in .github/scripts/pinned-npm.sh and both jobs follow.
+        run: bash .github/scripts/pinned-npm.sh
 
         # 2. Restore npm cache manually
       - name: Restore npm cache

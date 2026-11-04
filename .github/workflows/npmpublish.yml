@@ -66,16 +66,19 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # Node 22 ships npm 10.x - OIDC trusted publishing needs npm >= 11.5.1.
-      # Pinned rather than @latest so the toolchain that publishes the package
-      # is the one this commit was reviewed with: @latest would adopt a new npm
-      # major into the release path without a commit here. 12.2.0 is what
-      # @latest resolved to when this was pinned.
-      # Keep this at the same version as the Update npm step in
-      # build-unit-tests.yml - that pairing is what makes a pull request read
-      # the pack report with the npm the release job uses. npm 12 changed the
-      # shape of `npm pack --json` and nothing noticed until a release failed.
-      - name: Update npm
-        run: npm install -g npm@12.2.0
+      # Pinned to the version the publish path was reviewed with rather than
+      # @latest, which would adopt a new npm major into the release path without
+      # a commit here.
+      # The script fetches that release's tarball and verifies a recorded
+      # sha512, rather than installing it: `npm install -g` re-resolves the
+      # version against the registry on every run and cannot be attested to, so
+      # it is unpinnable by construction.
+      # Keep this at the same version as the step in build-unit-tests.yml - that
+      # pairing is what makes a pull request read the pack report with the npm
+      # the release job uses. Bump the version in .github/scripts/pinned-npm.sh
+      # and both jobs follow.
+      - name: Pin the npm the release path uses
+        run: bash .github/scripts/pinned-npm.sh
 
         # Restore npm cache manually
       - name: Restore npm cache
