@@ -32,12 +32,20 @@
  *
  * Needs a build: run `npm run build` first (or `npm run package:lib`, which
  * builds first). Run with `node release/bundle-check.mjs`.
+ *
+ * `--source-only` scans the sources and skips the bundle: `npm run build` runs
+ * it before webpack, so the barrel-import failure is reported in this script's
+ * words rather than as webpack's `Can't resolve 'os'`, which is what a bare
+ * `@sasjs/utils` import otherwise produces several seconds later.
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
+
+/** Skip the bundle checks, which need a build: `npm run build` runs this before webpack. */
+const sourceOnly = process.argv.includes('--source-only')
 
 /**
  * Code that only the Node polyfill tree carries. Signatures rather than names,
@@ -123,8 +131,8 @@ const importSpecifiers = (line) => {
 
 const offences = []
 
-const bundles = bundlePaths()
-if (!bundles.length) {
+const bundles = sourceOnly ? [] : bundlePaths()
+if (!bundles.length && !sourceOnly) {
   console.error(
     'no browser bundle found - run `npm run build` (or `npm run package:lib`) before this check'
   )
@@ -186,18 +194,28 @@ for (const path of files) {
   })
 }
 
-console.log(
-  `browser bundles checked: ${bundles.map((p) => relative(repoRoot, p)).join(', ')}`
-)
+if (sourceOnly) {
+  console.log('source-only: the bundles are not built yet, so only imports were checked')
+} else {
+  console.log(
+    `browser bundles checked: ${bundles.map((p) => relative(repoRoot, p)).join(', ')}`
+  )
+}
 console.log(`source files checked: ${files.length}`)
 if (!offences.length) {
   console.log(
-    'no Node polyfill tree, and no barrel import, on the browser bundle path'
+    sourceOnly
+      ? 'no barrel import on the browser bundle path'
+      : 'no Node polyfill tree, and no barrel import, on the browser bundle path'
   )
   process.exit(0)
 }
 
-console.error('\nthe browser bundle would carry the Node polyfill tree:')
+console.error(
+  sourceOnly
+    ? '\nbrowser-reachable source would put the Node polyfill tree in the bundle:'
+    : '\nthe browser bundle would carry the Node polyfill tree:'
+)
 for (const offence of offences) {
   console.error(`  ${offence.what}  - ${offence.why}`)
   for (const hit of offence.hits) console.error(`      ${hit}`)
