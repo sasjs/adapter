@@ -32,15 +32,6 @@
           "prepareCmd": "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version"
         }
       ],
-      [
-        "@semantic-release/git",
-        {
-          "assets": [
-            "package.json",
-            "package-lock.json"
-          ]
-        }
-      ],
       "@semantic-release/github"
     ]
   },
@@ -120,7 +111,7 @@
     "form-data": "4.0.6",
     "tough-cookie": "6.0.2"
   },
-  "version": "5.2.2",
+  "version": "0.0.0-semantically-released",
   "engines": {
     "node": ">=22"
   },
