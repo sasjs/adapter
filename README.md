@@ -1,12 +1,11 @@
 # @sasjs/adapter
 
-[![npm package][npm-image]][npm-url] [![Github Workflow][githubworkflow-image]][githubworkflow-url] [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sasjs/adapter/badge)](https://scorecard.dev/viewer/?uri=github.com/sasjs/adapter) [![npm](https://img.shields.io/npm/dt/@sasjs/adapter)]() ![GitHub License](https://img.shields.io/github/license/sasjs/adapter) ![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter) ![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter) [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
+[![npm package][npm-image]][npm-url] [![Github Workflow][githubworkflow-image]][githubworkflow-url] [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sasjs/adapter/badge)](https://scorecard.dev/viewer/?uri=github.com/sasjs/adapter) [![npm](https://img.shields.io/npm/dt/@sasjs/adapter)](https://www.npmjs.com/package/@sasjs/adapter) ![GitHub License](https://img.shields.io/github/license/sasjs/adapter) ![GitHub top language](https://img.shields.io/github/languages/top/sasjs/adapter) ![GitHub issues](https://img.shields.io/github/issues/sasjs/adapter) [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/sasjs/adapter)
 
 [npm-image]: https://img.shields.io/npm/v/@sasjs/adapter.svg
 [npm-url]: http://npmjs.org/package/@sasjs/adapter
 [githubworkflow-image]: https://github.com/sasjs/adapter/actions/workflows/build-unit-tests.yml/badge.svg
 [githubworkflow-url]: https://github.com/sasjs/adapter/blob/main/.github/workflows/build.yml
-[dependency-image]: https://david-dm.org/sasjs/adapter.svg
 
 SASjs is a open-source framework for building Web Apps on SAS® platforms. You can use as much or as little of it as you like. This repository contains the JS adapter, the part that handles the to/from SAS communication on the client side. There are 3 ways to install it:
 
