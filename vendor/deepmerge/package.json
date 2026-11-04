@@ -1,0 +1,13 @@
+{
+  "name": "deepmerge",
+  "version": "4.3.1-sasjs.1",
+  "private": true,
+  "description": "deepmerge 4.3.1 with GHSA-gcqx-w48m-w2h4 (prototype poisoning in mergeObject) guarded. Vendored because no fixed release exists upstream.",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sasjs/adapter.git",
+    "directory": "vendor/deepmerge"
+  }
+}
