@@ -55,13 +55,72 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
-          npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP"
-          packed="$(ls "$RUNNER_TEMP"/sasjs-adapter-*.tgz)"
-          asset="${TAG}-$(basename "$packed")"
-          mv "$packed" "$RUNNER_TEMP/$asset"
+          set -euo pipefail
+          # `release: published` can fire before the registry has the version, and a
+          # pack against a version that is not there yet is a 404 - not a reason to
+          # leave a release with no assets at all
+          packed=""
+          for attempt in $(seq 1 10); do
+            if npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP" --json \
+                > "$RUNNER_TEMP/pack.json" 2> "$RUNNER_TEMP/pack.err"; then
+              packed="$(node -e "process.stdout.write(require(process.argv[1])[0].filename)" "$RUNNER_TEMP/pack.json")"
+              break
+            fi
+            echo "attempt ${attempt}/10: $(tail -n 1 "$RUNNER_TEMP/pack.err")"
+            if [ "$attempt" = 10 ]; then
+              echo "::error::@sasjs/adapter@${VERSION} never appeared in the registry"
+              exit 1
+            fi
+            sleep 6
+          done
+
+          if [ -z "$packed" ] || [ ! -f "$RUNNER_TEMP/$packed" ]; then
+            echo "::error::npm pack named ${packed:-nothing} but there is no such file"
+            exit 1
+          fi
+
+          # the tarball we attest must be the one the registry vouches for, not merely
+          # one this workflow downloaded
+          expected="$(npm view "@sasjs/adapter@${VERSION}" dist.integrity)"
+          actual="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/$packed" | openssl base64 -A)"
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::the packed tarball does not match the integrity the registry publishes"
+            echo "   expected: $expected"
+            echo "   actual:   $actual"
+            exit 1
+          fi
+
+          asset="${TAG}-${packed}"
+          mv "$RUNNER_TEMP/$packed" "$RUNNER_TEMP/$asset"
           echo "asset=$asset" >> "$GITHUB_OUTPUT"
           echo "path=$RUNNER_TEMP/$asset" >> "$GITHUB_OUTPUT"
-          sha256sum "$RUNNER_TEMP/$asset"
+          echo "integrity=$actual" >> "$GITHUB_OUTPUT"
+
+      - name: Say what the attestation covers
+        # the subject is the registry tarball fetched at release time, so the claim is
+        # "this artifact, as the registry serves it, was fetched and renamed by this
+        # workflow at <sha>" - not "this artifact was built from the tagged source".
+        # Rebuilding from the tag cannot be compared byte for byte (npm tarballs carry
+        # timestamps), so the integrity check above is what ties the file to the
+        # registry, and this note is what ties the claim to its scope.
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: ${{ steps.pack.outputs.asset }}
+          INTEGRITY: ${{ steps.pack.outputs.integrity }}
+        run: |
+          {
+            echo "### Provenance for ${TAG}"
+            echo
+            echo "Subject: \`${ASSET}\` - the tarball the npm registry serves for ${TAG},"
+            echo "verified against the registry's published integrity:"
+            echo
+            echo '```'
+            echo "${INTEGRITY}"
+            echo '```'
+            echo
+            echo "The attestation covers what was fetched here, at this commit; it does not"
+            echo "claim the registry tarball was rebuilt from the tagged source."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Attest the tarball
         id: attest
