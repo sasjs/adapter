@@ -12,6 +12,10 @@
  * polyfills plus the vm shim's dynamic code execution. sasjs/utils#275 describes
  * the same chain arriving a second way, through the utils barrel.
  *
+ * It also fails if the bundle carries dynamic code evaluation - `new Function` or
+ * `eval` - which webpack.config.js rewrites out of its global helper and which no
+ * browser bundle should carry, because it forces `unsafe-eval` on the loading page.
+ *
  * Two things put the chain on the bundle's path, and both are checked here:
  *
  *   1. webpack.config.js aliases the Node builtins again (`crypto` and
@@ -137,6 +141,31 @@ for (const path of bundles) {
       what: relative(repoRoot, path),
       why: 'carries the Node polyfill tree',
       hits: hits.map(([signature, reason]) => `${signature} - ${reason}`)
+    })
+  }
+}
+
+/**
+ * Dynamic code evaluation must not reach the bundle. The one place it appeared was
+ * webpack's global helper, whose last resort is `new Function('return this')()` - the
+ * reason a page loading dist/sasjs-adapter.js needed `unsafe-eval`, and what Socket
+ * reports as `usesEval`. webpack.config.js rewrites that helper out; this fails the
+ * build if it comes back, either because a webpack upgrade changed the template or
+ * because a dependency brought its own.
+ */
+const DYNAMIC_CODE = [/new Function\s*\(/, /\beval\s*\(/]
+
+for (const path of bundles) {
+  const code = readFileSync(path, 'utf8')
+  const hits = DYNAMIC_CODE.filter((pattern) => pattern.test(code))
+  if (hits.length) {
+    offences.push({
+      what: relative(repoRoot, path),
+      why: 'carries dynamic code evaluation, which forces unsafe-eval on any page that loads the bundle',
+      hits: hits.map(
+        (pattern) =>
+          `${pattern.source} - webpack.config.js rewrites webpack's global helper; anything else here is new`
+      )
     })
   }
 }
