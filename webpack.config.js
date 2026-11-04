@@ -23,6 +23,53 @@ const webpack = require('webpack')
 // answers those reads in about twenty lines, where the node-stdlib polyfill
 // tree answered them with bundled copies of Node internals. Its empty
 // `versions` object is what keeps isNode() false in a browser.
+// webpack 5 emits this helper for `__webpack_require__.g` on every build, whether or
+// not `output.globalObject` is set: the setting only changes what the UMD wrapper uses
+// as its root, while the helper itself stays a fixed template whose last resort is
+//
+//   try { return this || new Function('return this')(); } catch (e) { ... }
+//
+// That `new Function` is dynamic code evaluation in the shipped bundle, which makes a
+// Content-Security-Policy with `unsafe-eval` mandatory for anyone loading
+// dist/sasjs-adapter.js, and it is what Socket reports as `usesEval`. The config above
+// cannot remove it, so the asset is rewritten here: the helper's first branch already
+// answers `globalThis` on every target this bundle supports (the same `globalThis` the
+// UMD wrapper is told to use), so the fallback is dead code in a browser.
+//
+// release/bundle-check.mjs fails the build if either construct comes back.
+const GLOBAL_HELPER = /__webpack_require__\.g = \(function\s*\(\)\s*\{[\s\S]*?\}\)\(\);/
+
+class NoDynamicCodeEvaluation {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('NoDynamicCodeEvaluation', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'NoDynamicCodeEvaluation',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE
+        },
+        (assets) => {
+          for (const [name, asset] of Object.entries(assets)) {
+            if (!name.endsWith('.js')) continue
+
+            const source = asset.source().toString()
+            const rewritten = source.replace(
+              GLOBAL_HELPER,
+              '__webpack_require__.g = globalThis;'
+            )
+
+            if (rewritten === source) continue
+
+            compilation.updateAsset(
+              name,
+              new compiler.webpack.sources.RawSource(rewritten)
+            )
+          }
+        }
+      )
+    })
+  }
+}
+
 const defaultPlugins = [
   new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
   new webpack.ProvidePlugin({
@@ -76,7 +123,7 @@ const browserConfig = {
     // the same reason.
     alias: { '@sasjs/utils/file': false, util: false }
   },
-  plugins: defaultPlugins
+  plugins: [...defaultPlugins, new NoDynamicCodeEvaluation()]
 }
 
 module.exports = [browserConfig]
