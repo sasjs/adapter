@@ -51,7 +51,8 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      # Checkout using the app token so the release commit can be pushed
+      # The app token is what creates the GitHub release (and therefore the tag) as an
+      # app rather than as github-actions; nothing is pushed to master from here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -138,59 +139,19 @@ jobs:
         run: node release/dep-range-check.mjs
 
       - name: Semantic Release
-        # semantic-release pushes twice: @semantic-release/git pushes the release
-        # commit to the branch, then core pushes the tag in a second, tags-only
-        # push. GitHub rejected that second push on 2026-10-17 -
-        # "! [remote rejected] v5.1.1 -> v5.1.1 (missing necessary objects)" -
-        # which left master carrying the release commit (package.json at 5.1.1)
-        # with no v5.1.1 tag: no GitHub release, no npm stage, and every later
-        # run dying in the exec plugin's `npm version` with "Version not changed".
+        # semantic-release creates the GitHub release, and the tag with it, through the
+        # API - so the only thing this step needs is a token that can create releases.
+        # It no longer pushes anything to master: @semantic-release/git used to commit
+        # the version bump to the branch, which is the sole reason this workflow needed
+        # an App with a branch-protection bypass - and a bypass granted to an App is a
+        # bypass for anyone holding a token for that App. With the branch push gone,
+        # master stays PR-only for every identity, and the released version lives in the
+        # tag and on the registry.
         #
-        # The tag push runs after the tag exists locally and after the branch is
-        # updated, so one more attempt has only the tag to push. Retry exactly
-        # that case: a local tag alone does not identify it, because the tag is
-        # also there when the failure came later (the GitHub release). Retrying
-        # that would find the tag restored by semantic-release's own fetch, decide
-        # there is nothing to release, exit 0 and leave the step green with the
-        # release still missing - so require the tag to be absent from the remote
-        # as well.
-        #
-        # Only a definitive answer counts. `git ls-remote --exit-code` exits 2 for
-        # an absent ref but 128 when the query itself fails (network, auth,
-        # unreachable remote), and treating every non-zero exit as "absent" would
-        # retry on the transient GitHub-side failures that are the very class of
-        # incident this retry repairs - deleting the local tag, letting
-        # semantic-release's fetch restore it, finding nothing to release and
-        # exiting 0 with the release still missing. So 2 retries, 0 and anything
-        # else fail the step.
-        run: |
-          if release/node_modules/.bin/semantic-release; then
-            exit 0
-          fi
-
-          version=$(node -p "require('./package.json').version")
-
-          if ! git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
-            echo "No local v$version tag, so the failure came before the tag was created - not retrying." >&2
-            exit 1
-          fi
-
-          ls_rc=0
-          git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1 || ls_rc=$?
-
-          if [ "$ls_rc" -eq 0 ]; then
-            echo "v$version is already on the remote, so the failure came after the tag push - not retrying." >&2
-            exit 1
-          fi
-
-          if [ "$ls_rc" -ne 2 ]; then
-            echo "Could not establish whether v$version is on the remote (git ls-remote exited $ls_rc) - not retrying." >&2
-            exit 1
-          fi
-
-          echo "Retrying: v$version exists locally but not on the remote, so the tag push is what failed."
-          git tag -d "v$version"
-          release/node_modules/.bin/semantic-release
+        # The retry this step used to carry existed for the tag push that followed the
+        # branch push ("missing necessary objects" on 2026-10-17). There is no local tag
+        # and no branch push to sequence any more, so a failure here is a real failure.
+        run: release/node_modules/.bin/semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
 
@@ -220,12 +181,16 @@ jobs:
         id: publish
         if: success()
         run: |
+          # `prepareCmd` writes the version into the workspace only when
+          # semantic-release decides to cut one, so the placeholder surviving this step
+          # IS the "nothing to release" signal. Comparing against the registry cannot
+          # work once the committed file carries a placeholder: the two would never
+          # match, and every merge would try to stage the placeholder itself.
           local_version=$(node -p "require('./package.json').version")
-          published_version=$(npm view @sasjs/adapter version 2>/dev/null || echo "")
 
-          if [ "$local_version" = "$published_version" ]; then
+          if [ "$local_version" = "0.0.0-semantically-released" ]; then
             echo "released=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing to stage - $local_version is already on npm"
+            echo "Nothing to stage - semantic-release cut no version in this run"
             exit 0
           fi
 
