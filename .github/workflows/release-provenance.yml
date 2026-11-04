@@ -56,23 +56,74 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          # `release: published` can fire before the registry has the version, and a
-          # pack against a version that is not there yet is a 404 - not a reason to
-          # leave a release with no assets at all
-          packed=""
-          for attempt in $(seq 1 10); do
-            if npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP" --json \
-                > "$RUNNER_TEMP/pack.json" 2> "$RUNNER_TEMP/pack.err"; then
-              packed="$(node -e "process.stdout.write(require(process.argv[1])[0].filename)" "$RUNNER_TEMP/pack.json")"
-              break
-            fi
-            echo "attempt ${attempt}/10: $(tail -n 1 "$RUNNER_TEMP/pack.err")"
-            if [ "$attempt" = 10 ]; then
-              echo "::error::@sasjs/adapter@${VERSION} never appeared in the registry"
+          # `release: published` fires seconds before the registry serves the
+          # version, and `npm pack` against a version that is not there yet is a
+          # 404. The first version of this step retried ten times inside a minute,
+          # which is shorter than the registry's own lag: v5.2.3, v5.2.4 and
+          # v5.2.5 each ended with no assets at all, and the loop hid the reason
+          # by printing only the last line of npm's error - the line that says
+          # where the log is, not what went wrong.
+          #
+          # So: wait for availability first, with a deadline measured in minutes
+          # and npm's own first error line in the output, then pack exactly once.
+          deadline=$(( SECONDS + 600 ))
+          until npm view "@sasjs/adapter@${VERSION}" dist.integrity \
+              > "$RUNNER_TEMP/view.out" 2> "$RUNNER_TEMP/view.err"; do
+            # npm puts the code on one line and the reason on the next, so prefer
+            # the line that carries a message
+            reason="$(grep -m1 -E 'npm (error|ERR) [0-9]{3} .+' "$RUNNER_TEMP/view.err" \
+              || grep -m1 -E 'npm (error|ERR)' "$RUNNER_TEMP/view.err" \
+              || echo 'no reason given')"
+
+            # Only "not published yet" is worth waiting for. A bad credential, a
+            # DNS failure or a rate limit would otherwise spend the whole deadline
+            # and then report as though the version were missing.
+            if ! grep -qE 'npm (error|ERR) (code )?(E404|ETARGET)\b' "$RUNNER_TEMP/view.err"; then
+              echo "::error::npm view failed for a reason other than the version being absent"
+              sed -n '1,6p' "$RUNNER_TEMP/view.err"
               exit 1
             fi
-            sleep 6
+
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::@sasjs/adapter@${VERSION} is still not in the registry after 10 minutes"
+              sed -n '1,6p' "$RUNNER_TEMP/view.err"
+              exit 1
+            fi
+
+            echo "not in the registry yet, ${SECONDS}s in: ${reason}"
+            sleep 15
           done
+
+          expected="$(cat "$RUNNER_TEMP/view.out")"
+
+          # `npm view` exits 0 and prints nothing when the field resolves but is
+          # absent, which a mirror or a proxy can do. Without this the run falls
+          # through to an integrity mismatch against an empty value - the same
+          # shape of misleading failure this step exists to remove.
+          if [ -z "$expected" ]; then
+            echo "::error::the registry returned no dist.integrity for @sasjs/adapter@${VERSION}"
+            exit 1
+          fi
+
+          if ! npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP" --json \
+              > "$RUNNER_TEMP/pack.json" 2> "$RUNNER_TEMP/pack.err"; then
+            echo "::error::npm pack failed even though ${VERSION} is in the registry"
+            sed -n '1,10p' "$RUNNER_TEMP/pack.err"
+            exit 1
+          fi
+
+          # npm 12 reports the pack as an object keyed by package name; npm 11 and
+          # below report an array. This job runs on node 22's bundled npm today,
+          # but reading only one shape is how #933 broke a release.
+          packed="$(node -e "
+            const report = require(process.argv[1])
+            const entry = Array.isArray(report) ? report[0] : report[Object.keys(report)[0]]
+            process.stdout.write(entry.filename)
+          " "$RUNNER_TEMP/pack.json")" || {
+            echo "::error::could not read the packed filename from the pack report"
+            sed -n '1,20p' "$RUNNER_TEMP/pack.json"
+            exit 1
+          }
 
           if [ -z "$packed" ] || [ ! -f "$RUNNER_TEMP/$packed" ]; then
             echo "::error::npm pack named ${packed:-nothing} but there is no such file"
@@ -81,7 +132,6 @@ jobs:
 
           # the tarball we attest must be the one the registry vouches for, not merely
           # one this workflow downloaded
-          expected="$(npm view "@sasjs/adapter@${VERSION}" dist.integrity)"
           actual="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/$packed" | openssl base64 -A)"
           if [ "$expected" != "$actual" ]; then
             echo "::error::the packed tarball does not match the integrity the registry publishes"
