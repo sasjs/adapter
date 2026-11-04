@@ -44,7 +44,7 @@ jobs:
           node-version: 22
 
       - name: Update npm
-        run: npm install -g npm@${{ env.NPM_VERSION }}
+        run: npm install -g npm@12.2.0
 
       - name: Install Dependencies
         run: npm ci
