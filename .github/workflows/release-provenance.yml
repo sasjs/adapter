@@ -1,0 +1,87 @@
+# Attach the published tarball - and its build provenance - to the GitHub release.
+#
+# adapter's releases carried no assets, and scorecard skips a release with no assets,
+# so Signed-Releases read as inconclusive rather than as a failure. That is the good
+# state to be in: attaching the artifact *without* an attestation would turn it into a
+# zero, because the check looks for an asset whose name ends `.intoto.jsonl` and scores
+# the release 0 when there is none. So the artifact and its attestation are attached
+# together, and the subject is the version the registry serves rather than a local
+# build, so what is attested is what a consumer installs.
+name: Release provenance
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the artifact and its attestation to
+        required: true
+        type: string
+
+permissions: read-all
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # attach the artifact and the bundle to the release
+      id-token: write # sign the attestation
+      attestations: write # record it against this repository
+    steps:
+      - name: Resolve the tag and the version it names
+        id: version
+        env:
+          RELEASED_TAG: ${{ github.event.release.tag_name }}
+          CHOSEN_TAG: ${{ inputs.tag }}
+        run: |
+          tag="${CHOSEN_TAG:-$RELEASED_TAG}"
+          if [ -z "$tag" ]; then
+            echo "::error::no tag - run this from a published release or pass one"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Fetch the tarball the registry serves
+        id: pack
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP"
+          packed="$(ls "$RUNNER_TEMP"/sasjs-adapter-*.tgz)"
+          asset="${TAG}-$(basename "$packed")"
+          mv "$packed" "$RUNNER_TEMP/$asset"
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "path=$RUNNER_TEMP/$asset" >> "$GITHUB_OUTPUT"
+          sha256sum "$RUNNER_TEMP/$asset"
+
+      - name: Attest the tarball
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.pack.outputs.path }}
+
+      - name: Attach the artifact and its attestation together
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: ${{ steps.pack.outputs.asset }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          # scorecard looks for an asset name ending .intoto.jsonl; the action writes a
+          # bundle, so it is uploaded under that name
+          cp "$BUNDLE" "$RUNNER_TEMP/${ASSET}.intoto.jsonl"
+          gh release upload "$TAG" \
+            "$RUNNER_TEMP/$ASSET" \
+            "$RUNNER_TEMP/${ASSET}.intoto.jsonl" \
+            --clobber
+          gh release view "$TAG" --json assets --jq '.assets[].name'
