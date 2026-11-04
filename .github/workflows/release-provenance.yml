@@ -1,0 +1,146 @@
+# Attach the published tarball - and its build provenance - to the GitHub release.
+#
+# adapter's releases carried no assets, and scorecard skips a release with no assets,
+# so Signed-Releases read as inconclusive rather than as a failure. That is the good
+# state to be in: attaching the artifact *without* an attestation would turn it into a
+# zero, because the check looks for an asset whose name ends `.intoto.jsonl` and scores
+# the release 0 when there is none. So the artifact and its attestation are attached
+# together, and the subject is the version the registry serves rather than a local
+# build, so what is attested is what a consumer installs.
+name: Release provenance
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the artifact and its attestation to
+        required: true
+        type: string
+
+permissions: read-all
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # attach the artifact and the bundle to the release
+      id-token: write # sign the attestation
+      attestations: write # record it against this repository
+    steps:
+      - name: Resolve the tag and the version it names
+        id: version
+        env:
+          RELEASED_TAG: ${{ github.event.release.tag_name }}
+          CHOSEN_TAG: ${{ inputs.tag }}
+        run: |
+          tag="${CHOSEN_TAG:-$RELEASED_TAG}"
+          if [ -z "$tag" ]; then
+            echo "::error::no tag - run this from a published release or pass one"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Fetch the tarball the registry serves
+        id: pack
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # `release: published` can fire before the registry has the version, and a
+          # pack against a version that is not there yet is a 404 - not a reason to
+          # leave a release with no assets at all
+          packed=""
+          for attempt in $(seq 1 10); do
+            if npm pack "@sasjs/adapter@${VERSION}" --pack-destination "$RUNNER_TEMP" --json \
+                > "$RUNNER_TEMP/pack.json" 2> "$RUNNER_TEMP/pack.err"; then
+              packed="$(node -e "process.stdout.write(require(process.argv[1])[0].filename)" "$RUNNER_TEMP/pack.json")"
+              break
+            fi
+            echo "attempt ${attempt}/10: $(tail -n 1 "$RUNNER_TEMP/pack.err")"
+            if [ "$attempt" = 10 ]; then
+              echo "::error::@sasjs/adapter@${VERSION} never appeared in the registry"
+              exit 1
+            fi
+            sleep 6
+          done
+
+          if [ -z "$packed" ] || [ ! -f "$RUNNER_TEMP/$packed" ]; then
+            echo "::error::npm pack named ${packed:-nothing} but there is no such file"
+            exit 1
+          fi
+
+          # the tarball we attest must be the one the registry vouches for, not merely
+          # one this workflow downloaded
+          expected="$(npm view "@sasjs/adapter@${VERSION}" dist.integrity)"
+          actual="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/$packed" | openssl base64 -A)"
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::the packed tarball does not match the integrity the registry publishes"
+            echo "   expected: $expected"
+            echo "   actual:   $actual"
+            exit 1
+          fi
+
+          asset="${TAG}-${packed}"
+          mv "$RUNNER_TEMP/$packed" "$RUNNER_TEMP/$asset"
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "path=$RUNNER_TEMP/$asset" >> "$GITHUB_OUTPUT"
+          echo "integrity=$actual" >> "$GITHUB_OUTPUT"
+
+      - name: Say what the attestation covers
+        # the subject is the registry tarball fetched at release time, so the claim is
+        # "this artifact, as the registry serves it, was fetched and renamed by this
+        # workflow at <sha>" - not "this artifact was built from the tagged source".
+        # Rebuilding from the tag cannot be compared byte for byte (npm tarballs carry
+        # timestamps), so the integrity check above is what ties the file to the
+        # registry, and this note is what ties the claim to its scope.
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: ${{ steps.pack.outputs.asset }}
+          INTEGRITY: ${{ steps.pack.outputs.integrity }}
+        run: |
+          {
+            echo "### Provenance for ${TAG}"
+            echo
+            echo "Subject: \`${ASSET}\` - the tarball the npm registry serves for ${TAG},"
+            echo "verified against the registry's published integrity:"
+            echo
+            echo '```'
+            echo "${INTEGRITY}"
+            echo '```'
+            echo
+            echo "The attestation covers what was fetched here, at this commit; it does not"
+            echo "claim the registry tarball was rebuilt from the tagged source."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest the tarball
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.pack.outputs.path }}
+
+      - name: Attach the artifact and its attestation together
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: ${{ steps.pack.outputs.asset }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          # scorecard looks for an asset name ending .intoto.jsonl; the action writes a
+          # bundle, so it is uploaded under that name
+          cp "$BUNDLE" "$RUNNER_TEMP/${ASSET}.intoto.jsonl"
+          gh release upload "$TAG" \
+            "$RUNNER_TEMP/$ASSET" \
+            "$RUNNER_TEMP/${ASSET}.intoto.jsonl" \
+            --clobber
+          gh release view "$TAG" --json assets --jq '.assets[].name'
