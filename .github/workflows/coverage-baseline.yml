@@ -26,10 +26,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  # the same pin as build-unit-tests.yml and npmpublish.yml
-  NPM_VERSION: 12.2.0
-
 jobs:
   baseline:
     name: baseline

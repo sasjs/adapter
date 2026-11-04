@@ -49,7 +49,9 @@ cd "$REPO_ROOT"
 # A fresh checkout has no node_modules, and `npm run package:lib` needs the
 # adapter's own devDependencies (copyfiles, webpack). CI starts clean, so
 # install first - a pre-populated local tree hides this.
-if [ -f package-lock.json ]; then npm ci; else npm i; fi
+# npm ci, not npm i: the lockfile is what pins the devDependencies, and the scorecard
+# reads a bare `npm i` as an unpinned dependency
+npm ci
 npm run package:lib
 TARBALL="$(ls -t "$REPO_ROOT"/build/sasjs-adapter-*.tgz | head -1)"
 echo "   tarball: $TARBALL"
