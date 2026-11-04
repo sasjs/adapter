@@ -90,10 +90,6 @@ jobs:
         # files and passed while the leak was present.
         run: node release/pack-check.mjs
 
-      - name: Install Rimraf
-        # pinned: `npm i rimraf` resolves at run time, which is what the scorecard flags
-        run: npm i rimraf@6.1.4 --no-save
-
       - name: Check code style
         run: npm run lint
 
