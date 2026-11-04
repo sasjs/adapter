@@ -39,8 +39,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Update npm
-        run: npm install -g npm@12.2.0
+      - name: Pin the npm the release path uses
+        run: bash .github/scripts/pinned-npm.sh
 
       - name: Install Dependencies
         run: npm ci
