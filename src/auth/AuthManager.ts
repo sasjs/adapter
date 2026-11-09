@@ -9,20 +9,29 @@ import { verifySas9Login } from './verifySas9Login'
 import { verifySasViyaLogin } from './verifySasViyaLogin'
 import { isLogInSuccessHeaderPresent } from './'
 import { getLogger } from '../utils/host'
+import {
+  apiBasePrefix,
+  DEFAULT_API_BASE_PATH,
+  normaliseApiBasePath
+} from '../apiBasePath'
 
 export class AuthManager {
   public userName = ''
   public userLongName = ''
   private loginUrl: string
   private logoutUrl: string
+  /** The mount the SASjs API answers on, normalised once. */
+  private apiBase: string
   private redirectedLoginUrl = `/SASLogon` //SAS 9 M8 no longer redirects from `/SASLogon/home` to the login page. `/SASLogon` seems to be stable enough across SAS versions
 
   constructor(
     private serverUrl: string,
     private serverType: ServerType,
     private requestClient: RequestClient,
-    private loginCallback: () => Promise<void>
+    private loginCallback: () => Promise<void>,
+    apiBasePath: string = DEFAULT_API_BASE_PATH
   ) {
+    this.apiBase = normaliseApiBasePath(apiBasePath)
     this.loginUrl = `/SASLogon/login`
     this.logoutUrl =
       this.serverType === ServerType.Sas9
@@ -271,7 +280,7 @@ export class AuthManager {
         ? `${this.serverUrl}/identities/users/@currentUser`
         : this.serverType === ServerType.Sas9
           ? `${this.serverUrl}/SASStoredProcess`
-          : `${this.serverUrl}/SASjsApi/session`
+          : `${this.serverUrl}${apiBasePrefix(this.apiBase)}/session`
 
     const { result: loginResponse } = await this.requestClient
       .get<string>(url, undefined, 'text/plain')

@@ -291,6 +291,7 @@ Configuration on the client side involves passing an object on startup, which ca
 - `appLoc` - this is the folder (eg in metadata or SAS Drive) under which the SAS services are created.
 - `serverType` - either `SAS9`, `SASVIYA` or `SASJS`. The `SASJS` server type is for use with [sasjs/server](https://github.com/sasjs/server).
 - `serverUrl` - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.
+- `pathSASJS` - Only relevant when the serverType is `SASJS`. The path the SASjs Server API is mounted at - `/SASjsApi` by default, or `/api` to use the short spelling that sasjs/server also serves. Every SASjs Server route is addressed under this mount, including the stored-program endpoint at `<mount>/stp/execute`, which is not configurable.
 - `debug` - if `true` then SAS Logs and extra debug information is returned.
 - `verbose` - optional, if `true` then a summary of every HTTP response is logged.
 - `loginMechanism` - either `Default` or `Redirected`. See [SAS Logon](#sas-logon) section.

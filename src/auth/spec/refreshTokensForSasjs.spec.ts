@@ -27,6 +27,44 @@ describe('refreshTokensForSasjs', () => {
     )
   })
 
+  it('should post to the configured mount, not the default one', async () => {
+    setupMocks()
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.resolve({ result: mockAuthResponse, etag: '' })
+      )
+
+    await refreshTokensForSasjs(requestClient, 'refresh-t0ken', '/api')
+
+    expect(requestClient.post).toHaveBeenCalledWith(
+      '/api/auth/refresh',
+      undefined,
+      undefined,
+      undefined,
+      { Authorization: 'Bearer refresh-t0ken' }
+    )
+  })
+
+  it('should not compose a protocol-relative url at a root mount', async () => {
+    setupMocks()
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.resolve({ result: mockAuthResponse, etag: '' })
+      )
+
+    await refreshTokensForSasjs(requestClient, 'refresh-t0ken', '/')
+
+    expect(requestClient.post).toHaveBeenCalledWith(
+      '/auth/refresh',
+      undefined,
+      undefined,
+      undefined,
+      { Authorization: 'Bearer refresh-t0ken' }
+    )
+  })
+
   it('should handle errors while refreshing tokens', async () => {
     setupMocks()
 

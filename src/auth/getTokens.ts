@@ -8,6 +8,7 @@ import { RequestClient } from '../request/RequestClient'
 import { refreshTokensForViya } from './refreshTokensForViya'
 import { refreshTokensForSasjs } from './refreshTokensForSasjs'
 import { getLogger } from '../utils/host'
+import { DEFAULT_API_BASE_PATH } from '../apiBasePath'
 
 /**
  * Callback invoked with the rotated token pair after a successful internal
@@ -28,12 +29,15 @@ export type OnTokensRefreshed = (tokens: {
  * @param serverType - server type for which refreshing the tokens, defaults to SASVIYA
  * @param onTokensRefreshed - optional callback invoked with the rotated token
  * pair after a successful internal refresh.
+ * @param apiBasePath - the path the SASjs API is mounted at, default `/SASjsApi`.
+ * Only used for `ServerType.Sasjs`.
  */
 export async function getTokens(
   requestClient: RequestClient,
   authConfig: AuthConfig,
   serverType: ServerType = ServerType.SasViya,
-  onTokensRefreshed?: OnTokensRefreshed
+  onTokensRefreshed?: OnTokensRefreshed,
+  apiBasePath: string = DEFAULT_API_BASE_PATH
 ): Promise<AuthConfig> {
   const logger = getLogger()
   // Note: client/secret are NOT mutated. The sas.cli public-client fallback
@@ -101,7 +105,7 @@ export async function getTokens(
             secret || '',
             refresh_token
           )
-        : await refreshTokensForSasjs(requestClient, refresh_token)
+        : await refreshTokensForSasjs(requestClient, refresh_token, apiBasePath)
     ;({ access_token, refresh_token } = tokens)
 
     // Viya refresh tokens are single-use/rotating. Callers throughout the

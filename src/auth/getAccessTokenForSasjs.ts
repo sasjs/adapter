@@ -2,19 +2,22 @@ import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
 import { ServerType } from '@sasjs/utils/types'
+import { apiBasePrefix, DEFAULT_API_BASE_PATH } from '../apiBasePath'
 
 /**
  * Exchanges the auth code for an access token for the given client.
  * @param requestClient - the pre-configured HTTP request client
  * @param clientId - the client ID to authenticate with.
  * @param authCode - the auth code received from the server.
+ * @param apiBasePath - the path the API is mounted at, default `/SASjsApi`.
  */
 export async function getAccessTokenForSasjs(
   requestClient: RequestClient,
   clientId: string,
-  authCode: string
+  authCode: string,
+  apiBasePath: string = DEFAULT_API_BASE_PATH
 ) {
-  const url = '/SASjsApi/auth/token'
+  const url = `${apiBasePrefix(apiBasePath)}/auth/token`
   const data = {
     clientId,
     code: authCode
