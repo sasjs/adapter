@@ -14,7 +14,7 @@ import { LoginOptions, LoginResult } from '../../types/Login'
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
-  pathSASJS: '/SASjsApi/stp/execute',
+  pathSASJS: '/SASjsApi',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',

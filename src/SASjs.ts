@@ -15,6 +15,13 @@ import {
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
 import { SASjsApiClient, SASjsAuthResponse } from './SASjsApiClient'
+import {
+  apiBaseFromPathSASJS,
+  apiBasePrefix,
+  DEFAULT_API_BASE_PATH,
+  DEFAULT_PATH_SASJS,
+  STP_EXECUTE_SUFFIX
+} from './apiBasePath'
 import { AuthManager } from './auth'
 import { OnTokensRefreshed } from './auth/getTokens'
 import {
@@ -56,7 +63,9 @@ interface ExecuteScriptParams {
 
 const defaultConfig: SASjsConfig = {
   serverUrl: '',
-  pathSASJS: '/SASjsApi/stp/execute',
+  // The one name the adapter needs for SASjs Server: the mount its routes sit
+  // under. The stored-program endpoint under it is appended in the callers.
+  pathSASJS: DEFAULT_PATH_SASJS,
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
@@ -77,6 +86,8 @@ export default class SASjs {
   private sasViyaApiClient: SASViyaApiClient | null = null
   private sas9ApiClient: SAS9ApiClient | null = null
   private sasJSApiClient: SASjsApiClient | null = null
+  /** The mount the cached client was built for, so a change rebuilds it. */
+  private sasJSApiBasePath: string | null = null
   private fileUploader: FileUploader | null = null
   private authManager: AuthManager | null = null
   private requestClient: RequestClient | null = null
@@ -85,7 +96,6 @@ export default class SASjs {
   private computeJobExecutor: JobExecutor | null = null
   private jesJobExecutor: JobExecutor | null = null
   private sas9JobExecutor: JobExecutor | null = null
-
   constructor(config?: Partial<SASjsConfig>) {
     this.sasjsConfig = {
       ...defaultConfig,
@@ -651,12 +661,29 @@ export default class SASjs {
    * Sets the SASjs configuration.
    * @param config - SASjs configuration.
    */
-  public async setSASjsConfig(config: SASjsConfig) {
+  public async setSASjsConfig(config: Partial<SASjsConfig>) {
     this.sasjsConfig = {
       ...this.sasjsConfig,
       ...config
     }
+
     this.setupConfiguration()
+  }
+
+  /**
+   * The mount every SASjs Server route sits under, read from `pathSASJS`.
+   *
+   * One knob: deploy, code execution, triggers, sessions, auth and the
+   * stored-program endpoint all hang off this, so they cannot end up on
+   * different mounts.
+   */
+  private getApiBasePath() {
+    // Only a SASjs Server project has this mount; a Viya or SAS 9 project never
+    // reads the value.
+    if (this.sasjsConfig.serverType !== ServerType.Sasjs)
+      return DEFAULT_API_BASE_PATH
+
+    return apiBaseFromPathSASJS(this.sasjsConfig.pathSASJS)
   }
 
   /**
@@ -1097,18 +1124,26 @@ export default class SASjs {
       )
     }
 
+    // A path the executors append `?_program=` to. Viya and SAS 9 name that
+    // endpoint outright, so their value is used as it stands; `pathSASJS` names
+    // the mount, and the endpoint under it is hard-coded here so a caller cannot
+    // point the two at different places.
+    const apiBasePath = this.getApiBasePath()
+
     this.jobsPath =
       this.sasjsConfig.serverType === ServerType.SasViya
         ? this.sasjsConfig.pathSASViya
         : this.sasjsConfig.serverType === ServerType.Sas9
           ? this.sasjsConfig.pathSAS9
-          : this.sasjsConfig.pathSASJS
+          : // a root mount would otherwise compose '//stp/execute'
+            `${apiBasePrefix(apiBasePath)}${STP_EXECUTE_SUFFIX}`
 
     this.authManager = new AuthManager(
       this.sasjsConfig.serverUrl,
       this.sasjsConfig.serverType!,
       this.requestClient,
-      this.resendWaitingRequests
+      this.resendWaitingRequests,
+      apiBasePath
     )
 
     if (this.sasjsConfig.serverType === ServerType.SasViya) {
@@ -1142,8 +1177,12 @@ export default class SASjs {
     }
 
     if (this.sasjsConfig.serverType === ServerType.Sasjs) {
-      if (!this.sasJSApiClient) {
-        this.sasJSApiClient = new SASjsApiClient(this.requestClient)
+      if (!this.sasJSApiClient || this.sasJSApiBasePath !== apiBasePath) {
+        this.sasJSApiClient = new SASjsApiClient(
+          this.requestClient,
+          apiBasePath
+        )
+        this.sasJSApiBasePath = apiBasePath
       }
     }
 

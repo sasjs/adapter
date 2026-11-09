@@ -14,8 +14,12 @@ export class SASjsConfig {
    */
   serverUrl: string = ''
   /**
-   * The location of the STP Process Web Application.  By default the adapter
-   * will use '/SASjsApi/stp/execute' on SAS JS.
+   * The mount the SASjs Server API answers on.
+   *
+   * Defaults to '/SASjsApi'; '/api' selects the short spelling sasjs/server also
+   * serves. The stored-program endpoint is not configurable: it is
+   * `<mount>/stp/execute`, appended by the callers, so this value names the mount
+   * and nothing else.
    */
   pathSASJS: string = ''
   /**

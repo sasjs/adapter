@@ -35,6 +35,59 @@ describe('getAccessTokenForSasjs', () => {
     )
   })
 
+  it('should post to the configured mount, not the default one', async () => {
+    setupMocks()
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.resolve({ result: mockSasjsAuthResponse, etag: '' })
+      )
+
+    await getAccessTokenForSasjs(requestClient, 'cl13nt', 'c0de', '/api')
+
+    expect(requestClient.post).toHaveBeenCalledWith(
+      '/api/auth/token',
+      { clientId: 'cl13nt', code: 'c0de' },
+      undefined
+    )
+  })
+
+  it('should normalise the mount it is given', async () => {
+    setupMocks()
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.resolve({ result: mockSasjsAuthResponse, etag: '' })
+      )
+
+    await getAccessTokenForSasjs(requestClient, 'cl13nt', 'c0de', 'api/')
+
+    expect(requestClient.post).toHaveBeenCalledWith(
+      '/api/auth/token',
+      { clientId: 'cl13nt', code: 'c0de' },
+      undefined
+    )
+  })
+
+  it('should not compose a protocol-relative url at a root mount', async () => {
+    // normalise() gives '/', so concatenating it produced '//auth/token', which
+    // axios reads as protocol-relative: a request to a host called `auth`.
+    setupMocks()
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.resolve({ result: mockSasjsAuthResponse, etag: '' })
+      )
+
+    await getAccessTokenForSasjs(requestClient, 'cl13nt', 'c0de', '/')
+
+    expect(requestClient.post).toHaveBeenCalledWith(
+      '/auth/token',
+      { clientId: 'cl13nt', code: 'c0de' },
+      undefined
+    )
+  })
+
   it('should handle errors while refreshing tokens', async () => {
     setupMocks()
     const access_token = generateToken(30)

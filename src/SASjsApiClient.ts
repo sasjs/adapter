@@ -15,6 +15,11 @@ import { getAccessTokenForSasjs } from './auth/getAccessTokenForSasjs'
 import { refreshTokensForSasjs } from './auth/refreshTokensForSasjs'
 import { getTokens } from './auth/getTokens'
 import { isNode } from './utils/isNode'
+import {
+  apiBasePrefix,
+  DEFAULT_API_BASE_PATH,
+  normaliseApiBasePath
+} from './apiBasePath'
 
 // TODO: move to sasjs/utils
 export interface SASjsAuthResponse {
@@ -45,14 +50,36 @@ export const readSasjsState: StateReader = (body) => {
 }
 
 export class SASjsApiClient {
-  constructor(private requestClient: RequestClient) {}
+  /** The mount, absolute: for the hrefs a caller composes onto serverUrl. */
+  private apiBase: string
+
+  /**
+   * The same mount without the leading slash, for requestClient.
+   *
+   * Requests stay relative on purpose: a `serverUrl` may carry a path prefix
+   * (`https://host/sasjs`), and an absolute url would drop it.
+   */
+  private apiPath: string
+
+  constructor(
+    private requestClient: RequestClient,
+    apiBasePath: string = DEFAULT_API_BASE_PATH
+  ) {
+    this.apiBase = normaliseApiBasePath(apiBasePath)
+    // sliced, not replaced with /^\/+/ - normalise already left at most one
+    this.apiPath = this.apiBase.startsWith('/')
+      ? this.apiBase.slice(1)
+      : this.apiBase
+  }
 
   private async getAccessTokenForRequest(authConfig?: AuthConfig) {
     if (authConfig) {
       const { access_token } = await getTokens(
         this.requestClient,
         authConfig,
-        ServerType.Sasjs
+        ServerType.Sasjs,
+        undefined,
+        this.apiBase
       )
 
       return access_token
@@ -80,7 +107,7 @@ export class SASjsApiClient {
       streamServiceName?: string
       example?: {}
     }>(
-      'SASjsApi/drive/deploy',
+      `${this.apiPath}/drive/deploy`,
       dataJson,
       access_token,
       undefined,
@@ -119,7 +146,7 @@ export class SASjsApiClient {
       streamServiceName?: string
       example?: {}
     }>(
-      'SASjsApi/drive/deploy/upload',
+      `${this.apiPath}/drive/deploy/upload`,
       formData,
       access_token,
       contentType,
@@ -143,7 +170,7 @@ export class SASjsApiClient {
     } else _program = `${appLoc}/${query._program}`
 
     const response: any = await this.requestClient.post(
-      'SASjsApi/stp/execute',
+      `${this.apiPath}/stp/execute`,
       { _debug: 131, ...query, _program },
       access_token
     )
@@ -166,7 +193,7 @@ export class SASjsApiClient {
     const executionResult: ScriptExecutionResult = { log: '' }
 
     await this.requestClient
-      .post('SASjsApi/code/execute', { code, runTime }, access_token)
+      .post(`${this.apiPath}/code/execute`, { code, runTime }, access_token)
       .then((res: any) => {
         const { log, printOutput, result: webout } = res
 
@@ -194,7 +221,12 @@ export class SASjsApiClient {
     clientId: string,
     authCode: string
   ): Promise<SASjsAuthResponse> {
-    return getAccessTokenForSasjs(this.requestClient, clientId, authCode)
+    return getAccessTokenForSasjs(
+      this.requestClient,
+      clientId,
+      authCode,
+      this.apiBase
+    )
   }
 
   /**
@@ -259,7 +291,7 @@ export class SASjsApiClient {
         status?: string
         message?: string
         error?: string
-      }>(`SASjsApi/stp/trigger?${query.toString()}`, {}, access_token)
+      }>(`${this.apiPath}/stp/trigger?${query.toString()}`, {}, access_token)
       .catch((err) => {
         throw prefixMessage(err, 'Error while triggering the program. ')
       })
@@ -281,17 +313,17 @@ export class SASjsApiClient {
     const links = [
       {
         rel: 'state',
-        href: `/SASjsApi/session/${result.sessionId}/state`,
+        href: `${apiBasePrefix(this.apiBase)}/session/${result.sessionId}/state`,
         method: 'GET'
       },
       {
         rel: 'log',
-        href: `/SASjsApi/session/${result.sessionId}/log`,
+        href: `${apiBasePrefix(this.apiBase)}/session/${result.sessionId}/log`,
         method: 'GET'
       },
       {
         rel: 'self',
-        href: `/SASjsApi/session/${result.sessionId}`,
+        href: `${apiBasePrefix(this.apiBase)}/session/${result.sessionId}`,
         method: 'GET'
       }
     ]
@@ -318,7 +350,7 @@ export class SASjsApiClient {
 
     const { result: log } = await this.requestClient
       .get<string>(
-        `SASjsApi/session/${result.sessionId}/log`,
+        `${this.apiPath}/session/${result.sessionId}/log`,
         access_token,
         'text/plain'
       )
@@ -337,6 +369,6 @@ export class SASjsApiClient {
    * @param refreshToken - the refresh token received from the server.
    */
   public async refreshTokens(refreshToken: string): Promise<SASjsAuthResponse> {
-    return refreshTokensForSasjs(this.requestClient, refreshToken)
+    return refreshTokensForSasjs(this.requestClient, refreshToken, this.apiBase)
   }
 }
