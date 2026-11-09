@@ -8,7 +8,7 @@ const stringData: any = { table1: [{ col1: 'first col value' }] }
 
 const defaultConfig: SASjsConfig = {
   serverUrl: window.location.origin,
-  pathSASJS: '/SASjsApi/stp/execute',
+  pathSASJS: '/SASjsApi',
   pathSAS9: '/SASStoredProcess/do',
   pathSASViya: '/SASJobExecution',
   appLoc: '/Public/seedapp',
