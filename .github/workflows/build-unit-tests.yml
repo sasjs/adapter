@@ -97,6 +97,16 @@ jobs:
 
       - name: Check code style
         run: npm run lint
+      - name: Check the docs build
+        # `generateDocs.yml` only runs on a push to master, so no pull request has
+        # ever generated the docs - which is how a typedoc failure sat in master
+        # from 2026-11-04 for four pushes: `fast-check`'s declarations import
+        # `pure-rand/types/...`, a subpath export this package's classic
+        # `moduleResolution: node` cannot resolve, so `npm run typedoc` failed
+        # and the gh-pages publish was skipped with it, leaving adapter.sasjs.io
+        # on the previous release. A few seconds, and the same command the docs
+        # job runs.
+        run: npm run typedoc
 
       # Node 22 produces the coverage summary the ratchet reads; node 24 runs the
       # same suite without coverage, as a forward-compatibility check on the
