@@ -189,8 +189,14 @@ jobs:
           # scorecard looks for an asset name ending .intoto.jsonl; the action writes a
           # bundle, so it is uploaded under that name
           cp "$BUNDLE" "$RUNNER_TEMP/${ASSET}.intoto.jsonl"
+          # The repository is named on both calls: this job has no checkout on
+          # purpose (it attests the tarball the REGISTRY serves, not a local
+          # build), and `gh` infers the repository from a git remote - without one
+          # it exits with `failed to run git: fatal: not a git repository`, which
+          # is how v6.0.1 was published with no assets.
           gh release upload "$TAG" \
             "$RUNNER_TEMP/$ASSET" \
             "$RUNNER_TEMP/${ASSET}.intoto.jsonl" \
+            --repo "$GITHUB_REPOSITORY" \
             --clobber
-          gh release view "$TAG" --json assets --jq '.assets[].name'
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name'

@@ -87,6 +87,15 @@ jobs:
         # toolchain is not a dependency of this package - see release/audit.mjs.
         run: npm ci --prefix release --ignore-scripts
 
+      - name: Check every gh call names its repository
+        # `gh` infers the repository from a git remote. A job with no
+        # `actions/checkout` has none and the call dies with "failed to run git:
+        # fatal: not a git repository" - which is how v6.0.1 published with no
+        # assets at all: the provenance job attested the tarball and then could
+        # not attach it. That job only runs on a release, so no pull request could
+        # see it; this step can, on every one.
+        run: node release/workflow-gh-repo-check.mjs
+
       - name: Check what the package would carry
         # Guards the tarball-leak shape: a broad allowlist glob ("**/*.d.ts")
         # also matched the release toolchain's node_modules, which shipped 1330
