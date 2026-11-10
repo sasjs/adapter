@@ -15,6 +15,10 @@ import {
 } from '../types'
 import { RequestClient } from '../request/RequestClient'
 import { getTokenRequestErrorPrefixResponse } from '../auth/getTokenRequestErrorPrefix'
+import {
+  markResponseReceived,
+  responseWasReceived
+} from '../request/responseReceived'
 import { AxiosResponse, AxiosError } from 'axios'
 import { Logger, LogLevel } from '@sasjs/utils/logger'
 import * as UtilsModule from 'util'
@@ -74,13 +78,28 @@ describe('RequestClient', () => {
       error_description: 'Bad credentials'
     })
 
+    let thrown: any
+
     const rejectionErrorMessage = await adapter
       .getAccessToken('clientId', 'clientSecret', 'incorrect')
-      .catch((err) =>
-        getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
-      )
+      .catch((err) => {
+        thrown = err
+
+        return getTokenRequestErrorPrefixResponse(
+          err.message,
+          ServerType.SasViya
+        )
+      })
 
     expect(rejectionErrorMessage).toEqual(expectedError.message)
+
+    // The server answered 401, and the request client rethrows that as a
+    // LoginRequiredError of its own - which carries no `response` property, so
+    // the message cannot be titled from the error's shape (sasjs/adapter#895).
+    // The boundary marks it instead.
+    expect(thrown.message).toContain('Response from Viya is below.')
+    expect(thrown.message).not.toContain('No response from Viya')
+    expect(responseWasReceived(thrown)).toBe(true)
   })
 
   describe('defaultInterceptionCallBacks for successful requests and failed requests', () => {
@@ -607,6 +626,28 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       expect(requestClient['csrfToken']).toEqual({ headerName: '', value: '' })
     })
 
+    it('should mark the recovered failure with the retry response, not the network error', async () => {
+      // the opaque ERR_NETWORK is what starts the recovery; if the retry then
+      // reaches the server and is refused, the failure DID arrive (sasjs/adapter#895)
+      const networkError = {
+        isAxiosError: true,
+        code: 'ERR_NETWORK',
+        message: 'Network Error'
+      }
+      const refused = markResponseReceived(new LoginRequiredError(), true)
+
+      let thrown: any
+
+      await requestClient['handleError'](networkError, () =>
+        Promise.reject(refused)
+      ).catch((e: any) => {
+        thrown = e
+      })
+
+      expect(thrown).toBeInstanceOf(LoginRequiredError)
+      expect(responseWasReceived(thrown)).toBe(true)
+    })
+
     it('should throw LoginRequiredError if retry also fails with ERR_NETWORK', async () => {
       const networkError = {
         isAxiosError: true,
@@ -702,13 +743,28 @@ describe('RequestClient - Self Signed Server', () => {
       error_description: 'Bad credentials'
     })
 
+    let thrown: any
+
     const rejectionErrorMessage = await adapter
       .getAccessToken('clientId', 'clientSecret', 'incorrect')
-      .catch((err) =>
-        getTokenRequestErrorPrefixResponse(err.message, ServerType.SasViya)
-      )
+      .catch((err) => {
+        thrown = err
+
+        return getTokenRequestErrorPrefixResponse(
+          err.message,
+          ServerType.SasViya
+        )
+      })
 
     expect(rejectionErrorMessage).toEqual(expectedError.message)
+
+    // The server answered 401, and the request client rethrows that as a
+    // LoginRequiredError of its own - which carries no `response` property, so
+    // the message cannot be titled from the error's shape (sasjs/adapter#895).
+    // The boundary marks it instead.
+    expect(thrown.message).toContain('Response from Viya is below.')
+    expect(thrown.message).not.toContain('No response from Viya')
+    expect(responseWasReceived(thrown)).toBe(true)
   })
 })
 

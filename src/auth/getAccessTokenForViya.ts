@@ -1,8 +1,7 @@
 import { SasAuthResponse, ServerType } from '@sasjs/utils/types'
-import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
 import { CertificateError } from '../types/errors'
-import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
+import { tokenRequestErrorMessage } from './getTokenRequestErrorPrefix'
 
 /**
  * Exchange the auth code for access / refresh tokens for the given client / secret pair.
@@ -42,18 +41,16 @@ export async function getAccessTokenForViya(
     .then((res) => res.result as SasAuthResponse)
     .catch((err) => {
       if (err instanceof CertificateError) throw err
-      throw prefixMessage(
+      throw tokenRequestErrorMessage(
         err,
-        getTokenRequestErrorPrefix(
-          'fetching access token',
-          'getAccessTokenForViya',
-          ServerType.SasViya,
-          url,
-          dataJson,
-          headers,
-          clientId,
-          clientSecret
-        )
+        'fetching access token',
+        'getAccessTokenForViya',
+        ServerType.SasViya,
+        url,
+        dataJson,
+        headers,
+        clientId,
+        clientSecret
       )
     })
 

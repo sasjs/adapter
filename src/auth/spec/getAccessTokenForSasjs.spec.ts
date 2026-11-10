@@ -88,6 +88,31 @@ describe('getAccessTokenForSasjs', () => {
     )
   })
 
+  it('should name the client id in a failed message, not a header', async () => {
+    // the call site passes data, then headers (absent), then the client id
+    // positionally; dropping the `undefined` puts the id in the headers slot
+    // and the message prints `Headers: "cl13nt"` (sasjs/adapter#895)
+    setupMocks()
+
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.reject(new Error('connect ETIMEDOUT 10.0.0.1:443'))
+      )
+
+    const message = await getAccessTokenForSasjs(
+      requestClient,
+      'cl13nt',
+      'c0de'
+    ).catch((e: any) => e.message)
+
+    expect(message).toContain('ClientId: cl13nt')
+    expect(message).not.toContain('Headers:')
+    expect(message).toContain(
+      'No response from Sasjs - the request did not reach it.'
+    )
+  })
+
   it('should handle errors while refreshing tokens', async () => {
     setupMocks()
     const access_token = generateToken(30)

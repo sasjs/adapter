@@ -28,6 +28,7 @@ import {
 } from '../utils'
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 import { getLogger, inspectValue } from '../utils/host'
+import { markResponseReceived, responseWasReceived } from './responseReceived'
 import { isNode } from '../utils/isNode'
 import { captureMockReadiness, installMockReadinessGate } from './mockReadiness'
 import { MockReadinessError } from '../types/errors/MockReadinessError'
@@ -703,16 +704,16 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
         })
       }
 
-      throw e
+      throw markResponseReceived(e, true)
     } else if (response?.status === 404) {
-      throw new NotFoundError(response.config.url!)
+      throw markResponseReceived(new NotFoundError(response.config.url!), true)
     } else if (response?.status === 502) {
-      if (debug) throw new InternalServerError()
+      if (debug) throw markResponseReceived(new InternalServerError(), true)
       else return
     }
 
     if (e.isAxiosError && e.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
-      throw new CertificateError(e.message)
+      throw markResponseReceived(new CertificateError(e.message), false)
     }
 
     if (
@@ -746,16 +747,26 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
         }
 
         return await callback()
-      } catch {
-        // Session could not be recovered — surface LoginRequiredError
-        throw new LoginRequiredError()
+      } catch (retryError) {
+        // Session could not be recovered — surface LoginRequiredError. The
+        // retry itself may have reached the server and been refused, which is
+        // not the same as never arriving: the marker follows the retry's own
+        // answer, not the opaque network error that started this.
+        throw markResponseReceived(
+          new LoginRequiredError(),
+          responseWasReceived(retryError)
+        )
       } finally {
         this.isRecoveringFromNetworkError = false
       }
     }
 
-    if (e.message) throw e
-    else throw prefixMessage(e, 'Error while handling error. ')
+    if (e.message) throw markResponseReceived(e, Boolean(response))
+
+    throw markResponseReceived(
+      prefixMessage(e, 'Error while handling error. '),
+      Boolean(response)
+    )
   }
 
   protected parseResponse<T>(response: AxiosResponse<any>) {
@@ -831,7 +842,26 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 const isTokenRefreshUrl = (url?: string) =>
   !!url && /(^|\/)auth\/refresh(\?|$)/.test(url)
 
+/**
+ * Raises the error a response status implies, marked as one built from a
+ * response.
+ *
+ * The marking has to happen here: every error below is a new object carrying
+ * the body, so the axios error - the thing that knew a response had arrived -
+ * is gone by the time a caller catches it (sasjs/adapter#895). A 401 from a
+ * refresh route is named by `throwForStatus` as a rejected refresh token
+ * (sasjs/adapter#975); this marks it as an answer that arrived, so a transport
+ * failure and a refusal are not reported with the same title.
+ */
 export const throwIfError = (response: AxiosResponse) => {
+  try {
+    throwForStatus(response)
+  } catch (error) {
+    throw markResponseReceived(error, true)
+  }
+}
+
+const throwForStatus = (response: AxiosResponse) => {
   switch (response.status) {
     case 400:
       if (

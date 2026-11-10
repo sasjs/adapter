@@ -75,6 +75,57 @@ describe('refreshTokensForViya', () => {
     expect(error).toEqual(tokenError)
   })
 
+  it('should not call the transport message a response when the target was unreachable', async () => {
+    setupMocks()
+
+    // what axios rejects with when the request never left the machine: no
+    // response, and a message from the transport itself (sasjs/adapter#895)
+    const transportError = Object.assign(
+      new Error('connect ETIMEDOUT 10.0.0.1:443'),
+      { code: 'ETIMEDOUT' }
+    )
+
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() => Promise.reject(transportError))
+
+    const message = await refreshTokensForViya(
+      requestClient,
+      'cl13nt',
+      's3cr3t',
+      'refresh'
+    ).catch((e: any) => e.message)
+
+    expect(message).toContain(
+      'No response from Viya - the request did not reach it.'
+    )
+    expect(message).not.toContain('Response from Viya is below.')
+    expect(message).toContain('connect ETIMEDOUT 10.0.0.1:443')
+  })
+
+  it('should still name the response when the server answered', async () => {
+    setupMocks()
+
+    const refusal = Object.assign(
+      new Error('Request failed with status code 401'),
+      { response: { status: 401, data: { error: 'invalid_token' } } }
+    )
+
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() => Promise.reject(refusal))
+
+    const message = await refreshTokensForViya(
+      requestClient,
+      'cl13nt',
+      's3cr3t',
+      'refresh'
+    ).catch((e: any) => e.message)
+
+    expect(message).toContain('Response from Viya is below.')
+    expect(message).toContain('Request failed with status code 401')
+  })
+
   it('should throw an error if environment is not Node', async () => {
     jest.spyOn(IsNodeModule, 'isNode').mockImplementation(() => false)
 

@@ -1,6 +1,5 @@
-import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
-import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
+import { tokenRequestErrorMessage } from './getTokenRequestErrorPrefix'
 import { ServerType } from '@sasjs/utils/types'
 import { apiBasePrefix, DEFAULT_API_BASE_PATH } from '../apiBasePath'
 
@@ -33,14 +32,12 @@ export async function refreshTokensForSasjs(
       }
     })
     .catch((err) => {
-      throw prefixMessage(
+      throw tokenRequestErrorMessage(
         err,
-        getTokenRequestErrorPrefix(
-          'refreshing tokens',
-          'refreshTokensForSasjs',
-          ServerType.Sasjs,
-          url
-        )
+        'refreshing tokens',
+        'refreshTokensForSasjs',
+        ServerType.Sasjs,
+        url
       )
     })
 
