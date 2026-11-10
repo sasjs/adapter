@@ -34,9 +34,18 @@ async function createTSDocs() {
 
   // typedoc 0.28 builds the application through the static bootstrap; the
   // constructor no longer accepts an empty configuration
+  // The docs are generated from the program the PACKAGE ships, not from the
+  // development one. `tsconfig.json` includes every spec file, and the specs
+  // import dev-only libraries whose own type declarations are not resolvable
+  // under this package's classic `moduleResolution: node` - `fast-check`'s
+  // `pure-rand/types/...` is a subpath export that only resolves under
+  // node16/bundler - which typedoc reports as a hard error and refuses to
+  // generate anything at all. Nothing is lost: `typedoc.json`'s `exclude`
+  // already keeps the specs out of the documentation, so this only stops them
+  // from being type-checked on the way there.
   const app = await td.Application.bootstrapWithPlugins({
     ...typedocJson,
-    tsconfig: 'tsconfig.json'
+    tsconfig: 'tsconfig.build.json'
   })
 
   const project = await app.convert()
