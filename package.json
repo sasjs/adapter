@@ -86,6 +86,7 @@
     "/SASjsApiClient.*",
     "/SessionManager.*",
     "/api/**",
+    "/apiBasePath.*",
     "/auth/**",
     "/file/**",
     "/job-execution/**",
