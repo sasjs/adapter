@@ -135,6 +135,16 @@ jobs:
         # install it packed 3 files and passed while the leak was present.
         run: node release/pack-check.mjs
 
+      - name: Check the packed package loads
+        # The other direction of the same allowlist: it names the root modules one
+        # by one, so a module added to src/ and required by another is silently
+        # left out. 6.0.0 shipped auth/refreshTokensForSasjs.js requiring
+        # ../apiBasePath, which the allowlist did not name - every Node consumer
+        # failed at require, while the suite (which loads src/) was green. This
+        # packs, unpacks and requires the entry point, which is the only check
+        # that sees what a consumer gets.
+        run: node release/pack-load-check.mjs
+
       - name: Check @sasjs dependencies are ranges
         # The PR workflow gates this too, but this is the path that publishes: a
         # change that reaches the release branch without a PR would otherwise
