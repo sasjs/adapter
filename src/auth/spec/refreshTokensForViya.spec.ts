@@ -81,7 +81,7 @@ describe('refreshTokensForViya', () => {
     // what axios rejects with when the request never left the machine: no
     // response, and a message from the transport itself (sasjs/adapter#895)
     const transportError = Object.assign(
-      new Error('connect ETIMEDOUT 10.0.0.1:443'),
+      new Error('connect ETIMEDOUT 192.0.2.1:443'),
       { code: 'ETIMEDOUT' }
     )
 
@@ -100,7 +100,7 @@ describe('refreshTokensForViya', () => {
       'No response from Viya - the request did not reach it.'
     )
     expect(message).not.toContain('Response from Viya is below.')
-    expect(message).toContain('connect ETIMEDOUT 10.0.0.1:443')
+    expect(message).toContain('connect ETIMEDOUT 192.0.2.1:443')
 
     // the report names the client pair without printing either half (#895)
     expect(message).not.toContain('s3cr3t')
