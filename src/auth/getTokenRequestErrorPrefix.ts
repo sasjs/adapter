@@ -1,6 +1,7 @@
 import { ServerType } from '@sasjs/utils/types'
 import { prefixMessage } from '@sasjs/utils/error'
 import { responseWasReceived } from '../request/responseReceived'
+import { REDACTED, redactHeaders, redactPayload } from './redactCredentials'
 
 type Server = ServerType.SasViya | ServerType.Sasjs
 type Operation = 'fetching access token' | 'refreshing tokens'
@@ -76,16 +77,24 @@ export const getTokenRequestErrorPrefix = (
     `Thrown by the @sasjs/adapter ${funcName} function.`
   ]
 
+  // The request carries the credentials that minted the token: the header is the
+  // client pair base64-encoded together, the body a refresh token or an
+  // authorization code. A failure is pasted into tickets, so the values are
+  // named and not printed (#895).
   if (data) {
+    const payload = redactPayload(data)
+
     lines.push('Payload:')
-    lines.push(stringify(data))
+    lines.push(typeof payload === 'string' ? payload : stringify(payload as {}))
   }
   if (headers) {
     lines.push('Headers:')
-    lines.push(stringify(headers))
+    lines.push(stringify(redactHeaders(headers)))
   }
+  // The client id names which client failed and is not a credential; the secret
+  // beside it is, so it is stated as supplied rather than printed.
   if (clientId) lines.push(`ClientId: ${clientId}`)
-  if (clientSecret) lines.push(`ClientSecret: ${clientSecret}`)
+  if (clientSecret) lines.push(`ClientSecret: ${REDACTED}`)
 
   lines.push('')
   lines.push(`${getResponseTitle(server, responseReceived)}`)

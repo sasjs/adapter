@@ -8,10 +8,10 @@ import {
   markResponseReceived,
   responseWasReceived
 } from '../../request/responseReceived'
+import { REDACTED } from '../redactCredentials'
 
 describe('getTokenRequestErrorPrefix', () => {
-  it('should return error prefix', () => {
-    // INFO: Viya with only required attributes
+  it('should return the error prefix, with the credential values redacted', () => {
     let operation: 'fetching access token' = 'fetching access token'
     const funcName = 'testFunc'
     const url = '/SASjsApi/auth/token'
@@ -31,12 +31,24 @@ describe('getTokenRequestErrorPrefix', () => {
       Authorization: 'Basic test=',
       Accept: 'application/json'
     }
+    const redactedData = {
+      grant_type: 'authorization_code',
+      code: REDACTED
+    }
+    const redactedHeaders = {
+      Authorization: 'Basic <redacted>',
+      Accept: 'application/json'
+    }
 
     expectedPrefix = `Error while ${operation} from ${url}\nThrown by the @sasjs/adapter ${funcName} function.\nPayload:\n${JSON.stringify(
-      data,
+      redactedData,
       null,
       2
-    )}\nHeaders:\n${JSON.stringify(headers, null, 2)}\n\nResponse from Sasjs is below.\n`
+    )}\nHeaders:\n${JSON.stringify(
+      redactedHeaders,
+      null,
+      2
+    )}\n\nResponse from Sasjs is below.\n`
 
     expect(
       getTokenRequestErrorPrefix(
@@ -54,10 +66,14 @@ describe('getTokenRequestErrorPrefix', () => {
     const clientSecret = 'testSecret'
 
     expectedPrefix = `Error while ${operation} from ${url}\nThrown by the @sasjs/adapter ${funcName} function.\nPayload:\n${JSON.stringify(
-      data,
+      redactedData,
       null,
       2
-    )}\nHeaders:\n${JSON.stringify(headers, null, 2)}\nClientId: ${clientId}\nClientSecret: ${clientSecret}\n\nResponse from Viya is below.\n`
+    )}\nHeaders:\n${JSON.stringify(
+      redactedHeaders,
+      null,
+      2
+    )}\nClientId: ${clientId}\nClientSecret: ${REDACTED}\n\nResponse from Viya is below.\n`
 
     expect(
       getTokenRequestErrorPrefix(
@@ -71,6 +87,41 @@ describe('getTokenRequestErrorPrefix', () => {
         clientSecret
       )
     ).toEqual(expectedPrefix)
+  })
+
+  it('should print no credential value, only that one was supplied', () => {
+    // sasjs/adapter#895: the report carried the Basic header, the client id and
+    // the client secret verbatim, so pasting the error into a ticket published
+    // the credential pair
+    const prefix = getTokenRequestErrorPrefix(
+      'refreshing tokens',
+      'refreshTokensForViya',
+      ServerType.SasViya,
+      '/SASLogon/oauth/token',
+      new URLSearchParams({ grant_type: 'refresh_token' }),
+      {
+        Authorization:
+          'Basic ' + Buffer.from('testId:testSecret').toString('base64')
+      },
+      'testId',
+      'testSecret'
+    )
+
+    expect(prefix).not.toContain('testSecret')
+    expect(prefix).not.toContain(
+      Buffer.from('testId:testSecret').toString('base64')
+    )
+    expect(prefix).toContain(`ClientSecret: ${REDACTED}`)
+    // the identifier still names which client failed
+    expect(prefix).toContain('ClientId: testId')
+    // and the title contract is untouched: a reader still gets the payload
+    // section on its own
+    expect(
+      getTokenRequestErrorPrefixResponse(
+        `${prefix}Actual response text`,
+        ServerType.SasViya
+      )
+    ).toBe('Actual response text')
   })
 
   it('should say the request did not reach the server when there was no response', () => {
