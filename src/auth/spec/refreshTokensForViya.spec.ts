@@ -101,6 +101,14 @@ describe('refreshTokensForViya', () => {
     )
     expect(message).not.toContain('Response from Viya is below.')
     expect(message).toContain('connect ETIMEDOUT 10.0.0.1:443')
+
+    // the report names the client pair without printing either half (#895)
+    expect(message).not.toContain('s3cr3t')
+    expect(message).not.toContain(
+      Buffer.from('cl13nt:s3cr3t').toString('base64')
+    )
+    expect(message).toContain('ClientId: cl13nt')
+    expect(message).toContain('ClientSecret: <redacted>')
   })
 
   it('should still name the response when the server answered', async () => {
