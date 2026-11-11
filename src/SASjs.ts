@@ -678,8 +678,9 @@ export default class SASjs {
    * both `/api`), a value carrying the stored-program endpoint
    * (`/api/stp/execute`) is read as the mount it names, and absent or empty
    * means `/SASjsApi`. A root mount is `/` - a proxy that puts the API at the
-   * origin - and a caller concatenating onto it wants `apiBasePrefix`, which
-   * answers `''` for that case, rather than the value verbatim.
+   * origin - and a caller concatenating onto it contributes `''` for that
+   * case rather than the value verbatim, because `${serverUrl}/` + `/stp/...`
+   * is a doubled slash and a different URL to a proxy.
    *
    * A Viya or SAS 9 project has no such mount: neither server type reads
    * `pathSASJS`, so this answers the default `/SASjsApi` for them.
@@ -688,8 +689,10 @@ export default class SASjs {
    * for a `?_program=` link, or a route it builds for the drive and info
    * endpoints - asks the adapter instead of re-implementing the normalisation
    * or deep-importing the `apiBasePath` module. Note that
-   * `getSasjsConfig().pathSASJS` is NOT this value: it reads back exactly as
-   * configured.
+   * `getSasjsConfig().pathSASJS` is not this value: it reads back as configured,
+   * or `/SASjsApi` when it was never set (the constructor's default), so a
+   * caller cannot tell a defaulted value from one configured as `/SASjsApi`
+   * there - this accessor is the answer to what the mount is.
    */
   public getApiBasePath(): string {
     // Only a SASjs Server project has this mount; a Viya or SAS 9 project never

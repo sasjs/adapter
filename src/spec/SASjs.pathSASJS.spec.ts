@@ -1,5 +1,4 @@
 import { ServerType } from '@sasjs/utils/types'
-import { apiBasePrefix } from '../apiBasePath'
 import SASjs from '../SASjs'
 
 /**
@@ -175,16 +174,30 @@ describe('getApiBasePath', () => {
     expect(sasjs.getApiBasePath()).toBe('/api')
   })
 
-  it('keeps a root mount as / and leaves the collapse to apiBasePrefix', () => {
-    // '/' is a real deployment - a proxy with the API at the origin. A caller
-    // concatenating onto it wants `apiBasePrefix` (which answers '') rather
-    // than the mount verbatim, so the two are documented apart.
-    const sasjs = build({ pathSASJS: '/' })
+  it('cannot be read off the config when the mount was never configured', () => {
+    // The default is a real value in the config (`defaultConfig.pathSASJS`), so
+    // a caller comparing the two to see whether normalisation changed anything
+    // gets `/SASjsApi` on both sides and cannot tell a defaulted mount from one
+    // configured as `/SASjsApi`. That is the case the accessor exists for.
+    const defaulted = build()
+    const configured = build({ pathSASJS: '/SASjsApi' })
 
-    expect(sasjs.getApiBasePath()).toBe('/')
-    expect(`${apiBasePrefix(sasjs.getApiBasePath())}/stp/execute`).toBe(
-      '/stp/execute'
-    )
+    expect(defaulted.getSasjsConfig().pathSASJS).toBe('/SASjsApi')
+    expect(defaulted.getApiBasePath()).toBe('/SASjsApi')
+    expect(configured.getSasjsConfig().pathSASJS).toBe('/SASjsApi')
+    expect(configured.getApiBasePath()).toBe(defaulted.getApiBasePath())
+  })
+
+  it('keeps a root mount as /, which a caller contributes as empty', () => {
+    // '/' is a real deployment - a proxy with the API at the origin. Appending
+    // the endpoint to the value verbatim would give '//stp/execute', which a
+    // proxy reads as a different path, so the documented rule is that this one
+    // value contributes nothing.
+    const sasjs = build({ pathSASJS: '/' })
+    const mount = sasjs.getApiBasePath()
+
+    expect(mount).toBe('/')
+    expect(`${mount === '/' ? '' : mount}/stp/execute`).toBe('/stp/execute')
     expect(executionPath(sasjs)).toBe('/stp/execute')
   })
 
