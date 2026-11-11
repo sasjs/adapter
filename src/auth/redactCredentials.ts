@@ -104,10 +104,17 @@ const redactText = (text: string): unknown => {
 
   if (!trimmed) return trimmed
 
-  if (/^[^\s&]+=[^\s&]*(&[^\s&]+=[^\s&]*)*$/.test(trimmed)) {
+  // A linear test, not a regular expression: the obvious pattern for "pairs
+  // joined by &" nests quantifiers and backtracks exponentially on a string like
+  // `!=&!=&!=&...` (CodeQL js/redos, found on this branch).
+  const pairs = trimmed.split('&')
+  const isFormEncoded =
+    !/\s/.test(trimmed) && pairs.every((pair) => pair.indexOf('=') > 0)
+
+  if (isFormEncoded) {
     const redacted: Record<string, string> = {}
 
-    for (const pair of trimmed.split('&')) {
+    for (const pair of pairs) {
       const [key, ...rest] = pair.split('=')
       const value = rest.join('=')
 
