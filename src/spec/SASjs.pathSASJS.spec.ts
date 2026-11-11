@@ -194,11 +194,34 @@ describe('getApiBasePath', () => {
     // proxy reads as a different path, so the documented rule is that this one
     // value contributes nothing.
     const sasjs = build({ pathSASJS: '/' })
-    const mount = sasjs.getApiBasePath()
 
-    expect(mount).toBe('/')
-    expect(`${mount === '/' ? '' : mount}/stp/execute`).toBe('/stp/execute')
+    expect(sasjs.getApiBasePath()).toBe('/')
     expect(executionPath(sasjs)).toBe('/stp/execute')
+  })
+
+  it('composes the URL a caller would, for every mount shape', () => {
+    // The rule the docs state, written the way a caller writes it. Running it
+    // against the mount the adapter reports is what makes this a test rather
+    // than a restatement: a mount the adapter normalised differently from the
+    // config - a doubled slash, a dropped one, the endpoint left on the end -
+    // shows up as a mismatch with the URL the adapter itself executes against.
+    const asACallerComposes = (mount: string) =>
+      `${mount === '/' ? '' : mount}/stp/execute`
+
+    for (const pathSASJS of [
+      '/',
+      '/api',
+      '/api/',
+      ' api/ ',
+      '/api/stp/execute',
+      '/SASjsApi'
+    ]) {
+      const sasjs = build({ pathSASJS })
+
+      expect(asACallerComposes(sasjs.getApiBasePath())).toBe(
+        executionPath(sasjs)
+      )
+    }
   })
 
   it('follows a mount set after construction', async () => {
