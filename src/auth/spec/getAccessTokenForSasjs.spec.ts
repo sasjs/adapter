@@ -97,7 +97,7 @@ describe('getAccessTokenForSasjs', () => {
     jest
       .spyOn(requestClient, 'post')
       .mockImplementation(() =>
-        Promise.reject(new Error('connect ETIMEDOUT 10.0.0.1:443'))
+        Promise.reject(new Error('connect ETIMEDOUT 192.0.2.1:443'))
       )
 
     const message = await getAccessTokenForSasjs(

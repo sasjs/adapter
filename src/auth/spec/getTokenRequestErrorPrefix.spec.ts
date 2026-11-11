@@ -150,7 +150,7 @@ describe('responseWasReceived', () => {
     expect(responseWasReceived({ response: { status: 401 } })).toBe(true)
     expect(
       responseWasReceived(
-        Object.assign(new Error('connect ETIMEDOUT 10.0.0.1:443'), {
+        Object.assign(new Error('connect ETIMEDOUT 192.0.2.1:443'), {
           code: 'ETIMEDOUT'
         })
       )
@@ -209,7 +209,7 @@ describe('responseWasReceived', () => {
 
 describe('tokenRequestErrorMessage', () => {
   it('should prefix the transport message without calling it a response', () => {
-    const error = Object.assign(new Error('connect ETIMEDOUT 10.0.0.1:443'), {
+    const error = Object.assign(new Error('connect ETIMEDOUT 192.0.2.1:443'), {
       code: 'ETIMEDOUT'
     })
 
@@ -226,7 +226,7 @@ describe('tokenRequestErrorMessage', () => {
     )
     expect(message.message).not.toContain('Response from Viya is below.')
     // the transport's own words are still there, and still say what happened
-    expect(message.message).toContain('connect ETIMEDOUT 10.0.0.1:443')
+    expect(message.message).toContain('connect ETIMEDOUT 192.0.2.1:443')
   })
 
   it('should call the payload a response when one arrived', () => {
@@ -276,10 +276,10 @@ describe('getTokenRequestErrorPrefixResponse', () => {
     ).toEqual('\nAuth error: {"error":"invalid_token"}')
 
     const unreachable =
-      'Error while refreshing tokens from /x\nThrown by the @sasjs/adapter f function.\n\nNo response from Viya - the request did not reach it.\nconnect ETIMEDOUT 10.0.0.1:443'
+      'Error while refreshing tokens from /x\nThrown by the @sasjs/adapter f function.\n\nNo response from Viya - the request did not reach it.\nconnect ETIMEDOUT 192.0.2.1:443'
 
     expect(
       getTokenRequestErrorPrefixResponse(unreachable, ServerType.SasViya)
-    ).toEqual('connect ETIMEDOUT 10.0.0.1:443')
+    ).toEqual('connect ETIMEDOUT 192.0.2.1:443')
   })
 })

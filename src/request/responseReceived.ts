@@ -52,7 +52,7 @@ export const markResponseReceived = <T>(error: T, received: boolean): T => {
  * `false` is what a transport failure looks like: a wrong URL, a closed port, a
  * VPN that is down, a certificate that does not verify. The message that
  * accompanies such a failure is the transport's own (`connect ETIMEDOUT
- * 10.0.0.1:443`), not something a server said.
+ * 192.0.2.1:443`), not something a server said.
  */
 export const responseWasReceived = (error: unknown): boolean => {
   const marked = (error as { responseReceived?: unknown } | null | undefined)
