@@ -30,28 +30,35 @@ const getResponseTitle = (server: Server, responseReceived: boolean) =>
  * @param funcName - name of the function sent the request.
  * @param server - server type (SASVIYA or SASJS).
  * @param url - endpoint used to send the request.
- * @param data - request payload.
- * @param headers - request headers.
- * @param clientId - client ID to authenticate with.
- * @param clientSecret - client secret to authenticate with.
+ * @param data - request payload. Values of secret-bearing parameters are
+ * replaced before printing, at any depth, in JSON, form-encoded and object
+ * payloads alike.
+ * @param headers - request headers. An authorization value keeps its scheme and
+ * loses its credential.
+ * @param clientId - client ID to authenticate with. Printed: it names which
+ * client failed.
+ * @param clientSecret - client secret to authenticate with. Replaced, never
+ * printed; the report states that one was supplied.
  * @param responseReceived - whether the request came back with a response
  * (default `true`). When it did not, the title says so rather than presenting
  * the transport's own message as an answer from the server.
- * @returns - string containing request information. Example:
+ * @returns - string containing request information, with every credential
+ * named rather than printed. A failure is pasted into tickets and kept in CI
+ * logs, so the report never carries a value that could be used as one. Example:
  * Error while fetching access token from /SASLogon/oauth/token
  * Thrown by the @sasjs/adapter getAccessTokenForViya function.
  * Payload:
  * {
  *   "grant_type": "authorization_code",
- *   "code": "example_code"
+ *   "code": "<redacted>"
  * }
  * Headers:
  * {
- *   "Authorization": "Basic NEdMQXBwOjRHTEFwcDE=",
+ *   "Authorization": "Basic <redacted>",
  *   "Accept": "application/json"
  * }
  * ClientId: exampleClientId
- * ClientSecret: exampleClientSecret
+ * ClientSecret: <redacted>
  *
  * Response from Viya is below.
  * Auth error: {
@@ -117,10 +124,15 @@ export const getTokenRequestErrorPrefix = (
  * @param funcName - name of the function that sent the request.
  * @param server - server type (SASVIYA or SASJS).
  * @param url - endpoint used to send the request.
- * @param data - request payload.
- * @param headers - request headers.
- * @param clientId - client ID to authenticate with.
- * @param clientSecret - client secret to authenticate with.
+ * @param data - request payload. Values of secret-bearing parameters are
+ * replaced before printing, at any depth, in JSON, form-encoded and object
+ * payloads alike.
+ * @param headers - request headers. An authorization value keeps its scheme and
+ * loses its credential.
+ * @param clientId - client ID to authenticate with. Printed: it names which
+ * client failed.
+ * @param clientSecret - client secret to authenticate with. Replaced, never
+ * printed; the report states that one was supplied.
  * @returns - the error, with the prefix in front of its message.
  */
 export const tokenRequestErrorMessage = (
