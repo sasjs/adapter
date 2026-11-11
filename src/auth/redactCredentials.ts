@@ -67,15 +67,6 @@ export const redactHeaders = (headers: {}): {} =>
     ])
   )
 
-/**
- * A request payload, with the credential-bearing values redacted.
- *
- * Three shapes reach this function: a plain object, `URLSearchParams` (the form
- * the OAuth code exchange is sent as), and multipart form data (the refresh,
- * whose parts are a stream rather than an enumerable map). The last is reported
- * as its shape rather than its fields, because the parts cannot be read without
- * consuming the stream the request still needs.
- */
 /** A value, with secret-named keys redacted at any depth. */
 const redactValue = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(redactValue)
@@ -129,6 +120,16 @@ const redactText = (text: string): unknown => {
   return 'text body - values redacted'
 }
 
+/**
+ * A request payload, with the credential-bearing values redacted.
+ *
+ * Four shapes reach this function. A plain object is walked, so a secret one
+ * level down is redacted like one at the top. `URLSearchParams` (the form the
+ * OAuth code exchange is sent as) is rebuilt pair by pair. A string that parses
+ * as `key=value&key=value` is rebuilt the same way. Multipart form data (the
+ * refresh) is reported as its shape rather than its fields, because its parts
+ * are a stream the request still needs.
+ */
 export const redactPayload = (data: {} | string | undefined): unknown => {
   if (!data) return data
 

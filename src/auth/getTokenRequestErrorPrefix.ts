@@ -30,9 +30,9 @@ const getResponseTitle = (server: Server, responseReceived: boolean) =>
  * @param funcName - name of the function sent the request.
  * @param server - server type (SASVIYA or SASJS).
  * @param url - endpoint used to send the request.
- * @param data - request payload. Values of secret-bearing parameters are
- * replaced before printing, at any depth, in JSON, form-encoded and object
- * payloads alike.
+ * @param data - request payload. Object and form-encoded payloads are redacted
+ * field by field, at any depth; any other text body is reported as a shape
+ * rather than printed.
  * @param headers - request headers. An authorization value keeps its scheme and
  * loses its credential.
  * @param clientId - client ID to authenticate with. Printed: it names which
@@ -124,9 +124,9 @@ export const getTokenRequestErrorPrefix = (
  * @param funcName - name of the function that sent the request.
  * @param server - server type (SASVIYA or SASJS).
  * @param url - endpoint used to send the request.
- * @param data - request payload. Values of secret-bearing parameters are
- * replaced before printing, at any depth, in JSON, form-encoded and object
- * payloads alike.
+ * @param data - request payload. Object and form-encoded payloads are redacted
+ * field by field, at any depth; any other text body is reported as a shape
+ * rather than printed.
  * @param headers - request headers. An authorization value keeps its scheme and
  * loses its credential.
  * @param clientId - client ID to authenticate with. Printed: it names which
