@@ -8,23 +8,27 @@
  * then never attached, so the release published with no assets at all, and
  * nothing noticed because the provenance job cannot run on a pull request.
  *
- * The remedy is one of two, and this check accepts either: name the repository on
- * the command itself (`--repo "$GITHUB_REPOSITORY"`, or a `--repo "$GH_REPO"` the
- * step's env supplies), or check the repository out in the same job. It reads the
+ * Three things satisfy it, and all three are accepted: `--repo` on the command;
+ * `GH_REPO` in the step's env or the job's (which covers that step, or every step
+ * in the job - an env entry in one step does not excuse a call in another); or a
+ * checkout in the same job. The first version accepted only `--repo`, which would
+ * have failed a workflow whose env already told gh what it needed. It reads the
  * workflow files as text rather
  * than parsing them - the shape it needs (job keys at two spaces, `uses:` and
  * `run:` blocks beneath them) is stable enough that a parser would be a
  * dependency for no gain, and a rule about text is what a reader can check by
  * eye.
  *
- * Run with `node release/workflow-gh-repo-check.mjs`.
+ * Run with `node release/workflow-gh-repo-check.mjs [dir]` - the directory is the
+ * repo's workflows unless one is named, which is how a probe is exercised.
  */
 import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
-const workflows = join(repoRoot, '.github', 'workflows')
+/** A directory may be passed, so the rule can be exercised on a probe workflow. */
+const workflows = process.argv[2] || join(repoRoot, '.github', 'workflows')
 
 /** The subcommands that need a repository, and so fail without one. */
 const NEEDS_A_REPO =
@@ -55,6 +59,8 @@ const joinedLines = (text) => {
   return out
 }
 
+const indentOf = (text) => text.length - text.trimStart().length
+
 const offences = []
 
 for (const file of readdirSync(workflows).filter((name) =>
@@ -65,7 +71,12 @@ for (const file of readdirSync(workflows).filter((name) =>
 
   let inJobs = false
   let job = null
+  let step = null
+  /** The env block being read, and the indent it sits at: 4 is the job's, 8+ a step's. */
+  let envIndent = null
+
   const jobs = new Map()
+  const current = () => jobs.get(job)
 
   for (const { number, text } of lines) {
     if (/^jobs:\s*$/.test(text)) {
@@ -78,31 +89,72 @@ for (const file of readdirSync(workflows).filter((name) =>
     const jobKey = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(text)
     if (jobKey) {
       job = jobKey[1]
-      if (!jobs.has(job)) jobs.set(job, { checkout: false, calls: [] })
+      step = null
+      envIndent = null
+      if (!jobs.has(job))
+        jobs.set(job, {
+          checkout: false,
+          envRepo: false,
+          stepEnvRepo: new Set(),
+          calls: []
+        })
       continue
     }
 
     if (!job) continue
 
-    if (/uses:\s*actions\/checkout@/.test(text)) jobs.get(job).checkout = true
-
+    const indent = indentOf(text)
     const trimmed = text.trim()
+
+    if (!trimmed) continue
+
+    // leaving the env block: anything at or above the `env:` indent is a sibling
+    if (envIndent !== null && indent <= envIndent) envIndent = null
+
+    if (/^env:\s*$/.test(trimmed)) {
+      envIndent = indent
+      continue
+    }
+
+    // `GH_REPO` is how gh is told the repository when it is not on the command;
+    // an empty value tells it nothing, so only a value counts. A job-level env
+    // covers every step; a step-level one covers only that step, which is why the
+    // two are recorded apart.
+    if (envIndent !== null && indent > envIndent) {
+      const assigned = /^GH_REPO:\s*(.+)$/.exec(trimmed)
+      const value = assigned && assigned[1].trim()
+      if (value && value !== "''") {
+        if (envIndent === 4) current().envRepo = true
+        else if (step !== null) current().stepEnvRepo.add(step)
+      }
+      continue
+    }
+
+    if (/^ {6}- /.test(text)) step = number
+
+    if (/uses:\s*actions\/checkout@/.test(text)) current().checkout = true
+
     if (trimmed.startsWith('#')) continue
     if (!NEEDS_A_REPO.test(text)) continue
 
-    jobs
-      .get(job)
-      .calls.push({ line: number, namesRepo: /--repo[\s=]|GH_REPO/.test(text) })
+    current().calls.push({
+      line: number,
+      step,
+      command: trimmed.replace(/\s+/g, ' ').slice(0, 120),
+      namesRepo: /--repo[\s=]/.test(text)
+    })
   }
 
-  for (const [name, { checkout, calls }] of jobs) {
+  for (const [name, { checkout, envRepo, stepEnvRepo, calls }] of jobs) {
     for (const call of calls) {
-      if (call.namesRepo || checkout) continue
+      if (call.namesRepo || envRepo || stepEnvRepo.has(call.step) || checkout)
+        continue
       offences.push({
-        file,
+        path: join(workflows, file),
         line: call.line,
         job: name,
-        why: 'calls gh in a job with no checkout and no --repo'
+        command: call.command,
+        why: 'calls gh with no --repo, no GH_REPO and no checkout'
       })
     }
   }
@@ -115,9 +167,13 @@ if (!offences.length) {
 
 console.error('\na workflow calls gh where gh cannot see a repository:')
 for (const offence of offences) {
+  const where = offence.path.startsWith(repoRoot)
+    ? offence.path.slice(repoRoot.length + 1)
+    : offence.path
   console.error(
-    `  .github/workflows/${offence.file}:${offence.line} (job ${offence.job}) - ${offence.why}`
+    `  ${where}:${offence.line} (job ${offence.job}) - ${offence.why}`
   )
+  console.error(`      ${offence.command}`)
 }
 console.error(
   '\ngh infers the repository from a git remote, and exits with "failed to run git:' +
