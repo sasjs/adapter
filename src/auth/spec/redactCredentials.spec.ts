@@ -103,6 +103,38 @@ describe('redactCredentials', () => {
     expect(redacted).toContain('redacted')
   })
 
+  it('redacts a form-encoded body passed as text', () => {
+    // the parameter admits a string, and a string must not be iterated as its
+    // characters - the token would reconstruct one letter at a time
+    expect(
+      redactPayload('grant_type=refresh_token&refresh_token=sekret-token')
+    ).toEqual({
+      grant_type: 'refresh_token',
+      refresh_token: REDACTED
+    })
+  })
+
+  it('reports a text body it cannot parse as a shape, not as content', () => {
+    expect(redactPayload('<html><body>secret</body></html>')).toBe(
+      'text body - values redacted'
+    )
+  })
+
+  it('redacts secret-named keys at any depth', () => {
+    expect(
+      redactPayload({
+        token: 'top-level-secret',
+        nested: {
+          client_secret: 'inner-secret',
+          grant_type: 'authorization_code'
+        }
+      })
+    ).toEqual({
+      token: REDACTED,
+      nested: { client_secret: REDACTED, grant_type: 'authorization_code' }
+    })
+  })
+
   it('passes an absent body through', () => {
     expect(redactPayload(undefined)).toBeUndefined()
   })

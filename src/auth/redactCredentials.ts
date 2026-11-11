@@ -20,6 +20,7 @@ export const REDACTED = '<redacted>'
  */
 const SECRET_KEYS = [
   'authorization',
+  'token',
   'cookie',
   'x-csrf-token',
   'x-xsrf-token',
@@ -75,8 +76,56 @@ export const redactHeaders = (headers: {}): {} =>
  * as its shape rather than its fields, because the parts cannot be read without
  * consuming the stream the request still needs.
  */
-export const redactPayload = (data: {} | undefined): unknown => {
+/** A value, with secret-named keys redacted at any depth. */
+const redactValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(redactValue)
+
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([key, inner]) => [
+        key,
+        isSecretKey(key) ? REDACTED : redactValue(inner)
+      ])
+    )
+
+  return value
+}
+
+/**
+ * A body that arrived as text, which a caller is free to pass: the parameter is
+ * typed to admit one.
+ *
+ * Form-encoded text is rebuilt pair by pair so the parameters that are not
+ * secrets stay readable, and anything else is reported as a shape rather than
+ * echoed, because a body this module cannot read is a body it cannot redact.
+ */
+const redactText = (text: string): unknown => {
+  const trimmed = text.trim()
+
+  if (!trimmed) return trimmed
+
+  if (/^[^\s&]+=[^\s&]*(&[^\s&]+=[^\s&]*)*$/.test(trimmed)) {
+    const redacted: Record<string, string> = {}
+
+    for (const pair of trimmed.split('&')) {
+      const [key, ...rest] = pair.split('=')
+      const value = rest.join('=')
+
+      redacted[key] = isSecretKey(key) ? REDACTED : value
+    }
+
+    return redacted
+  }
+
+  // not form-encoded: a JSON string, a SAS log, an HTML page. It is not parsed
+  // here because a half-parsed body is worse than a stated shape.
+  return 'text body - values redacted'
+}
+
+export const redactPayload = (data: {} | string | undefined): unknown => {
   if (!data) return data
+
+  if (typeof data === 'string') return redactText(data)
 
   const candidate = data as any
 
@@ -95,10 +144,5 @@ export const redactPayload = (data: {} | undefined): unknown => {
     return redacted
   }
 
-  const redacted: Record<string, unknown> = {}
-
-  for (const [key, value] of Object.entries(candidate))
-    redacted[key] = isSecretKey(key) ? REDACTED : value
-
-  return redacted
+  return redactValue(candidate) as Record<string, unknown>
 }
