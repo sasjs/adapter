@@ -135,6 +135,17 @@ describe('redactCredentials', () => {
     })
   })
 
+  it('does not backtrack on a body that is almost form-encoded', () => {
+    // the first attempt validated pairs with a nested quantifier, which CodeQL
+    // flagged as exponential on this shape; the check is linear now, so this
+    // returns rather than stalling
+    const pathological = '!=&'.repeat(20000)
+
+    const redacted = redactPayload(pathological)
+
+    expect(redacted).toBe('text body - values redacted')
+  })
+
   it('passes an absent body through', () => {
     expect(redactPayload(undefined)).toBeUndefined()
   })
