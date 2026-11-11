@@ -252,6 +252,7 @@ run;
 <li><code>appLoc</code> - this is the folder (eg in metadata or SAS Drive) under which the SAS services are created.</li>
 <li><code>serverType</code> - either <code>SAS9</code>, <code>SASVIYA</code> or <code>SASJS</code>. The <code>SASJS</code> server type is for use with <a href="https://github.com/sasjs/server">sasjs/server</a>.</li>
 <li><code>serverUrl</code> - the location (including http protocol and port) of the SAS Server. Can be omitted, eg if serving directly from the SAS Web Server, or in streaming mode.</li>
+<li><code>pathSASJS</code> - Only relevant when the serverType is <code>SASJS</code>. The path the SASjs Server API is mounted at - <code>/SASjsApi</code> by default, or <code>/api</code> to use the short spelling that sasjs/server also serves. Every SASjs Server route is addressed under this mount, including the stored-program endpoint at <code>&lt;mount&gt;/stp/execute</code>, which is not configurable.</li>
 <li><code>debug</code> - if <code>true</code> then SAS Logs and extra debug information is returned.</li>
 <li><code>verbose</code> - optional, if <code>true</code> then a summary of every HTTP response is logged.</li>
 <li><code>loginMechanism</code> - either <code>Default</code> or <code>Redirected</code>. See <a href="#sas-logon">SAS Logon</a> section.</li>
