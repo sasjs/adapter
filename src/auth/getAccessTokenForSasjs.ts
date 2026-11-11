@@ -1,6 +1,5 @@
-import { prefixMessage } from '@sasjs/utils/error'
 import { RequestClient } from '../request/RequestClient'
-import { getTokenRequestErrorPrefix } from './getTokenRequestErrorPrefix'
+import { tokenRequestErrorMessage } from './getTokenRequestErrorPrefix'
 import { ServerType } from '@sasjs/utils/types'
 import { apiBasePrefix, DEFAULT_API_BASE_PATH } from '../apiBasePath'
 
@@ -36,16 +35,15 @@ export async function getAccessTokenForSasjs(
       }
     })
     .catch((err) => {
-      throw prefixMessage(
+      throw tokenRequestErrorMessage(
         err,
-        getTokenRequestErrorPrefix(
-          'fetching access token',
-          'getAccessTokenForSasjs',
-          ServerType.Sasjs,
-          url,
-          data,
-          clientId
-        )
+        'fetching access token',
+        'getAccessTokenForSasjs',
+        ServerType.Sasjs,
+        url,
+        data,
+        undefined,
+        clientId
       )
     })
 }
