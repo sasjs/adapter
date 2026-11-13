@@ -14,7 +14,8 @@ import {
   NotFoundError,
   InternalServerError,
   JobExecutionError,
-  CertificateError
+  CertificateError,
+  RefreshTokenRejectedError
 } from '../types/errors'
 import { SASjsRequest, HttpClient, VerboseMode } from '../types'
 import { parseWeboutResponse } from '../utils/parseWeboutResponse'
@@ -809,6 +810,19 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
   }
 }
 
+/**
+ * Whether a url is a refresh-token endpoint, whichever server it belongs to.
+ *
+ * Matched on the path rather than on the server type because this runs where
+ * the response is turned into an error, before any caller knows which client
+ * made the request. `/auth/refresh` is SASjs Server's route; Viya's refresh
+ * goes through `/SASLogon/oauth/token`, where a 401 means the client
+ * credentials were refused rather than the refresh token, so it is not
+ * included here.
+ */
+const isTokenRefreshUrl = (url?: string) =>
+  !!url && /(^|\/)auth\/refresh(\?|$)/.test(url)
+
 export const throwIfError = (response: AxiosResponse) => {
   switch (response.status) {
     case 400:
@@ -828,6 +842,13 @@ export const throwIfError = (response: AxiosResponse) => {
       }
       break
     case 401:
+      // A 401 on the refresh route is the server refusing the credential that
+      // was presented - the refresh token - not the caller failing to log in.
+      // See RefreshTokenRejectedError for why the distinction matters.
+      if (isTokenRefreshUrl(response.config?.url)) {
+        throw new RefreshTokenRejectedError(response.data)
+      }
+
       if (typeof response.data === 'object') {
         throw new LoginRequiredError(response.data)
       } else {
