@@ -1,4 +1,5 @@
 import { isRelativePath, isUri, isUrl } from './utils'
+import { joinFolderPath } from './utils/joinFolderPath'
 import NodeFormData from 'form-data'
 import {
   Job,
@@ -660,14 +661,11 @@ export class SASViyaApiClient {
 
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       } else if (isForced) {
-        const folderPath = parentFolderPath + '/' + folderName
+        const folderPath = joinFolderPath(parentFolderPath, folderName)
         const folderUri = await this.getFolderUri(folderPath, accessToken)
 
         if (folderUri) {
-          await this.deleteFolder(
-            parentFolderPath + '/' + folderName,
-            accessToken
-          )
+          await this.deleteFolder(folderPath, accessToken)
         }
       }
     }
@@ -703,11 +701,18 @@ export class SASViyaApiClient {
         throw err
       })
 
-    // update folder map with newly created folder.
-    await this.populateFolderMap(
-      `${parentFolderPath}/${folderName}`,
-      accessToken
-    )
+    // The POST answered with the folder it created, so there is nothing to look up:
+    // a new folder has no members, and re-reading it by a path joined here by hand
+    // is how the doubled slash in adapter#974 reached the server.
+    //
+    // A caller may have given a URI instead of a path, in which case there is no
+    // key to file it under - and the previous code filed it under "undefined/name".
+    if (parentFolderPath) {
+      this.folderMap.set(
+        this.folderMapKey(joinFolderPath(parentFolderPath, folderName)),
+        []
+      )
+    }
 
     return createFolderResponse
   }
@@ -1126,10 +1131,15 @@ export class SASViyaApiClient {
     return executionResult
   }
 
-  private async populateFolderMap(folderPath: string, accessToken?: string) {
-    const path = isRelativePath(folderPath)
+  /** The key `folderMap` stores a folder's members under. */
+  private folderMapKey(folderPath: string) {
+    return isRelativePath(folderPath)
       ? `${this.rootFolderName}/${folderPath}`
       : folderPath
+  }
+
+  private async populateFolderMap(folderPath: string, accessToken?: string) {
+    const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return
     }
