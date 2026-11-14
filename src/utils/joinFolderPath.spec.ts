@@ -1,4 +1,4 @@
-import { joinFolderPath } from './joinFolderPath'
+import { joinFolderPath, normaliseFolderPath } from './joinFolderPath'
 
 describe('joinFolderPath', () => {
   it('joins a normal parent path', () => {
@@ -18,5 +18,11 @@ describe('joinFolderPath', () => {
 
   it('keeps a relative parent relative', () => {
     expect(joinFolderPath('myFolder', 'app')).toEqual('myFolder/app')
+  })
+
+  it('drops a trailing slash but keeps the root', () => {
+    expect(normaliseFolderPath('/app/')).toEqual('/app')
+    expect(normaliseFolderPath('/')).toEqual('/')
+    expect(normaliseFolderPath('myFolder/')).toEqual('myFolder')
   })
 })

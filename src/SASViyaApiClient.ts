@@ -1,5 +1,5 @@
 import { isRelativePath, isUri, isUrl } from './utils'
-import { joinFolderPath } from './utils/joinFolderPath'
+import { joinFolderPath, normaliseFolderPath } from './utils/joinFolderPath'
 import NodeFormData from 'form-data'
 import {
   Job,
@@ -705,6 +705,12 @@ export class SASViyaApiClient {
     // a new folder has no members, and re-reading it by a path joined here by hand
     // is how the doubled slash in adapter#974 reached the server.
     //
+    // An empty member list is only ever written for a folder that has just been
+    // created, which is the one case where it is exact: a folder that already
+    // existed refuses the POST (409) unless `isForced` deleted it first, and a
+    // deleted folder takes its members with it. So this cannot drop members the
+    // server still has.
+    //
     // A caller may have given a URI instead of a path, in which case there is no
     // key to file it under - and the previous code filed it under "undefined/name".
     if (parentFolderPath) {
@@ -1139,7 +1145,7 @@ export class SASViyaApiClient {
   }
 
   private async populateFolderMap(folderPath: string, accessToken?: string) {
-    const path = this.folderMapKey(folderPath)
+    const path = normaliseFolderPath(this.folderMapKey(folderPath))
     if (this.folderMap.get(path)) {
       return
     }
@@ -1196,9 +1202,12 @@ export class SASViyaApiClient {
     folderPath: string,
     accessToken?: string
   ): Promise<Folder | undefined> {
-    const url = isUri(folderPath)
-      ? folderPath
-      : `/folders/folders/@item?path=${folderPath}`
+    // every caller reaches the server through here, so the collapse happens at the
+    // point a path becomes a URL rather than at each place one is built
+    const normalisedPath = normaliseFolderPath(folderPath)
+    const url = isUri(normalisedPath)
+      ? normalisedPath
+      : `/folders/folders/@item?path=${normalisedPath}`
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)

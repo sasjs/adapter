@@ -1,15 +1,36 @@
 /**
+ * Collapse repeated slashes in a folder path.
+ *
+ * A Viya folder path is a sequence of names separated by single slashes, so a run
+ * of slashes is always a caller's join going wrong. Two ways of getting one:
+ *
+ * - joining a parent path with a name, when the parent is the root: `'/' + '/app'`
+ *   is `'//app'` (adapter#974)
+ * - a caller passing a path it built itself, with a trailing slash or a doubled
+ *   one in the middle: `'/Users/me/' + 'app'`
+ *
+ * Some deployments do not collapse the doubled slash when it arrives in `?path=`,
+ * and answer 404 for a folder that exists, so the path a request carries has to be
+ * the path the server knows. This is applied where a path is turned into a request,
+ * not only where one is joined, so the invariant holds for every caller.
+ */
+export const normaliseFolderPath = (folderPath: string): string => {
+  const collapsed = folderPath.replace(/\/{2,}/g, '/')
+  // a single trailing slash is the other way a caller's join goes wrong, and it is
+  // not a run of slashes: '/app/' names the same folder as '/app', and asking the
+  // server about the first is a 404 on a deployment that does not tidy it up
+  return collapsed.length > 1 && collapsed.endsWith('/')
+    ? collapsed.slice(0, -1)
+    : collapsed
+}
+
+/**
  * Join a parent folder path and a folder name into one path.
  *
- * A parent path can be the root, and `'/' + '/' + 'app'` is `'//app'` - a path
- * that some Viya deployments do not collapse when it arrives in `?path=`, so the
- * server mints an id for a folder that is not the one just created. Creating at
- * the root then reports a refusal for a folder that exists (adapter#974).
- *
- * Collapsing repeated slashes here keeps every caller off that path, and keeps
- * the path used for a write identical to the one used to read it back.
+ * The result is normalised, so a create at the root reads back the same path it
+ * wrote - which is the failure adapter#974 describes.
  */
 export const joinFolderPath = (
   parentFolderPath: string,
   folderName: string
-): string => `${parentFolderPath}/${folderName}`.replace(/\/{2,}/g, '/')
+): string => normaliseFolderPath(`${parentFolderPath}/${folderName}`)

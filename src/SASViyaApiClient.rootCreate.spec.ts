@@ -128,4 +128,24 @@ describe('createFolder at the root, against a server that does not collapse slas
     expect(server.requests.filter((r) => r.includes('//'))).toEqual([])
     expect(server.folders.has('/app')).toBe(true)
   })
+
+  it('normalises a parent path the caller doubled, wherever it is used', async () => {
+    // the invariant is applied where a path becomes a request, so callers that
+    // build paths themselves are covered too - not only createFolder's own join
+    server.folders.set('/app', { id: 'app', name: 'app', memberCount: 0 })
+    const client = new SASViyaApiClient(
+      server.url,
+      '/',
+      'context',
+      new RequestClient(server.url)
+    )
+
+    // the trailing slash is the caller's, exactly as a path built elsewhere might
+    // have it; the lookup must still ask the server about '/app'
+    const folder = await client.createFolder('child', '/app/')
+
+    expect(folder.id).toEqual('id-app-child')
+    expect(server.requests.filter((r) => r.includes('//'))).toEqual([])
+    expect(server.folders.has('/app/child')).toBe(true)
+  })
 })
