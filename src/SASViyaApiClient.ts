@@ -1,4 +1,5 @@
 import { isRelativePath, isUri, isUrl } from './utils'
+import { joinFolderPath, normaliseFolderPath } from './utils/joinFolderPath'
 import NodeFormData from 'form-data'
 import {
   Job,
@@ -150,9 +151,7 @@ export class SASViyaApiClient {
    * Returns a list of jobs in the currently set root folder.
    */
   public async getJobsInFolder(folderPath: string) {
-    const path = isRelativePath(folderPath)
-      ? `${this.rootFolderName}/${folderPath}`
-      : folderPath
+    const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return this.folderMap.get(path)
     }
@@ -462,8 +461,14 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for authorizing the request.
    */
   public async getFolder(folderPath: string, accessToken?: string) {
+    // one of the three places a path becomes a request, so the same normalisation
+    // applies here as in getFolderDetails - otherwise getFolder('//app') sends the
+    // string this class now refuses to send anywhere else
     return await this.requestClient
-      .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
+      .get(
+        `/folders/folders/@item?path=${normaliseFolderPath(folderPath)}`,
+        accessToken
+      )
       .then((res) => res.result)
   }
 
@@ -660,14 +665,11 @@ export class SASViyaApiClient {
 
         parentFolderUri = `/folders/folders/${parentFolder.id}`
       } else if (isForced) {
-        const folderPath = parentFolderPath + '/' + folderName
+        const folderPath = joinFolderPath(parentFolderPath, folderName)
         const folderUri = await this.getFolderUri(folderPath, accessToken)
 
         if (folderUri) {
-          await this.deleteFolder(
-            parentFolderPath + '/' + folderName,
-            accessToken
-          )
+          await this.deleteFolder(folderPath, accessToken)
         }
       }
     }
@@ -703,11 +705,24 @@ export class SASViyaApiClient {
         throw err
       })
 
-    // update folder map with newly created folder.
-    await this.populateFolderMap(
-      `${parentFolderPath}/${folderName}`,
-      accessToken
-    )
+    // The POST answered with the folder it created, so there is nothing to look up:
+    // a new folder has no members, and re-reading it by a path joined here by hand
+    // is how the doubled slash in adapter#974 reached the server.
+    //
+    // An empty member list is only ever written for a folder that has just been
+    // created, which is the one case where it is exact: a folder that already
+    // existed refuses the POST (409) unless `isForced` deleted it first, and a
+    // deleted folder takes its members with it. So this cannot drop members the
+    // server still has.
+    //
+    // A caller may have given a URI instead of a path, in which case there is no
+    // key to file it under - and the previous code filed it under "undefined/name".
+    if (parentFolderPath) {
+      this.folderMap.set(
+        this.folderMapKey(joinFolderPath(parentFolderPath, folderName)),
+        []
+      )
+    }
 
     return createFolderResponse
   }
@@ -903,7 +918,7 @@ export class SASViyaApiClient {
       throw prefixMessage(err, 'Error while populating folder map. ')
     })
 
-    const jobFolder = this.folderMap.get(fullFolderPath)
+    const jobFolder = this.folderMap.get(this.folderMapKey(fullFolderPath))
 
     if (!jobFolder) {
       throw new Error(
@@ -1006,7 +1021,7 @@ export class SASViyaApiClient {
 
     await this.populateFolderMap(fullFolderPath, access_token)
 
-    const jobFolder = this.folderMap.get(fullFolderPath)
+    const jobFolder = this.folderMap.get(this.folderMapKey(fullFolderPath))
     if (!jobFolder) {
       throw new Error(
         `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'.`
@@ -1126,10 +1141,23 @@ export class SASViyaApiClient {
     return executionResult
   }
 
+  /**
+   * The key `folderMap` stores a folder's members under.
+   *
+   * Normalised, so a caller's '//app' and its own '/app' are one key: the map is
+   * written by populateFolderMap and read by four other methods, and a path that
+   * needs normalising must not miss its own entry.
+   */
+  private folderMapKey(folderPath: string) {
+    return normaliseFolderPath(
+      isRelativePath(folderPath)
+        ? `${this.rootFolderName}/${folderPath}`
+        : folderPath
+    )
+  }
+
   private async populateFolderMap(folderPath: string, accessToken?: string) {
-    const path = isRelativePath(folderPath)
-      ? `${this.rootFolderName}/${folderPath}`
-      : folderPath
+    const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return
     }
@@ -1186,9 +1214,12 @@ export class SASViyaApiClient {
     folderPath: string,
     accessToken?: string
   ): Promise<Folder | undefined> {
-    const url = isUri(folderPath)
-      ? folderPath
-      : `/folders/folders/@item?path=${folderPath}`
+    // every caller reaches the server through here, so the collapse happens at the
+    // point a path becomes a URL rather than at each place one is built
+    const normalisedPath = normaliseFolderPath(folderPath)
+    const url = isUri(normalisedPath)
+      ? normalisedPath
+      : `/folders/folders/@item?path=${normalisedPath}`
 
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
