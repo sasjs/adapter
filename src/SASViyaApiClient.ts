@@ -151,9 +151,7 @@ export class SASViyaApiClient {
    * Returns a list of jobs in the currently set root folder.
    */
   public async getJobsInFolder(folderPath: string) {
-    const path = isRelativePath(folderPath)
-      ? `${this.rootFolderName}/${folderPath}`
-      : folderPath
+    const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return this.folderMap.get(path)
     }
@@ -463,8 +461,14 @@ export class SASViyaApiClient {
    * @param accessToken - an access token for authorizing the request.
    */
   public async getFolder(folderPath: string, accessToken?: string) {
+    // one of the three places a path becomes a request, so the same normalisation
+    // applies here as in getFolderDetails - otherwise getFolder('//app') sends the
+    // string this class now refuses to send anywhere else
     return await this.requestClient
-      .get(`/folders/folders/@item?path=${folderPath}`, accessToken)
+      .get(
+        `/folders/folders/@item?path=${normaliseFolderPath(folderPath)}`,
+        accessToken
+      )
       .then((res) => res.result)
   }
 
@@ -914,7 +918,7 @@ export class SASViyaApiClient {
       throw prefixMessage(err, 'Error while populating folder map. ')
     })
 
-    const jobFolder = this.folderMap.get(fullFolderPath)
+    const jobFolder = this.folderMap.get(this.folderMapKey(fullFolderPath))
 
     if (!jobFolder) {
       throw new Error(
@@ -1017,7 +1021,7 @@ export class SASViyaApiClient {
 
     await this.populateFolderMap(fullFolderPath, access_token)
 
-    const jobFolder = this.folderMap.get(fullFolderPath)
+    const jobFolder = this.folderMap.get(this.folderMapKey(fullFolderPath))
     if (!jobFolder) {
       throw new Error(
         `The folder '${fullFolderPath}' was not found on '${this.serverUrl}'.`
@@ -1137,15 +1141,23 @@ export class SASViyaApiClient {
     return executionResult
   }
 
-  /** The key `folderMap` stores a folder's members under. */
+  /**
+   * The key `folderMap` stores a folder's members under.
+   *
+   * Normalised, so a caller's '//app' and its own '/app' are one key: the map is
+   * written by populateFolderMap and read by four other methods, and a path that
+   * needs normalising must not miss its own entry.
+   */
   private folderMapKey(folderPath: string) {
-    return isRelativePath(folderPath)
-      ? `${this.rootFolderName}/${folderPath}`
-      : folderPath
+    return normaliseFolderPath(
+      isRelativePath(folderPath)
+        ? `${this.rootFolderName}/${folderPath}`
+        : folderPath
+    )
   }
 
   private async populateFolderMap(folderPath: string, accessToken?: string) {
-    const path = normaliseFolderPath(this.folderMapKey(folderPath))
+    const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return
     }

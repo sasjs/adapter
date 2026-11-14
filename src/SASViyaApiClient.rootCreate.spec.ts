@@ -148,4 +148,39 @@ describe('createFolder at the root, against a server that does not collapse slas
     expect(server.requests.filter((r) => r.includes('//'))).toEqual([])
     expect(server.folders.has('/app/child')).toBe(true)
   })
+
+  it('getFolder normalises the path it asks about', async () => {
+    server.folders.set('/app', { id: 'app', name: 'app', memberCount: 0 })
+    const client = new SASViyaApiClient(
+      server.url,
+      '/',
+      'context',
+      new RequestClient(server.url)
+    )
+
+    const folder = (await client.getFolder('//app')) as { id: string }
+
+    expect(folder.id).toEqual('app')
+
+    // '/app' exists in this fixture; '//app' does not, so this only passes if the
+    // third path-to-request site normalises like the other two
+    expect(server.requests.filter((r) => r.includes('//'))).toEqual([])
+  })
+
+  it('reads a folder it cached under a normalised key', async () => {
+    // the map is written by populateFolderMap and read by four callers; if one side
+    // normalises and the other does not, a folder is cached and then not found
+    server.folders.set('/app', { id: 'app', name: 'app', memberCount: 0 })
+    const client = new SASViyaApiClient(
+      server.url,
+      '/',
+      'context',
+      new RequestClient(server.url)
+    )
+
+    const jobs = await client.getJobsInFolder('app/')
+
+    expect(jobs).toEqual([])
+    expect(server.requests.filter((r) => r.includes('//'))).toEqual([])
+  })
 })
