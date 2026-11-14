@@ -1,5 +1,10 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+# Release and stage @sasjs/adapter from one job.
+#
+# @sasjs/release decides the version from the conventional commits since the last
+# tag, creates the tag and the release, and stamps the version npm will read. The
+# publish stays in this file because npm's trusted publisher is registered against
+# its filename, and because the package is STAGED rather than published: it
+# declares dual-use content, so a maintainer approves each version with 2FA.
 
 name: SASjs Build and Publish
 
@@ -14,14 +19,12 @@ on:
   # no workflow run at all.
   workflow_dispatch:
 
-# One release at a time. Both triggers publish: the push trigger fires on every
-# release commit @semantic-release/git pushes back to master, and the dispatch
-# trigger exists precisely so a stranded release can be recovered by hand. With
-# no gate the two can overlap, and two semantic-release processes racing the
-# same tag and the same npm stage is a new way to strand a release - the failure
-# class the retry above repairs. `cancel-in-progress: false` queues the second
-# run rather than cancelling the first, because cancelling a run midway through
-# a release is itself a way to leave a tag pushed and the release missing.
+# One release at a time. The push trigger fires on every merge to master and the
+# dispatch trigger exists so a stranded release can be finished by hand; with no
+# gate the two can overlap, and two runs racing the same tag and the same npm
+# stage is a way to strand a release. `cancel-in-progress: false` queues the
+# second run rather than cancelling the first, because cancelling a run midway
+# through a release is itself a way to leave a tag created and the stage missing.
 concurrency:
   group: npmpublish
   cancel-in-progress: false
@@ -33,31 +36,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write       # required for npm provenance (trusted publisher)
-      issues: write         # optional: lets @semantic-release/github comment on issues
-      pull-requests: write  # optional: lets @semantic-release/github comment on PRs
+      contents: write       # the tag, the release, and the assets attached to it
+      id-token: write       # npm provenance (trusted publisher) and the attestation
+      attestations: write   # actions/attest-build-provenance records it
 
     strategy:
       matrix:
         node-version: [22]
 
     steps:
-      # Mint a short-lived GitHub App token (bypass-capable)
-      - name: Generate token
-        id: app-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      # The app token is what creates the GitHub release (and therefore the tag) as an
-      # app rather than as github-actions; nothing is pushed to master from here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
-          fetch-depth: 0      # semantic-release needs full history + tags
+          # the version is worked out from the tags, so a shallow clone has nothing
+          # to classify. Publishing is from master or not at all, so the checkout
+          # says so rather than inheriting a dispatcher's ref.
+          ref: master
+          fetch-depth: 0
+          # the tag and the release are created over the API, so this token does
+          # not need to stay in the git config - and nothing is pushed
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -93,6 +90,13 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Check npm audit
+        # The same gate the pull request runs, repeated on the job that holds
+        # contents: write and publish credentials. Full tree, dev included: it is
+        # clean, so `npm audit` covers the release tool as well - which is the
+        # whole reason not to scope this to production here.
+        run: npm audit --audit-level=low
+
       - name: Check code style
         run: npm run lint
 
@@ -110,30 +114,14 @@ jobs:
         # it - and browser-reachable source must not import the utils barrel,
         # which is the other way the crypto chain reaches the bundle
         # (sasjs/utils#275).
-        run: node release/bundle-check.mjs
-
-      - name: Audit the release toolchain
-        # Its own scope: the toolchain is not shipped, so it must not gate the
-        # package, but it runs with publish credentials, so it must not be
-        # invisible either. Fails on anything outside the named exemptions in
-        # release/audit.mjs.
-        run: node release/audit.mjs
-
-      - name: Install the release tooling
-        # Its own locked tree, installed here rather than carried as a
-        # devDependency: that tree is where the unfixable advisories live
-        # (micromatch -> braces, and the npm package @semantic-release/npm
-        # bundles), so keeping it out of the package's dependencies keeps it
-        # out of `npm audit`. Locked, unlike resolving from npx, so the
-        # resolved versions and their integrity hashes are pinned.
-        run: npm ci --prefix release --ignore-scripts
+        run: node scripts/bundle-check.mjs
 
       - name: Check what the package would carry
         # After the install, not before. The leak this guards against is the
         # toolchain's own node_modules being matched by a broad allowlist glob
         # ("**/*.d.ts"), so the check has to see that tree - run before the
         # install it packed 3 files and passed while the leak was present.
-        run: node release/pack-check.mjs
+        run: node scripts/pack-check.mjs
 
       - name: Check the packed package loads
         # The other direction of the same allowlist: it names the root modules one
@@ -143,69 +131,52 @@ jobs:
         # failed at require, while the suite (which loads src/) was green. This
         # packs, unpacks and requires the entry point, which is the only check
         # that sees what a consumer gets.
-        run: node release/pack-load-check.mjs
+        run: node scripts/pack-load-check.mjs
 
       - name: Check @sasjs dependencies are ranges
         # The PR workflow gates this too, but this is the path that publishes: a
         # change that reaches the release branch without a PR would otherwise
         # ship a pin that nests a second copy in every consumer.
-        run: node release/dep-range-check.mjs
+        run: node scripts/dep-range-check.mjs
 
-      - name: Semantic Release
-        # semantic-release creates the GitHub release, and the tag with it, through the
-        # API - so the only thing this step needs is a token that can create releases.
-        # It no longer pushes anything to master: @semantic-release/git used to commit
-        # the version bump to the branch, which is the sole reason this workflow needed
-        # an App with a branch-protection bypass - and a bypass granted to an App is a
-        # bypass for anyone holding a token for that App. With the branch push gone,
-        # master stays PR-only for every identity, and the released version lives in the
-        # tag and on the registry.
-        #
-        # The retry this step used to carry existed for the tag push that followed the
-        # branch push ("missing necessary objects" on 2026-10-17). There is no local tag
-        # and no branch push to sequence any more, so a failure here is a real failure.
-        run: release/node_modules/.bin/semantic-release
+      - name: Tag and release, if there is anything to release
+        id: release
+        # The release, and the tag with it, are created over the API by this
+        # token: no App with a branch-protection bypass, and nothing pushed to
+        # master. `released` is false when the commits since the last tag are
+        # docs/build/chore, and true when a release was cut - or when the tag
+        # already existed, which is what makes a failed run re-runnable.
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}   # <-- app token, not secrets.GITHUB_TOKEN
+          GH_TOKEN: ${{ github.token }}
+        run: npm run release -- --host github --release --output "$GITHUB_OUTPUT"
 
-      # semantic-release only releases when it finds a releasable commit, and the
-      # angular convention it is configured with does not treat `build:` or
-      # `chore:` as one. This step ran on `if: success()` regardless, so a merge
-      # with no releasable commit published the version already in package.json,
-      # which npm rejects with "You cannot publish over the previously published
-      # versions". Compare against the registry instead, and stage only when
-      # there is something new.
-      #
+      - name: Decide what to stage
+        id: prepare
+        # stamps the tag's version where npm and the pack steps will read it,
+        # refuses a tag that is not on master, and asks the registry whether the
+        # version is already there. `publish` is the gate the stage step uses.
+        run: npm run release -- --prepare-publish --branch master --output "$GITHUB_OUTPUT"
+
       # `npm stage publish`, not `npm publish`: the package declares dual-use
       # content (`contentPolicy` in package.json, DISCLOSURE at the root of the
-      # tarball). npm's dual-use policy does not permit direct publishing
-      # through trusted publishing - staging with a maintainer's 2FA promotion
-      # is the permitted automated path. The staged version is not installable
-      # until it is approved, so the version guard compares against the live
-      # registry version.
+      # tarball). npm's dual-use policy does not permit direct publishing through
+      # trusted publishing - staging with a maintainer's 2FA promotion is the
+      # permitted automated path. The staged version is not installable until it
+      # is approved, so `--prepare-publish` compares against the live registry.
       #
       # `npm stage publish` is always an allowed action for a trusted publisher,
       # independent of `npm publish` and `npm dist-tag`. This package's trust
-      # relationship already stages: 5.0.2 was staged through this same OIDC
-      # path on 2026-10-14. A trust entry predating the allowed-actions setting
-      # would need stage publish enabled in the package's Trusted Publisher
-      # settings before this step can authenticate.
+      # relationship already stages: 5.0.2 was staged through this same OIDC path
+      # on 2026-10-14. A trust entry predating the allowed-actions setting would
+      # need stage publish enabled in the package's Trusted Publisher settings
+      # before this step can authenticate.
       - name: Stage the release on npm
         id: publish
-        if: success()
+        if: steps.prepare.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.prepare.outputs.version }}
         run: |
-          # `prepareCmd` writes the version into the workspace only when
-          # semantic-release decides to cut one, so the placeholder surviving this step
-          # IS the "nothing to release" signal. Comparing against the registry cannot
-          # work once the committed file carries a placeholder: the two would never
-          # match, and every merge would try to stage the placeholder itself.
-          local_version=$(node -p "require('./package.json').version")
-
-          if [ "$local_version" = "0.0.0-semantically-released" ]; then
-            echo "released=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing to stage - semantic-release cut no version in this run"
-            exit 0
-          fi
+          set -euo pipefail
 
           # A staged version shares the semver index with published versions but
           # is invisible to `npm view`, so a re-run while an approval is pending
@@ -216,7 +187,7 @@ jobs:
             printf '%s\n' "$stage_output"
             if printf '%s' "$stage_output" | grep -qiE 'already[ -]?staged|already exists|EPUBLISHCONFLICT'; then
               echo "released=true" >> "$GITHUB_OUTPUT"
-              echo "$local_version is already staged and awaiting approval."
+              echo "$VERSION is already staged and awaiting approval."
               echo "(https://www.npmjs.com/settings/~/staged-packages)"
               exit 0
             fi
@@ -225,8 +196,46 @@ jobs:
 
           printf '%s\n' "$stage_output"
           echo "released=true" >> "$GITHUB_OUTPUT"
-          echo "Staged $local_version. A maintainer must approve it with 2FA"
+          echo "Staged $VERSION. A maintainer must approve it with 2FA"
           echo "(https://www.npmjs.com/settings/~/staged-packages) before it is live."
+
+      - name: Pack the tarball this run stages
+        id: pack
+        if: steps.publish.outputs.released == 'true'
+        # The same tree npm packed for the stage, because nothing has changed
+        # since. This is the file the attestation is about, and packing it here
+        # rather than fetching it from the registry is what makes the attestation
+        # possible at all: a staged version is not downloadable until a maintainer
+        # approves it, which is why the workflow this replaces produced no assets
+        # for v5.2.3, v5.2.4 or v5.2.5.
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          npm pack --pack-destination dist
+          ls -l dist
+
+      - name: Attest the tarball's build provenance
+        id: attest
+        if: steps.publish.outputs.released == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: 'dist/*.tgz'
+
+      - name: Attach the tarball and its provenance to the release
+        if: steps.publish.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.prepare.outputs.version }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        # the scorecard's Signed-Releases check reads release assets by filename,
+        # and only `*.intoto.jsonl` earns the full score, so the bundle - which
+        # carries no extension of its own - is renamed to match before upload
+        run: |
+          set -euo pipefail
+          cp "$BUNDLE" "dist/provenance-${VERSION}.intoto.jsonl"
+          gh release upload "$TAG" dist/*.tgz "dist/provenance-${VERSION}.intoto.jsonl" --clobber
+          gh release view "$TAG" --json assets --jq '.assets[].name'
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
