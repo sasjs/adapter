@@ -49,8 +49,8 @@ describe('SASViyaApiClient', () => {
 
     expect(folder).toEqual(mockFolder)
 
-    const urls = [...getSpy.mock.calls, ...postSpy.mock.calls].map((call: any[]) =>
-      String(call[0])
+    const urls = [...getSpy.mock.calls, ...postSpy.mock.calls].map(
+      (call: any[]) => String(call[0])
     )
     expect(urls.filter((url) => url.includes('//app'))).toEqual([])
     // and nothing re-reads the folder it has just created
