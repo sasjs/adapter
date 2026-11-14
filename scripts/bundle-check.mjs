@@ -31,7 +31,7 @@
  * way to see it - see sasjs/utils#275, which describes the barrel path.
  *
  * Needs a build: run `npm run build` first (or `npm run package:lib`, which
- * builds first). Run with `node release/bundle-check.mjs`.
+ * builds first). Run with `node scripts/bundle-check.mjs`.
  *
  * `--source-only` scans the sources and skips the bundle: `npm run build` runs
  * it before webpack, so the barrel-import failure is reported in this script's

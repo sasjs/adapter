@@ -47,8 +47,8 @@
  * manifest rather than the lockfile: the lockfile is where the resolution
  * belongs, and it is allowed to record an exact version.
  *
- * Run with `node release/dep-range-check.mjs`, or point it at a fixture with
- * `--manifest <path>` (what release/dep-range-check.spec.ts does).
+ * Run with `node scripts/dep-range-check.mjs`, or point it at a fixture with
+ * `--manifest <path>` (what scripts/dep-range-check.spec.ts does).
  */
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -88,7 +88,7 @@ let manifestPath = join(repoRoot, 'package.json')
 if (manifestFlag !== -1) {
   const value = process.argv[manifestFlag + 1]
   if (!value || value.startsWith('--')) {
-    console.error('Usage: node release/dep-range-check.mjs [--manifest <path>]')
+    console.error('Usage: node scripts/dep-range-check.mjs [--manifest <path>]')
     process.exit(1)
   }
   manifestPath = resolve(value)

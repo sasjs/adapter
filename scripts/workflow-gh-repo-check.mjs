@@ -19,7 +19,7 @@
  * dependency for no gain, and a rule about text is what a reader can check by
  * eye.
  *
- * Run with `node release/workflow-gh-repo-check.mjs [dir]` - the directory is the
+ * Run with `node scripts/workflow-gh-repo-check.mjs [dir]` - the directory is the
  * repo's workflows unless one is named, which is how a probe is exercised.
  */
 import { readdirSync, readFileSync } from 'node:fs'

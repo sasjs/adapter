@@ -36,7 +36,7 @@ const webpack = require('webpack')
 // answers `globalThis` on every target this bundle supports (the same `globalThis` the
 // UMD wrapper is told to use), so the fallback is dead code in a browser.
 //
-// release/bundle-check.mjs fails the build if either construct comes back.
+// scripts/bundle-check.mjs fails the build if either construct comes back.
 const GLOBAL_HELPER = /__webpack_require__\.g = \(function\s*\(\)\s*\{[\s\S]*?\}\)\(\);/
 
 class NoDynamicCodeEvaluation {
