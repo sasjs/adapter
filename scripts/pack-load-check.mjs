@@ -15,7 +15,7 @@
  * adapter in node - while the package's own suite (which loads `src/`) was green.
  *
  * Run from a tree where `npm run publishInit` has been run, which is the tree
- * `semantic-release` packs: `node release/pack-load-check.mjs`.
+ * the release job packs: `node scripts/pack-load-check.mjs`.
  */
 import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'

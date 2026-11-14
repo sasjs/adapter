@@ -19,7 +19,7 @@
  * No build is needed: `npm pack --dry-run` reports what the allowlist matches
  * against the working tree, and the files in question are present there.
  *
- * Run with `node release/pack-check.mjs`.
+ * Run with `node scripts/pack-check.mjs`.
  */
 import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
@@ -33,7 +33,10 @@ const FORBIDDEN = [
     'node_modules/',
     'a dependency tree - npm excludes these itself, so one appearing means an allowlist entry reached into one'
   ],
-  ['release/', 'the release toolchain, which is not shipped']
+  [
+    'release/',
+    'a directory the release toolchain once lived in - not in the tree now, and kept because a broad allowlist glob matched a toolchain tree once and shipped 24 MB'
+  ]
 ]
 
 /**
@@ -124,7 +127,8 @@ for (const offence of offences) {
   for (const hit of offence.hits.slice(0, 5)) console.error(`      ${hit}`)
 }
 console.error(
-  '\nNarrow the `files` allowlist (or add an exclusion such as "!release/**"), and' +
-    '\nname any required file in it - the allowlist only ships what it lists.'
+  '\nNarrow the `files` allowlist, or add an exclusion for the prefix named above' +
+    '\n(for example "!scripts/**" if that tree is being matched), and name any' +
+    '\nrequired file in it - the allowlist only ships what it lists.'
 )
 process.exit(1)

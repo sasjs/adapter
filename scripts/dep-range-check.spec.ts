@@ -122,7 +122,7 @@ describe('dep-range-check', () => {
     })
 
     expect(result.status).toBe(1)
-    expect(result.stderr).toContain('Usage: node release/dep-range-check.mjs')
+    expect(result.stderr).toContain('Usage: node scripts/dep-range-check.mjs')
     expect(result.stderr).not.toContain('TypeError')
   })
 })
