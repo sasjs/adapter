@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { RequestClient } from '../request/RequestClient'
+import { MockReadinessError } from '../types/errors/MockReadinessError'
 import { NotFoundError } from '../types/errors'
 import { LoginOptions, LoginResult, LoginResultInternal } from '../types/Login'
 import { serialize } from '../utils'
@@ -285,6 +286,7 @@ export class AuthManager {
     const { result: loginResponse } = await this.requestClient
       .get<string>(url, undefined, 'text/plain')
       .catch((err: any) => {
+        if (err instanceof MockReadinessError) throw err
         return { result: 'authErr' }
       })
 

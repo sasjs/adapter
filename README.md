@@ -284,6 +284,12 @@ Where an entire column is made up of special missing numerics, there would be no
 
 The `%webout()` macro itself is just a wrapper for the [mp_jsonout](https://core.sasjs.io/mp__jsonout_8sas.html) macro.
 
+## Browser mock readiness
+
+When a SASjs CLI mock host publishes `window.__sasjsMockReady` before the adapter is constructed, the adapter waits for it before sending requests to that mock. The constructor and page rendering remain synchronous. Calls to unrelated backends, Node applications and pages without the host contract behave as before.
+
+If mock initialization rejects, reports a legacy boot error or does not complete within two minutes, affected calls reject without sending a request. A shorter request timeout or cancellation also stops the wait. This applies only to requests made through the adapter; direct browser requests and assets are not gated. Streamed applications need their host to publish the contract before the adapter starts.
+
 ## Configuration
 
 Configuration on the client side involves passing an object on startup, which can also be passed with each request. Technical documentation on the SASjsConfig class is available [here](https://github.com/sasjs/adapter/blob/master/src/types/SASjsConfig.ts). The main config items are:
