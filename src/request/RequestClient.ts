@@ -28,6 +28,8 @@ import {
 import { InvalidSASjsCsrfError } from '../types/errors/InvalidSASjsCsrfError'
 import { getLogger, inspectValue } from '../utils/host'
 import { isNode } from '../utils/isNode'
+import { captureMockReadiness, installMockReadinessGate } from './mockReadiness'
+import { MockReadinessError } from '../types/errors/MockReadinessError'
 
 export class RequestClient implements HttpClient {
   private requests: SASjsRequest[] = []
@@ -39,6 +41,7 @@ export class RequestClient implements HttpClient {
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
   private isRecoveringFromNetworkError = false
+  private mockReadiness = captureMockReadiness()
 
   constructor(
     protected baseUrl: string,
@@ -468,6 +471,8 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
   }
 
   private handleAxiosError = (error: AxiosError) => {
+    if (error instanceof MockReadinessError || error?.code === 'ERR_CANCELED')
+      throw error
     // Message indicating absent value.
     const noValueMessage = 'Not provided'
     const { response, request, config } = error
@@ -802,6 +807,9 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
         : undefined
 
     this.httpClient = createAxiosInstance(baseUrl, httpsAgent)
+    if (this.mockReadiness) {
+      installMockReadinessGate(this.httpClient, this.mockReadiness)
+    }
 
     this.httpClient.defaults.validateStatus = (status) => {
       return status >= 200 && status <= 401

@@ -10,6 +10,7 @@ import {
   LoginRequiredError
 } from '../types/errors'
 import { RequestClient } from '../request/RequestClient'
+import { MockReadinessError } from '../types/errors/MockReadinessError'
 import { ServerType } from '@sasjs/utils/types'
 import { BaseJobExecutor } from './JobExecutor'
 
@@ -143,7 +144,14 @@ export class FileUploader extends BaseJobExecutor {
 
             await loginCallback()
           } else {
-            reject(new ErrorResponse('File upload request failed.', e))
+            reject(
+              new ErrorResponse(
+                e instanceof MockReadinessError
+                  ? e.message
+                  : 'File upload request failed.',
+                e
+              )
+            )
           }
         })
     })
