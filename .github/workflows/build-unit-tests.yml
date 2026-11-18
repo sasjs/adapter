@@ -59,13 +59,23 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Check npm audit
-        # Full tree, dev included: measured at 0 advisories, the overrides in
-        # package.json are what keep it there. That is what lets this gate cover
-        # the release tool, which is a devDependency and which runs with publish
-        # credentials - `--omit=dev` would skip exactly the dependency that
-        # matters here. A repo whose dev tree carries advisories has to scope this
-        # to production and assert the tool's own tree separately instead.
-        run: npm audit --audit-level=low
+        # Still the full tree, dev included: the release tool is a devDependency
+        # and runs with publish credentials, so `--omit=dev` would skip exactly
+        # the dependency that matters here.
+        #
+        # What changed is that the verdict is now argued rather than absolute.
+        # `node scripts/audit-check.mjs` runs `npm audit --omit=dev` on its own and
+        # fails on ANY advisory there - a shipping dependency is a version to
+        # change, never a risk to accept - then fails on any dev advisory that is
+        # not named in its EXEMPT list with the argument for why it cannot be
+        # fixed. An entry that stops appearing fails too, so a stale exemption
+        # cannot outlive its reason.
+        #
+        # The one entry today is GHSA-fc5q-39xc-vjpf against picomatch, whose
+        # advisory range is <= 4.0.7 while 4.0.7 is the newest version published
+        # (measured 2026-11-18), so there is no version to override to and no
+        # Socket registry replacement for it.
+        run: node scripts/audit-check.mjs
 
       - name: Check @sasjs dependencies are ranges
         # An exact pin on a shared package nests a second copy in every consumer

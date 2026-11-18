@@ -92,10 +92,12 @@ jobs:
 
       - name: Check npm audit
         # The same gate the pull request runs, repeated on the job that holds
-        # contents: write and publish credentials. Full tree, dev included: it is
-        # clean, so `npm audit` covers the release tool as well - which is the
-        # whole reason not to scope this to production here.
-        run: npm audit --audit-level=low
+        # contents: write and publish credentials. Same command, same named
+        # acceptances: `scripts/audit-check.mjs` fails on any advisory in a
+        # dependency that ships and on any dev advisory not argued for in its
+        # EXEMPT list, so the release tool - a devDependency running with publish
+        # credentials - stays covered here as it is on a pull request.
+        run: node scripts/audit-check.mjs
 
       - name: Check code style
         run: npm run lint
