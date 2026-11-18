@@ -41,6 +41,15 @@ const SECRET_KEYS = [
 /** A parameter name with the spellings that vary (case, hyphen, underscore) removed. */
 const normalise = (key: string) => key.toLowerCase().replace(/[\s_-]/g, '')
 
+/**
+ * What a form-encoded decoder is allowed to read as a parameter name.
+ *
+ * Deliberately narrow: a name carrying `{`, `[`, `"`, `%`, `&`, whitespace or a
+ * second `=` is not a parameter of a form-encoded body, it is text this module
+ * cannot read - and a body it cannot read is reported as a shape, never printed.
+ */
+const PARAMETER_NAME = /^[A-Za-z0-9_.~[\]]+$/
+
 /** Whether a parameter name carries a credential. */
 export const isSecretKey = (key: string) =>
   SECRET_KEYS.map(normalise).includes(normalise(key))
@@ -89,18 +98,29 @@ const redactValue = (value: unknown): unknown => {
  * Form-encoded text is rebuilt pair by pair so the parameters that are not
  * secrets stay readable, and anything else is reported as a shape rather than
  * echoed, because a body this module cannot read is a body it cannot redact.
+ *
+ * A JSON body is never form-encoded, whatever it contains. Base64 carries `=`
+ * padding, so `{"client_secret":"YWJjWg=="}` splits into a key that is the
+ * secret's own text and a value of `"}"` - the key is not a secret *name*, so no
+ * key check catches it, and the secret is printed as though it were a parameter
+ * name. Structured text therefore takes the shape branch on its opening
+ * character, before any splitting.
  */
 const redactText = (text: string): unknown => {
   const trimmed = text.trim()
 
   if (!trimmed) return trimmed
 
+  if (/^[{[]/.test(trimmed)) return 'text body - values redacted'
+
   // A linear test, not a regular expression: the obvious pattern for "pairs
   // joined by &" nests quantifiers and backtracks exponentially on a string like
   // `!=&!=&!=&...` (CodeQL js/redos, found on this branch).
   const pairs = trimmed.split('&')
   const isFormEncoded =
-    !/\s/.test(trimmed) && pairs.every((pair) => pair.indexOf('=') > 0)
+    !/\s/.test(trimmed) &&
+    pairs.every((pair) => pair.indexOf('=') > 0) &&
+    pairs.every((pair) => PARAMETER_NAME.test(pair.slice(0, pair.indexOf('='))))
 
   if (isFormEncoded) {
     const redacted: Record<string, string> = {}

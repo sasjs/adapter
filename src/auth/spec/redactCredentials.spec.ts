@@ -120,6 +120,47 @@ describe('redactCredentials', () => {
     )
   })
 
+  it('never decodes a JSON body as form-encoded, padding and all', () => {
+    // base64 padding puts '=' inside the secret, and splitting the body on the
+    // first '=' turns the secret's own text into a parameter name - which no
+    // secret-name check can catch, because it is not a name
+    const body = '{"client_secret":"YWJjZGVMb25nU2VjcmV0Wg=="}'
+
+    const redacted = redactPayload(body)
+
+    expect(redacted).toBe('text body - values redacted')
+    expect(String(redacted)).not.toContain('YWJjZGVMb25nU2VjcmV0Wg')
+  })
+
+  it('never decodes a JSON array body as form-encoded', () => {
+    const redacted = redactPayload('[{"code":"abc=="},{"code":"def=="}]')
+
+    expect(redacted).toBe('text body - values redacted')
+    expect(String(redacted)).not.toContain('abc')
+  })
+
+  it('reports a body whose pair has a non-parameter name as a shape', () => {
+    // a name this module would have to guess at: reported, not printed
+    const redacted = redactPayload('{"client_secret":"abc"}=1&grant_type=code')
+
+    expect(redacted).toBe('text body - values redacted')
+    expect(String(redacted)).not.toContain('abc')
+  })
+
+  it('keeps reading a real form-encoded body, including a value with = in it', () => {
+    expect(
+      redactPayload('grant_type=authorization_code&code=YWJj=ZGVm')
+    ).toEqual({
+      grant_type: 'authorization_code',
+      code: REDACTED
+    })
+
+    expect(redactPayload('user=me&pass=a=b')).toEqual({
+      user: 'me',
+      pass: 'a=b'
+    })
+  })
+
   it('redacts secret-named keys at any depth', () => {
     expect(
       redactPayload({
