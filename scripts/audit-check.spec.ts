@@ -25,24 +25,30 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }))
 let written = 0
 
 /** One advisory, in the shape `npm audit --json` reports it. */
-const advisory = (id: string, pkg = 'picomatch', severity = 'high') => ({
-  [pkg]: {
-    severity,
-    via: [
-      {
-        source: 1,
-        name: pkg,
-        title: 'vulnerable to ReDoS',
-        url: `https://github.com/advisories/${id}`,
-        severity,
-        range: '<=4.0.7'
-      }
-    ],
-    effects: [],
-    range: '<=4.0.7',
-    nodes: [`node_modules/${pkg}`],
-    fixAvailable: false
-  }
+const advisoryEntry = (
+  id: string | null,
+  pkg = 'picomatch',
+  severity = 'high'
+) => ({
+  severity,
+  via: [
+    {
+      source: 1096467,
+      name: pkg,
+      title: 'vulnerable to ReDoS',
+      url: id ? `https://github.com/advisories/${id}` : undefined,
+      severity,
+      range: '<=4.0.7'
+    }
+  ],
+  effects: [],
+  range: '<=4.0.7',
+  nodes: [`node_modules/${pkg}`],
+  fixAvailable: false
+})
+
+const advisory = (id: string | null, pkg = 'picomatch') => ({
+  [pkg]: advisoryEntry(id, pkg)
 })
 
 const report = (vulnerabilities: object) => ({
@@ -53,12 +59,18 @@ const report = (vulnerabilities: object) => ({
 
 const clean = report({})
 
-const run = (full: object, prod: object) => {
+const run = (full: object | string, prod: object | string) => {
   const fullFile = join(dir, `full-${written}.json`)
   const prodFile = join(dir, `prod-${written++}.json`)
 
-  writeFileSync(fullFile, JSON.stringify(full))
-  writeFileSync(prodFile, JSON.stringify(prod))
+  writeFileSync(
+    fullFile,
+    typeof full === 'string' ? full : JSON.stringify(full)
+  )
+  writeFileSync(
+    prodFile,
+    typeof prod === 'string' ? prod : JSON.stringify(prod)
+  )
 
   return spawnSync('node', [script, '--audit', fullFile, '--prod', prodFile], {
     encoding: 'utf8'
@@ -83,7 +95,7 @@ describe('audit-check', () => {
   })
 
   it('should fail on a dev advisory reported alongside an exempted one', () => {
-    const both = { ...advisory(EXEMPT_ID), ...advisory(OTHER_ID) }
+    const both = { ...advisory(EXEMPT_ID), ...advisory(OTHER_ID, 'micromatch') }
 
     const result = run(report(both), clean)
 
@@ -102,6 +114,36 @@ describe('audit-check', () => {
     expect(result.stderr).toContain('cannot be exempted')
   })
 
+  it('should name every package an advisory reaches', () => {
+    // one id, two packages: a reader has to fix both paths, so both are named
+    const twoPackages = {
+      ...advisory(OTHER_ID, 'picomatch'),
+      ...advisory(OTHER_ID, 'micromatch')
+    }
+
+    const result = run(report(twoPackages), clean)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('(picomatch)')
+    expect(result.stderr).toContain('(micromatch)')
+  })
+
+  it('should fail on an advisory it cannot name, in either tree', () => {
+    // npm raises advisories of its own with no GHSA url: unexemptible, and
+    // dropping it would turn "cannot name this" into "nothing to fix"
+    const unnamed = run(report(advisory(null)), clean)
+
+    expect(unnamed.status).toBe(1)
+    expect(unnamed.stderr).toContain('no GHSA id')
+    expect(unnamed.stderr).toContain('has to be fixed')
+
+    const unnamedProd = run(clean, report(advisory(null, 'axios')))
+
+    expect(unnamedProd.status).toBe(1)
+    expect(unnamedProd.stderr).toContain('no GHSA id')
+    expect(unnamedProd.stderr).toContain('PRODUCTION dependency')
+  })
+
   it('should fail on an exemption that no longer appears', () => {
     // the advisory has cleared, so the entry is a claim about a tree that no
     // longer exists and must be deleted - a stale entry is invisible in a pass
@@ -110,6 +152,27 @@ describe('audit-check', () => {
     expect(result.status).toBe(1)
     expect(result.stderr).toContain(EXEMPT_ID)
     expect(result.stderr).toContain('is exempt but no longer reported')
+  })
+
+  it('should fail on npm error output rather than reading it as a clean tree', () => {
+    // npm writes its own failures to stdout as JSON and exits non-zero; a
+    // missing lockfile must not become the steady state that passes
+    const errorReport = JSON.stringify({
+      error: { code: 'ENOLOCK', summary: 'This command requires an existing lockfile.' }
+    })
+
+    const result = run(errorReport, clean)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('ENOLOCK')
+    expect(result.stdout).not.toContain('nothing in a production dependency')
+  })
+
+  it('should fail on a report with no vulnerabilities object', () => {
+    const result = run(JSON.stringify({ auditReportVersion: 2 }), clean)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('no vulnerabilities object')
   })
 
   it('should fail when a report cannot be read, and say which one', () => {
@@ -130,15 +193,10 @@ describe('audit-check', () => {
   })
 
   it('should fail when a report is not JSON', () => {
-    const notJson = join(dir, 'not-json.json')
-    writeFileSync(notJson, '<html>registry unavailable</html>')
-
-    const result = spawnSync('node', [script, '--audit', notJson], {
-      encoding: 'utf8'
-    })
+    const result = run('<html>registry unavailable</html>', clean)
 
     expect(result.status).toBe(1)
-    expect(result.stderr).toContain('is not JSON')
+    expect(result.stderr).toContain('did not produce a report')
   })
 
   it('should print usage when a flag has no value', () => {

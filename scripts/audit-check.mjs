@@ -8,9 +8,9 @@
  * advisory in the tree. That is the right bar and it stays the bar for everything
  * that ships - but it also fails on a dev dependency the registry has no fixed
  * version of, which stops every pull request in this repository for a reason no
- * branch can act on. Measured 2026-11-18: 39 advisories, all of them
- * `GHSA-fc5q-39xc-vjpf` against picomatch, whose advisory range is `<= 4.0.7`
- * while 4.0.7 is the newest version published - so `npm audit fix` offers only a
+ * branch can act on. `GHSA-fc5q-39xc-vjpf` is that advisory: its range is
+ * `<= 4.0.7`, 4.0.7 was the newest version published on 2026-11-18, and there is
+ * no `@socketregistry/picomatch` to override to - so `npm audit fix` offers only a
  * downgrade of ts-loader, and there is nothing to take.
  *
  * WHAT IS STRICT
@@ -26,6 +26,20 @@
  * clears it. The list is a claim about the locked tree, so an entry that stops
  * appearing FAILS this check rather than rotting - a stale exemption is invisible
  * in a passing build, which is how an exemption outlives the problem it describes.
+ *
+ * AN ADVISORY THIS SCRIPT CANNOT NAME IS A FAILURE
+ *
+ * An exemption is a claim about a specific advisory, so an advisory with no GHSA
+ * id cannot be exempted and is reported as a failure rather than dropped: npm
+ * raises advisories of its own that carry a `source` and no `url`, and silently
+ * skipping them would turn "I cannot name this" into "there is nothing to fix".
+ *
+ * A BROKEN AUDIT IS A FAILURE
+ *
+ * `npm audit --json` writes its own errors to STDOUT and exits non-zero, so a
+ * missing lockfile or an unreachable registry parses as JSON with no
+ * `vulnerabilities` key. That is not a clean tree and it must not become a pass
+ * once EXEMPT empties out.
  *
  * Run with `node scripts/audit-check.mjs`, or point it at recorded output with
  * `--audit <full.json> --prod <prod.json>` (the spec does this).
@@ -47,15 +61,22 @@ const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 export const EXEMPT = new Map([
   [
     'GHSA-fc5q-39xc-vjpf',
-    "picomatch, reached only from the dev toolchain (ts-loader and the webpack chain, and jest through micromatch). The advisory range is <= 4.0.7 and 4.0.7 is the newest version on the registry as of 2026-11-18, so no version this repository can resolve is outside it, and an `overrides` entry would pin a vulnerable copy. NOT SHIPPED: no production dependency resolves picomatch, and `npm audit --omit=dev` is clean. RISK ACCEPTANCE: the ReDoS input is a glob pattern, and the patterns this tree matches are the repository's own build and test configuration - written and reviewed by a contributor - not data a package supplies at runtime. It clears when picomatch publishes above the range; this entry then fails the stale rule until it is deleted."
+    "picomatch, reached only from the dev toolchain (ts-loader and the webpack chain, and jest through micromatch). No production dependency resolves picomatch - `npm audit --omit=dev` is clean - and no version this repository can resolve is outside the advisory range: 4.0.7 was the newest published on 2026-11-18, and an `overrides` entry would pin a vulnerable copy. RISK ACCEPTANCE: the ReDoS input is a glob pattern, and the patterns this tree matches are the repository's own build and test configuration - written and reviewed by a contributor - not data a package supplies at runtime. It clears when picomatch publishes above the range; this entry then fails the stale rule until it is deleted."
   ]
 ])
 
-/** The advisory ids inside one `npm audit --json` result. */
+/**
+ * Every advisory in one `npm audit --json` report, keyed by advisory and package.
+ *
+ * A single advisory reaches several packages, and a reader has to fix each path,
+ * so the key carries both. `id` is the GHSA identifier when npm supplied one and
+ * `undefined` otherwise - the caller decides what an unnamed advisory means, which
+ * is never "nothing".
+ */
 export const advisoriesOf = (audit) => {
   const found = new Map()
 
-  for (const [name, vulnerability] of Object.entries(
+  for (const [packageName, vulnerability] of Object.entries(
     audit?.vulnerabilities ?? {}
   )) {
     for (const via of vulnerability?.via ?? []) {
@@ -63,12 +84,19 @@ export const advisoriesOf = (audit) => {
 
       const id = /GHSA-[a-z0-9-]+/i.exec(via.url ?? '')?.[0]
 
-      if (id && !found.has(id))
-        found.set(id, {
+      // keyed by advisory AND package: one advisory reaches several packages and
+      // a reader has to fix each path, so each is reported
+      const key = id
+        ? `${id}|${packageName}`
+        : `source:${via.source ?? 'unknown'}:${via.name ?? packageName}:${packageName}`
+
+      if (!found.has(key))
+        found.set(key, {
           id,
+          key,
           severity: via.severity,
           title: via.title,
-          package: name
+          package: packageName
         })
     }
   }
@@ -83,26 +111,38 @@ export const advisoriesOf = (audit) => {
 export const evaluate = ({ full, prod, exempt = EXEMPT }) => {
   const failures = []
   const shipped = advisoriesOf(prod)
+  const all = advisoriesOf(full)
 
   for (const advisory of shipped.values())
     failures.push(
-      `${advisory.severity} ${advisory.id} in a PRODUCTION dependency (${advisory.package}): ${advisory.title}. A shipping dependency is a version to change, not a risk to accept, so this cannot be exempted.`
+      advisory.id
+        ? `${advisory.severity} ${advisory.id} in a PRODUCTION dependency (${advisory.package}): ${advisory.title}. A shipping dependency is a version to change, not a risk to accept, so this cannot be exempted.`
+        : `${advisory.severity} advisory in a PRODUCTION dependency (${advisory.package}) with no GHSA id: ${advisory.title}. It cannot be exempted by name, so it has to be fixed.`
     )
 
-  const devOnly = [...advisoriesOf(full).values()].filter(
-    (advisory) => !shipped.has(advisory.id)
-  )
+  for (const advisory of all.values()) {
+    if (shipped.has(advisory.key)) continue
 
-  for (const advisory of devOnly)
-    if (!exempt.has(advisory.id))
+    if (!advisory.id) {
       failures.push(
-        `${advisory.severity} ${advisory.id} in the dev tree (${advisory.package}): ${advisory.title}. Fix it, or add it to EXEMPT in scripts/audit-check.mjs with the reason it cannot be fixed.`
+        `${advisory.severity} advisory in the dev tree (${advisory.package}) with no GHSA id: ${advisory.title}. It cannot be exempted by name, so it has to be fixed.`
       )
 
-  const reported = new Set([
-    ...shipped.keys(),
-    ...devOnly.map((advisory) => advisory.id)
-  ])
+      continue
+    }
+
+    if (exempt.has(advisory.id)) continue
+
+    failures.push(
+      `${advisory.severity} ${advisory.id} in the dev tree (${advisory.package}): ${advisory.title}. Fix it, or add it to EXEMPT in scripts/audit-check.mjs with the reason it cannot be fixed.`
+    )
+  }
+
+  const reported = new Set(
+    [...all.values(), ...shipped.values()]
+      .map((advisory) => advisory.id)
+      .filter(Boolean)
+  )
 
   for (const [id, reason] of exempt)
     if (!reported.has(id))
@@ -111,6 +151,41 @@ export const evaluate = ({ full, prod, exempt = EXEMPT }) => {
       )
 
   return failures
+}
+
+/**
+ * The report in an `npm audit --json` run, or a failure that says what happened.
+ *
+ * npm writes its own errors to stdout as JSON (`{"error": {"code": "ENOLOCK"}}`)
+ * and exits non-zero, so neither the exit status nor a successful parse is a
+ * verdict by itself: the report has to carry a `vulnerabilities` object.
+ */
+export const reportOf = (result, label) => {
+  let parsed
+
+  try {
+    parsed = JSON.parse(result.stdout)
+  } catch {
+    const detail = (result.stderr || result.stdout || '').trim().slice(0, 400)
+
+    throw new Error(
+      `${label} did not produce a report: ${detail || `exit ${result.status}`}`
+    )
+  }
+
+  if (parsed?.error)
+    throw new Error(
+      `${label} failed: ${parsed.error.code ?? 'error'} ${
+        parsed.error.summary ?? parsed.error.detail ?? ''
+      }`.trim()
+    )
+
+  if (!parsed || typeof parsed.vulnerabilities !== 'object' || !parsed.vulnerabilities)
+    throw new Error(
+      `${label} returned no vulnerabilities object, so this gate cannot tell a clean tree from a broken audit`
+    )
+
+  return parsed
 }
 
 const readJson = (path, label) => {
@@ -122,18 +197,9 @@ const readJson = (path, label) => {
     throw new Error(`${label}: cannot read ${path}: ${error.message}`)
   }
 
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(`${label}: ${path} is not JSON`)
-  }
+  return reportOf({ stdout: text, status: 0 }, label)
 }
 
-/**
- * `npm audit --json` exits non-zero when it finds anything, so its STATUS is not
- * a verdict - the report on stdout is. A run that produced no parseable report
- * fails, because a gate that cannot read its input is not a pass.
- */
 const runAudit = (omit) => {
   const args = ['audit', '--json']
 
@@ -145,16 +211,7 @@ const runAudit = (omit) => {
     shell: process.platform === 'win32'
   })
 
-  try {
-    return JSON.parse(result.stdout)
-  } catch {
-    throw new Error(
-      `npm audit${omit ? ' --omit=dev' : ''} did not produce a report: ${
-        (result.stderr || result.stdout || '').trim().slice(0, 400) ||
-        `exit ${result.status}`
-      }`
-    )
-  }
+  return reportOf(result, `npm audit${omit ? ' --omit=dev' : ''}`)
 }
 
 const argument = (flag) => {
@@ -208,7 +265,7 @@ const main = () => {
   console.log(
     `npm audit: nothing in a production dependency, ${
       advisoriesOf(full).size
-    } dev advisory id(s), all ${EXEMPT.size} exempted by name`
+    } dev advisory (advisory, package) pair(s), all ${EXEMPT.size} id(s) exempted by name`
   )
 }
 
