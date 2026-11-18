@@ -144,6 +144,20 @@ describe('audit-check', () => {
     expect(unnamedProd.stderr).toContain('PRODUCTION dependency')
   })
 
+  it('should fail when the exempted id arrives against a package the entry does not name', () => {
+    // the entry argues about picomatch; the same id under another package is a
+    // different path and a different argument, so it is not covered by it
+    const result = run(report(advisory(EXEMPT_ID, 'micromatch')), clean)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('The exemption covers picomatch, not micromatch')
+    // and the package the entry does name is no longer reported, so that part of
+    // the entry is stale rather than silently satisfied
+    expect(result.stderr).toContain(
+      'is exempt for picomatch, but no longer reported against it'
+    )
+  })
+
   it('should fail on an exemption that no longer appears', () => {
     // the advisory has cleared, so the entry is a claim about a tree that no
     // longer exists and must be deleted - a stale entry is invisible in a pass

@@ -52,16 +52,25 @@ import { fileURLToPath } from 'node:url'
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 
 /**
- * Dev-tree advisories this repository cannot clear, each with its argument.
+ * Dev-tree advisories this repository cannot clear, each with its argument and the
+ * packages the argument covers.
  *
- * Keyed by advisory id. The value is what a reader needs to judge the claim:
- * where the package sits, what input reaches the affected code, and the condition
- * that clears it.
+ * Keyed by advisory id, and `packages` names every package npm reports the id
+ * against - an id exempted for `picomatch` says nothing about the same id arriving
+ * under `micromatch`, so the package has to match too. A package that starts
+ * reporting the id fails the gate until the argument is extended to it, which is
+ * the point: the exemption is a statement about a set of packages, not a waiver for
+ * an id. The `reason` is what a reader needs to judge the claim: where the package
+ * sits, what input reaches the affected code, and the condition that clears it.
  */
 export const EXEMPT = new Map([
   [
     'GHSA-fc5q-39xc-vjpf',
-    "picomatch, reached only from the dev toolchain (ts-loader and the webpack chain, and jest through micromatch). No production dependency resolves picomatch - `npm audit --omit=dev` is clean - and no version this repository can resolve is outside the advisory range: 4.0.7 was the newest published on 2026-11-18, and an `overrides` entry would pin a vulnerable copy. RISK ACCEPTANCE: the ReDoS input is a glob pattern, and the patterns this tree matches are the repository's own build and test configuration - written and reviewed by a contributor - not data a package supplies at runtime. It clears when picomatch publishes above the range; this entry then fails the stale rule until it is deleted."
+    {
+      packages: ['picomatch'],
+      reason:
+        "picomatch, reached only from the dev toolchain (ts-loader and the webpack chain, and jest through micromatch). No production dependency resolves picomatch - `npm audit --omit=dev` is clean - and no version this repository can resolve is outside the advisory range: 4.0.7 was the newest published on 2026-11-18, and an `overrides` entry would pin a vulnerable copy. RISK ACCEPTANCE: the ReDoS input is a glob pattern, and the patterns this tree matches are the repository's own build and test configuration - written and reviewed by a contributor - not data a package supplies at runtime. It clears when picomatch publishes above the range; this entry then fails the stale rule until it is deleted."
+    }
   ]
 ])
 
@@ -131,24 +140,49 @@ export const evaluate = ({ full, prod, exempt = EXEMPT }) => {
       continue
     }
 
-    if (exempt.has(advisory.id)) continue
+    const entry = exempt.get(advisory.id)
 
-    failures.push(
-      `${advisory.severity} ${advisory.id} in the dev tree (${advisory.package}): ${advisory.title}. Fix it, or add it to EXEMPT in scripts/audit-check.mjs with the reason it cannot be fixed.`
-    )
+    if (!entry) {
+      failures.push(
+        `${advisory.severity} ${advisory.id} in the dev tree (${advisory.package}): ${advisory.title}. Fix it, or add it to EXEMPT in scripts/audit-check.mjs with the reason it cannot be fixed.`
+      )
+
+      continue
+    }
+
+    if (!entry.packages.includes(advisory.package))
+      failures.push(
+        `${advisory.severity} ${advisory.id} in the dev tree (${advisory.package}): ${advisory.title}. The exemption covers ${entry.packages.join(', ')}, not ${advisory.package} - extend the entry with the argument for this package, or fix it.`
+      )
   }
 
-  const reported = new Set(
+  const reportedIds = new Set(
     [...all.values(), ...shipped.values()]
       .map((advisory) => advisory.id)
       .filter(Boolean)
   )
 
-  for (const [id, reason] of exempt)
-    if (!reported.has(id))
+  for (const [id, entry] of exempt) {
+    if (!reportedIds.has(id)) {
       failures.push(
-        `${id} is exempt but no longer reported, so the exemption can go: ${reason}`
+        `${id} is exempt but no longer reported, so the exemption can go: ${entry.reason}`
       )
+
+      continue
+    }
+
+    const reportedPackages = new Set(
+      [...all.values(), ...shipped.values()]
+        .filter((advisory) => advisory.id === id)
+        .map((advisory) => advisory.package)
+    )
+
+    for (const packageName of entry.packages)
+      if (!reportedPackages.has(packageName))
+        failures.push(
+          `${id} is exempt for ${packageName}, but no longer reported against it, so that part of the entry can go: ${entry.reason}`
+        )
+  }
 
   return failures
 }
