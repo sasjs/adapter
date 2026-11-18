@@ -3,6 +3,7 @@ import { generateToken, mockAuthResponse } from './mockResponses'
 import { RequestClient } from '../../request/RequestClient'
 import { refreshTokensForSasjs } from '../refreshTokensForSasjs'
 import { getTokenRequestErrorPrefixResponse } from '../getTokenRequestErrorPrefix'
+import { RefreshTokenRejectedError } from '../../types/errors/RefreshTokenRejectedError'
 
 const requestClient = new (<jest.Mock<RequestClient>>RequestClient)()
 
@@ -81,6 +82,30 @@ describe('refreshTokensForSasjs', () => {
     ).catch((e: any) => getTokenRequestErrorPrefixResponse(e, ServerType.Sasjs))
 
     expect(error).toEqual(tokenError)
+  })
+
+  it('keeps the rejected-refresh-token explanation when prefixing the error', async () => {
+    setupMocks()
+
+    jest
+      .spyOn(requestClient, 'post')
+      .mockImplementation(() =>
+        Promise.reject(new RefreshTokenRejectedError('Unauthorized'))
+      )
+
+    const error: any = await refreshTokensForSasjs(
+      requestClient,
+      generateToken(30)
+    ).catch((e: any) => e)
+
+    expect(error).toBeInstanceOf(RefreshTokenRejectedError)
+    expect(error.message).toContain(
+      'Error while refreshing tokens from /SASjsApi/auth/refresh'
+    )
+    expect(error.message).toContain('rejected the refresh token')
+    expect(error.message).not.toContain(
+      'You must be logged in to access this resource'
+    )
   })
 })
 
