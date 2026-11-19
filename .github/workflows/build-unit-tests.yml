@@ -71,10 +71,11 @@ jobs:
         # fixed. An entry that stops appearing fails too, so a stale exemption
         # cannot outlive its reason.
         #
-        # The one entry today is GHSA-fc5q-39xc-vjpf against picomatch, whose
-        # advisory range is <= 4.0.7 while 4.0.7 is the newest version published
-        # (measured 2026-11-18), so there is no version to override to and no
-        # Socket registry replacement for it.
+        # The list is empty today: the advisory this gate was written for,
+        # GHSA-fc5q-39xc-vjpf against picomatch, was withdrawn upstream on
+        # 2026-11-18 and the stale rule failed the gate until the entry was
+        # deleted. An entry goes back in only while npm reports the advisory and no
+        # version this repository can resolve clears it.
         run: node scripts/audit-check.mjs
 
       - name: Check @sasjs dependencies are ranges
