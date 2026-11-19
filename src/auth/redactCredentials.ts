@@ -76,6 +76,8 @@ export const redactHeaders = (headers: {}): {} =>
     ])
   )
 
+const MAX_DEPTH = 20
+
 /**
  * A value, with secret-named keys redacted at any depth.
  *
@@ -93,8 +95,6 @@ export const redactHeaders = (headers: {}): {} =>
  * body that shares a sub-object between two keys is walked twice rather than
  * reported as circular - it is not.
  */
-const MAX_DEPTH = 20
-
 const redactValue = (
   value: unknown,
   seen: WeakSet<object> = new WeakSet(),
