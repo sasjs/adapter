@@ -1,4 +1,7 @@
 import { ServerType } from '@sasjs/utils/types'
+import { prefixMessage } from '@sasjs/utils/error'
+import { responseWasReceived } from '../request/responseReceived'
+import { REDACTED, redactHeaders, redactPayload } from './redactCredentials'
 
 type Server = ServerType.SasViya | ServerType.Sasjs
 type Operation = 'fetching access token' | 'refreshing tokens'
@@ -6,8 +9,20 @@ type Operation = 'fetching access token' | 'refreshing tokens'
 const getServerName = (server: Server) =>
   server === ServerType.SasViya ? 'Viya' : 'Sasjs'
 
-const getResponseTitle = (server: Server) =>
-  `Response from ${getServerName(server)} is below.`
+/**
+ * What follows the request details: the server's answer, or the statement that
+ * there was none.
+ *
+ * A transport failure - a wrong URL, a closed port, a VPN that is down, a
+ * certificate that does not verify - carries no response, so calling its text
+ * "Response from Viya" claims something the server never said. That is
+ * sasjs/adapter#895: the reader was told the target answered with
+ * `connect ETIMEDOUT`.
+ */
+const getResponseTitle = (server: Server, responseReceived: boolean) =>
+  responseReceived
+    ? `Response from ${getServerName(server)} is below.`
+    : `No response from ${getServerName(server)} - the request did not reach it.`
 
 /**
  * Forms error prefix for requests related to token operations.
@@ -15,25 +30,35 @@ const getResponseTitle = (server: Server) =>
  * @param funcName - name of the function sent the request.
  * @param server - server type (SASVIYA or SASJS).
  * @param url - endpoint used to send the request.
- * @param data - request payload.
- * @param headers - request headers.
- * @param clientId - client ID to authenticate with.
- * @param clientSecret - client secret to authenticate with.
- * @returns - string containing request information. Example:
+ * @param data - request payload. Object and form-encoded payloads are redacted
+ * field by field, at any depth; any other text body is reported as a shape
+ * rather than printed.
+ * @param headers - request headers. An authorization value keeps its scheme and
+ * loses its credential.
+ * @param clientId - client ID to authenticate with. Printed: it names which
+ * client failed.
+ * @param clientSecret - client secret to authenticate with. Replaced, never
+ * printed; the report states that one was supplied.
+ * @param responseReceived - whether the request came back with a response
+ * (default `true`). When it did not, the title says so rather than presenting
+ * the transport's own message as an answer from the server.
+ * @returns - string containing request information, with every credential
+ * named rather than printed. A failure is pasted into tickets and kept in CI
+ * logs, so the report never carries a value that could be used as one. Example:
  * Error while fetching access token from /SASLogon/oauth/token
  * Thrown by the @sasjs/adapter getAccessTokenForViya function.
  * Payload:
  * {
  *   "grant_type": "authorization_code",
- *   "code": "example_code"
+ *   "code": "<redacted>"
  * }
  * Headers:
  * {
- *   "Authorization": "Basic NEdMQXBwOjRHTEFwcDE=",
+ *   "Authorization": "Basic <redacted>",
  *   "Accept": "application/json"
  * }
  * ClientId: exampleClientId
- * ClientSecret: exampleClientSecret
+ * ClientSecret: <redacted>
  *
  * Response from Viya is below.
  * Auth error: {
@@ -49,7 +74,8 @@ export const getTokenRequestErrorPrefix = (
   data?: {},
   headers?: {},
   clientId?: string,
-  clientSecret?: string
+  clientSecret?: string,
+  responseReceived = true
 ) => {
   const stringify = (obj: {}) => JSON.stringify(obj, null, 2)
 
@@ -58,26 +84,90 @@ export const getTokenRequestErrorPrefix = (
     `Thrown by the @sasjs/adapter ${funcName} function.`
   ]
 
+  // The request carries the credentials that minted the token: the header is the
+  // client pair base64-encoded together, the body a refresh token or an
+  // authorization code. A failure is pasted into tickets, so the values are
+  // named and not printed (#895).
   if (data) {
+    const payload = redactPayload(data)
+
     lines.push('Payload:')
-    lines.push(stringify(data))
+    lines.push(typeof payload === 'string' ? payload : stringify(payload as {}))
   }
   if (headers) {
     lines.push('Headers:')
-    lines.push(stringify(headers))
+    lines.push(stringify(redactHeaders(headers)))
   }
+  // The client id names which client failed and is not a credential; the secret
+  // beside it is, so it is stated as supplied rather than printed.
   if (clientId) lines.push(`ClientId: ${clientId}`)
-  if (clientSecret) lines.push(`ClientSecret: ${clientSecret}`)
+  if (clientSecret) lines.push(`ClientSecret: ${REDACTED}`)
 
   lines.push('')
-  lines.push(`${getResponseTitle(server)}`)
+  lines.push(`${getResponseTitle(server, responseReceived)}`)
   lines.push('')
 
   return lines.join(`\n`)
 }
 
 /**
+ * The message for a failed token request: how the request was made, then what
+ * came back.
+ *
+ * Every caller holds the error, so this is where "did the server answer?" is
+ * decided - once. Threading a boolean through the optional parameters of
+ * `getTokenRequestErrorPrefix` instead leaves the short call sites padding
+ * arguments they do not have, which is how a later caller gets it wrong.
+ *
+ * @param error - the rejection from the request client.
+ * @param operation - string describing operation ('fetching access token' or 'refreshing tokens').
+ * @param funcName - name of the function that sent the request.
+ * @param server - server type (SASVIYA or SASJS).
+ * @param url - endpoint used to send the request.
+ * @param data - request payload. Object and form-encoded payloads are redacted
+ * field by field, at any depth; any other text body is reported as a shape
+ * rather than printed.
+ * @param headers - request headers. An authorization value keeps its scheme and
+ * loses its credential.
+ * @param clientId - client ID to authenticate with. Printed: it names which
+ * client failed.
+ * @param clientSecret - client secret to authenticate with. Replaced, never
+ * printed; the report states that one was supplied.
+ * @returns - the error, with the prefix in front of its message.
+ */
+export const tokenRequestErrorMessage = (
+  error: unknown,
+  operation: Operation,
+  funcName: string,
+  server: Server,
+  url: string,
+  data?: {},
+  headers?: {},
+  clientId?: string,
+  clientSecret?: string
+) =>
+  prefixMessage(
+    error as Error | string,
+    getTokenRequestErrorPrefix(
+      operation,
+      funcName,
+      server,
+      url,
+      data,
+      headers,
+      clientId,
+      clientSecret,
+      responseWasReceived(error)
+    )
+  )
+
+/**
  * Parse error prefix to get response payload.
+ *
+ * A prefix built for a request that never reached the server carries the
+ * transport's own message where the payload would be, so the split is made on
+ * whichever title the prefix holds rather than assuming one.
+ *
  * @param prefix - error prefix generated by getTokenRequestErrorPrefix function.
  * @param server - server type (SASVIYA or SASJS).
  * @returns - response payload.
@@ -85,4 +175,11 @@ export const getTokenRequestErrorPrefix = (
 export const getTokenRequestErrorPrefixResponse = (
   prefix: string,
   server: ServerType.SasViya | ServerType.Sasjs
-) => prefix.split(`${getResponseTitle(server)}\n`).pop() as string
+) => {
+  const receivedTitle = `${getResponseTitle(server, true)}\n`
+
+  if (prefix.includes(receivedTitle))
+    return prefix.split(receivedTitle).pop() as string
+
+  return prefix.split(`${getResponseTitle(server, false)}\n`).pop() as string
+}
