@@ -182,6 +182,62 @@ describe('redactCredentials', () => {
     }
   })
 
+  it('never walks a byte view nested inside the body either', () => {
+    // the guard has to hold where the walk happens, not only at the entry point
+    const redacted = redactPayload({
+      body: Buffer.from(
+        'grant_type=refresh_token&refresh_token=SECRET-VALUE-123'
+      )
+    }) as Record<string, unknown>
+
+    expect(redacted).toEqual({ body: 'binary body - values redacted' })
+    expect(JSON.stringify(redacted)).not.toContain('103')
+    expect(JSON.stringify(redacted)).not.toContain('SECRET-VALUE-123')
+  })
+
+  it('reports a payload that refers to itself instead of overflowing', () => {
+    // a stack overflow would replace the token failure the report exists to explain
+    const circular: Record<string, unknown> = { grant_type: 'refresh_token' }
+    circular.self = circular
+
+    const redacted = redactPayload(circular) as Record<string, unknown>
+
+    expect(redacted.grant_type).toBe('refresh_token')
+    expect(redacted.self).toBe('circular body - values redacted')
+  })
+
+  it('reports a payload nested past the cap instead of overflowing', () => {
+    let deep: Record<string, unknown> = { grant_type: 'refresh_token' }
+
+    for (let depth = 0; depth < 10000; depth++) deep = { nested: deep }
+
+    const redacted = redactPayload(deep) as Record<string, unknown>
+
+    expect(JSON.stringify(redacted)).toContain(
+      'nested too deep - values redacted'
+    )
+    expect(JSON.stringify(redacted)).not.toContain('RangeError')
+  })
+
+  it('walks a sub-object shared between two keys rather than calling it circular', () => {
+    // only the current path is remembered: sharing is not a cycle
+    const shared = { grant_type: 'authorization_code', code: 'abc' }
+
+    const redacted = redactPayload({ first: shared, second: shared }) as Record<
+      string,
+      Record<string, unknown>
+    >
+
+    expect(redacted.first).toEqual({
+      grant_type: 'authorization_code',
+      code: REDACTED
+    })
+    expect(redacted.second).toEqual({
+      grant_type: 'authorization_code',
+      code: REDACTED
+    })
+  })
+
   it('redacts secret-named keys at any depth', () => {
     expect(
       redactPayload({

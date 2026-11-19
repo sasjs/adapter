@@ -76,19 +76,54 @@ export const redactHeaders = (headers: {}): {} =>
     ])
   )
 
-/** A value, with secret-named keys redacted at any depth. */
-const redactValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(redactValue)
+/**
+ * A value, with secret-named keys redacted at any depth.
+ *
+ * Two guards belong here because this is where the walk happens, and both are
+ * about a payload the reporter cannot print:
+ *
+ * - a byte view - a Buffer, a typed array, an ArrayBuffer - is a body, and walking
+ *   one as an object emits a numbered key per byte (`{"0":103,"1":114,...}`), the
+ *   body reproduced as clearly as the text it came from;
+ * - a payload that refers to itself, or nests past `MAX_DEPTH`, would replace the
+ *   token failure with `RangeError: Maximum call stack size exceeded`. Both are
+ *   reported as a shape instead.
+ *
+ * `seen` holds the objects on the CURRENT path, not every object ever visited, so a
+ * body that shares a sub-object between two keys is walked twice rather than
+ * reported as circular - it is not.
+ */
+const MAX_DEPTH = 20
 
-  if (value && typeof value === 'object')
+const redactValue = (
+  value: unknown,
+  seen: WeakSet<object> = new WeakSet(),
+  depth = 0
+): unknown => {
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer)
+    return 'binary body - values redacted'
+
+  if (!value || typeof value !== 'object') return value
+
+  if (seen.has(value)) return 'circular body - values redacted'
+
+  if (depth >= MAX_DEPTH) return 'nested too deep - values redacted'
+
+  seen.add(value)
+
+  try {
+    if (Array.isArray(value))
+      return value.map((inner) => redactValue(inner, seen, depth + 1))
+
     return Object.fromEntries(
       Object.entries(value).map(([key, inner]) => [
         key,
-        isSecretKey(key) ? REDACTED : redactValue(inner)
+        isSecretKey(key) ? REDACTED : redactValue(inner, seen, depth + 1)
       ])
     )
-
-  return value
+  } finally {
+    seen.delete(value)
+  }
 }
 
 /**
@@ -143,24 +178,22 @@ const redactText = (text: string): unknown => {
 /**
  * A request payload, with the credential-bearing values redacted.
  *
- * Four shapes reach this function. A plain object is walked, so a secret one
- * level down is redacted like one at the top. `URLSearchParams` (the form the
- * OAuth code exchange is sent as) is rebuilt pair by pair. A string that parses
- * as `key=value&key=value` is rebuilt the same way. Multipart form data (the
- * refresh) is reported as its shape rather than its fields, because its parts
- * are a stream the request still needs.
+ * The shapes that reach this function, each handled on its own terms: a plain
+ * object or array is walked, so a secret one level down is redacted like one at the
+ * top; a byte view - a Buffer or any typed array - is reported as a shape, because
+ * walking it emits a key per byte; `URLSearchParams` (the form the OAuth code
+ * exchange is sent as) is rebuilt pair by pair; a string that parses as
+ * `key=value&key=value` is rebuilt the same way; and multipart form data (the
+ * refresh) is reported as its shape rather than its fields, because its parts are a
+ * stream the request still needs.
+ *
+ * `redactValue` carries the byte-view and cycle guards, so they hold at every depth
+ * rather than only here.
  */
 export const redactPayload = (data: {} | string | undefined): unknown => {
   if (!data) return data
 
   if (typeof data === 'string') return redactText(data)
-
-  // A Buffer, a typed array or an ArrayBuffer is a byte view of the body. Walking
-  // one as an object emits a numbered key per byte - the body reproduced as
-  // `{"0":103,"1":114,...}` - which is exactly what this module exists to keep out
-  // of an error report, so it is reported as a shape.
-  if (ArrayBuffer.isView(data) || data instanceof ArrayBuffer)
-    return 'binary body - values redacted'
 
   const candidate = data as any
 
