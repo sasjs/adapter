@@ -5,13 +5,14 @@
  * WHAT THIS REPLACES
  *
  * The gate used to be `npm audit --audit-level=low`, which fails the build on ANY
- * advisory in the tree. That is the right bar and it stays the bar for everything
- * that ships - but it also fails on a dev dependency the registry has no fixed
- * version of, which stops every pull request in this repository for a reason no
- * branch can act on. `GHSA-fc5q-39xc-vjpf` is that advisory: its range is
- * `<= 4.0.7`, 4.0.7 was the newest version published on 2026-11-18, and there is
- * no `@socketregistry/picomatch` to override to - so `npm audit fix` offers only a
- * downgrade of ts-loader, and there is nothing to take.
+ * advisory in the tree. That is the right bar for everything that ships, and the
+ * wrong one for a dev dependency the registry has no fixed version of: it stops
+ * every pull request in this repository for a reason no branch can act on. That
+ * happened with `GHSA-fc5q-39xc-vjpf` against picomatch - range `<= 4.0.7`, 4.0.7
+ * the newest published, and no `@socketregistry/picomatch` to override to, so
+ * `npm audit fix` offered only a downgrade of ts-loader. The advisory was
+ * withdrawn upstream on 2026-11-18, which is why the list below is empty today;
+ * the machinery stays, because the next one will not be.
  *
  * WHAT IS STRICT
  *
@@ -62,17 +63,14 @@ const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)))
  * the point: the exemption is a statement about a set of packages, not a waiver for
  * an id. The `reason` is what a reader needs to judge the claim: where the package
  * sits, what input reaches the affected code, and the condition that clears it.
+ *
+ * EMPTY TODAY. The entry this gate was written for - picomatch,
+ * `GHSA-fc5q-39xc-vjpf` - was withdrawn upstream on 2026-11-18, and the stale rule
+ * failed the gate until the entry was deleted, which is the rule working. An entry
+ * belongs here only while npm reports the advisory and no version this repository
+ * can resolve clears it.
  */
-export const EXEMPT = new Map([
-  [
-    'GHSA-fc5q-39xc-vjpf',
-    {
-      packages: ['picomatch'],
-      reason:
-        "picomatch, reached only from the dev toolchain (ts-loader and the webpack chain, and jest through micromatch). No production dependency resolves picomatch - `npm audit --omit=dev` is clean - and no version this repository can resolve is outside the advisory range: 4.0.7 was the newest published on 2026-11-18, and an `overrides` entry would pin a vulnerable copy. RISK ACCEPTANCE: the ReDoS input is a glob pattern, and the patterns this tree matches are the repository's own build and test configuration - written and reviewed by a contributor - not data a package supplies at runtime. It clears when picomatch publishes above the range; this entry then fails the stale rule until it is deleted."
-    }
-  ]
-])
+export const EXEMPT = new Map([])
 
 /**
  * Every advisory in one `npm audit --json` report, keyed by advisory and package.
@@ -254,14 +252,41 @@ const argument = (flag) => {
   return index === -1 ? undefined : process.argv[index + 1]
 }
 
+/**
+ * An exemption list from a file, in the shape `EXEMPT` has.
+ *
+ * The spec's seam: with an empty `EXEMPT` there is nothing to exercise the
+ * exemption rules against, and a rule that is only covered while an advisory
+ * happens to be live is a rule that rots. Nothing in the workflows passes this.
+ */
+const readExemptList = (path) => {
+  let text
+
+  try {
+    text = readFileSync(path, 'utf8')
+  } catch (error) {
+    throw new Error(`--exempt: cannot read ${path}: ${error.message}`)
+  }
+
+  let parsed
+
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error(`--exempt: ${path} is not JSON`)
+  }
+
+  return new Map(Object.entries(parsed))
+}
+
 const main = () => {
-  const bare = ['--audit', '--prod'].filter(
+  const bare = ['--audit', '--prod', '--exempt'].filter(
     (flag) => process.argv.includes(flag) && !argument(flag)
   )
 
   if (bare.length) {
     console.error(
-      'Usage: node scripts/audit-check.mjs [--audit <full-audit.json> --prod <prod-audit.json>]'
+      'Usage: node scripts/audit-check.mjs [--audit <full-audit.json> --prod <prod-audit.json>] [--exempt <exempt.json>]'
     )
     process.exitCode = 1
     return
@@ -269,20 +294,23 @@ const main = () => {
 
   const fullPath = argument('--audit')
   const prodPath = argument('--prod')
+  const exemptPath = argument('--exempt')
 
   let full
   let prod
+  let exempt = EXEMPT
 
   try {
     full = fullPath ? readJson(fullPath, '--audit') : runAudit(false)
     prod = prodPath ? readJson(prodPath, '--prod') : runAudit(true)
+    if (exemptPath) exempt = readExemptList(exemptPath)
   } catch (error) {
     console.error(String(error?.message ?? error))
     process.exitCode = 1
     return
   }
 
-  const failures = evaluate({ full, prod })
+  const failures = evaluate({ full, prod, exempt })
 
   if (failures.length) {
     console.error(
@@ -299,7 +327,7 @@ const main = () => {
   console.log(
     `npm audit: nothing in a production dependency, ${
       advisoriesOf(full).size
-    } dev advisory (advisory, package) pair(s), all ${EXEMPT.size} id(s) exempted by name`
+    } dev advisory (advisory, package) pair(s), all ${exempt.size} id(s) exempted by name`
   )
 }
 

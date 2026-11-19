@@ -9,12 +9,14 @@ import { join } from 'path'
  * code and what it says. A change that turned the gate into a pass would look
  * exactly like a clean tree, which is what these cases prevent.
  *
- * The reports are built here rather than kept as files: a case is a row below,
- * next to the expectation it belongs to.
+ * The exemption list is passed as a fixture where a case needs one: `EXEMPT` is
+ * empty while no dev advisory is live, and the exemption rules have to stay
+ * covered anyway - a rule that is only exercised while an advisory happens to
+ * exist is a rule that rots.
  */
 const script = join(__dirname, 'audit-check.mjs')
 
-/** The advisory the gate exempts, and a second one it does not. */
+/** The advisory a fixture exempts, and a second one it never does. */
 const EXEMPT_ID = 'GHSA-fc5q-39xc-vjpf'
 const OTHER_ID = 'GHSA-aaaa-bbbb-cccc'
 
@@ -59,7 +61,16 @@ const report = (vulnerabilities: object) => ({
 
 const clean = report({})
 
-const run = (full: object | string, prod: object | string) => {
+/** An exemption list, in the shape the script's EXEMPT map has. */
+const exemptionList = (packages = ['picomatch'], id = EXEMPT_ID) => ({
+  [id]: { packages, reason: 'a reason, for the case at hand' }
+})
+
+const run = (
+  full: object | string,
+  prod: object | string,
+  exempt?: object
+) => {
   const fullFile = join(dir, `full-${written}.json`)
   const prodFile = join(dir, `prod-${written++}.json`)
 
@@ -72,32 +83,46 @@ const run = (full: object | string, prod: object | string) => {
     typeof prod === 'string' ? prod : JSON.stringify(prod)
   )
 
-  return spawnSync('node', [script, '--audit', fullFile, '--prod', prodFile], {
-    encoding: 'utf8'
-  })
+  const args = [script, '--audit', fullFile, '--prod', prodFile]
+
+  if (exempt) {
+    const exemptFile = join(dir, `exempt-${written}.json`)
+    writeFileSync(exemptFile, JSON.stringify(exempt))
+    args.push('--exempt', exemptFile)
+  }
+
+  return spawnSync('node', args, { encoding: 'utf8' })
 }
 
 describe('audit-check', () => {
-  it('should pass when the only advisory is the exempted one, in the dev tree', () => {
-    const result = run(report(advisory(EXEMPT_ID)), clean)
+  it('should pass when the only advisory is exempted by name, in the dev tree', () => {
+    const result = run(report(advisory(EXEMPT_ID)), clean, exemptionList())
 
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('exempted by name')
   })
 
+  it('should fail on a dev advisory when nothing is exempt, which is the list today', () => {
+    // no --exempt: the shipped list is empty, so an advisory fails on the first day
+    const result = run(report(advisory(EXEMPT_ID)), clean)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain(EXEMPT_ID)
+    expect(result.stderr).toContain('Fix it, or add it to EXEMPT')
+  })
+
   it('should fail on a dev advisory that is not exempted', () => {
-    const result = run(report(advisory(OTHER_ID)), clean)
+    const result = run(report(advisory(OTHER_ID)), clean, exemptionList())
 
     expect(result.status).toBe(1)
     expect(result.stderr).toContain(OTHER_ID)
     expect(result.stderr).toContain('in the dev tree')
-    expect(result.stderr).toContain('Fix it, or add it to EXEMPT')
   })
 
   it('should fail on a dev advisory reported alongside an exempted one', () => {
     const both = { ...advisory(EXEMPT_ID), ...advisory(OTHER_ID, 'micromatch') }
 
-    const result = run(report(both), clean)
+    const result = run(report(both), clean, exemptionList())
 
     expect(result.status).toBe(1)
     expect(result.stderr).toContain(OTHER_ID)
@@ -107,7 +132,11 @@ describe('audit-check', () => {
   it('should fail on the exempted advisory when it reaches a production dependency', () => {
     // the same id in the tree that ships: an exemption is a statement about the
     // dev tree, and it must not travel into a production one
-    const result = run(report(advisory(EXEMPT_ID)), report(advisory(EXEMPT_ID)))
+    const result = run(
+      report(advisory(EXEMPT_ID)),
+      report(advisory(EXEMPT_ID)),
+      exemptionList()
+    )
 
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('PRODUCTION dependency')
@@ -121,17 +150,35 @@ describe('audit-check', () => {
       ...advisory(OTHER_ID, 'micromatch')
     }
 
-    const result = run(report(twoPackages), clean)
+    const result = run(report(twoPackages), clean, exemptionList())
 
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('(picomatch)')
     expect(result.stderr).toContain('(micromatch)')
   })
 
+  it('should fail when the exempted id arrives against a package the entry does not name', () => {
+    // the entry argues about picomatch; the same id under another package is a
+    // different path and a different argument, so it is not covered by it
+    const result = run(
+      report(advisory(EXEMPT_ID, 'micromatch')),
+      clean,
+      exemptionList()
+    )
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('The exemption covers picomatch, not micromatch')
+    // and the package the entry does name is no longer reported, so that part of
+    // the entry is stale rather than silently satisfied
+    expect(result.stderr).toContain(
+      'is exempt for picomatch, but no longer reported against it'
+    )
+  })
+
   it('should fail on an advisory it cannot name, in either tree', () => {
     // npm raises advisories of its own with no GHSA url: unexemptible, and
     // dropping it would turn "cannot name this" into "nothing to fix"
-    const unnamed = run(report(advisory(null)), clean)
+    const unnamed = run(report(advisory(null)), clean, exemptionList())
 
     expect(unnamed.status).toBe(1)
     expect(unnamed.stderr).toContain('no GHSA id')
@@ -144,24 +191,10 @@ describe('audit-check', () => {
     expect(unnamedProd.stderr).toContain('PRODUCTION dependency')
   })
 
-  it('should fail when the exempted id arrives against a package the entry does not name', () => {
-    // the entry argues about picomatch; the same id under another package is a
-    // different path and a different argument, so it is not covered by it
-    const result = run(report(advisory(EXEMPT_ID, 'micromatch')), clean)
-
-    expect(result.status).toBe(1)
-    expect(result.stderr).toContain('The exemption covers picomatch, not micromatch')
-    // and the package the entry does name is no longer reported, so that part of
-    // the entry is stale rather than silently satisfied
-    expect(result.stderr).toContain(
-      'is exempt for picomatch, but no longer reported against it'
-    )
-  })
-
   it('should fail on an exemption that no longer appears', () => {
     // the advisory has cleared, so the entry is a claim about a tree that no
     // longer exists and must be deleted - a stale entry is invisible in a pass
-    const result = run(clean, clean)
+    const result = run(clean, clean, exemptionList())
 
     expect(result.status).toBe(1)
     expect(result.stderr).toContain(EXEMPT_ID)
