@@ -155,6 +155,13 @@ export const redactPayload = (data: {} | string | undefined): unknown => {
 
   if (typeof data === 'string') return redactText(data)
 
+  // A Buffer, a typed array or an ArrayBuffer is a byte view of the body. Walking
+  // one as an object emits a numbered key per byte - the body reproduced as
+  // `{"0":103,"1":114,...}` - which is exactly what this module exists to keep out
+  // of an error report, so it is reported as a shape.
+  if (ArrayBuffer.isView(data) || data instanceof ArrayBuffer)
+    return 'binary body - values redacted'
+
   const candidate = data as any
 
   if (typeof candidate.getBoundary === 'function')

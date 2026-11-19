@@ -161,6 +161,27 @@ describe('redactCredentials', () => {
     })
   })
 
+  it('never walks a byte view of the body as an object', () => {
+    // a Buffer walked as an object leaves one numbered key per byte, which
+    // reproduces the body the module exists to keep out of the report
+    const body = Buffer.from(
+      'grant_type=refresh_token&refresh_token=SECRET-VALUE-123'
+    )
+
+    for (const view of [
+      body,
+      new Uint8Array(body),
+      body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)
+    ]) {
+      const redacted = redactPayload(view)
+
+      expect(redacted).toBe('binary body - values redacted')
+      expect(String(redacted)).not.toContain('SECRET-VALUE-123')
+      // and not the byte-by-byte reproduction either
+      expect(String(redacted)).not.toContain('103,')
+    }
+  })
+
   it('redacts secret-named keys at any depth', () => {
     expect(
       redactPayload({
