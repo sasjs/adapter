@@ -96,6 +96,9 @@ test('download uses HTTPS-only curl with connection and total deadlines', (t) =>
   const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
   assert.equal(result.status, 0, result.stdout + result.stderr)
   const args = readFileSync(join(root, 'release.tgz.args'), 'utf8').trim().split('\n')
+  for (const flag of ['--fail', '--proto', '--proto-redir', '--connect-timeout', '--max-time']) {
+    assert.ok(args.includes(flag), `missing ${flag}`)
+  }
   for (const [flag, value] of [['--proto', '=https'], ['--proto-redir', '=https'], ['--connect-timeout', '10'], ['--max-time', '60']]) {
     const index = args.indexOf(flag)
     assert.ok(index >= 0, `missing ${flag}`)
