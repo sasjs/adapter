@@ -63,6 +63,31 @@ function ustar(members) {
   return gzipSync(Buffer.concat(blocks))
 }
 
+// The shared gate accepts only known npm shim templates and never executes them.
+const windowsNpmShim = String.raw`@ECHO off
+GOTO start
+:find_dp0
+SET dp0=%~dp0
+EXIT /b
+:start
+SETLOCAL
+CALL :find_dp0
+
+IF EXIST "%dp0%\node.exe" (
+  SET "_prog=%dp0%\node.exe"
+) ELSE (
+  SET "_prog=node"
+)
+
+endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.JS;=;% & "%_prog%"  "%dp0%\node_modules\npm\bin\npm-cli.js" %*`
+
+test('Windows fixture matches the pinned gate global npm shim', () => {
+  const match = releaseSource.toString('utf8').match(/const NPM_GLOBAL_SHIM = `([^`]+)`/)
+  assert.ok(match, 'pinned gate global npm shim is missing')
+  // The release source uses a normal template literal with escaped backslashes.
+  assert.equal(windowsNpmShim, match[1].replaceAll('\\\\', '\\'))
+})
+
 function fixture(t, { full = report(), prod = report(), exemptions = [], corrupt = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'adapter-gate-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
@@ -94,22 +119,7 @@ process.exitCode = Number(process.env.NPM_STATUS || 0)
   if (process.platform === 'win32') {
     // Standard global cmd-shim; the gate validates it and launches npm-cli.js
     // directly with node.exe. It does not execute the batch file.
-    writeFileSync(join(bin, 'npm.cmd'), String.raw`@ECHO off
-GOTO start
-:find_dp0
-SET dp0=%~dp0
-EXIT /b
-:start
-SETLOCAL
-CALL :find_dp0
-
-IF EXIST "%dp0%\\node.exe" (
-  SET "_prog=%dp0%\\node.exe"
-) ELSE (
-  SET "_prog=node"
-)
-
-endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.JS;=;% & "%_prog%"  "%dp0%\\node_modules\\npm\\bin\\npm-cli.js" %*`)
+    writeFileSync(join(bin, 'npm.cmd'), windowsNpmShim)
     const cli = join(bin, 'node_modules', 'npm', 'bin')
     mkdirSync(cli, { recursive: true })
     writeFileSync(join(cli, 'npm-cli.js'), npmCode)
