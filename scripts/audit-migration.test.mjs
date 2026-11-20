@@ -46,7 +46,7 @@ function ustar(members) {
     pad('0', 8).copy(header, 108) // uid
     pad('0', 8).copy(header, 116) // gid
     octal(data.length, 12).copy(header, 124)
-    pad(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 12).copy(header, 136) // mtime
+    octal(0, 12).copy(header, 136) // mtime
     pad('        ', 8).copy(header, 148) // checksum placeholder
     header[156] = Buffer.from(type, 'utf8')[0]
     pad('ustar', 6).copy(header, 257)
@@ -127,7 +127,7 @@ endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.
     cwd, encoding: 'utf8', env
   })
   const run = (...args) => runAt(root, ...args)
-  return { root, run, runAt, archivePath: join(root, 'scripts/vendor/@sasjs-release-0.0.0.tgz'), pin }
+  return { root, run, runAt, env, archivePath: join(root, 'scripts/vendor/@sasjs-release-0.0.0.tgz'), pin }
 }
 
 function repin(root, archive) {
@@ -213,6 +213,76 @@ test('the committed tarball is used, never the network', (t) => {
   assert.throws(() => readFileSync(join(root, 'npm.log')))
 })
 
+test('rejects invalid ustar checksums before executing the gate', async (t) => {
+  for (const kind of ['changed-header', 'second-header', 'empty-checksum', 'junk-after-nul', 'wrong-sum']) {
+    await t.test(kind, (t) => {
+      const { root, run, archivePath } = fixture(t, { corrupt: true })
+      const raw = gunzipSync(readFileSync(archivePath))
+      if (kind === 'changed-header') raw[136] ^= 1
+      if (kind === 'second-header') {
+        const size = parseInt(raw.subarray(124, 136).toString('ascii'), 8)
+        raw[512 + Math.ceil(size / 512) * 512 + 136] ^= 1
+      }
+      if (kind === 'empty-checksum') raw.fill(0, 148, 156)
+      if (kind === 'junk-after-nul') raw[155] = 0x37
+      if (kind === 'wrong-sum') raw.write('000001\0 ', 148, 'ascii')
+      const archive = gzipSync(raw)
+      writeFileSync(archivePath, archive)
+      repin(root, archive)
+      const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+      assert.notEqual(result.status, 0, result.stdout + result.stderr)
+      assert.match(result.stderr, /checksum/i)
+      assert.throws(() => readFileSync(join(root, 'npm.log')))
+      assert.throws(() => readFileSync(join(root, 'executed')))
+    })
+  }
+})
+
+test('rejects checksum-valid malformed numeric and name fields', async (t) => {
+  for (const kind of ['mode-after-nul', 'mode-internal-space', 'invalid-uid', 'invalid-mtime', 'name-after-nul']) {
+    await t.test(kind, (t) => {
+      const { root, run, archivePath } = fixture(t)
+      const raw = gunzipSync(readFileSync(archivePath))
+      if (kind === 'mode-after-nul') { raw[104] = 0; raw[105] = 0x37 }
+      if (kind === 'mode-internal-space') raw[102] = 0x20
+      if (kind === 'invalid-uid') raw[108] = 0x39
+      if (kind === 'invalid-mtime') raw[136] = 0x39
+      if (kind === 'name-after-nul') raw[99] = 0x78
+      raw.fill(0x20, 148, 156)
+      const sum = raw.subarray(0, 512).reduce((a, b) => a + b, 0)
+      raw.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 'ascii')
+      const archive = gzipSync(raw)
+      writeFileSync(archivePath, archive)
+      repin(root, archive)
+      const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+      assert.notEqual(result.status, 0, result.stdout + result.stderr)
+      assert.match(result.stderr, /invalid archive header field/i)
+      assert.throws(() => readFileSync(join(root, 'npm.log')))
+    })
+  }
+})
+
+test('rejects truncated archives and nonzero data after the end marker', async (t) => {
+  for (const kind of ['missing-end', 'partial-end', 'nonzero-after-end', 'truncated-padding']) {
+    await t.test(kind, (t) => {
+      const { root, run, archivePath } = fixture(t)
+      const raw = gunzipSync(readFileSync(archivePath))
+      let changed
+      if (kind === 'missing-end') changed = raw.subarray(0, raw.length - 1024)
+      if (kind === 'partial-end') changed = raw.subarray(0, raw.length - 512)
+      if (kind === 'nonzero-after-end') { changed = Buffer.from(raw); changed[changed.length - 1] = 1 }
+      if (kind === 'truncated-padding') changed = raw.subarray(0, raw.length - 1025)
+      const archive = gzipSync(changed)
+      writeFileSync(archivePath, archive)
+      repin(root, archive)
+      const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+      assert.notEqual(result.status, 0, result.stdout + result.stderr)
+      assert.match(result.stderr, /truncated archive|invalid archive end/i)
+      assert.throws(() => readFileSync(join(root, 'npm.log')))
+    })
+  }
+})
+
 test('rejects an oversized committed tarball before executing the gate', (t) => {
   const { root, run, archivePath } = fixture(t)
   const archive = Buffer.concat([readFileSync(archivePath), randomBytes(5 * 1024 * 1024)])
@@ -221,6 +291,56 @@ test('rejects an oversized committed tarball before executing the gate', (t) => 
   const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
   assert.notEqual(result.status, 0, result.stdout)
   assert.match(result.stderr, /size limit|exceeds/i)
+})
+
+test('bounds tarball reads even if the file grows after its size check', async (t) => {
+  for (const kind of ['already-oversized', 'grows-after-stat']) {
+    await t.test(kind, (t) => {
+      const { root, env, archivePath } = fixture(t)
+      if (kind === 'already-oversized') writeFileSync(archivePath, Buffer.alloc(4 * 1024 * 1024 + 1))
+      // Intercept only the vendor file: an unbounded readFileSync is forbidden,
+      // and a growth race is injected immediately after fstat on the open fd.
+      const hook = join(root, 'probe.cjs')
+      writeFileSync(hook, `
+const fs = require('node:fs')
+const { syncBuiltinESMExports } = require('node:module')
+const target = process.env.PROBE_TARGET
+const originalOpen = fs.openSync, originalReadFile = fs.readFileSync
+const originalStat = fs.fstatSync, originalRead = fs.readSync
+let targetFd
+fs.openSync = function(path, ...args) {
+  const fd = originalOpen.call(this, path, ...args)
+  if (path === target) targetFd = fd
+  return fd
+}
+fs.readFileSync = function(path, ...args) {
+  if (path === target || path === targetFd) throw new Error('unbounded vendor read attempted')
+  return originalReadFile.call(this, path, ...args)
+}
+fs.fstatSync = function(fd, ...args) {
+  const stat = originalStat.call(this, fd, ...args)
+  if (fd === targetFd && process.env.PROBE_GROW === '1') {
+    fs.appendFileSync(target, Buffer.alloc(4 * 1024 * 1024 + 1))
+    process.env.PROBE_GROW = '0'
+  }
+  return stat
+}
+fs.readSync = function(fd, buffer, offset, length, position) {
+  if (fd === targetFd && length > 4 * 1024 * 1024 + 1) throw new Error('unbounded vendor read attempted')
+  return originalRead.call(this, fd, buffer, offset, length, position)
+}
+syncBuiltinESMExports()
+`)
+      const result = spawnSync(process.execPath, ['--require', hook, join(root, 'scripts/audit-check.mjs'), '--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json')], {
+        cwd: root, encoding: 'utf8', env: { ...env, PROBE_TARGET: archivePath, PROBE_GROW: kind === 'grows-after-stat' ? '1' : '0' }
+      })
+      assert.notEqual(result.status, 0, result.stdout + result.stderr)
+      assert.match(result.stderr, /release tarball exceeds the committed size limit/i)
+      assert.doesNotMatch(result.stderr, /unbounded vendor read attempted/)
+      assert.throws(() => readFileSync(join(root, 'npm.log')))
+      assert.throws(() => readFileSync(join(root, 'executed')))
+    })
+  }
 })
 
 test('rejects compressed archive expansion beyond the resource limit', (t) => {
