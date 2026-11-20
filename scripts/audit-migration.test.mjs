@@ -36,10 +36,11 @@ function fixture(t, { full = report(), prod = report(), exemptions = [], corrupt
   writeFileSync(join(root, 'scripts/audit-allowlist.json'), JSON.stringify(exemptions))
   writeFileSync(join(root, 'full.json'), JSON.stringify(full))
   writeFileSync(join(root, 'prod.json'), JSON.stringify(prod))
-  writeFileSync(join(root, 'bin/curl'), '#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\ncp "$FIXTURE_TARBALL" "$2"\n', { mode: 0o755 })
+  writeFileSync(join(root, 'bin/curl'), '#!/bin/sh\ncat "$FIXTURE_TARBALL"\n', { mode: 0o755 })
   writeFileSync(join(root, 'bin/npm'), '#!/bin/sh\necho "$@" >> "$NPM_LOG"\ncase "$*" in *--omit*) cat "$NPM_PROD" ;; *) cat "$NPM_FULL" ;; esac\nexit "${NPM_STATUS:-0}"\n', { mode: 0o755 })
-  const run = (...args) => spawnSync(process.execPath, [join(root, 'scripts/audit-check.mjs'), ...args], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: `${root}/bin:${process.env.PATH}`, FIXTURE_TARBALL: join(root, 'release.tgz'), NPM_LOG: join(root, 'npm.log'), NPM_FULL: join(root, 'full.json'), NPM_PROD: join(root, 'prod.json'), EXECUTED: join(root, 'executed') } })
-  return { root, run }
+  const runAt = (cwd, ...args) => spawnSync(process.execPath, [join(root, 'scripts/audit-check.mjs'), ...args], { cwd, encoding: 'utf8', env: { ...process.env, PATH: `${root}/bin:${process.env.PATH}`, FIXTURE_TARBALL: join(root, 'release.tgz'), NPM_LOG: join(root, 'npm.log'), NPM_FULL: join(root, 'full.json'), NPM_PROD: join(root, 'prod.json'), EXECUTED: join(root, 'executed') } })
+  const run = (...args) => runAt(root, ...args)
+  return { root, run, runAt }
 }
 
 function repack(root, kind) {
@@ -67,6 +68,17 @@ with tarfile.open(p, 'w:gz') as dst:
   writeFileSync(path, JSON.stringify(lock))
 }
 
+test('PR and publish run the pinned-npm audit before npm ci', () => {
+  for (const file of ['.github/workflows/build-unit-tests.yml', '.github/workflows/npmpublish.yml']) {
+    const workflow = readFileSync(resolve(file), 'utf8')
+    const runs = [...workflow.matchAll(/^\s+run: (.+)$/gm)].map(match => match[1].trim())
+    const pin = runs.indexOf('bash .github/scripts/pinned-npm.sh')
+    const audit = runs.indexOf('node scripts/audit-check.mjs')
+    const install = runs.indexOf('npm ci')
+    assert.ok(pin >= 0 && audit > pin && install > audit, `${file}: audit must run after npm pin and before npm ci`)
+  }
+})
+
 test('rejects dangerous or duplicate archive members before running the gate', (t) => {
   for (const kind of ['traversal', 'absolute', 'symlink', 'hardlink', 'duplicate']) {
     const { root, run } = fixture(t)
@@ -76,6 +88,70 @@ test('rejects dangerous or duplicate archive members before running the gate', (
     assert.match(result.stderr, /unsafe archive path|archive link|duplicate archive member/)
     assert.throws(() => readFileSync(join(root, 'npm.log')))
   }
+})
+
+test('download uses HTTPS-only curl with connection and total deadlines', (t) => {
+  const { root, run } = fixture(t)
+  writeFileSync(join(root, 'bin/curl'), '#!/bin/sh\nprintf "%s\\n" "$@" > "$FIXTURE_TARBALL.args"\ncat "$FIXTURE_TARBALL"\n', { mode: 0o755 })
+  const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+  const args = readFileSync(join(root, 'release.tgz.args'), 'utf8').trim().split('\n')
+  for (const [flag, value] of [['--proto', '=https'], ['--proto-redir', '=https'], ['--connect-timeout', '10'], ['--max-time', '60']]) {
+    const index = args.indexOf(flag)
+    assert.ok(index >= 0, `missing ${flag}`)
+    assert.equal(args[index + 1], value)
+  }
+})
+
+test('rejects oversized downloads before executing the gate', (t) => {
+  const { root, run } = fixture(t)
+  const archive = join(root, 'release.tgz')
+  const data = readFileSync(archive)
+  writeFileSync(archive, Buffer.concat([data, Buffer.alloc(5 * 1024 * 1024)]))
+  const path = join(root, 'package-lock.json')
+  const lock = JSON.parse(readFileSync(path))
+  lock.packages['node_modules/@sasjs/release'].integrity = 'sha512-' + createHash('sha512').update(readFileSync(archive)).digest('base64')
+  writeFileSync(path, JSON.stringify(lock))
+  const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+  assert.notEqual(result.status, 0, result.stdout)
+  assert.match(result.stderr, /download.*(?:limit|large|size)/i)
+})
+
+test('rejects compressed archive expansion beyond the resource limit', (t) => {
+  const { root, run } = fixture(t)
+  writeFileSync(join(root, 'package/padding'), Buffer.alloc(20 * 1024 * 1024))
+  const packed = spawnSync('tar', ['-czf', join(root, 'release.tgz'), '-C', root, 'package'])
+  assert.equal(packed.status, 0)
+  const path = join(root, 'package-lock.json')
+  const lock = JSON.parse(readFileSync(path))
+  lock.packages['node_modules/@sasjs/release'].integrity = 'sha512-' + createHash('sha512').update(readFileSync(join(root, 'release.tgz'))).digest('base64')
+  writeFileSync(path, JSON.stringify(lock))
+  const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+  assert.notEqual(result.status, 0, result.stdout)
+  assert.match(result.stderr, /archive.*(?:limit|large|size)/i)
+})
+
+test('rejects archives with too many members', (t) => {
+  const { root, run } = fixture(t)
+  const python = `import io, sys, tarfile
+p = sys.argv[1]
+with tarfile.open(p, 'r:gz') as src:
+    members = [(e, src.extractfile(e).read() if e.isfile() else None) for e in src]
+with tarfile.open(p, 'w:gz') as dst:
+    for e, data in members:
+        dst.addfile(e, io.BytesIO(data) if data is not None else None)
+    for i in range(4100):
+        dst.addfile(tarfile.TarInfo('package/extra' + str(i)))
+`
+  const packed = spawnSync('python3', ['-c', python, join(root, 'release.tgz')], { encoding: 'utf8' })
+  assert.equal(packed.status, 0, packed.stderr)
+  const path = join(root, 'package-lock.json')
+  const lock = JSON.parse(readFileSync(path))
+  lock.packages['node_modules/@sasjs/release'].integrity = 'sha512-' + createHash('sha512').update(readFileSync(join(root, 'release.tgz'))).digest('base64')
+  writeFileSync(path, JSON.stringify(lock))
+  const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+  assert.notEqual(result.status, 0, result.stdout)
+  assert.match(result.stderr, /archive member limit/i)
 })
 
 test('fails closed on fetch failure and mismatched manifest or lock pin', (t) => {
@@ -121,6 +197,26 @@ test('recorded clean reports pass without npm or install scripts', (t) => {
   assert.equal(result.status, 0, result.stderr)
   assert.throws(() => readFileSync(join(root, 'npm.log')))
   assert.throws(() => readFileSync(join(root, 'lifecycle-ran')))
+})
+
+test('relative replay paths resolve against the caller, not the repository', (t) => {
+  const { root, runAt } = fixture(t, { prod: report('axios') })
+  const caller = join(root, 'caller')
+  mkdirSync(caller)
+  writeFileSync(join(caller, 'full.json'), JSON.stringify(report()))
+  writeFileSync(join(caller, 'prod.json'), JSON.stringify(report()))
+  const result = runAt(caller, '--audit', 'full.json', '--prod', 'prod.json')
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+  writeFileSync(join(caller, 'prod.json'), JSON.stringify(report('axios')))
+  const failure = runAt(caller, '--audit', 'full.json', '--prod', 'prod.json')
+  assert.notEqual(failure.status, 0)
+  assert.match(failure.stdout + failure.stderr, /axios/)
+  writeFileSync(join(caller, 'prod.json'), JSON.stringify(report()))
+  writeFileSync(join(caller, 'full.json'), JSON.stringify(report('lodash')))
+  const fullFailure = runAt(caller, '--audit', 'full.json', '--prod', 'prod.json')
+  assert.notEqual(fullFailure.status, 0)
+  assert.match(fullFailure.stdout + fullFailure.stderr, /lodash/)
+  assert.throws(() => readFileSync(join(root, 'npm.log')))
 })
 
 test('production info fails even when the waiver list is empty', (t) => {
