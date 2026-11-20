@@ -217,16 +217,16 @@ jobs:
         id: ratchet
         # continue-on-error so the comment below is posted either way; the
         # "Fail on a coverage regression" step turns the outcome into the job's
-        # result. See the script's header for why the comparison is the gate.
+        # result. `sasjs-release --help` says why the comparison is the gate.
         continue-on-error: true
         if: matrix.node-version == 22
         run: >-
-          node .github/scripts/coverage-ratchet.mjs
-          --head coverage/coverage-summary.json
-          --base coverage-base/coverage-summary.json
-          --markdown coverage-comment.md
-          --missing-baseline ${{ steps.coverage-baseline.outputs.missing }}
-          --note "Compared against ${{ steps.coverage-baseline.outputs.source }}."
+          npm run release -- --coverage-ratchet
+          --coverage-head coverage/coverage-summary.json
+          --coverage-base coverage-base/coverage-summary.json
+          --coverage-markdown coverage-comment.md
+          --coverage-missing-baseline ${{ steps.coverage-baseline.outputs.missing }}
+          --coverage-note "Compared against ${{ steps.coverage-baseline.outputs.source }}."
 
       - name: Report the coverage
         # one comment per pull request, edited in place on each push
