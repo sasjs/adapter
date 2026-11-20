@@ -7,6 +7,9 @@ it('enforces the shared audit contract before installation', () => {
     encoding: 'utf8',
     env: process.env
   })
-  expect(`${result.stdout}\n${result.stderr}`).toContain('fail 0')
-  expect(result.status).toBe(0)
+  expect({ status: result.status, output: `${result.stdout}\n${result.stderr}`, error: result.error?.message }).toEqual({
+    status: 0,
+    output: expect.any(String),
+    error: undefined
+  })
 })

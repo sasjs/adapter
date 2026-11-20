@@ -4,9 +4,8 @@
 // lockfile's SHA-512 before anything is extracted or executed: the lockfile is
 // the trust anchor, not this script and not the committed artifact.
 //
-// Pure Node on purpose: no curl, no python3, no network access, so the
-// pre-install audit runs on every platform the adapter itself supports,
-// including Windows.
+// The bootstrap itself is pure Node and offline, with no curl or python3.
+// The subsequently launched live npm audits need registry access.
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { gunzipSync } from 'node:zlib'
@@ -23,7 +22,7 @@ const maxDecompressedBytes = 16 * 1024 * 1024
 const maxMembers = 4096
 
 // A deliberately restricted ustar reader: fixed 512-byte headers only, no
-// sparse files, no pax/GNU extensions, no links, no device nodes. Anything
+// sparse files, no pax/GNU extensions, no directories, links or device nodes. Anything
 // outside that envelope is rejected rather than interpreted.
 function extract(release) {
   // gunzipSync's maxOutputLength (Node >= 22.1) bounds the whole decompressed
@@ -60,7 +59,7 @@ function extract(release) {
     if (seen.has(name)) throw new Error(`duplicate archive member: ${name}`)
     if (seen.size >= maxMembers) throw new Error('archive member limit exceeded')
     seen.add(name)
-    if (typeflag !== 0x30 && typeflag !== 0x35) throw new Error(`archive link or special member: ${name}`)
+    if (typeflag !== 0x30) throw new Error(`archive link or special member: ${name}`)
     offset += 512
     const data = raw.subarray(offset, offset + size)
     if (data.byteLength !== size) throw new Error(`truncated archive member: ${name}`)
@@ -81,7 +80,7 @@ function extract(release) {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', ...options })
   if (result.error) throw result.error
-  if (result.status !== 0) throw new Error(`${command} failed (exit ${result.status}): ${result.stderr || ''}`)
+  if (result.status !== 0) throw new Error(`${command} failed (exit ${result.status})${result.stderr ? `: ${result.stderr}` : ''}`)
   return result
 }
 

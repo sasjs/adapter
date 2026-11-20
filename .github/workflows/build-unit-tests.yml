@@ -60,9 +60,9 @@ jobs:
 
       - name: Check npm audit
         # Bootstrap the lock-pinned shared gate without npm install or lifecycle
-        # scripts. Pure Node: reads the committed, lockfile-verified vendor
-        # tarball, no curl, no python3, no network - so the same step runs on
-        # the Windows audit leg below. Production and full trees are both
+        # scripts. The pure-Node bootstrap reads a committed, lockfile-verified
+        # tarball without network access; the subsequent live npm audits need
+        # the registry. Windows runs the same gate below. Production and full trees are both
         # checked at info; only scoped dev waivers in
         # scripts/audit-allowlist.json can pass, and stale waivers fail.
         # This PR job deliberately audits before npm ci.
@@ -77,9 +77,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
-
-      - name: Test audit migration
-        run: node --test scripts/audit-migration.test.mjs
 
       - name: Check every gh call names its repository
         # `gh` infers the repository from a git remote. A job with no
@@ -271,10 +268,9 @@ jobs:
         run: node scripts/bundle-check.mjs
 
   windows-audit:
-    # The audit bootstrap is pure Node, so the pre-install gate must hold on
-    # Windows too - the platform every consumer of this package develops on.
-    # This leg proves it: same steps as the audit portion of the build job,
-    # before any dependency installation.
+    # The gate runs before any dependency installation. Unlike the Linux build's
+    # separately pinned npm 12, this leg uses the npm supplied by setup-node.
+    # It also runs the migration suite directly, without npm ci or Jest.
     runs-on: windows-latest
     permissions:
       contents: read
@@ -290,3 +286,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Check npm audit before npm ci
         run: node scripts/audit-check.mjs
+      - name: Test audit migration without installing dependencies
+        run: node --test scripts/audit-migration.test.mjs

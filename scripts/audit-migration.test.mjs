@@ -3,13 +3,26 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { delimiter, dirname, join, resolve } from 'node:path'
 import { createHash, randomBytes } from 'node:crypto'
-import { gzipSync } from 'node:zlib'
+import { gzipSync, gunzipSync } from 'node:zlib'
 
-// During development point RELEASE_SOURCE at the merged release checkout. CI
-// uses the installed exact pin, so it exercises the artifact consumers get.
-const source = process.env.RELEASE_SOURCE || resolve('node_modules/@sasjs/release/release.mjs')
+// Read the committed exact pin so the suite needs neither npm ci nor tar.
+const version = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).devDependencies['@sasjs/release']
+const raw = gunzipSync(readFileSync(resolve(`scripts/vendor/@sasjs-release-${version}.tgz`)))
+let releaseSource
+for (let offset = 0; offset + 512 <= raw.length;) {
+  const tar = raw.subarray(offset, offset + 512)
+  if (tar.every(byte => byte === 0)) break
+  const field = (start, end) => tar.subarray(start, end).toString('utf8').split('\0')[0]
+  const name = [field(345, 500), field(0, 100)].filter(Boolean).join('/')
+  const size = parseInt(field(124, 136).trim() || '0', 8)
+  offset += 512
+  if (name === 'package/release.mjs') releaseSource = raw.subarray(offset, offset + size)
+  offset += Math.ceil(size / 512) * 512
+}
+assert.ok(releaseSource, 'committed release entrypoint is missing')
+if (process.env.RELEASE_SOURCE) releaseSource = readFileSync(process.env.RELEASE_SOURCE)
 const bootstrap = resolve('scripts/audit-check.mjs')
 const id = 'GHSA-fc5q-39xc-vjpf'
 const report = (pkg, severity = 'info', advisory = id) => ({
@@ -54,7 +67,7 @@ function fixture(t, { full = report(), prod = report(), exemptions = [], corrupt
   const root = mkdtempSync(join(tmpdir(), 'adapter-gate-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   mkdirSync(join(root, 'scripts/vendor'), { recursive: true })
-  const releaseCode = corrupt ? "import { writeFileSync } from 'node:fs'; writeFileSync(process.env.EXECUTED, 'yes')\n" : readFileSync(source)
+  const releaseCode = corrupt ? "import { writeFileSync } from 'node:fs'; writeFileSync(process.env.EXECUTED, 'yes')\n" : releaseSource
   const archive = ustar([
     { name: 'package/package.json', data: Buffer.from(JSON.stringify({ name: '@sasjs/release', version: '0.0.0', scripts: { preinstall: 'touch lifecycle-ran', install: 'touch lifecycle-ran' } })) },
     { name: 'package/release.mjs', data: Buffer.from(releaseCode) }
@@ -68,16 +81,50 @@ function fixture(t, { full = report(), prod = report(), exemptions = [], corrupt
   writeFileSync(join(root, 'scripts/audit-allowlist.json'), JSON.stringify(exemptions))
   writeFileSync(join(root, 'full.json'), JSON.stringify(full))
   writeFileSync(join(root, 'prod.json'), JSON.stringify(prod))
-  const npmStub = process.platform === 'win32'
-    ? null
-    : '#!/bin/sh\necho "$@" >> "$NPM_LOG"\ncase "$*" in *--omit*) cat "$NPM_PROD" ;; *) cat "$NPM_FULL" ;; esac\nexit "${NPM_STATUS:-0}"\n'
-  if (npmStub) {
-    mkdirSync(join(root, 'bin'))
-    writeFileSync(join(root, 'bin/npm'), npmStub, { mode: 0o755 })
+  const bin = join(root, 'bin')
+  const npmCode = `#!/usr/bin/env node
+const fs = require('node:fs')
+const args = process.argv.slice(2)
+fs.appendFileSync(process.env.NPM_LOG, JSON.stringify(args) + '\\n')
+const prod = args.some((arg, i) => arg === '--omit' && args[i + 1] === 'dev' || arg === '--omit=dev')
+process.stdout.write(fs.readFileSync(prod ? process.env.NPM_PROD : process.env.NPM_FULL))
+process.exitCode = Number(process.env.NPM_STATUS || 0)
+`
+  mkdirSync(bin)
+  if (process.platform === 'win32') {
+    // Standard global cmd-shim; the gate validates it and launches npm-cli.js
+    // directly with node.exe. It does not execute the batch file.
+    writeFileSync(join(bin, 'npm.cmd'), String.raw`@ECHO off
+GOTO start
+:find_dp0
+SET dp0=%~dp0
+EXIT /b
+:start
+SETLOCAL
+CALL :find_dp0
+
+IF EXIST "%dp0%\\node.exe" (
+  SET "_prog=%dp0%\\node.exe"
+) ELSE (
+  SET "_prog=node"
+)
+
+endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.JS;=;% & "%_prog%"  "%dp0%\\node_modules\\npm\\bin\\npm-cli.js" %*`)
+    const cli = join(bin, 'node_modules', 'npm', 'bin')
+    mkdirSync(cli, { recursive: true })
+    writeFileSync(join(cli, 'npm-cli.js'), npmCode)
+  } else {
+    writeFileSync(join(bin, 'npm'), npmCode, { mode: 0o755 })
   }
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !['path', 'pathext', 'npm_status', 'release_source'].includes(key.toLowerCase())))
+  Object.assign(env, {
+    PATH: [bin, dirname(process.execPath)].join(delimiter),
+    PATHEXT: '.COM;.EXE;.BAT;.CMD',
+    NoDefaultCurrentDirectoryInExePath: '1',
+    NPM_LOG: join(root, 'npm.log'), NPM_FULL: join(root, 'full.json'), NPM_PROD: join(root, 'prod.json'), EXECUTED: join(root, 'executed')
+  })
   const runAt = (cwd, ...args) => spawnSync(process.execPath, [join(root, 'scripts/audit-check.mjs'), ...args], {
-    cwd, encoding: 'utf8',
-    env: { ...process.env, PATH: npmStub ? `${join(root, 'bin')}:${process.env.PATH}` : process.env.PATH, NPM_LOG: join(root, 'npm.log'), NPM_FULL: join(root, 'full.json'), NPM_PROD: join(root, 'prod.json'), EXECUTED: join(root, 'executed') }
+    cwd, encoding: 'utf8', env
   })
   const run = (...args) => runAt(root, ...args)
   return { root, run, runAt, archivePath: join(root, 'scripts/vendor/@sasjs-release-0.0.0.tgz'), pin }
@@ -99,6 +146,40 @@ test('PR and publish run the pinned-npm audit before npm ci', () => {
     const install = runs.indexOf('npm ci')
     assert.ok(pin >= 0 && audit > pin && install > audit, `${file}: audit must run after npm pin and before npm ci`)
   }
+})
+
+test('Windows audit job executes the migration suite without npm ci', () => {
+  const workflow = readFileSync(resolve('.github/workflows/build-unit-tests.yml'), 'utf8')
+  const windows = workflow.split(/^  windows-audit:\s*$/m)[1]
+  assert.ok(windows, 'windows-audit job missing')
+  assert.match(windows, /node-version: \[22, 24\]/)
+  const runs = [...windows.matchAll(/^\s+run: (.+)$/gm)].map(match => match[1].trim())
+  assert.deepEqual(runs, ['node scripts/audit-check.mjs', 'node --test scripts/audit-migration.test.mjs'])
+})
+
+test('rejects directory archive members regardless of mode', (t) => {
+  for (const mode of [0, 0o40755]) {
+    const { root, run, archivePath } = fixture(t)
+    const archive = ustar([
+      { name: 'package/package.json', data: Buffer.from(JSON.stringify({ name: '@sasjs/release', version: '0.0.0' })) },
+      { name: 'package/release.mjs', data: Buffer.from('export {}') },
+      { name: 'package/directory', type: '5', mode }
+    ])
+    writeFileSync(archivePath, archive)
+    repin(root, archive)
+    const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+    assert.notEqual(result.status, 0, result.stdout + result.stderr)
+    assert.match(result.stderr, /archive link or special member: package\/directory/)
+  }
+})
+
+test('reports a failed inherited-stdio gate without an empty diagnostic suffix', (t) => {
+  const { root, run } = fixture(t, { prod: report('axios') })
+  const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
+  assert.notEqual(result.status, 0)
+  assert.match(result.stdout + result.stderr, /axios/)
+  assert.match(result.stderr, /failed \(exit 1\)(?:\r?\n|$)/)
+  assert.doesNotMatch(result.stderr, /failed \(exit 1\):\s*(?:\r?\n|$)/)
 })
 
 test('rejects dangerous or duplicate archive members before running the gate', (t) => {
@@ -125,8 +206,8 @@ test('rejects dangerous or duplicate archive members before running the gate', (
 
 test('the committed tarball is used, never the network', (t) => {
   const { root, run } = fixture(t)
-  // No curl, no network tool of any kind is invoked: the fixture PATH contains
-  // only the npm stub, and the gate still succeeds from the committed tarball.
+  // Replay mode must not invoke npm; fixture PATH contains only the stub and
+  // Node. The bootstrap itself reads the committed tarball.
   const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
   assert.equal(result.status, 0, result.stdout + result.stderr)
   assert.throws(() => readFileSync(join(root, 'npm.log')))
@@ -257,20 +338,21 @@ test('missing or empty package scope cannot waive an advisory', (t) => {
     const { root, run } = fixture(t, { full: report('picomatch'), exemptions: [entry] })
     const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
     assert.notEqual(result.status, 0, result.stdout)
-    assert.match(result.stderr + result.stdout, /packages/i)
+    assert.match(result.stderr + result.stdout, /nonempty packages are required with --audit-require-packages/)
   }
 })
 
 test('allows only the named dev package and rejects mismatch and stale scopes', (t) => {
-  for (const [full, exemptions, expected] of [
-    [report('picomatch'), [waiver()], 0],
-    [report('micromatch'), [waiver()], 1],
-    [report('picomatch'), [waiver(['picomatch', 'missing'])], 1],
-    [report(), [waiver()], 1]
+  for (const [full, exemptions, expected, diagnostic] of [
+    [report('picomatch'), [waiver()], 0, /no advisory at or above info outside the allowlist/],
+    [report('micromatch'), [waiver()], 1, /micromatch: not in the allowlist/],
+    [report('picomatch'), [waiver(['picomatch', 'missing'])], 1, /report no longer carries it for: missing/],
+    [report(), [waiver()], 1, /report no longer carries it for: picomatch/]
   ]) {
     const { root, run } = fixture(t, { full, exemptions })
     const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
-    assert.equal(result.status === 0 ? 0 : 1, expected, result.stdout + result.stderr)
+    assert.equal(result.status, expected, result.stdout + result.stderr)
+    assert.match(result.stdout, diagnostic)
   }
 })
 
@@ -279,6 +361,7 @@ test('unnamed advisories cannot be waived and all severities fail', (t) => {
     const { root, run } = fixture(t, { full: report('picomatch', severity, null) })
     const result = run('--audit', join(root, 'full.json'), '--prod', join(root, 'prod.json'))
     assert.notEqual(result.status, 0, result.stdout)
+    assert.match(result.stdout, new RegExp(`${severity} \\(no advisory id\\) picomatch: no GHSA id, so it cannot be exempted`))
   }
 })
 
@@ -286,12 +369,29 @@ test('live preflight always asks npm for production and full reports, never npm 
   const { root, run } = fixture(t)
   const result = run()
   assert.equal(result.status, 0, result.stdout + result.stderr)
-  const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n')
-  assert.equal(log.length, 2, log.join('\n'))
-  assert.match(log[0], /^audit /)
-  assert.match(log[0], /--omit[= ]dev/)
-  assert.match(log[1], /^audit /)
-  assert.doesNotMatch(log.join('\n'), /\bci\b/)
+  const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+  assert.equal(log.length, 2, JSON.stringify(log))
+  for (const args of log) {
+    assert.equal(args[0], 'audit')
+    assert.ok(args.includes('--json'))
+    assert.ok(!args.includes('ci'))
+  }
+  assert.deepEqual(log[0].slice(-2), ['--omit', 'dev'])
+  assert.ok(!log[1].includes('--omit'), JSON.stringify(log[1]))
+  assert.ok(log[1].includes('dev'), JSON.stringify(log[1]))
+})
+
+test('live findings block in production first and in the full tree second', (t) => {
+  for (const target of ['prod', 'full']) {
+    const { root, run } = fixture(t, { [target]: report(target === 'prod' ? 'axios' : 'lodash') })
+    const result = run()
+    assert.notEqual(result.status, 0, result.stdout + result.stderr)
+    assert.match(result.stdout, target === 'prod' ? /axios: in the production tree/ : /lodash: not in the allowlist/)
+    const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    assert.equal(log.length, target === 'prod' ? 1 : 2, JSON.stringify(log))
+    assert.deepEqual(log[0].slice(-2), ['--omit', 'dev'])
+    if (target === 'full') assert.ok(!log[1].includes('--omit'))
+  }
 })
 
 test('npm error output does not become a clean audit', (t) => {
@@ -299,5 +399,34 @@ test('npm error output does not become a clean audit', (t) => {
   writeFileSync(join(root, 'prod.json'), JSON.stringify({ error: { code: 'ENOLOCK' } }))
   const result = run()
   assert.notEqual(result.status, 0, result.stdout)
-  assert.match(result.stderr + result.stdout, /ENOLOCK|not an npm audit report|failed/i)
+  assert.match(result.stderr, /this is not an npm audit report: no vulnerabilities or auditReportVersion/)
+  const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+  assert.equal(log.length, 1, JSON.stringify(log))
+  assert.deepEqual(log[0].slice(-2), ['--omit', 'dev'])
+})
+
+test('an error disguised as a clean npm audit report fails in both scopes', (t) => {
+  for (const target of ['prod', 'full']) {
+    const { root, run } = fixture(t)
+    writeFileSync(join(root, `${target}.json`), JSON.stringify({ ...report(), error: { code: 'EVIL' } }))
+    const result = run()
+    assert.notEqual(result.status, 0, result.stdout)
+    assert.match(result.stderr, /npm audit report contains an error:.*EVIL/)
+    const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    assert.equal(log.length, target === 'prod' ? 1 : 2, JSON.stringify(log))
+    assert.deepEqual(log[0].slice(-2), ['--omit', 'dev'])
+    if (target === 'full') assert.ok(!log[1].includes('--omit'))
+  }
+})
+
+test('a malicious full report is rejected after a clean production preflight', (t) => {
+  const { root, run } = fixture(t)
+  writeFileSync(join(root, 'full.json'), JSON.stringify({ error: { code: 'ENOLOCK' } }))
+  const result = run()
+  assert.notEqual(result.status, 0, result.stdout)
+  assert.match(result.stderr, /this is not an npm audit report: no vulnerabilities or auditReportVersion/)
+  const log = readFileSync(join(root, 'npm.log'), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+  assert.equal(log.length, 2, JSON.stringify(log))
+  assert.deepEqual(log[0].slice(-2), ['--omit', 'dev'])
+  assert.ok(!log[1].includes('--omit'))
 })
