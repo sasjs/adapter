@@ -60,8 +60,10 @@ jobs:
 
       - name: Check npm audit
         # Bootstrap the lock-pinned shared gate without npm install or lifecycle
-        # scripts. Requires curl and python3 on the Ubuntu runner. Production and
-        # full trees are both checked at info; only scoped dev waivers in
+        # scripts. Pure Node: reads the committed, lockfile-verified vendor
+        # tarball, no curl, no python3, no network - so the same step runs on
+        # the Windows audit leg below. Production and full trees are both
+        # checked at info; only scoped dev waivers in
         # scripts/audit-allowlist.json can pass, and stale waivers fail.
         # This PR job deliberately audits before npm ci.
         run: node scripts/audit-check.mjs
@@ -267,3 +269,24 @@ jobs:
         # when browser-reachable source imports the utils barrel, which is the
         # other way the crypto chain reaches the bundle (sasjs/utils#275).
         run: node scripts/bundle-check.mjs
+
+  windows-audit:
+    # The audit bootstrap is pure Node, so the pre-install gate must hold on
+    # Windows too - the platform every consumer of this package develops on.
+    # This leg proves it: same steps as the audit portion of the build job,
+    # before any dependency installation.
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Check npm audit before npm ci
+        run: node scripts/audit-check.mjs
