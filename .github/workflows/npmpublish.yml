@@ -87,17 +87,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Check npm audit
+        # Bootstrap the lock-pinned gate before npm ci can run lifecycle scripts.
+        # The same full and production info-level policy applies in the PR job.
+        run: node scripts/audit-check.mjs
+
       - name: Install Dependencies
         run: npm ci
-
-      - name: Check npm audit
-        # The same gate the pull request runs, repeated on the job that holds
-        # contents: write and publish credentials. Same command, same named
-        # acceptances: `scripts/audit-check.mjs` fails on any advisory in a
-        # dependency that ships and on any dev advisory not argued for in its
-        # EXEMPT list, so the release tool - a devDependency running with publish
-        # credentials - stays covered here as it is on a pull request.
-        run: node scripts/audit-check.mjs
 
       - name: Check code style
         run: npm run lint

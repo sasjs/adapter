@@ -59,23 +59,13 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Check npm audit
-        # Still the full tree, dev included: the release tool is a devDependency
-        # and runs with publish credentials, so `--omit=dev` would skip exactly
-        # the dependency that matters here.
-        #
-        # What changed is that the verdict is now argued rather than absolute.
-        # `node scripts/audit-check.mjs` runs `npm audit --omit=dev` on its own and
-        # fails on ANY advisory there - a shipping dependency is a version to
-        # change, never a risk to accept - then fails on any dev advisory that is
-        # not named in its EXEMPT list with the argument for why it cannot be
-        # fixed. An entry that stops appearing fails too, so a stale exemption
-        # cannot outlive its reason.
-        #
-        # The list is empty today: the advisory this gate was written for,
-        # GHSA-fc5q-39xc-vjpf against picomatch, was withdrawn upstream on
-        # 2026-11-18 and the stale rule failed the gate until the entry was
-        # deleted. An entry goes back in only while npm reports the advisory and no
-        # version this repository can resolve clears it.
+        # Bootstrap the lock-pinned shared gate without npm install or lifecycle
+        # scripts. The pure-Node bootstrap reads a committed, lockfile-verified
+        # tarball without network access; the subsequent live npm audits need
+        # the registry. Windows runs the same gate below. Production and full trees are both
+        # checked at info; only scoped dev waivers in
+        # scripts/audit-allowlist.json can pass, and stale waivers fail.
+        # This PR job deliberately audits before npm ci.
         run: node scripts/audit-check.mjs
 
       - name: Check @sasjs dependencies are ranges
@@ -276,3 +266,25 @@ jobs:
         # when browser-reachable source imports the utils barrel, which is the
         # other way the crypto chain reaches the bundle (sasjs/utils#275).
         run: node scripts/bundle-check.mjs
+
+  windows-audit:
+    # The gate runs before any dependency installation. Unlike the Linux build's
+    # separately pinned npm 12, this leg uses the npm supplied by setup-node.
+    # It also runs the migration suite directly, without npm ci or Jest.
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Check npm audit before npm ci
+        run: node scripts/audit-check.mjs
+      - name: Test audit migration without installing dependencies
+        run: node --test scripts/audit-migration.test.mjs
