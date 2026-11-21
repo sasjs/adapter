@@ -37,7 +37,7 @@
   "license": "ISC",
   "devDependencies": {
     "@cypress/webpack-preprocessor": "8.0.0",
-    "@sasjs/release": "0.16.1",
+    "@sasjs/release": "0.18.0",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",

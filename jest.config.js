@@ -34,7 +34,7 @@ module.exports = {
 
   // A list of reporter names that Jest uses when writing coverage reports
   //
-  // `json-summary` is for the coverage ratchet (.github/scripts/coverage-ratchet.mjs):
+  // `json-summary` is for the coverage ratchet (`sasjs-release --coverage-ratchet`):
   // it reads coverage/coverage-summary.json, both the baseline published from
   // master and the one this run produces. `text` stays so the job log shows the
   // table. lcov and clover are not consumed by anything and are dropped, which
