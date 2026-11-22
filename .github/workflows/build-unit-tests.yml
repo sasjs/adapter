@@ -58,6 +58,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Check release attestation wiring
+        run: node --test scripts/attestation-workflow.test.mjs
+
       - name: Check npm audit
         # Bootstrap the lock-pinned shared gate without npm install or lifecycle
         # scripts. The pure-Node bootstrap reads a committed, lockfile-verified
