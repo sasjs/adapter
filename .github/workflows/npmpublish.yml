@@ -229,8 +229,14 @@ jobs:
         # The shared action names the bundle for the scorecard's Signed-Releases check.
         run: |
           set -euo pipefail
+          case "$BUNDLE" in
+            *.intoto.jsonl) ;;
+            *) printf 'Unexpected provenance bundle name: %s\n' "$BUNDLE" >&2; exit 1 ;;
+          esac
           gh release upload "$TAG" dist/*.tgz "$BUNDLE" --clobber
-          gh release view "$TAG" --json assets --jq '.assets[].name'
+          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          printf '%s\n' "$assets"
+          printf '%s\n' "$assets" | grep -Fx -- "${BUNDLE##*/}" >/dev/null
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
