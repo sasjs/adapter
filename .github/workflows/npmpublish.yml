@@ -38,7 +38,7 @@ jobs:
     permissions:
       contents: write       # the tag, the release, and the assets attached to it
       id-token: write       # npm provenance (trusted publisher) and the attestation
-      attestations: write   # actions/attest-build-provenance records it
+      attestations: write   # the shared attest-assets action records provenance
 
     strategy:
       matrix:
