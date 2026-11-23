@@ -5,25 +5,25 @@ import { readFileSync } from 'node:fs'
 const workflow = readFileSync('.github/workflows/npmpublish.yml', 'utf8')
 const job = workflow.match(/^  build:[ \t]*\n([\s\S]*?)(?=^  [\w-]+:|^\S|(?![\s\S]))/m)?.[1]
 assert.ok(job, 'release build job is missing')
-const step = (name) => {
-  const steps = job.split(/^      - name: /m)
-  const matches = steps.filter((s) => s.startsWith(`${name}\n`))
-  assert.equal(matches.length, 1, `expected one ${name} step`)
+const step = (pattern, description) => {
+  const steps = job.split(/^      - (?:name:|uses:|run:)/m)
+  const matches = steps.filter((s) => pattern.test(s))
+  assert.equal(matches.length, 1, `expected one ${description} step`)
   return matches[0]
 }
 
 test('the staged local tarball is attested and the same bundle is attached', () => {
-  const stage = step('Stage the release on npm')
+  const stage = step(/^[ \t]+id: publish$/m, 'stage')
   assert.match(stage, /npm stage publish/)
-  const pack = step('Pack the tarball this run stages')
+  const pack = step(/^[ \t]+npm pack --pack-destination dist$/m, 'pack')
   assert.match(pack, /^[ \t]+if: steps\.publish\.outputs\.released == 'true'$/m)
   assert.match(pack, /^[ \t]+npm pack --pack-destination dist$/m)
-  const attest = step("Attest the tarball's build provenance")
+  const attest = step(/^[ \t]+uses: sasjs\/release\/\.github\/actions\/attest-assets@/m, 'attest')
   assert.match(attest, /^[ \t]+if: steps\.publish\.outputs\.released == 'true'$/m)
   assert.match(attest, /^[ \t]+uses: sasjs\/release\/\.github\/actions\/attest-assets@[0-9a-f]{40}(?:[ \t]+#.*)?$/m)
   assert.match(attest, /^[ \t]+subject-path: 'dist\/\*\.tgz'$/m)
   assert.match(attest, /^[ \t]+version: \$\{\{ steps\.prepare\.outputs\.version \}\}$/m)
-  const attach = step('Attach the tarball and its provenance to the release')
+  const attach = step(/gh release upload "\$TAG" dist\/\*\.tgz "\$BUNDLE" --clobber/, 'attach')
   assert.match(attach, /^[ \t]+if: steps\.publish\.outputs\.released == 'true'$/m)
   assert.match(attach, /^[ \t]+TAG: \$\{\{ steps\.release\.outputs\.tag \}\}$/m)
   assert.match(attach, /^[ \t]+BUNDLE: \$\{\{ steps\.attest\.outputs\.bundle-path \}\}$/m)
