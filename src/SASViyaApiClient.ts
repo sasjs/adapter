@@ -850,6 +850,12 @@ export class SASViyaApiClient {
 
   /**
    * Deletes the client representing the supplied ID.
+   *
+   * @deprecated Removing an OAuth client is an identity provider's administrative
+   * action: on Viya it takes an administrator's token, and the client it removes
+   * is a credential other callers sign in with. Nothing in this framework calls
+   * it, from a browser or from the CLI, so it is kept only until the next major
+   * release and will be removed then.
    * @param clientId - the client ID to authenticate with.
    * @param accessToken - an access token for authorizing the request.
    */
