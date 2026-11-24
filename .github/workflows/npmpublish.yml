@@ -38,7 +38,7 @@ jobs:
     permissions:
       contents: write       # the tag, the release, and the assets attached to it
       id-token: write       # npm provenance (trusted publisher) and the attestation
-      attestations: write   # actions/attest-build-provenance records it
+      attestations: write   # the shared attest-assets action records provenance
 
     strategy:
       matrix:
@@ -215,25 +215,28 @@ jobs:
       - name: Attest the tarball's build provenance
         id: attest
         if: steps.publish.outputs.released == 'true'
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        uses: sasjs/release/.github/actions/attest-assets@6bce05cbcd9364c7097f089ea6c9132978a500ca # v0.19.0
         with:
           subject-path: 'dist/*.tgz'
+          version: ${{ steps.prepare.outputs.version }}
 
       - name: Attach the tarball and its provenance to the release
         if: steps.publish.outputs.released == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
-          VERSION: ${{ steps.prepare.outputs.version }}
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
-        # the scorecard's Signed-Releases check reads release assets by filename,
-        # and only `*.intoto.jsonl` earns the full score, so the bundle - which
-        # carries no extension of its own - is renamed to match before upload
+        # The shared action names the bundle for the scorecard's Signed-Releases check.
         run: |
           set -euo pipefail
-          cp "$BUNDLE" "dist/provenance-${VERSION}.intoto.jsonl"
-          gh release upload "$TAG" dist/*.tgz "dist/provenance-${VERSION}.intoto.jsonl" --clobber
-          gh release view "$TAG" --json assets --jq '.assets[].name'
+          case "$BUNDLE" in
+            *.intoto.jsonl) ;;
+            *) printf 'Unexpected provenance bundle name: %s\n' "$BUNDLE" >&2; exit 1 ;;
+          esac
+          gh release upload "$TAG" dist/*.tgz "$BUNDLE" --clobber
+          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          printf '%s\n' "$assets"
+          printf '%s\n' "$assets" | grep -Fx -- "${BUNDLE##*/}" >/dev/null
 
       - name: Send Matrix message
         if: steps.publish.outputs.released == 'true'
