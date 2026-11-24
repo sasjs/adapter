@@ -635,6 +635,15 @@ export default class SASjs {
     )
   }
 
+  /**
+   * Deletes the client representing the supplied ID.
+   *
+   * @deprecated Nothing in the framework calls it - no CLI command, no SASjs
+   * Server route and no published app - and deleting an OAuth client is an estate
+   * administrator's action, taken in the platform against an administrator's
+   * token, so a browser or CLI client has no use for it. It keeps working until
+   * the next major release, when it will be removed.
+   */
   public async deleteClient(clientId: string, accessToken: string) {
     this.isMethodSupported('deleteClient', [ServerType.SasViya])
 
