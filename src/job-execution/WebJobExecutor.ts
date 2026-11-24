@@ -64,6 +64,15 @@ export class WebJobExecutor extends BaseJobExecutor {
       } catch (e: any) {
         return new Promise(async (resolve, reject) => {
           if (e instanceof LoginRequiredError) {
+            if (!loginRequiredCallback) {
+              reject(
+                new ErrorResponse(
+                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
+                  e
+                )
+              )
+              return
+            }
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,
@@ -251,6 +260,7 @@ export class WebJobExecutor extends BaseJobExecutor {
                   e
                 )
               )
+              return
             }
 
             this.appendWaitingRequest(() => {
