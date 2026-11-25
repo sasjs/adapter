@@ -10,6 +10,7 @@ import {
 } from '../../types/errors'
 import { generateFileUploadForm } from '../../file/generateFileUploadForm'
 import { generateTableUploadForm } from '../../file/generateTableUploadForm'
+import { bounded } from '../../test/utils/bounded'
 
 jest.mock('../../file/generateFileUploadForm')
 jest.mock('../../file/generateTableUploadForm')
@@ -64,31 +65,6 @@ describe('WebJobExecutor', () => {
   }
 
   afterEach(() => jest.clearAllMocks())
-
-  /**
-   * Generous bound for the race that detects a promise which never settles.
-   * The executor under test resolves or rejects within a couple of microtask
-   * ticks; anything still pending after this many real milliseconds is a
-   * hang, not a slow machine.
-   */
-  const TEST_SETTLE_BOUND_MS = 5000
-
-  const bounded = async <T>(promise: Promise<T>): Promise<T> => {
-    let timer: ReturnType<typeof setTimeout>
-    try {
-      return await Promise.race([
-        promise,
-        new Promise<never>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error('request timed out')),
-            TEST_SETTLE_BOUND_MS
-          )
-        })
-      ])
-    } finally {
-      clearTimeout(timer!)
-    }
-  }
 
   describe('minified SAS9 executor', () => {
     const config = { ...baseConfig, serverType: ServerType.Sas9 }

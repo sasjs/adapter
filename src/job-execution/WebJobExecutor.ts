@@ -24,6 +24,7 @@ import {
   isNode
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
+import { UNAUTHENTICATED_REQUEST_MESSAGE } from './unauthenticatedRequestMessage'
 
 export interface WaitingRequstPromise {
   promise: Promise<any> | null
@@ -65,12 +66,7 @@ export class WebJobExecutor extends BaseJobExecutor {
         return new Promise(async (resolve, reject) => {
           if (e instanceof LoginRequiredError) {
             if (!loginRequiredCallback) {
-              reject(
-                new ErrorResponse(
-                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
-                  e
-                )
-              )
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
               return
             }
             this.appendWaitingRequest(() => {
@@ -254,12 +250,7 @@ export class WebJobExecutor extends BaseJobExecutor {
 
           if (e instanceof LoginRequiredError) {
             if (!loginRequiredCallback) {
-              reject(
-                new ErrorResponse(
-                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
-                  e
-                )
-              )
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
               return
             }
 

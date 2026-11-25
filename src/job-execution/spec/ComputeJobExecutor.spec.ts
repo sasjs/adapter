@@ -5,17 +5,10 @@ import {
   ErrorResponse,
   LoginRequiredError
 } from '../../types/errors'
+import { bounded } from '../../test/utils/bounded'
 
 describe('ComputeJobExecutor', () => {
   const serverUrl = 'https://sample.server.com'
-
-  /**
-   * Generous bound for the race that detects a promise which never settles.
-   * The executors under test resolve or reject within a couple of microtask
-   * ticks; anything still pending after this many real milliseconds is a
-   * hang, not a slow machine.
-   */
-  const TEST_SETTLE_BOUND_MS = 5000
 
   const makeExecutor = () => {
     const sasViyaApiClient = {
@@ -37,23 +30,6 @@ describe('ComputeJobExecutor', () => {
   }
 
   afterEach(() => jest.clearAllMocks())
-
-  const bounded = async <T>(promise: Promise<T>): Promise<T> => {
-    let timer: ReturnType<typeof setTimeout>
-    try {
-      return await Promise.race([
-        promise,
-        new Promise<never>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error('request timed out')),
-            TEST_SETTLE_BOUND_MS
-          )
-        })
-      ])
-    } finally {
-      clearTimeout(timer!)
-    }
-  }
 
   it('waits for the result and resolves with it', async () => {
     const { executor, sasViyaApiClient } = makeExecutor()

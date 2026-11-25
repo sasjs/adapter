@@ -7,6 +7,7 @@ import { SASjsConfig, UploadFile } from '../types'
 import { RequestClient } from '../request/RequestClient'
 import { ErrorResponse, LoginRequiredError } from '../types/errors'
 import axios from 'axios'
+import { bounded } from './utils/bounded'
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -30,31 +31,6 @@ const prepareFilesAndParams = () => {
   const params = { table: 'libtable' }
 
   return { files, params }
-}
-
-/**
- * Generous bound for the race that detects a promise which never settles.
- * The executor under test resolves or rejects within a couple of microtask
- * ticks; anything still pending after this many real milliseconds is a
- * hang, not a slow machine.
- */
-const TEST_SETTLE_BOUND_MS = 5000
-
-const bounded = async <T>(promise: Promise<T>): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout>
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error('request timed out')),
-          TEST_SETTLE_BOUND_MS
-        )
-      })
-    ])
-  } finally {
-    clearTimeout(timer!)
-  }
 }
 
 describe('FileUploader', () => {
