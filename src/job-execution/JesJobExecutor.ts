@@ -7,6 +7,7 @@ import {
 } from '../types/errors'
 import { ExtraResponseAttributes } from '@sasjs/utils/types'
 import { BaseJobExecutor } from './JobExecutor'
+import { UNAUTHENTICATED_REQUEST_MESSAGE } from './unauthenticatedRequestMessage'
 import { appendExtraResponseAttributes } from '../utils'
 
 export class JesJobExecutor extends BaseJobExecutor {
@@ -48,6 +49,10 @@ export class JesJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
+            if (!loginRequiredCallback) {
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
+              return
+            }
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,

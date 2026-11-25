@@ -5,7 +5,9 @@
 import { FileUploader } from '../job-execution/FileUploader'
 import { SASjsConfig, UploadFile } from '../types'
 import { RequestClient } from '../request/RequestClient'
+import { ErrorResponse, LoginRequiredError } from '../types/errors'
 import axios from 'axios'
+import { bounded } from './utils/bounded'
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -38,12 +40,15 @@ describe('FileUploader', () => {
     debug: false
   }
 
-  const fileUploader = new FileUploader(
-    config.serverUrl,
-    config.serverType!,
-    '/jobs/path',
-    new RequestClient('https://sample.server.com')
-  )
+  let fileUploader: FileUploader
+  beforeEach(() => {
+    fileUploader = new FileUploader(
+      config.serverUrl,
+      config.serverType!,
+      '/jobs/path',
+      new RequestClient('https://sample.server.com')
+    )
+  })
 
   it('should upload successfully', async () => {
     const sasJob = 'test/upload'
@@ -64,20 +69,39 @@ describe('FileUploader', () => {
       )
       .mockImplementationOnce(() => Promise.resolve({ data: sampleResponse }))
 
-    const loginCallback = jest.fn().mockImplementation(async () => {
-      await fileUploader.resendWaitingRequests()
-      Promise.resolve()
-    })
+    const loginCallback = jest.fn(() => fileUploader.resendWaitingRequests())
 
     const sasJob = 'test'
     const data = prepareFilesAndParams()
 
-    const res = await fileUploader.execute(sasJob, data, config, loginCallback)
+    const res = await bounded(
+      fileUploader.execute(sasJob, data, config, loginCallback)
+    )
 
     expect(res).toEqual(JSON.parse(sampleResponse))
 
     expect(mockedAxios.post).toHaveBeenCalledTimes(2)
-    expect(loginCallback).toHaveBeenCalled()
+    expect(loginCallback).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a login-required upload without a callback and never replays it', async () => {
+    mockedAxios.post
+      .mockResolvedValueOnce({ data: '<form action="Logon">' })
+      .mockResolvedValue({ data: sampleResponse })
+
+    await expect(
+      bounded(
+        fileUploader.execute('test/upload', prepareFilesAndParams(), config)
+      )
+    ).rejects.toEqual(
+      new ErrorResponse(
+        'Request is not authenticated. Make sure .env file exists with valid credentials.',
+        new LoginRequiredError()
+      )
+    )
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1)
+    await bounded(fileUploader.resendWaitingRequests())
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1)
   })
 
   it('should an error when no files are provided', async () => {

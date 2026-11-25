@@ -1,6 +1,11 @@
 import { SASViyaApiClient } from '../../SASViyaApiClient'
 import { JesJobExecutor } from '../JesJobExecutor'
-import { JobExecutionError, LoginRequiredError } from '../../types/errors'
+import {
+  ErrorResponse,
+  JobExecutionError,
+  LoginRequiredError
+} from '../../types/errors'
+import { bounded } from '../../test/utils/bounded'
 
 describe('JesJobExecutor', () => {
   const serverUrl = 'https://sample.server.com'
@@ -77,5 +82,58 @@ describe('JesJobExecutor', () => {
 
     expect(waitingSpy).toHaveBeenCalled()
     expect(loginCallback).toHaveBeenCalled()
+  })
+
+  it('rejects a login-required job without a callback and never replays it', async () => {
+    const { executor, sasViyaApiClient, waitingSpy } = makeExecutor()
+    waitingSpy.mockRestore()
+    const loginError = new LoginRequiredError()
+    const execute = sasViyaApiClient.executeJob as jest.Mock
+    execute.mockRejectedValue(loginError)
+
+    await expect(
+      bounded(executor.execute('common/sendObj', null, baseConfig))
+    ).rejects.toEqual(
+      new ErrorResponse(
+        'Request is not authenticated. Make sure .env file exists with valid credentials.',
+        loginError
+      )
+    )
+    expect(execute).toHaveBeenCalledTimes(1)
+    execute.mockResolvedValue({ result: { ok: true } })
+    await bounded(executor.resendWaitingRequests())
+    expect(execute).toHaveBeenCalledTimes(1)
+  })
+
+  it('replays successfully after a login callback when a callback was given', async () => {
+    const { executor, sasViyaApiClient, waitingSpy } = makeExecutor()
+    waitingSpy.mockRestore()
+    const loginError = new LoginRequiredError()
+    const execute = sasViyaApiClient.executeJob as jest.Mock
+    let loggedIn = false
+    execute.mockImplementation(async () => {
+      if (!loggedIn) throw loginError
+      return { result: { ok: true } }
+    })
+
+    let signalLogin: () => void = () => {}
+    const loginCalled = new Promise<void>((resolve) => {
+      signalLogin = resolve
+    })
+    const loginCallback = jest.fn(async () => {
+      loggedIn = true
+      signalLogin()
+    })
+    const response = executor.execute(
+      'common/sendObj',
+      null,
+      baseConfig,
+      loginCallback
+    )
+    await bounded(loginCalled)
+    expect(loginCallback).toHaveBeenCalledTimes(1)
+    await bounded(executor.resendWaitingRequests())
+    await expect(bounded(response)).resolves.toEqual({ ok: true })
+    expect(execute).toHaveBeenCalledTimes(2)
   })
 })

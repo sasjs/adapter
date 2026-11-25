@@ -19,6 +19,7 @@ import {
   getValidJson
 } from '../utils'
 import { BaseJobExecutor } from './JobExecutor'
+import { UNAUTHENTICATED_REQUEST_MESSAGE } from './unauthenticatedRequestMessage'
 
 export class SasjsJobExecutor extends BaseJobExecutor {
   constructor(
@@ -116,12 +117,8 @@ export class SasjsJobExecutor extends BaseJobExecutor {
 
           if (e instanceof LoginRequiredError) {
             if (!loginRequiredCallback) {
-              reject(
-                new ErrorResponse(
-                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
-                  e
-                )
-              )
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
+              return
             }
 
             this.appendWaitingRequest(() => {

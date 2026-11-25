@@ -6,6 +6,7 @@ import {
   LoginRequiredError
 } from '../types/errors'
 import { BaseJobExecutor } from './JobExecutor'
+import { UNAUTHENTICATED_REQUEST_MESSAGE } from './unauthenticatedRequestMessage'
 
 export class ComputeJobExecutor extends BaseJobExecutor {
   constructor(
@@ -48,6 +49,10 @@ export class ComputeJobExecutor extends BaseJobExecutor {
           }
 
           if (e instanceof LoginRequiredError) {
+            if (!loginRequiredCallback) {
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
+              return
+            }
             this.appendWaitingRequest(() => {
               return this.execute(
                 sasJob,

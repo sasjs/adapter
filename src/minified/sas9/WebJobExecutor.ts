@@ -15,6 +15,7 @@ import {
   convertToCSV
 } from '../../utils'
 import { BaseJobExecutor } from '../../job-execution/JobExecutor'
+import { UNAUTHENTICATED_REQUEST_MESSAGE } from '../../job-execution/unauthenticatedRequestMessage'
 import { parseWeboutResponse } from '../../utils/parseWeboutResponse'
 
 export interface WaitingRequstPromise {
@@ -92,12 +93,8 @@ export class WebJobExecutor extends BaseJobExecutor {
 
           if (e instanceof LoginRequiredError) {
             if (!loginRequiredCallback) {
-              reject(
-                new ErrorResponse(
-                  'Request is not authenticated. Make sure .env file exists with valid credentials.',
-                  e
-                )
-              )
+              reject(new ErrorResponse(UNAUTHENTICATED_REQUEST_MESSAGE, e))
+              return
             }
 
             this.appendWaitingRequest(() => {
