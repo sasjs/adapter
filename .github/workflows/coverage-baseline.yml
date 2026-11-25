@@ -32,7 +32,7 @@ jobs:
   baseline:
     # v0.18.0: the merge commit, since a tag is not a pin and the action-pins check
     # demands one for every external `uses:`
-    uses: sasjs/release/.github/workflows/coverage-baseline.yml@daaf6bd774f022b4a16e62504e63661b6319a8f2 # v0.18.0
+    uses: sasjs/release/.github/workflows/coverage-baseline.yml@6bce05cbcd9364c7097f089ea6c9132978a500ca # v0.19.0
     with:
       # required: the toolchain the head summary is measured with has to match
       runs-on: ubuntu-22.04
