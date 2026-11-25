@@ -1,5 +1,6 @@
 import { ServerType } from '@sasjs/utils/types'
 import { WebJobExecutor } from '../WebJobExecutor'
+import { WebJobExecutor as Sas9WebJobExecutor } from '../../minified/sas9/WebJobExecutor'
 import { RequestClient } from '../../request/RequestClient'
 import { SASViyaApiClient } from '../../SASViyaApiClient'
 import {
@@ -64,19 +65,111 @@ describe('WebJobExecutor', () => {
 
   afterEach(() => jest.clearAllMocks())
 
+  /**
+   * Generous bound for the race that detects a promise which never settles.
+   * The executor under test resolves or rejects within a couple of microtask
+   * ticks; anything still pending after this many real milliseconds is a
+   * hang, not a slow machine.
+   */
+  const TEST_SETTLE_BOUND_MS = 5000
+
   const bounded = async <T>(promise: Promise<T>): Promise<T> => {
     let timer: ReturnType<typeof setTimeout>
     try {
       return await Promise.race([
         promise,
         new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error('request timed out')), 200)
+          timer = setTimeout(
+            () => reject(new Error('request timed out')),
+            TEST_SETTLE_BOUND_MS
+          )
         })
       ])
     } finally {
       clearTimeout(timer!)
     }
   }
+
+  describe('minified SAS9 executor', () => {
+    const config = { ...baseConfig, serverType: ServerType.Sas9 }
+    const makeSas9Executor = () => {
+      const requestClient = new RequestClient(serverUrl)
+      const executor = new Sas9WebJobExecutor(
+        serverUrl,
+        ServerType.Sas9,
+        '/SASStoredProcess/do',
+        requestClient
+      )
+      const loginError = new LoginRequiredError()
+      const post = jest
+        .spyOn(requestClient, 'post')
+        .mockRejectedValueOnce(loginError)
+        .mockResolvedValue({ result: { ok: true }, etag: '' })
+      return { executor, loginError, post }
+    }
+
+    it('rejects a login-required POST without queuing a replay', async () => {
+      const { executor, loginError, post } = makeSas9Executor()
+
+      await expect(
+        bounded(executor.execute('services/common/configure', null, config))
+      ).rejects.toEqual(
+        new ErrorResponse(
+          'Request is not authenticated. Make sure .env file exists with valid credentials.',
+          loginError
+        )
+      )
+      expect(post).toHaveBeenCalledTimes(1)
+      await bounded(executor.resendWaitingRequests())
+      expect(post).toHaveBeenCalledTimes(1)
+    })
+
+    it('replays the SAS9 upload and returns the requested debug log after login', async () => {
+      const { executor, post } = makeSas9Executor()
+      const loginCallback = jest.fn(() => executor.resendWaitingRequests())
+      const data = { rows: [{ id: 1 }] }
+      const debugResponse = {
+        result: '>>weboutBEGIN<<{"ok":true}>>weboutEND<<',
+        log: 'SAS log',
+        etag: ''
+      }
+      post.mockResolvedValue(debugResponse)
+
+      await expect(
+        bounded(
+          executor.execute(
+            'services/common/configure',
+            data,
+            { ...config, debug: true },
+            loginCallback,
+            undefined,
+            ['log']
+          )
+        )
+      ).resolves.toEqual({ result: '{"ok":true}', log: 'SAS log' })
+      expect(loginCallback).toHaveBeenCalledTimes(1)
+      expect(post).toHaveBeenCalledTimes(2)
+      for (const [, body] of post.mock.calls) {
+        expect(body.get('_debug')).toBe('131')
+        expect(body.get('rows')).toHaveProperty('name', 'rows.csv')
+      }
+    })
+
+    it('rejects the original request when the replay fails after login', async () => {
+      const { executor, post } = makeSas9Executor()
+      const loginCallback = jest.fn(() => executor.resendWaitingRequests())
+      const jobError = new JobExecutionError(42, 'job blew up', '')
+      post.mockRejectedValue(jobError)
+
+      await expect(
+        bounded(executor.execute('/absolute/job', null, config, loginCallback))
+      ).rejects.toEqual(
+        new ErrorResponse('Error Code 42: job blew up', jobError)
+      )
+      expect(loginCallback).toHaveBeenCalledTimes(1)
+      expect(post).toHaveBeenCalledTimes(2)
+    })
+  })
 
   it('sends the job uri as _job once and renames _program to __program', async () => {
     const { executor, postSpy, sasViyaApiClient } = makeExecutor(

@@ -122,6 +122,7 @@ export class SasjsJobExecutor extends BaseJobExecutor {
                   e
                 )
               )
+              return
             }
 
             this.appendWaitingRequest(() => {

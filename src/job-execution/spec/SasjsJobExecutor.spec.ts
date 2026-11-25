@@ -1,6 +1,6 @@
 import { RequestClient } from '../../request/RequestClient'
 import { SasjsJobExecutor } from '../SasjsJobExecutor'
-import { LoginRequiredError } from '../../types/errors'
+import { ErrorResponse, LoginRequiredError } from '../../types/errors'
 import { generateFileUploadForm } from '../../file/generateFileUploadForm'
 
 jest.mock('../../file/generateFileUploadForm')
@@ -8,6 +8,14 @@ jest.mock('../../file/generateFileUploadForm')
 describe('SasjsJobExecutor', () => {
   const serverUrl = 'https://sample.server.com'
   const jobsPath = '/SASjsApi/stp/execute'
+
+  /**
+   * Generous bound for the race that detects a promise which never settles.
+   * The executors under test resolve or reject within a couple of microtask
+   * ticks; anything still pending after this many real milliseconds is a
+   * hang, not a slow machine.
+   */
+  const TEST_SETTLE_BOUND_MS = 5000
 
   const makeExecutor = () => {
     const requestClient = new RequestClient(serverUrl)
@@ -29,6 +37,23 @@ describe('SasjsJobExecutor', () => {
   }
 
   afterEach(() => jest.clearAllMocks())
+
+  const bounded = async <T>(promise: Promise<T>): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout>
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error('request timed out')),
+            TEST_SETTLE_BOUND_MS
+          )
+        })
+      ])
+    } finally {
+      clearTimeout(timer!)
+    }
+  }
 
   it('posts to the appLoc program and parses a JSON string result', async () => {
     const { executor, postSpy } = makeExecutor()
@@ -93,6 +118,26 @@ describe('SasjsJobExecutor', () => {
     )
   })
 
+  it('rejects a login-required job without a callback and never replays it', async () => {
+    const { executor, postSpy, waitingSpy } = makeExecutor()
+    waitingSpy.mockRestore()
+    const loginError = new LoginRequiredError()
+    postSpy.mockRejectedValue(loginError)
+
+    await expect(
+      bounded(executor.execute('common/sendObj', null, baseConfig))
+    ).rejects.toEqual(
+      new ErrorResponse(
+        'Request is not authenticated. Make sure .env file exists with valid credentials.',
+        loginError
+      )
+    )
+    expect(postSpy).toHaveBeenCalledTimes(1)
+    postSpy.mockResolvedValue({ result: { ok: true }, log: '' } as any)
+    await bounded(executor.resendWaitingRequests())
+    expect(postSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('queues the request when a login is required and a callback was given', async () => {
     const { executor, postSpy, waitingSpy } = makeExecutor()
     postSpy.mockRejectedValue(new LoginRequiredError())
@@ -103,5 +148,36 @@ describe('SasjsJobExecutor', () => {
 
     expect(waitingSpy).toHaveBeenCalled()
     expect(loginCallback).toHaveBeenCalled()
+  })
+
+  it('replays successfully after a login callback when a callback was given', async () => {
+    const { executor, postSpy, waitingSpy } = makeExecutor()
+    waitingSpy.mockRestore()
+    const loginError = new LoginRequiredError()
+    let loggedIn = false
+    postSpy.mockImplementation(async () => {
+      if (!loggedIn) throw loginError
+      return { result: { ok: true }, log: '' } as any
+    })
+
+    let signalLogin: () => void = () => {}
+    const loginCalled = new Promise<void>((resolve) => {
+      signalLogin = resolve
+    })
+    const loginCallback = jest.fn(async () => {
+      loggedIn = true
+      signalLogin()
+    })
+    const response = executor.execute(
+      'common/sendObj',
+      null,
+      baseConfig,
+      loginCallback
+    )
+    await bounded(loginCalled)
+    expect(loginCallback).toHaveBeenCalledTimes(1)
+    await bounded(executor.resendWaitingRequests())
+    await expect(bounded(response)).resolves.toEqual({ ok: true })
+    expect(postSpy).toHaveBeenCalledTimes(2)
   })
 })

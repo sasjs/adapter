@@ -98,6 +98,7 @@ export class WebJobExecutor extends BaseJobExecutor {
                   e
                 )
               )
+              return
             }
 
             this.appendWaitingRequest(() => {

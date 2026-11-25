@@ -5,6 +5,7 @@
 import { FileUploader } from '../job-execution/FileUploader'
 import { SASjsConfig, UploadFile } from '../types'
 import { RequestClient } from '../request/RequestClient'
+import { ErrorResponse, LoginRequiredError } from '../types/errors'
 import axios from 'axios'
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
@@ -31,6 +32,31 @@ const prepareFilesAndParams = () => {
   return { files, params }
 }
 
+/**
+ * Generous bound for the race that detects a promise which never settles.
+ * The executor under test resolves or rejects within a couple of microtask
+ * ticks; anything still pending after this many real milliseconds is a
+ * hang, not a slow machine.
+ */
+const TEST_SETTLE_BOUND_MS = 5000
+
+const bounded = async <T>(promise: Promise<T>): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout>
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error('request timed out')),
+          TEST_SETTLE_BOUND_MS
+        )
+      })
+    ])
+  } finally {
+    clearTimeout(timer!)
+  }
+}
+
 describe('FileUploader', () => {
   const config: SASjsConfig = {
     ...new SASjsConfig(),
@@ -38,12 +64,15 @@ describe('FileUploader', () => {
     debug: false
   }
 
-  const fileUploader = new FileUploader(
-    config.serverUrl,
-    config.serverType!,
-    '/jobs/path',
-    new RequestClient('https://sample.server.com')
-  )
+  let fileUploader: FileUploader
+  beforeEach(() => {
+    fileUploader = new FileUploader(
+      config.serverUrl,
+      config.serverType!,
+      '/jobs/path',
+      new RequestClient('https://sample.server.com')
+    )
+  })
 
   it('should upload successfully', async () => {
     const sasJob = 'test/upload'
@@ -64,20 +93,39 @@ describe('FileUploader', () => {
       )
       .mockImplementationOnce(() => Promise.resolve({ data: sampleResponse }))
 
-    const loginCallback = jest.fn().mockImplementation(async () => {
-      await fileUploader.resendWaitingRequests()
-      Promise.resolve()
-    })
+    const loginCallback = jest.fn(() => fileUploader.resendWaitingRequests())
 
     const sasJob = 'test'
     const data = prepareFilesAndParams()
 
-    const res = await fileUploader.execute(sasJob, data, config, loginCallback)
+    const res = await bounded(
+      fileUploader.execute(sasJob, data, config, loginCallback)
+    )
 
     expect(res).toEqual(JSON.parse(sampleResponse))
 
     expect(mockedAxios.post).toHaveBeenCalledTimes(2)
-    expect(loginCallback).toHaveBeenCalled()
+    expect(loginCallback).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a login-required upload without a callback and never replays it', async () => {
+    mockedAxios.post
+      .mockResolvedValueOnce({ data: '<form action="Logon">' })
+      .mockResolvedValue({ data: sampleResponse })
+
+    await expect(
+      bounded(
+        fileUploader.execute('test/upload', prepareFilesAndParams(), config)
+      )
+    ).rejects.toEqual(
+      new ErrorResponse(
+        'Request is not authenticated. Make sure .env file exists with valid credentials.',
+        new LoginRequiredError()
+      )
+    )
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1)
+    await bounded(fileUploader.resendWaitingRequests())
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1)
   })
 
   it('should an error when no files are provided', async () => {
