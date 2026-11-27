@@ -664,13 +664,21 @@ export class SASViyaApiClient {
         )
 
         parentFolderUri = `/folders/folders/${parentFolder.id}`
-      } else if (isForced) {
-        const folderPath = joinFolderPath(parentFolderPath, folderName)
-        const folderUri = await this.getFolderUri(folderPath, accessToken)
+      }
+    }
 
-        if (folderUri) {
-          await this.deleteFolder(folderPath, accessToken)
-        }
+    // The forced delete of the folder being created is keyed on its path, not on
+    // how the parent was found: a caller that supplies the parent's URI (the
+    // service pack deploy does, to save a lookup per member) still expects an
+    // existing folder of this name to be replaced rather than refused with 409.
+    // When the parent itself did not exist there is nothing here to delete, and
+    // the lookup is a 404 the caller never sees.
+    if (isForced && parentFolderPath) {
+      const folderPath = joinFolderPath(parentFolderPath, folderName)
+      const folderUri = await this.getFolderUri(folderPath, accessToken)
+
+      if (folderUri) {
+        await this.deleteFolder(folderPath, accessToken)
       }
     }
 

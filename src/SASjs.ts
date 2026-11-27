@@ -10,7 +10,8 @@ import {
   LoginOptions,
   LoginResult,
   ExecutionQuery,
-  Tables
+  Tables,
+  DeployProgress
 } from './types'
 import { SASViyaApiClient } from './SASViyaApiClient'
 import { SAS9ApiClient } from './SAS9ApiClient'
@@ -915,13 +916,19 @@ export default class SASjs {
    * @param accessToken - an optional access token to be passed in when
    * using this function from the command line.
    * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
+   * @param onProgress - optional callback invoked once per member, immediately
+   * before the member is written, with its name, folder, type and position. A
+   * Viya deploy is one REST call per folder, file and job definition, run in
+   * sequence, so this is the only signal a caller has that a large pack is
+   * still moving rather than hung.
    */
   public async deployServicePack(
     serviceJson: any,
     appLoc?: string,
     serverUrl?: string,
     accessToken?: string,
-    isForced = false
+    isForced = false,
+    onProgress?: (progress: DeployProgress) => void
   ) {
     this.isMethodSupported('deployServicePack', [ServerType.SasViya])
 
@@ -973,7 +980,12 @@ export default class SASjs {
       members,
       accessToken,
       sasApiClient,
-      isForced
+      isForced,
+      {
+        onProgress,
+        index: 0,
+        total: countMembers(members)
+      }
     )
   }
 
@@ -1257,36 +1269,62 @@ export default class SASjs {
     membersJson: any[],
     accessToken?: string,
     sasApiClient?: SASViyaApiClient,
-    isForced?: boolean
+    isForced?: boolean,
+    progress: DeployProgressState = {
+      index: 0,
+      total: countMembers(membersJson)
+    },
+    parentFolderUri?: string
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
-        case 'folder':
-          await this.createFolder(
+        case 'folder': {
+          reportMember(progress, 'folder', member.name, parentFolder)
+
+          const folder = await this.createFolder(
             member.name,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient,
             isForced
           )
+
+          if (member.members && member.members.length) {
+            const folderPath = `${parentFolder}/${member.name}`
+
+            await this.createFoldersAndServices(
+              folderPath,
+              member.members,
+              accessToken,
+              sasApiClient,
+              isForced,
+              progress,
+              // the folder the deploy has just created, so its children do not
+              // each resolve the same path back to a URI
+              folder?.id ? `/folders/folders/${folder.id}` : undefined
+            )
+          }
           break
+        }
         case 'file':
+          reportMember(progress, 'file', member.name, parentFolder)
           await this.createFile(
             member.name,
             member.code,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient
           )
           break
         case 'service':
+          reportMember(progress, 'service', member.name, parentFolder)
           await this.createJobDefinition(
             member.name,
             member.code,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient
           )
@@ -1294,14 +1332,6 @@ export default class SASjs {
         default:
           throw new Error(`Unidentified member '${member.name}' provided.`)
       }
-      if (member.type === 'folder' && member.members && member.members.length)
-        await this.createFoldersAndServices(
-          `${parentFolder}/${member.name}`,
-          member.members,
-          accessToken,
-          sasApiClient,
-          isForced
-        )
     })
   }
 
@@ -1355,4 +1385,54 @@ export default class SASjs {
   Tables(table: Record<string, any>, macroName: string) {
     return new Tables(table, macroName)
   }
+}
+
+/**
+ * Position of a deploy, threaded through the recursive walk.
+ *
+ * A mutable state object rather than return values: the walk is depth-first and
+ * the counter has to survive the recursion, and the total is known before the
+ * first member is written (see countMembers).
+ */
+interface DeployProgressState {
+  onProgress?: (progress: DeployProgress) => void
+  index: number
+  total: number
+}
+
+/**
+ * Counts every member of a service pack, at every depth.
+ *
+ * Folders are counted as well as their children, because the deploy writes the
+ * folder itself before recursing - one `onProgress` call per member, so the
+ * total is exactly the number of calls the deploy will make.
+ */
+const countMembers = (members: any[] = []): number =>
+  members.reduce(
+    (count, member) =>
+      count + 1 + (member.members ? countMembers(member.members) : 0),
+    0
+  )
+
+/**
+ * Reports one member immediately before it is written.
+ *
+ * Emitted per case rather than before the switch so an unidentified member
+ * throws without first announcing a write that will not happen.
+ */
+const reportMember = (
+  progress: DeployProgressState,
+  type: DeployProgress['type'],
+  name: string,
+  parentFolder: string
+) => {
+  const index = ++progress.index
+
+  progress.onProgress?.({
+    type,
+    name,
+    parentFolder,
+    index,
+    total: progress.total
+  })
 }
