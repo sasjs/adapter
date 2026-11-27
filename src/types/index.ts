@@ -1,5 +1,6 @@
 export * from './Context'
 export * from './CsrfToken'
+export * from './DeployProgress'
 export * from './Folder'
 export * from './File'
 export * from './Job'
