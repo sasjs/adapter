@@ -1,6 +1,7 @@
 import { isRelativePath, isUri, isUrl } from './utils'
 import { joinFolderPath, normaliseFolderPath } from './utils/joinFolderPath'
 import NodeFormData from 'form-data'
+import { isNode } from './utils/isNode'
 import {
   Job,
   Session,
@@ -36,6 +37,8 @@ import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 import { FileResource } from './types/FileResource'
 import { getLogger } from './utils/host'
+import { NotFoundError } from './types/errors/NotFoundError'
+import { validateForcedServicePack } from './utils/validateForcedServicePack'
 
 interface JobExecutionResult {
   result?: { result: object }
@@ -122,6 +125,12 @@ export class SASViyaApiClient {
     this.requestClient
   )
   private folderMap = new Map<string, Job[]>()
+  private folderMapGeneration = 0
+
+  public invalidateFolderCache() {
+    this.folderMapGeneration++
+    this.folderMap.clear()
+  }
   private fileExtensionMap = new Map<string, IViyaTypesExtensionInfo>()
   private boolExtensionMap = false // required in case the map has zero entries
   // after an attempt to populate it.
@@ -502,8 +511,28 @@ export class SASViyaApiClient {
       'Content-Disposition': `filename="${fileName}";`
     }
 
-    const formData = new NodeFormData()
-    formData.append('file', contentBuffer, fileName)
+    const formData: any = isNode() ? new NodeFormData() : new FormData()
+    if (!isNode()) {
+      const bytes =
+        typeof contentBuffer === 'string'
+          ? contentBuffer
+          : new Uint8Array(
+              contentBuffer.buffer,
+              contentBuffer.byteOffset,
+              contentBuffer.byteLength
+            ).slice()
+      formData.append('file', new Blob([bytes]), fileName)
+    } else if (ArrayBuffer.isView(contentBuffer)) {
+      formData.append(
+        'file',
+        Buffer.from(
+          contentBuffer.buffer,
+          contentBuffer.byteOffset,
+          contentBuffer.byteLength
+        ),
+        fileName
+      )
+    } else formData.append('file', contentBuffer, fileName)
 
     /** Query Viya for file metadata based on extension type. */
 
@@ -528,9 +557,20 @@ export class SASViyaApiClient {
         // Populate the file extension map
         // 1. Get Viya's response to this api call
         const typesQueryUrl = `/types/types?limit=999999`
-        const response = (
-          await this.requestClient.get(typesQueryUrl, accessToken)
-        ).result as IViyaTypesResponse
+        const typesResult = await this.requestClient.get(
+          typesQueryUrl,
+          accessToken
+        )
+        if (
+          this.requestClient.isDeploymentTransport() &&
+          (!typesResult ||
+            !Number.isInteger(typesResult.status) ||
+            typesResult.status < 200 ||
+            typesResult.status >= 300 ||
+            !Array.isArray((typesResult.result as IViyaTypesResponse)?.items))
+        )
+          throw new Error('File type registry did not return success')
+        const response = typesResult.result as IViyaTypesResponse
         // 2. Filter the returned items that have file extensions into a map
         //    using forEach as an item may relate to multiple file extensions.
         response.items
@@ -572,35 +612,287 @@ export class SASViyaApiClient {
       }#rawUpload`,
       formData,
       accessToken,
-      'multipart/form-data; boundary=' + (formData as any)._boundary,
+      isNode()
+        ? 'multipart/form-data; boundary=' + formData.getBoundary()
+        : 'multipart/form-data',
       headers
     )
+
+    if (
+      !createFileResponse ||
+      typeof createFileResponse.status !== 'number' ||
+      createFileResponse.status < 200 ||
+      createFileResponse.status >= 300 ||
+      (this.requestClient.isDeploymentTransport() &&
+        createFileResponse.status !== 201)
+    )
+      throw new Error('File creation did not return success')
 
     // If a patch was created...
     if (filePatch) {
       try {
+        const links = createFileResponse.result?.links?.filter(
+          (e) => e.method == 'PATCH' && e.rel == 'patch'
+        )
+        let fileUri = links?.[0]?.uri
+        if (typeof fileUri !== 'string' || !fileUri)
+          throw new Error('Missing file metadata patch link')
         const patchHeaders = {
           Accept: 'application/json',
           'If-Match': '*'
         }
-        // Get the URI of the newly created file
-        const fileUri = createFileResponse.result.links.filter(
-          (e) => e.method == 'PATCH' && e.rel == 'patch'
-        )[0].uri
-        // and apply the patch
-        return (
-          await this.requestClient.patch<File>(
-            `${fileUri}`,
-            filePatch,
-            accessToken,
-            patchHeaders
+        if (this.requestClient.isDeploymentTransport()) {
+          const id = createFileResponse.result?.id
+          const etag = createFileResponse.etag
+          if (
+            typeof id !== 'string' ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              id
+            ) ||
+            links?.length !== 1 ||
+            fileUri !== `/files/files/${id}` ||
+            typeof etag !== 'string' ||
+            !/^"[\x21\x23-\x7e\x80-\xff]+"$/.test(etag)
           )
-        ).result
+            throw new Error('Invalid created file identity, patch link or ETag')
+          patchHeaders['If-Match'] = etag
+          fileUri = `/files/files/${id}`
+        }
+        // and apply the patch
+        const patched = await this.requestClient.patch<File>(
+          `${fileUri}`,
+          filePatch,
+          accessToken,
+          patchHeaders
+        )
+        if (
+          !patched ||
+          (this.requestClient.isDeploymentTransport() &&
+            (typeof patched.status !== 'number' ||
+              !Number.isInteger(patched.status))) ||
+          patched.status < 200 ||
+          patched.status >= 300
+        )
+          throw new Error('File metadata patch did not return success')
+        return patched.result
       } catch (e: any) {
         throw new Error(`Error patching file ${fileName}.\n${e.message}`)
       }
     }
     return createFileResponse.result
+  }
+
+  /** Recycle exactly the validated app folder; caller must own the scope exclusively. */
+  public async recycleDeploymentFolder(path: string, accessToken?: string) {
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    this.requestClient.restrictDeploymentTransport()
+    validateForcedServicePack(path, { members: [] })
+    const requireFolder = (response: any, expectedName?: string) => {
+      if (
+        !response ||
+        response.status < 200 ||
+        response.status >= 300 ||
+        !Number.isInteger(response.status) ||
+        !response.result ||
+        typeof response.result.id !== 'string' ||
+        !uuid.test(response.result.id) ||
+        (expectedName !== undefined && response.result.name !== expectedName)
+      )
+        throw new Error('Invalid folder response during deployment')
+      return response.result
+    }
+    const parentPath = path.slice(0, path.lastIndexOf('/'))
+    const name = path.slice(path.lastIndexOf('/') + 1)
+    const lookup = async (folderPath: string) => {
+      try {
+        const response = await this.requestClient.get<any>(
+          `${this.serverUrl}/folders/folders/@item?path=${encodeURIComponent(folderPath)}`,
+          accessToken
+        )
+        if (!response) throw new Error('No response to folder lookup')
+        return response
+      } catch (e) {
+        if (e instanceof NotFoundError) return null
+        throw e
+      }
+    }
+    const parent = requireFolder(
+      await lookup(parentPath),
+      parentPath.split('/').pop()
+    )
+    // Accept the user home and its personal folder as parents, never targets.
+    const isUserHome = /^\/users\/[^/]+$/i.test(parentPath)
+    const isPersonalFolder = /^\/users\/[^/]+\/my folder$/i.test(parentPath)
+    if (
+      parent.type !== 'folder' &&
+      !(isUserHome && ['myFolder', 'userFolder'].includes(parent.type)) &&
+      !(isPersonalFolder && parent.type === 'myFolder')
+    )
+      throw new Error('Cannot safely identify deployment parent folder')
+    const existing = await lookup(path)
+    if (existing === null) return { parentId: parent.id, recycled: undefined }
+    const folder = requireFolder(existing, name)
+    if (!existing) throw new Error('Invalid folder response during deployment')
+    if (
+      folder.id === parent.id ||
+      folder.type !== 'folder' ||
+      folder.parentFolderUri !== `/folders/folders/${parent.id}` ||
+      typeof existing.etag !== 'string' ||
+      !/^"[\x21\x23-\x7e\x80-\xff]+"$/.test(existing.etag)
+    )
+      throw new Error('Cannot safely identify deployment folder')
+    const bin = requireFolder(
+      await this.requestClient.get<any>(
+        `${this.serverUrl}/folders/folders/@myRecycleBin`,
+        accessToken
+      )
+    )
+    if (
+      bin.type !== 'trashFolder' ||
+      bin.id === folder.id ||
+      bin.id === parent.id
+    )
+      throw new Error('Invalid recycle bin')
+    // A UUID keeps the destination name bounded even for long app names.
+    const recycleName = folder.id
+    const url = `${this.serverUrl}/folders/folders/${bin.id}/members?limit=100&start=`
+    const requireEmptyNextPage = async (start: number, total: number) => {
+      const page = await this.requestClient.get<any>(url + start, accessToken)
+      if (
+        !Number.isInteger(page?.status) ||
+        page.status < 200 ||
+        page.status >= 300 ||
+        !Array.isArray(page.result?.items) ||
+        page.result.items.length !== 0 ||
+        page.result.count !== total
+      )
+        throw new Error('Ambiguous recycle bin listing count')
+    }
+    let start = 0
+    let total: number | undefined
+    do {
+      const page = await this.requestClient.get<any>(url + start, accessToken)
+      if (
+        !page ||
+        page.status < 200 ||
+        page.status >= 300 ||
+        !Number.isInteger(page.status) ||
+        !page.result ||
+        !Array.isArray(page.result.items) ||
+        !Number.isSafeInteger(page.result.count) ||
+        page.result.count < 0 ||
+        (total !== undefined && page.result.count !== total) ||
+        page.result.items.length > 100 ||
+        start + page.result.items.length > page.result.count
+      )
+        throw new Error('Invalid recycle bin listing')
+      total = page.result.count
+      if (
+        page.result.items.some(
+          (item: any) =>
+            !item ||
+            typeof item.name !== 'string' ||
+            typeof item.uri !== 'string' ||
+            item.name.toLowerCase() === recycleName.toLowerCase() ||
+            item.uri === `/folders/folders/${folder.id}`
+        )
+      )
+        throw new Error('Recycle destination collision or invalid member')
+      if (!page.result.items.length && start < total!)
+        throw new Error('Incomplete recycle bin listing')
+      start += page.result.items.length
+      // A full terminal page cannot prove that there are no further members.
+      if (start === total && page.result.items.length === 100)
+        await requireEmptyNextPage(start, total)
+    } while (start < total!)
+    const identity = `/folders/folders/${folder.id}`
+    try {
+      // PUT replaces the folder; retain all writable fields from the GET.
+      const moved: any = await this.requestClient.put<any>(
+        `${this.serverUrl}${identity}`,
+        {
+          name: recycleName,
+          type: folder.type,
+          ...(folder.description !== undefined && {
+            description: folder.description
+          }),
+          ...(folder.version !== undefined && { version: folder.version }),
+          parentFolderUri: `/folders/folders/${bin.id}`
+        },
+        accessToken,
+        { 'If-Match': existing.etag }
+      )
+      requireFolder(moved)
+      if (
+        moved.result.id !== folder.id ||
+        moved.result.name !== recycleName ||
+        moved.result.type !== 'folder' ||
+        moved.result.parentFolderUri !== `/folders/folders/${bin.id}`
+      )
+        throw new Error('Moved folder identity mismatch')
+    } catch (e) {
+      throw new Error(
+        `Recycle move failed or outcome unknown for ${path}; inspect recycle bin /folders/folders/${bin.id} for ${identity} as '${recycleName}' before retrying. ${e instanceof Error ? e.message : ''}`
+      )
+    }
+    try {
+      const confirmed = await lookup(path)
+      if (confirmed !== null) throw new Error('Original path is still occupied')
+      let position = 0
+      let expected: number | undefined
+      let matches = 0
+      do {
+        const page = await this.requestClient.get<any>(
+          url + position,
+          accessToken
+        )
+        const data = page?.result
+        if (
+          !page ||
+          !Number.isInteger(page.status) ||
+          page.status < 200 ||
+          page.status >= 300 ||
+          !data ||
+          !Array.isArray(data.items) ||
+          !Number.isSafeInteger(data.count) ||
+          data.count < 0 ||
+          (expected !== undefined && data.count !== expected) ||
+          data.items.length > 100 ||
+          position + data.items.length > data.count ||
+          (!data.items.length && position < data.count)
+        )
+          throw new Error('Invalid recycle listing after move')
+        expected = data.count
+        for (const item of data.items) {
+          if (
+            !item ||
+            typeof item.name !== 'string' ||
+            typeof item.uri !== 'string'
+          )
+            throw new Error('Invalid recycle member after move')
+          if (item.uri === identity && item.name === recycleName) matches++
+          else if (
+            item.uri === identity ||
+            item.name.toLowerCase() === recycleName.toLowerCase()
+          )
+            throw new Error('Ambiguous recycle member after move')
+        }
+        position += data.items.length
+        if (position === expected && data.items.length === 100)
+          await requireEmptyNextPage(position, expected!)
+      } while (position < expected!)
+      if (matches !== 1)
+        throw new Error('Moved folder not found in recycle bin')
+    } catch (e) {
+      throw new Error(
+        `Recycle move outcome could not be verified for ${path}; inspect ${identity} in recycle bin ${bin.id} before retrying. ${e instanceof Error ? e.message : ''}`
+      )
+    }
+    return {
+      parentId: parent.id,
+      recycled: { identity, recycleName, binId: bin.id }
+    }
   }
 
   /**
@@ -667,22 +959,14 @@ export class SASViyaApiClient {
       }
     }
 
-    // The forced delete of the folder being created is keyed on its path, not on
-    // how the parent was found: a caller that supplies the parent's URI (the
-    // service pack deploy does, to save a lookup per member) still expects an
-    // existing folder of this name to be replaced rather than refused with 409.
-    // When the parent itself did not exist there is nothing here to delete, and
-    // the lookup is a 404 the caller never sees.
+    // Resolve the child by path even when the caller supplied its parent URI.
     if (isForced && parentFolderPath) {
       const folderPath = joinFolderPath(parentFolderPath, folderName)
       const folderUri = await this.getFolderUri(folderPath, accessToken)
-
-      if (folderUri) {
-        await this.deleteFolder(folderPath, accessToken)
-      }
+      if (folderUri) await this.deleteFolder(folderPath, accessToken)
     }
 
-    const { result: createFolderResponse } = await this.requestClient
+    const createResponse = await this.requestClient
       .post<Folder>(
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
@@ -712,6 +996,19 @@ export class SASViyaApiClient {
 
         throw err
       })
+
+    if (
+      !createResponse ||
+      typeof createResponse.status !== 'number' ||
+      createResponse.status < 200 ||
+      createResponse.status >= 300 ||
+      (this.requestClient.isDeploymentTransport() &&
+        createResponse.status !== 201) ||
+      !createResponse.result ||
+      !createResponse.result.id
+    )
+      throw new Error('Folder creation did not return success')
+    const createFolderResponse = createResponse.result
 
     // The POST answered with the folder it created, so there is nothing to look up:
     // a new folder has no members, and re-reading it by a path joined here by hand
@@ -1170,12 +1467,16 @@ export class SASViyaApiClient {
     )
   }
 
-  private async populateFolderMap(folderPath: string, accessToken?: string) {
+  private async populateFolderMap(
+    folderPath: string,
+    accessToken?: string
+  ): Promise<void> {
     const path = this.folderMapKey(folderPath)
     if (this.folderMap.get(path)) {
       return
     }
 
+    const generation = this.folderMapGeneration
     const url = '/folders/folders/@item?path=' + path
     const { result: folder } = await this.requestClient
       .get<Folder>(`${url}`, accessToken)
@@ -1200,6 +1501,9 @@ export class SASViyaApiClient {
 
     const itemsAtRoot = members.items
 
+    if (generation !== this.folderMapGeneration) {
+      return this.populateFolderMap(path, accessToken)
+    }
     this.folderMap.set(path, itemsAtRoot)
   }
 
