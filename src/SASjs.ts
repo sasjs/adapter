@@ -914,8 +914,14 @@ export default class SASjs {
    * @param serverUrl - the server on which to deploy the folders and services.
    * If not provided, is taken from SASjsConfig.
    * @param accessToken - an optional access token to be passed in when
-   * using this function from the command line.
-   * @param isForced - flag that indicates if target folder already exists, it and all subfolders have to be deleted.
+   * using this function from the command line. Viya deployment rejects all
+   * redirects; browsers require Fetch with redirect: 'error' support.
+   * @param isForced - on Viya, replace existing pack folders and update matching
+   * files in place. Requires exclusive deployment ownership of appLoc: do not
+   * move or rename files while deploying. The file ETag does not bind folder
+   * membership atomically. Existing file URI, properties and content type are
+   * retained rather than applying type registry properties as on file creation;
+   * modification metadata can change.
    * @param onProgress - optional callback invoked once per member, immediately
    * before the member is written, with its name, folder, type and position. A
    * Viya deploy is one REST call per folder, file and job definition, run in
@@ -939,11 +945,23 @@ export default class SASjs {
       if (!appLoc) appLoc = this.sasjsConfig.appLoc
 
       if (this.sasjsConfig.serverType === ServerType.SasViya) {
-        sasApiClient = new SASViyaApiClient(
+        // Use an isolated transport so redirects cannot carry credentials away
+        // from the selected deployment server, including across CSRF retries.
+        const sameServer =
+          serverUrl.replace(/\/$/, '') ===
+          this.sasjsConfig.serverUrl.replace(/\/$/, '')
+        const deployRequestClient = this.requestClient!.forDeployment(
           serverUrl,
+          this.sasjsConfig.httpsAgentOptions,
+          this.sasjsConfig.requestHistoryLimit,
+          this.sasjsConfig.verbose,
+          sameServer
+        )
+        sasApiClient = new SASViyaApiClient(
+          serverUrl.replace(/\/$/, ''),
           appLoc,
           this.sasjsConfig.contextName,
-          this.requestClient!
+          deployRequestClient
         )
         sasApiClient.debug = this.sasjsConfig.debug
       } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
@@ -964,6 +982,22 @@ export default class SASjs {
 
       serverUrl = sasClientConfig.serverUrl
       appLoc = sasClientConfig.rootFolderName as string
+      if (this.sasjsConfig.serverType === ServerType.SasViya) {
+        const deployRequestClient = this.requestClient!.forDeployment(
+          serverUrl!,
+          this.sasjsConfig.httpsAgentOptions,
+          this.sasjsConfig.requestHistoryLimit,
+          this.sasjsConfig.verbose,
+          true
+        )
+        sasApiClient = new SASViyaApiClient(
+          serverUrl!.replace(/\/$/, ''),
+          appLoc!,
+          this.sasjsConfig.contextName,
+          deployRequestClient
+        )
+        sasApiClient.debug = this.sasjsConfig.debug
+      }
     }
 
     // members of type 'folder' should be processed first
@@ -1309,14 +1343,33 @@ export default class SASjs {
         }
         case 'file':
           reportMember(progress, 'file', member.name, parentFolder)
-          await this.createFile(
-            member.name,
-            member.code,
-            parentFolder,
-            parentFolderUri,
-            accessToken,
-            sasApiClient
-          )
+          try {
+            await this.createFile(
+              member.name,
+              member.code,
+              parentFolder,
+              parentFolderUri,
+              accessToken,
+              sasApiClient
+            )
+          } catch (err: any) {
+            if (
+              !isForced ||
+              err?.response?.status !== 409 ||
+              err?.config?.method?.toLowerCase() !== 'post' ||
+              !/^\/files\/files\?[^#]*#rawUpload$/.test(err?.config?.url || '')
+            )
+              throw err
+            const client = sasApiClient || this.sasViyaApiClient!
+            await client.replaceConflictingFile(
+              member.name,
+              member.code,
+              parentFolder,
+              parentFolderUri,
+              accessToken,
+              err
+            )
+          }
           break
         case 'service':
           reportMember(progress, 'service', member.name, parentFolder)

@@ -4,6 +4,8 @@ export interface FileResource {
   createdBy: string
   modifiedBy: string
   id: string
+  parentUri?: string
+  parentFolderUri?: string
   properties: Properties
   contentDisposition: string
   contentType: string

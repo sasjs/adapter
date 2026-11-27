@@ -46,6 +46,30 @@ parmcards4;
 
 You now have a simple web app with a backend service!
 
+## Forced Viya deployments
+
+`deployServicePack(..., isForced: true)` replaces existing pack folders and,
+for a recognized duplicate file conflict, updates the existing file's content
+in place at the existing file URI, using its current content type. The content
+update does not run the creation-time file-type registry properties patch. Viya
+may update metadata such as modification time; verify other metadata and effective
+authorization for your environment rather than assuming they are unchanged.
+Unrecognized conflicts and ambiguous file matches fail instead of overwriting.
+
+Viya service-pack deployment rejects all HTTP redirects, including same-origin
+redirects. Use the direct Viya endpoint. In browsers this requires Fetch with
+support for `redirect: 'error'`; XHR and older browsers cannot enforce it. A
+service worker or Fetch polyfill must also honor that setting. Browsers report
+refused redirects as network errors; deployment does not retry those errors.
+Browser cross-origin deployments still require the server's CORS configuration,
+including exposure of ETag and CSRF response headers when needed.
+
+The deployment must have **exclusive ownership of appLoc**: run only one deploy
+for it at a time and do not move or rename its files during deployment. The
+conditional content update uses the file's ETag, but this does not atomically
+bind its separate folder membership. A concurrent folder move or rename can
+therefore cause the wrong file to be updated despite the ETag check.
+
 ## Detailed Overview
 
 The SASjs adapter is a JS library and a set of SAS Macros that handle the communication between the frontend app and backend SAS services.

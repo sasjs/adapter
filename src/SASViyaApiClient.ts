@@ -36,6 +36,12 @@ import { getAccessTokenForViya } from './auth/getAccessTokenForViya'
 import { refreshTokensForViya } from './auth/refreshTokensForViya'
 import { FileResource } from './types/FileResource'
 import { getLogger } from './utils/host'
+import { isNode } from './utils/isNode'
+
+// Axios may transmit a view's entire backing buffer; copy the visible bytes.
+function copyViewBytes(view: ArrayBufferView): Uint8Array<ArrayBuffer> {
+  return new Uint8Array(view.buffer, view.byteOffset, view.byteLength).slice()
+}
 
 interface JobExecutionResult {
   result?: { result: object }
@@ -502,8 +508,19 @@ export class SASViyaApiClient {
       'Content-Disposition': `filename="${fileName}";`
     }
 
-    const formData = new NodeFormData()
-    formData.append('file', contentBuffer, fileName)
+    const formData = isNode() ? new NodeFormData() : new FormData()
+    const content = ArrayBuffer.isView(contentBuffer)
+      ? copyViewBytes(contentBuffer)
+      : contentBuffer
+    if (isNode()) {
+      ;(formData as NodeFormData).append(
+        'file',
+        ArrayBuffer.isView(content) ? Buffer.from(content) : content,
+        fileName
+      )
+    } else {
+      ;(formData as FormData).append('file', new Blob([content]), fileName)
+    }
 
     /** Query Viya for file metadata based on extension type. */
 
@@ -570,11 +587,27 @@ export class SASViyaApiClient {
       `/files/files?parentFolderUri=${parentFolderUri}&typeDefName=${
         typeDefName ?? 'file'
       }#rawUpload`,
-      formData,
+      // Node's form-data is a single-use stream. A CSRF retry must replay the
+      // exact bytes, rather than reuse the already consumed stream.
+      isNode() ? (formData as NodeFormData).getBuffer() : formData,
       accessToken,
-      'multipart/form-data; boundary=' + (formData as any)._boundary,
+      isNode()
+        ? 'multipart/form-data; boundary=' + (formData as any)._boundary
+        : 'multipart/form-data',
       headers
     )
+
+    if (
+      typeof createFileResponse?.status !== 'number' ||
+      !Number.isInteger(createFileResponse.status) ||
+      createFileResponse.status < 200 ||
+      createFileResponse.status >= 300
+    ) {
+      const status = createFileResponse?.status
+      throw new Error(
+        `File creation failed: ${Number.isInteger(status) ? `HTTP ${status}` : 'no HTTP success response'}.`
+      )
+    }
 
     // If a patch was created...
     if (filePatch) {
@@ -587,6 +620,27 @@ export class SASViyaApiClient {
         const fileUri = createFileResponse.result.links.filter(
           (e) => e.method == 'PATCH' && e.rel == 'patch'
         )[0].uri
+        // A server-supplied link must never send deployment credentials to
+        // another origin. Accept root-relative or same-origin absolute links.
+        const base = this.serverUrl || this.requestClient.getBaseUrl()
+        const rootRelative =
+          typeof fileUri === 'string' &&
+          /^\/(?!\/)[^\\\x00-\x20]*$/.test(fileUri)
+        let sameOrigin = false
+        if (
+          base &&
+          typeof fileUri === 'string' &&
+          !/[\\\x00-\x20]/.test(fileUri)
+        ) {
+          try {
+            const target = new URL(fileUri, base)
+            sameOrigin = target.origin === new URL(base).origin
+          } catch {
+            sameOrigin = false
+          }
+        }
+        if (!rootRelative && !sameOrigin)
+          throw new Error('File patch link is not on the deployment server.')
         // and apply the patch
         return (
           await this.requestClient.patch<File>(
@@ -601,6 +655,165 @@ export class SASViyaApiClient {
       }
     }
     return createFileResponse.result
+  }
+
+  /** Replace a conflicting file under exclusive deployment ownership of the folder. */
+  public async replaceConflictingFile(
+    fileName: string,
+    content: Buffer | string,
+    parentFolderPath: string,
+    parentFolderUri: string | undefined,
+    accessToken: string | undefined,
+    conflict: any
+  ): Promise<void> {
+    this.requestClient.assertDeploymentTransport(this.serverUrl)
+    const data = conflict?.response?.data
+    const message = data?.message
+    // Viya's observed duplicate response has errorCode 0 and names both the
+    // file and folder. Unknown conflicts must never authorize a replacement.
+    const prefix = `File with name "${fileName}" already exists in folder "`
+    if (
+      conflict?.response?.status !== 409 ||
+      data?.errorCode !== 0 ||
+      data?.httpStatusCode !== 409 ||
+      typeof message !== 'string' ||
+      !message.startsWith(prefix) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"\.$/i.test(
+        message.slice(prefix.length)
+      )
+    )
+      throw conflict
+    let uri = parentFolderUri
+    if (!uri) {
+      const path = normaliseFolderPath(parentFolderPath)
+      const lookupUrl = isUri(path)
+        ? path
+        : `/folders/folders/@item?path=${path}`
+      const lookup = await this.requestClient.get<Folder>(
+        `${this.serverUrl}${lookupUrl}`,
+        accessToken
+      )
+      if (
+        !Number.isInteger(lookup?.status) ||
+        lookup.status < 200 ||
+        lookup.status >= 300 ||
+        typeof lookup.result?.id !== 'string'
+      )
+        throw conflict
+      uri = `/folders/folders/${lookup.result.id}`
+    }
+    if (
+      !uri ||
+      message !== `${prefix}${uri.slice('/folders/folders/'.length)}".` ||
+      !/^\/folders\/folders\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        uri
+      )
+    )
+      throw conflict
+    let start = 0
+    let total: number | undefined
+    let found: any
+    while (true) {
+      const response = await this.requestClient.get<{
+        items: any[]
+        count: number
+      }>(
+        `${this.serverUrl}${uri}/members?start=${start}&limit=500`,
+        accessToken
+      )
+      const result = response?.result
+      if (
+        !Number.isInteger(response?.status) ||
+        response.status < 200 ||
+        response.status >= 300 ||
+        !Array.isArray(result?.items) ||
+        !Number.isSafeInteger(result.count) ||
+        result.count < 0 ||
+        (total !== undefined && result.count !== total) ||
+        start + result.items.length > result.count
+      )
+        throw conflict
+      total = result.count
+      const items = result.items
+      if (!items.length && start < result.count) throw conflict
+      const matches = items.filter(
+        (item) =>
+          typeof item?.name === 'string' &&
+          item.name.toLowerCase() === fileName.toLowerCase()
+      )
+      if (
+        matches.length > 1 ||
+        (found && matches.length) ||
+        (matches.length &&
+          (matches[0].name !== fileName || matches[0].contentType !== 'file'))
+      )
+        throw conflict
+      if (matches.length) found = matches[0]
+      start += items.length
+      if (!items.length || start >= result.count) break
+    }
+    if (
+      !found ||
+      ('parentFolderUri' in found && found.parentFolderUri !== uri) ||
+      !/^\/files\/files\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        found.uri
+      )
+    )
+      throw conflict
+    const url = `${this.serverUrl}${found.uri}`
+    const resourceResponse = await this.requestClient.get<FileResource>(
+      url,
+      accessToken
+    )
+    const resource = resourceResponse?.result
+    const etag = resourceResponse?.etag
+    if (
+      !Number.isInteger(resourceResponse?.status) ||
+      resourceResponse.status < 200 ||
+      resourceResponse.status >= 300 ||
+      !resource ||
+      typeof etag !== 'string' ||
+      !/^"[\x21\x23-\x7e\x80-\xff]*"$/.test(etag)
+    )
+      throw new Error(
+        `File ${fileName} does not have an ETag, or request failed.`
+      )
+    // The member listing can go stale before the resource GET; a fresh ETag
+    // alone does not establish that this is still the requested file.
+    if (
+      resource.id !== found.uri.slice('/files/files/'.length) ||
+      resource.name !== fileName ||
+      ('parentFolderUri' in resource && resource.parentFolderUri !== uri)
+    )
+      throw conflict
+    // parentUri is an associated object, not folder membership. The file ETag
+    // cannot bind the separate folder membership to this write: callers must
+    // ensure exclusive deploy ownership and prevent moves/renames throughout.
+    // Send bytes so Axios does not parse and normalize JSON string payloads.
+    // Axios sends an ArrayBuffer view's entire backing buffer. Copy the exact
+    // byte range into its own buffer, including for sliced/pooled Buffers.
+    const bytes =
+      typeof content === 'string'
+        ? new TextEncoder().encode(content)
+        : copyViewBytes(content)
+    const updated = await this.requestClient.put(
+      `${url}/content`,
+      bytes,
+      accessToken,
+      {
+        'If-Match': etag,
+        'Content-Type': resource.contentType || 'application/octet-stream'
+      }
+    )
+    if (
+      typeof updated?.status !== 'number' ||
+      !Number.isInteger(updated.status) ||
+      updated.status < 200 ||
+      updated.status >= 300
+    )
+      throw new Error(
+        `Failed to replace file ${fileName}: content update did not succeed.`
+      )
   }
 
   /**
@@ -1238,7 +1451,12 @@ export class SASViyaApiClient {
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
       .catch((err) => {
-        if (err instanceof CertificateError) throw err
+        if (
+          err instanceof CertificateError ||
+          err?.deploymentTransportError ||
+          (err?.response?.status >= 300 && err?.response?.status < 400)
+        )
+          throw err
         return { result: null }
       })
 
@@ -1285,7 +1503,12 @@ export class SASViyaApiClient {
     const { result: folder } = await this.requestClient
       .get<Folder>(`${this.serverUrl}${url}`, accessToken)
       .catch((err) => {
-        if (err instanceof CertificateError) throw err
+        if (
+          err instanceof CertificateError ||
+          err?.deploymentTransportError ||
+          (err?.response?.status >= 300 && err?.response?.status < 400)
+        )
+          throw err
         return { result: null }
       })
 

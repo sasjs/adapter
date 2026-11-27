@@ -60,6 +60,9 @@ describe('SASjs.deployServicePack request count', () => {
       'test context',
       requestClient
     )
+    jest
+      .spyOn((sasjs as any).requestClient, 'forDeployment')
+      .mockReturnValue(requestClient)
 
     jest.spyOn(requestClient, 'get').mockImplementation((url: string) => {
       gets.push(url)
@@ -79,7 +82,10 @@ describe('SASjs.deployServicePack request count', () => {
           result: { id: `created${++counter}`, links: [] }
         } as any)
 
-      return Promise.resolve({ result: { id: 'written', links: [] } } as any)
+      return Promise.resolve({
+        status: 201,
+        result: { id: 'written', links: [] }
+      } as any)
     })
   })
 

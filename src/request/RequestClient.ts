@@ -43,6 +43,7 @@ export class RequestClient implements HttpClient {
   protected fileUploadCsrfToken: CsrfToken | undefined
   protected httpClient!: AxiosInstance
   private isRecoveringFromNetworkError = false
+  private deploymentTransport = false
   private mockReadiness = captureMockReadiness()
 
   constructor(
@@ -61,7 +62,74 @@ export class RequestClient implements HttpClient {
     }
   }
 
+  /** Create an isolated transport which never follows deployment redirects. */
+  public forDeployment(
+    baseUrl: string,
+    httpsAgentOptions?: https.AgentOptions,
+    requestsLimit?: number,
+    verboseMode?: VerboseMode,
+    copyCsrf = false
+  ): RequestClient {
+    if (
+      copyCsrf &&
+      baseUrl.replace(/\/$/, '') !== this.getBaseUrl().replace(/\/$/, '')
+    ) {
+      throw new Error('Cannot copy deployment CSRF credentials across servers.')
+    }
+    const client = new RequestClient(
+      baseUrl,
+      httpsAgentOptions,
+      requestsLimit,
+      verboseMode
+    )
+    client.deploymentTransport = true
+    if (copyCsrf) {
+      client.csrfToken = { ...this.csrfToken }
+      client.fileUploadCsrfToken = this.fileUploadCsrfToken
+        ? { ...this.fileUploadCsrfToken }
+        : undefined
+    }
+    if (isNode()) {
+      client.httpClient.defaults.maxRedirects = 0
+      client.httpClient.defaults.adapter = 'http'
+    } else {
+      let supportsRedirectError = false
+      try {
+        supportsRedirectError =
+          typeof fetch === 'function' &&
+          typeof Request === 'function' &&
+          new Request('https://example.invalid/', { redirect: 'error' })
+            .redirect === 'error'
+      } catch {
+        supportsRedirectError = false
+      }
+      if (!supportsRedirectError) {
+        throw new Error(
+          'Viya deployment requires browser Fetch with redirect support.'
+        )
+      }
+      client.httpClient.defaults.adapter = 'fetch'
+      client.httpClient.defaults.fetchOptions = { redirect: 'error' }
+    }
+    client.httpClient.defaults.validateStatus = (status) =>
+      status >= 200 && status <= 401 && (status < 300 || status >= 400)
+    return client
+  }
+
+  /** Fail closed if a replacement is attempted outside a hardened deployment. */
+  public assertDeploymentTransport(serverUrl: string) {
+    if (
+      !this.deploymentTransport ||
+      serverUrl.replace(/\/$/, '') !== this.getBaseUrl().replace(/\/$/, '')
+    ) {
+      throw new Error(
+        'File replacement requires a matching hardened deployment transport.'
+      )
+    }
+  }
+
   public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
+    this.deploymentTransport = false
     this.createHttpClient(baseUrl, httpsAgentOptions)
   }
 
@@ -231,7 +299,7 @@ export class RequestClient implements HttpClient {
     contentType = 'application/json',
     overrideHeaders: { [key: string]: string | number } = {},
     additionalSettings: { [key: string]: string | number } = {}
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status?: number }> {
     const headers = {
       ...this.getHeaders(accessToken, contentType),
       ...overrideHeaders
@@ -260,7 +328,7 @@ export class RequestClient implements HttpClient {
     data: any,
     accessToken: string | undefined,
     overrideHeaders: { [key: string]: string | number } = {}
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status?: number }> {
     const headers = {
       ...this.getHeaders(accessToken, 'application/json'),
       ...overrideHeaders
@@ -472,7 +540,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     return response
   }
 
-  private handleAxiosError = (error: AxiosError) => {
+  private handleAxiosError = (error: AxiosError): AxiosError => {
     if (error instanceof MockReadinessError || error?.code === 'ERR_CANCELED')
       throw error
     // Message indicating absent value.
@@ -507,9 +575,10 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
 
     const { status, request: req, data: resData } = fallbackResponse
-    const { _header: reqHeaders, res } = req
-
-    const resHeaders = this.formatHeaders(res.rawHeaders)
+    const reqHeaders = req?._header ?? fallbackRequest._header
+    const resHeaders = this.formatHeaders(
+      req?.res?.rawHeaders ?? [noValueMessage]
+    )
     const parsedResBody = this.parseInterceptedBody(resData)
 
     getLogger().info(`HTTP Request (first 50 lines):
@@ -521,7 +590,7 @@ HTTP Response (first 50 lines):
 ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 `)
 
-    return error
+    throw error
   }
 
   // Converts an array of strings into a single string with the following format:
@@ -635,6 +704,12 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     debug: boolean = false
   ) => {
     const response = e.response as AxiosResponse
+
+    // Refused redirects look like network errors in Fetch; never retry writes.
+    if (this.deploymentTransport && !response) {
+      e.deploymentTransportError = true
+      throw e
+    }
 
     if (e instanceof AuthorizeError) {
       const res = await this.httpClient
