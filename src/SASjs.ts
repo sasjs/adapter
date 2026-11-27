@@ -1270,7 +1270,10 @@ export default class SASjs {
     accessToken?: string,
     sasApiClient?: SASViyaApiClient,
     isForced?: boolean,
-    progress: DeployProgressState = { index: 0, total: 0 }
+    progress: DeployProgressState = {
+      index: 0,
+      total: countMembers(membersJson)
+    }
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
