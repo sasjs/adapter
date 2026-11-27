@@ -45,6 +45,7 @@ import {
   FileUploader
 } from './job-execution'
 import { AxiosResponse, AxiosError } from 'axios'
+import { validateForcedServicePack } from './utils/validateForcedServicePack'
 
 interface ExecuteScriptParams {
   linesOfCode: string[]
@@ -914,19 +915,9 @@ export default class SASjs {
    * @param serverUrl - the server on which to deploy the folders and services.
    * If not provided, is taken from SASjsConfig.
    * @param accessToken - an optional access token to be passed in when
-   * using this function from the command line. Viya deployment rejects all
-   * redirects; browsers require Fetch with redirect: 'error' support.
-   * @param isForced - on Viya, replace existing pack folders and update matching
-   * files in place. Requires exclusive deployment ownership of appLoc: do not
-   * move or rename files while deploying. The file ETag does not bind folder
-   * membership atomically. Existing file URI, properties and content type are
-   * retained rather than applying type registry properties as on file creation;
-   * modification metadata can change.
-   * @param onProgress - optional callback invoked once per member, immediately
-   * before the member is written, with its name, folder, type and position. A
-   * Viya deploy is one REST call per folder, file and job definition, run in
-   * sequence, so this is the only signal a caller has that a large pack is
-   * still moving rather than hung.
+   * using this function from the command line.
+   * @param isForced - move the entire existing appLoc to the recycle bin before deploying (including content omitted from this pack); defaults to false. Requires exclusive control of appLoc, its parent and recycle bin. A failure may leave an incomplete app; see README for recovery.
+   * @param onProgress - called immediately before each pack member is written, with its name, folder, type and 1-based position.
    */
   public async deployServicePack(
     serviceJson: any,
@@ -940,28 +931,18 @@ export default class SASjs {
 
     let sasApiClient: any = null
 
-    if (serverUrl || appLoc) {
-      if (!serverUrl) serverUrl = this.sasjsConfig.serverUrl
-      if (!appLoc) appLoc = this.sasjsConfig.appLoc
+    if (serverUrl !== undefined || appLoc !== undefined) {
+      if (serverUrl === undefined) serverUrl = this.sasjsConfig.serverUrl
+      if (appLoc === undefined) appLoc = this.sasjsConfig.appLoc
 
       if (this.sasjsConfig.serverType === ServerType.SasViya) {
-        // Use an isolated transport so redirects cannot carry credentials away
-        // from the selected deployment server, including across CSRF retries.
-        const sameServer =
-          serverUrl.replace(/\/$/, '') ===
-          this.sasjsConfig.serverUrl.replace(/\/$/, '')
-        const deployRequestClient = this.requestClient!.forDeployment(
-          serverUrl,
-          this.sasjsConfig.httpsAgentOptions,
-          this.sasjsConfig.requestHistoryLimit,
-          this.sasjsConfig.verbose,
-          sameServer
-        )
         sasApiClient = new SASViyaApiClient(
-          serverUrl.replace(/\/$/, ''),
+          serverUrl,
           appLoc,
           this.sasjsConfig.contextName,
-          deployRequestClient
+          serverUrl === this.sasjsConfig.serverUrl
+            ? this.requestClient!
+            : new RequestClient(serverUrl, this.sasjsConfig.httpsAgentOptions)
         )
         sasApiClient.debug = this.sasjsConfig.debug
       } else if (this.sasjsConfig.serverType === ServerType.Sas9) {
@@ -982,26 +963,99 @@ export default class SASjs {
 
       serverUrl = sasClientConfig.serverUrl
       appLoc = sasClientConfig.rootFolderName as string
-      if (this.sasjsConfig.serverType === ServerType.SasViya) {
-        const deployRequestClient = this.requestClient!.forDeployment(
-          serverUrl!,
-          this.sasjsConfig.httpsAgentOptions,
-          this.sasjsConfig.requestHistoryLimit,
-          this.sasjsConfig.verbose,
-          true
+    }
+
+    const safeServer = (() => {
+      try {
+        const origin = new URL(
+          serverUrl || (typeof location !== 'undefined' ? location.href : '')
         )
-        sasApiClient = new SASViyaApiClient(
-          serverUrl!.replace(/\/$/, ''),
-          appLoc!,
-          this.sasjsConfig.contextName,
-          deployRequestClient
+        return (
+          (origin.protocol === 'https:' || origin.protocol === 'http:') &&
+          !origin.username &&
+          !origin.password &&
+          !origin.search &&
+          !origin.hash
         )
-        sasApiClient.debug = this.sasjsConfig.debug
+      } catch {
+        return false
       }
+    })()
+    if (isForced && !safeServer)
+      throw new Error('Invalid deployment server URL')
+
+    if (isForced) {
+      validateForcedServicePack(appLoc!, serviceJson)
+      const deploymentClient = new RequestClient(
+        serverUrl!,
+        this.sasjsConfig.httpsAgentOptions
+      )
+      if (serverUrl === this.sasjsConfig.serverUrl)
+        deploymentClient.copyCsrfFrom(this.requestClient!)
+      deploymentClient.restrictDeploymentTransport()
+      const api = new SASViyaApiClient(
+        serverUrl!,
+        appLoc!,
+        this.sasjsConfig.contextName,
+        deploymentClient
+      )
+      this.sasViyaApiClient?.invalidateFolderCache()
+      try {
+        const { parentId, recycled } = await api.recycleDeploymentFolder(
+          appLoc!,
+          accessToken
+        )
+        try {
+          const parent = appLoc!.slice(0, appLoc!.lastIndexOf('/'))
+          const name = appLoc!.slice(appLoc!.lastIndexOf('/') + 1)
+          const root = await api.createFolder(
+            name,
+            parent,
+            `/folders/folders/${parentId}`,
+            accessToken,
+            false
+          )
+          if (
+            !root ||
+            root.name !== name ||
+            root.parentFolderUri !== `/folders/folders/${parentId}` ||
+            root.type !== 'folder' ||
+            typeof root.id !== 'string' ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              root.id
+            )
+          )
+            throw new Error('Invalid created app folder identity')
+          await this.createFoldersAndServices(
+            appLoc!,
+            serviceJson.members,
+            accessToken,
+            api,
+            false,
+            {
+              onProgress,
+              index: 0,
+              total: countMembers(serviceJson.members),
+              strict: true
+            },
+            `/folders/folders/${root.id}`
+          )
+        } catch (e) {
+          const recovery = recycled
+            ? `Original folder ${recycled.identity} is in recycle bin ${recycled.binId} as '${recycled.recycleName}'.`
+            : 'No prior folder was recycled.'
+          throw new Error(
+            `Deployment may be partial at ${appLoc}. ${recovery} ${e instanceof Error ? e.message : String(e)}`
+          )
+        }
+      } finally {
+        this.sasViyaApiClient?.invalidateFolderCache()
+      }
+      return
     }
 
     // members of type 'folder' should be processed first
-    if (serviceJson.members[0].members) {
+    if (serviceJson.members[0]?.members) {
       serviceJson.members[0].members.sort((member: { type: string }) =>
         member.type === 'folder' ? -1 : 1
       )
@@ -1015,11 +1069,7 @@ export default class SASjs {
       accessToken,
       sasApiClient,
       isForced,
-      {
-        onProgress,
-        index: 0,
-        total: countMembers(members)
-      }
+      { onProgress, index: 0, total: countMembers(members), strict: false }
     )
   }
 
@@ -1306,15 +1356,16 @@ export default class SASjs {
     isForced?: boolean,
     progress: DeployProgressState = {
       index: 0,
-      total: countMembers(membersJson)
+      total: countMembers(membersJson),
+      strict: false
     },
     parentFolderUri?: string
   ) {
     await asyncForEach(membersJson, async (member: any) => {
+      let childUri: string | undefined
       switch (member.type) {
         case 'folder': {
           reportMember(progress, 'folder', member.name, parentFolder)
-
           const folder = await this.createFolder(
             member.name,
             parentFolder,
@@ -1323,57 +1374,25 @@ export default class SASjs {
             sasApiClient,
             isForced
           )
-
-          if (member.members && member.members.length) {
-            const folderPath = `${parentFolder}/${member.name}`
-
-            await this.createFoldersAndServices(
-              folderPath,
-              member.members,
-              accessToken,
-              sasApiClient,
-              isForced,
-              progress,
-              // the folder the deploy has just created, so its children do not
-              // each resolve the same path back to a URI
-              folder?.id ? `/folders/folders/${folder.id}` : undefined
+          if (progress.strict) {
+            if (
+              !folder ||
+              folder.name !== member.name ||
+              folder.parentFolderUri !== parentFolderUri ||
+              folder.type !== 'folder' ||
+              typeof folder.id !== 'string' ||
+              !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                folder.id
+              )
             )
+              throw new Error('Invalid created folder identity')
           }
+          childUri = folder?.id ? `/folders/folders/${folder.id}` : undefined
           break
         }
         case 'file':
           reportMember(progress, 'file', member.name, parentFolder)
-          try {
-            await this.createFile(
-              member.name,
-              member.code,
-              parentFolder,
-              parentFolderUri,
-              accessToken,
-              sasApiClient
-            )
-          } catch (err: any) {
-            if (
-              !isForced ||
-              err?.response?.status !== 409 ||
-              err?.config?.method?.toLowerCase() !== 'post' ||
-              !/^\/files\/files\?[^#]*#rawUpload$/.test(err?.config?.url || '')
-            )
-              throw err
-            const client = sasApiClient || this.sasViyaApiClient!
-            await client.replaceConflictingFile(
-              member.name,
-              member.code,
-              parentFolder,
-              parentFolderUri,
-              accessToken,
-              err
-            )
-          }
-          break
-        case 'service':
-          reportMember(progress, 'service', member.name, parentFolder)
-          await this.createJobDefinition(
+          await this.createFile(
             member.name,
             member.code,
             parentFolder,
@@ -1382,9 +1401,33 @@ export default class SASjs {
             sasApiClient
           )
           break
+        case 'service': {
+          reportMember(progress, 'service', member.name, parentFolder)
+          const response = await this.createJobDefinition(
+            member.name,
+            member.code,
+            parentFolder,
+            parentFolderUri,
+            accessToken,
+            sasApiClient
+          )
+          if (progress.strict && (!response || response.status !== 201))
+            throw new Error('Job definition creation did not return success')
+          break
+        }
         default:
           throw new Error(`Unidentified member '${member.name}' provided.`)
       }
+      if (member.type === 'folder' && member.members && member.members.length)
+        await this.createFoldersAndServices(
+          `${parentFolder}/${member.name}`,
+          member.members,
+          accessToken,
+          sasApiClient,
+          isForced,
+          progress,
+          childUri
+        )
     })
   }
 
@@ -1439,7 +1482,6 @@ export default class SASjs {
     return new Tables(table, macroName)
   }
 }
-
 /**
  * Position of a deploy, threaded through the recursive walk.
  *
@@ -1451,6 +1493,7 @@ interface DeployProgressState {
   onProgress?: (progress: DeployProgress) => void
   index: number
   total: number
+  strict: boolean
 }
 
 /**

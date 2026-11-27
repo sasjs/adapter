@@ -46,14 +46,15 @@ describe('SASjs.deployServicePack', () => {
       contextName: 'test context'
     })
 
-    jest
-      .spyOn((sasjs as any).requestClient, 'forDeployment')
-      .mockReturnValue(undefined)
-    apiClient = SASViyaApiClient.prototype
-    jest.spyOn(SASViyaApiClient.prototype, 'getConfig').mockReturnValue({
-      serverUrl: 'https://test.com',
-      rootFolderName: appLoc
-    } as any)
+    // deployServicePack reads the location from the client it already holds when
+    // no serverUrl/appLoc is passed, so the stubbed client supplies the root.
+    apiClient = new SASViyaApiClient(
+      'https://test.com',
+      appLoc,
+      'test context',
+      undefined as any
+    )
+    ;(sasjs as any).sasViyaApiClient = apiClient
 
     writes = []
 

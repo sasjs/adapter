@@ -204,12 +204,7 @@ Connection: close
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      try {
-        requestClient['handleAxiosError'](mockedAxiosError)
-        throw new Error('Expected rejection')
-      } catch (error) {
-        expect(error).toBe(mockedAxiosError)
-      }
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const noValueMessage = 'Not provided'
       const expectedLog = `HTTP Request (first 50 lines):
@@ -276,12 +271,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      try {
-        requestClient['handleAxiosError'](mockedAxiosError)
-        throw new Error('Expected rejection')
-      } catch (error) {
-        expect(error).toBe(mockedAxiosError)
-      }
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const noValueMessage = 'Not provided'
       const expectedLog = `HTTP Request (first 50 lines):
@@ -331,12 +321,7 @@ ${noValueMessage}
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      try {
-        requestClient['handleAxiosError'](mockedAxiosError)
-        throw new Error('Expected rejection')
-      } catch (error) {
-        expect(error).toBe(mockedAxiosError)
-      }
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}
@@ -389,12 +374,7 @@ ${resHeaders[0]}: ${resHeaders[1]}${
       } as AxiosError
 
       const requestClient = new RequestClient('')
-      try {
-        requestClient['handleAxiosError'](mockedAxiosError)
-        throw new Error('Expected rejection')
-      } catch (error) {
-        expect(error).toBe(mockedAxiosError)
-      }
+      requestClient['handleAxiosError'](mockedAxiosError)
 
       const expectedLog = `HTTP Request (first 50 lines):
 ${reqHeaders}${requestClient['parseInterceptedBody'](reqData)}

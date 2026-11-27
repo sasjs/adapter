@@ -57,6 +57,29 @@ describe('SASViyaApiClient', () => {
     expect(urls.filter((url) => url.includes('path=/app'))).toEqual([])
   })
 
+  it('replaces an existing child when the parent URI and path are supplied', async () => {
+    const lookup = jest
+      .spyOn(sasViyaApiClient as any, 'getFolderUri')
+      .mockResolvedValue('/folders/folders/existing' as never)
+    const remove = jest
+      .spyOn(sasViyaApiClient, 'deleteFolder')
+      .mockResolvedValue(undefined as any)
+    try {
+      await sasViyaApiClient.createFolder(
+        'child',
+        '/Public/app',
+        '/folders/folders/parent',
+        'token',
+        true
+      )
+      expect(lookup).toHaveBeenCalledWith('/Public/app/child', 'token')
+      expect(remove).toHaveBeenCalledWith('/Public/app/child', 'token')
+    } finally {
+      lookup.mockRestore()
+      remove.mockRestore()
+    }
+  })
+
   it('should throw an error when ', async () => {
     const testMessage1 = 'test message 1'
     const testMessage2 = 'test message 2.'

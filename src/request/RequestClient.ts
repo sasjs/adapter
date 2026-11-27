@@ -62,72 +62,6 @@ export class RequestClient implements HttpClient {
     }
   }
 
-  /** Create an isolated transport which never follows deployment redirects. */
-  public forDeployment(
-    baseUrl: string,
-    httpsAgentOptions?: https.AgentOptions,
-    requestsLimit?: number,
-    verboseMode?: VerboseMode,
-    copyCsrf = false
-  ): RequestClient {
-    if (
-      copyCsrf &&
-      baseUrl.replace(/\/$/, '') !== this.getBaseUrl().replace(/\/$/, '')
-    ) {
-      throw new Error('Cannot copy deployment CSRF credentials across servers.')
-    }
-    const client = new RequestClient(
-      baseUrl,
-      httpsAgentOptions,
-      requestsLimit,
-      verboseMode
-    )
-    client.deploymentTransport = true
-    if (copyCsrf) {
-      client.csrfToken = { ...this.csrfToken }
-      client.fileUploadCsrfToken = this.fileUploadCsrfToken
-        ? { ...this.fileUploadCsrfToken }
-        : undefined
-    }
-    if (isNode()) {
-      client.httpClient.defaults.maxRedirects = 0
-      client.httpClient.defaults.adapter = 'http'
-    } else {
-      let supportsRedirectError = false
-      try {
-        supportsRedirectError =
-          typeof fetch === 'function' &&
-          typeof Request === 'function' &&
-          new Request('https://example.invalid/', { redirect: 'error' })
-            .redirect === 'error'
-      } catch {
-        supportsRedirectError = false
-      }
-      if (!supportsRedirectError) {
-        throw new Error(
-          'Viya deployment requires browser Fetch with redirect support.'
-        )
-      }
-      client.httpClient.defaults.adapter = 'fetch'
-      client.httpClient.defaults.fetchOptions = { redirect: 'error' }
-    }
-    client.httpClient.defaults.validateStatus = (status) =>
-      status >= 200 && status <= 401 && (status < 300 || status >= 400)
-    return client
-  }
-
-  /** Fail closed if a replacement is attempted outside a hardened deployment. */
-  public assertDeploymentTransport(serverUrl: string) {
-    if (
-      !this.deploymentTransport ||
-      serverUrl.replace(/\/$/, '') !== this.getBaseUrl().replace(/\/$/, '')
-    ) {
-      throw new Error(
-        'File replacement requires a matching hardened deployment transport.'
-      )
-    }
-  }
-
   public setConfig(baseUrl: string, httpsAgentOptions?: https.AgentOptions) {
     this.deploymentTransport = false
     this.createHttpClient(baseUrl, httpsAgentOptions)
@@ -169,6 +103,65 @@ export class RequestClient implements HttpClient {
       if (!name) continue
       document.cookie = `${name}=; Max-Age=0; Path=/;`
     }
+  }
+
+  public copyCsrfFrom(source: RequestClient) {
+    const locationBase =
+      typeof location !== 'undefined' ? location.href : undefined
+    const targetUrl = new URL(
+      this.getBaseUrl() || locationBase || '',
+      locationBase
+    )
+    const sourceUrl = new URL(
+      source.getBaseUrl() || locationBase || '',
+      locationBase
+    )
+    if (targetUrl.origin !== sourceUrl.origin)
+      throw new Error('Cannot copy cross-origin CSRF state')
+    this.csrfToken = { ...source.csrfToken }
+  }
+
+  /** Restrict a dedicated deployment client to its origin and prohibit redirects. */
+  public restrictDeploymentTransport() {
+    const locationBase =
+      typeof location !== 'undefined' ? location.href : undefined
+    const base = new URL(this.getBaseUrl() || locationBase || '', locationBase)
+    this.httpClient.defaults.maxRedirects = 0
+    if (!isNode()) {
+      if (
+        typeof Request === 'undefined' ||
+        new Request(base.href, { redirect: 'error' }).redirect !== 'error'
+      )
+        throw new Error('Safe deployment requires fetch redirect support')
+      this.httpClient.defaults.adapter = 'fetch'
+      ;(this.httpClient.defaults as any).fetchOptions = { redirect: 'error' }
+    }
+    this.httpClient.interceptors.request.use((config) => {
+      if (
+        config.data &&
+        typeof config.data.getBuffer === 'function' &&
+        typeof config.data.getBoundary === 'function'
+      ) {
+        const boundary = config.data.getBoundary()
+        config.data = config.data.getBuffer()
+        config.headers.set(
+          'Content-Type',
+          `multipart/form-data; boundary=${boundary}`
+        )
+      }
+      const url = new URL(config.url || '', config.baseURL || base.href)
+      if (
+        url.origin !== base.origin ||
+        /[\\\u0000-\u001f\u007f]/.test(config.url || '')
+      )
+        throw new Error('Unsafe deployment request URL')
+      return config
+    })
+    this.deploymentTransport = true
+  }
+
+  public isDeploymentTransport() {
+    return this.deploymentTransport
   }
 
   public getBaseUrl() {
@@ -328,7 +321,7 @@ export class RequestClient implements HttpClient {
     data: any,
     accessToken: string | undefined,
     overrideHeaders: { [key: string]: string | number } = {}
-  ): Promise<{ result: T; etag: string; status?: number }> {
+  ): Promise<{ result: T; etag: string }> {
     const headers = {
       ...this.getHeaders(accessToken, 'application/json'),
       ...overrideHeaders
@@ -369,7 +362,7 @@ export class RequestClient implements HttpClient {
     data: any = {},
     accessToken?: string,
     overrideHeaders: { [key: string]: string | number } = {}
-  ): Promise<{ result: T; etag: string }> {
+  ): Promise<{ result: T; etag: string; status: number }> {
     const headers = {
       ...this.getHeaders(accessToken, 'application/json'),
       ...overrideHeaders
@@ -383,7 +376,7 @@ export class RequestClient implements HttpClient {
       })
       .catch(async (e: any) => {
         return await this.handleError(e, () =>
-          this.patch<T>(url, data, accessToken)
+          this.patch<T>(url, data, accessToken, overrideHeaders)
         )
       })
   }
@@ -540,7 +533,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     return response
   }
 
-  private handleAxiosError = (error: AxiosError): AxiosError => {
+  private handleAxiosError = (error: AxiosError) => {
     if (error instanceof MockReadinessError || error?.code === 'ERR_CANCELED')
       throw error
     // Message indicating absent value.
@@ -575,10 +568,9 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
 
     const { status, request: req, data: resData } = fallbackResponse
-    const reqHeaders = req?._header ?? fallbackRequest._header
-    const resHeaders = this.formatHeaders(
-      req?.res?.rawHeaders ?? [noValueMessage]
-    )
+    const { _header: reqHeaders, res } = req
+
+    const resHeaders = this.formatHeaders(res.rawHeaders)
     const parsedResBody = this.parseInterceptedBody(resData)
 
     getLogger().info(`HTTP Request (first 50 lines):
@@ -590,7 +582,7 @@ HTTP Response (first 50 lines):
 ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 `)
 
-    throw error
+    return error
   }
 
   // Converts an array of strings into a single string with the following format:
@@ -705,11 +697,20 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
   ) => {
     const response = e.response as AxiosResponse
 
-    // Refused redirects look like network errors in Fetch; never retry writes.
-    if (this.deploymentTransport && !response) {
-      e.deploymentTransportError = true
-      throw e
+    // A missing response may mean a write succeeded or a redirect was blocked.
+    // Retrying would repeat an operation whose outcome is unknown.
+    if (this.deploymentTransport && !response && e.isAxiosError) {
+      throw markResponseReceived(e, false)
     }
+
+    // These recovery callbacks recursively replay the original operation and can
+    // repeat an uncertain deployment write. Only the bounded CSRF challenge
+    // retry below is permitted on the restricted transport.
+    if (
+      this.deploymentTransport &&
+      (e instanceof AuthorizeError || e instanceof InvalidSASjsCsrfError)
+    )
+      throw e
 
     if (e instanceof AuthorizeError) {
       const res = await this.httpClient
@@ -768,6 +769,28 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
 
     if (response?.status === 403 || response?.status === 449) {
+      if (this.deploymentTransport) {
+        const challenge = this.parseCsrfToken(response)
+        const previous =
+          challenge && response.config.headers?.get(challenge.headerName)
+        if (
+          !challenge?.headerName ||
+          !/^x-[a-z0-9-]*(?:csrf|xsrf)[a-z0-9-]*$/.test(challenge.headerName) ||
+          !challenge.value ||
+          previous === challenge.value
+        )
+          throw markResponseReceived(e, true)
+        this.csrfToken = challenge
+        try {
+          const config = response.config
+          config.headers.set(challenge.headerName, challenge.value)
+          const retried = await this.httpClient.request(config)
+          throwIfError(retried)
+          return this.parseResponse(retried)
+        } catch (retryError: any) {
+          throw markResponseReceived(retryError, Boolean(retryError.response))
+        }
+      }
       this.parseAndSetCsrfToken(response)
 
       if (this.csrfToken.headerName && this.csrfToken.value) {
@@ -823,10 +846,7 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 
         return await callback()
       } catch (retryError) {
-        // Session could not be recovered — surface LoginRequiredError. The
-        // retry itself may have reached the server and been refused, which is
-        // not the same as never arriving: the marker follows the retry's own
-        // answer, not the opaque network error that started this.
+        // Session could not be recovered — surface LoginRequiredError
         throw markResponseReceived(
           new LoginRequiredError(),
           responseWasReceived(retryError)
@@ -837,7 +857,6 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
     }
 
     if (e.message) throw markResponseReceived(e, Boolean(response))
-
     throw markResponseReceived(
       prefixMessage(e, 'Error while handling error. '),
       Boolean(response)
@@ -917,17 +936,6 @@ ${resHeaders}${parsedResBody ? `\n\n${parsedResBody}` : ''}
 const isTokenRefreshUrl = (url?: string) =>
   !!url && /(^|\/)auth\/refresh(\?|$)/.test(url)
 
-/**
- * Raises the error a response status implies, marked as one built from a
- * response.
- *
- * The marking has to happen here: every error below is a new object carrying
- * the body, so the axios error - the thing that knew a response had arrived -
- * is gone by the time a caller catches it (sasjs/adapter#895). A 401 from a
- * refresh route is named by `throwForStatus` as a rejected refresh token
- * (sasjs/adapter#975); this marks it as an answer that arrived, so a transport
- * failure and a refusal are not reported with the same title.
- */
 export const throwIfError = (response: AxiosResponse) => {
   try {
     throwForStatus(response)

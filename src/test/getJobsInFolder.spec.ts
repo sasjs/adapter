@@ -72,6 +72,33 @@ describe('SASViyaApiClient.getJobsInFolder', () => {
     expect(second).toEqual(members)
   })
 
+  it('does not retain an old in-flight listing after cache invalidation', async () => {
+    const { client, requestClient } = makeClient()
+    let release!: (value: any) => void
+    let started!: () => void
+    const waiting = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    ;(requestClient.get as jest.Mock)
+      .mockResolvedValueOnce({ result: folder })
+      .mockImplementationOnce(() => {
+        started()
+        return new Promise((resolve) => {
+          release = resolve
+        })
+      })
+      .mockResolvedValueOnce({ result: { id: 'new', memberCount: 1 } })
+      .mockResolvedValueOnce({ result: { items: [{ name: 'new-job' }] } })
+    const lookup = client.getJobsInFolder('/Public/app')
+    await waiting
+    client.invalidateFolderCache()
+    release({ result: { items: [{ name: 'old-job' }] } })
+    expect(await lookup).toEqual([{ name: 'new-job' }])
+    expect(await client.getJobsInFolder('/Public/app')).toEqual([
+      { name: 'new-job' }
+    ])
+  })
+
   it('asks for as many members as the folder holds when that exceeds 500', async () => {
     const { client, requestClient } = makeClient()
     ;(requestClient.get as jest.Mock)

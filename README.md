@@ -46,29 +46,17 @@ parmcards4;
 
 You now have a simple web app with a backend service!
 
-## Forced Viya deployments
+## Forced Viya service-pack deployment
 
-`deployServicePack(..., isForced: true)` replaces existing pack folders and,
-for a recognized duplicate file conflict, updates the existing file's content
-in place at the existing file URI, using its current content type. The content
-update does not run the creation-time file-type registry properties patch. Viya
-may update metadata such as modification time; verify other metadata and effective
-authorization for your environment rather than assuming they are unchanged.
-Unrecognized conflicts and ambiguous file matches fail instead of overwriting.
+The ordinary SASjs CLI `deploy` passes force for Viya; `sasjs servicepack deploy` defaults to non-forced, and its `-f` option also forces replacement. A forced `deployServicePack(..., true)` moves **the entire existing `appLoc` folder**, including content not present in the pack, into the deploying user's recycle bin, then creates a new folder and writes the pack. This is not a merge or a single-file update. The adapter API and servicepack CLI accept partial packs: **forcing a partial pack still replaces all of appLoc**, and omitted content remains only in the recycle bin. Check the selected server, appLoc, pack completeness and permissions before running it.
 
-Viya service-pack deployment rejects all HTTP redirects, including same-origin
-redirects. Use the direct Viya endpoint. In browsers this requires Fetch with
-support for `redirect: 'error'`; XHR and older browsers cannot enforce it. A
-service worker or Fetch polyfill must also honor that setting. Browsers report
-refused redirects as network errors; deployment does not retry those errors.
-Browser cross-origin deployments still require the server's CORS configuration,
-including exposure of ETag and CSRF response headers when needed.
+Expect downtime between the move and completion. New folders, files and jobs have new identities; links to old IDs may break, and permissions and other folder/resource metadata may not carry over. Verify and reapply permissions as needed. The parent must already exist. Root, top-level shared folders, user homes, ambiguous paths and unsafe member names are rejected; use a dedicated app folder. The deploying account needs permission to read the target and its parent, inspect and write its recycle bin, move the app, and create all pack resources.
 
-The deployment must have **exclusive ownership of appLoc**: run only one deploy
-for it at a time and do not move or rename its files during deployment. The
-conditional content update uses the file's ETag, but this does not atomically
-bind its separate folder membership. A concurrent folder move or rename can
-therefore cause the wrong file to be updated despite the ETag check.
+Forced deployment prevalidates job names to at most 100 Unicode characters, including nested jobs, before moving anything. This conservative limit supports [Viya 3.5](https://developer.sas.com/rest-apis/jobDefinitions/createJobDefinition?cadence=Viya_35), whose job name limit is 100; the newer [Viya job definition API](https://developer.sas.com/rest-apis/jobDefinitions-v4/createJobDefinition/index.md) permits 255. Names between 101 and 255 are therefore rejected even on newer deployments. File names in forced packs must use printable ASCII and cannot contain double quotes, in addition to the general unsafe-name restrictions. Unicode and quoted file names are rejected before any request rather than encoded or renamed: the existing upload sends the name in a quoted HTTP header, and Viya's handling of alternate encodings has not been established. Rename those files and update references before forcing deployment; non-forced uploads are unchanged. A dedicated app under `/Users/<user>/My Folder` is supported, but the personal folder itself cannot be replaced.
+
+When a file type requires a metadata patch, forced deployment requires the create response to identify the new file, provide its exact patch URI and a strong ETag; the patch is conditional on that ETag. Missing or unsafe identity or ETag fails the deployment, potentially leaving a partial app. Restricted deployment retries a CSRF denial at most once, only for a fresh CSRF challenge. Forced creation requires the documented HTTP 201 response. Recycle-bin listings before and after the move must include a consistent count, although the API permits count to be omitted. An invalid pre-move listing stops the operation before moving the app; if a later listing omits the count or is otherwise invalid, verification fails after the move and the error identifies the original folder and recycle bin for inspection before retrying.
+
+The deployment is not transactional and does not automatically roll back. On failure after a move, the error identifies the original folder and recycle bin; the new appLoc may be incomplete. Inspect both locations, remove or move the partial replacement as appropriate, then restore the original folder from the deploying user's recycle bin. If the move response is lost, its outcome is uncertain: inspect by the reported original folder ID before retrying. Keep exclusive control of the appLoc, its parent, and recycle destination for the entire operation; concurrent moves, renames, writes or deployments can invalidate checks. A folder ETag protects the move only to the extent Viya enforces it, not all cross-resource races.
 
 ## Detailed Overview
 

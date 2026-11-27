@@ -6,6 +6,8 @@ const path = require('path')
 
 const folderId = 'cc4760b1-e3de-40d4-916c-950cb4e40128'
 const fileId = '11111111-2222-3333-4444-555555555555'
+const parentId = '22222222-2222-4222-8222-222222222222'
+const binId = '33333333-3333-4333-8333-333333333333'
 const bundle = path.join(__dirname, '../../build/dist/sasjs-adapter.js')
 
 // Run after `npm run build` with SASJS_BROWSER_DEPLOY_TEST=1. This opt-in
@@ -18,7 +20,8 @@ browserSuite('browser Viya deployment over real HTTP', () => {
     requests = [],
     redirect,
     challenge,
-    replace
+    dropUpload,
+    moved
   let nextId = 0,
     pending = new Map()
   const send = (method, params = {}, sessionId) =>
@@ -70,6 +73,19 @@ browserSuite('browser Viya deployment over real HTTP', () => {
           return res.end(fs.readFileSync(bundle))
         }
         if (
+          dropUpload &&
+          req.method === 'POST' &&
+          req.url.startsWith('/files/files')
+        ) {
+          dropUpload = false
+          res.writeHead(201, {
+            'Content-Type': 'application/json',
+            'Content-Length': '100'
+          })
+          res.write('{')
+          return setTimeout(() => res.destroy(), 20)
+        }
+        if (
           challenge &&
           req.method === 'POST' &&
           req.url.startsWith('/files/files')
@@ -91,58 +107,65 @@ browserSuite('browser Viya deployment over real HTTP', () => {
         }
         res.setHeader('Content-Type', 'application/json')
         if (req.url.startsWith('/types/types'))
-          return res.end(
-            JSON.stringify({
-              items: [
-                { extensions: ['txt'], name: 'file', properties: { x: 'y' } }
-              ]
-            })
-          )
-        if (req.url.startsWith('/folders/folders/@item'))
-          return res.end(JSON.stringify({ id: folderId }))
-        if (req.url.includes('/members?'))
-          return res.end(
-            JSON.stringify({
-              count: 1,
-              items: [
-                {
-                  name: 'asset.txt',
-                  contentType: 'file',
-                  uri: `/files/files/${fileId}`
-                }
-              ]
-            })
-          )
-        if (req.method === 'GET' && req.url === `/files/files/${fileId}`) {
+          return res.end(JSON.stringify({ items: [] }))
+        if (req.url.startsWith('/folders/folders/@item')) {
+          const p = new URL(req.url, origin).searchParams.get('path')
+          if (p === '/Public')
+            return res.end(
+              JSON.stringify({ id: parentId, name: 'Public', type: 'folder' })
+            )
+          if (moved) {
+            res.statusCode = 404
+            return res.end('{}')
+          }
           res.setHeader('ETag', '"v1"')
           return res.end(
             JSON.stringify({
-              id: fileId,
-              name: 'asset.txt',
-              contentType: 'text/plain'
+              id: folderId,
+              name: 'app',
+              type: 'folder',
+              parentFolderUri: `/folders/folders/${parentId}`
+            })
+          )
+        }
+        if (req.url === '/folders/folders/@myRecycleBin')
+          return res.end(JSON.stringify({ id: binId, type: 'trashFolder' }))
+        if (req.url.includes('/members?'))
+          return res.end(
+            JSON.stringify({
+              count: moved ? 1 : 0,
+              items: moved
+                ? [
+                    {
+                      name: folderId,
+                      uri: `/folders/folders/${folderId}`
+                    }
+                  ]
+                : []
+            })
+          )
+        if (
+          req.method === 'PUT' &&
+          req.url === `/folders/folders/${folderId}`
+        ) {
+          moved = true
+          const update = JSON.parse(body)
+          return res.end(JSON.stringify({ id: folderId, ...update }))
+        }
+        if (req.method === 'POST' && req.url.startsWith('/folders/folders?')) {
+          res.statusCode = 201
+          return res.end(
+            JSON.stringify({
+              id: folderId,
+              name: JSON.parse(body).name,
+              type: 'folder',
+              parentFolderUri: `/folders/folders/${parentId}`
             })
           )
         }
         if (req.method === 'POST' && req.url.startsWith('/files/files')) {
-          if (replace) {
-            res.statusCode = 409
-            return res.end(
-              JSON.stringify({
-                errorCode: 0,
-                httpStatusCode: 409,
-                message: `File with name "asset.txt" already exists in folder "${folderId}".`
-              })
-            )
-          }
           res.statusCode = 201
-          return res.end(
-            JSON.stringify({
-              id: fileId,
-              links: [
-                { method: 'PATCH', rel: 'patch', uri: `/files/files/${fileId}` }
-              ]
-            })
-          )
+          return res.end(JSON.stringify({ id: fileId, links: [] }))
         }
         res.end(JSON.stringify({ id: folderId }))
       })
@@ -210,7 +233,8 @@ browserSuite('browser Viya deployment over real HTTP', () => {
     requests = []
     redirect = undefined
     challenge = false
-    replace = false
+    dropUpload = false
+    moved = false
   })
   afterAll(async () => {
     if (socket) socket.close()
@@ -224,7 +248,7 @@ browserSuite('browser Viya deployment over real HTTP', () => {
     if (directory) fs.rmSync(directory, { recursive: true, force: true })
   })
   const deploy = async () => {
-    const expression = `(async () => { try { const sas = new SASjs.default({ serverUrl: location.origin, serverType: 'SASVIYA', appLoc: '/Public' }); await sas.deployServicePack({ members: [{ type: 'file', name: 'asset.txt', code: new TextEncoder().encode('hello') }] }, undefined, undefined, 'bearer-secret', true); return { ok: true } } catch (error) { return { ok: false, message: String(error.message) } } })()`
+    const expression = `(async () => { try { const sas = new SASjs.default({ serverUrl: location.origin, serverType: 'SASVIYA', appLoc: '/Public/app' }); await sas.deployServicePack({ members: [{ type: 'file', name: 'asset.txt', code: new TextEncoder().encode('hello') }] }, undefined, undefined, 'bearer-secret', true); return { ok: true } } catch (error) { return { ok: false, message: String(error.message) } } })()`
     const result = await send(
       'Runtime.evaluate',
       { expression, awaitPromise: true, returnByValue: true },
@@ -247,85 +271,42 @@ browserSuite('browser Viya deployment over real HTTP', () => {
     })
     expect(uploads[1].body).toContain('hello')
   })
-  it.each([
-    ['GET', '/folders/folders/@item'],
-    ['GET', '/types/types'],
-    ['POST', '/files/files'],
-    ['PATCH', `/files/files/${fileId}`]
-  ])(
-    'stops deployment after redirected %s %s without side effects',
-    async (method, path) => {
-      redirect = { method, path, target: `${attacker}/capture` }
-      const result = await deploy()
-      expect(result.ok).toBe(false)
-      expect(requests.filter((r) => r.host === 'attacker')).toEqual([])
-      expect(
-        requests.filter(
-          (r) => r.method === 'POST' && r.url.startsWith('/files/files')
-        )
-      ).toHaveLength(method === 'POST' || method === 'PATCH' ? 1 : 0)
-    }
-  )
-  it('replaces a duplicate file using its ETag in the browser', async () => {
-    replace = true
-    expect(await deploy()).toEqual({ ok: true })
-    const updates = requests.filter((r) => r.method === 'PUT')
-    expect(updates).toHaveLength(1)
-    expect(updates[0].body).toBe('hello')
-    expect(updates[0].ifMatch).toBe('"v1"')
-  })
-  it.each([302, 307, 308])(
-    'does not follow a %s redirect after a CSRF challenge',
-    async (status) => {
-      challenge = true
-      redirect = {
-        method: 'POST',
-        path: '/files/files',
-        target: `${attacker}/capture`,
-        status
-      }
-      expect((await deploy()).ok).toBe(false)
-      expect(requests.filter((r) => r.host === 'attacker')).toEqual([])
-      const uploads = requests.filter(
-        (r) => r.method === 'POST' && r.url.startsWith('/files/files')
-      )
-      expect(uploads).toHaveLength(2)
-      expect(uploads[1].csrf).toBe('new-csrf')
-    }
-  )
-  it.each([
-    ['GET', '/folders/folders/'],
-    ['GET', `/files/files/${fileId}`],
-    ['PUT', `/files/files/${fileId}/content`]
-  ])('blocks redirects during replacement %s %s', async (method, path) => {
-    replace = true
-    redirect = { method, path, target: `${attacker}/capture` }
-    expect((await deploy()).ok).toBe(false)
-    expect(requests.filter((r) => r.host === 'attacker')).toEqual([])
-    expect(
-      requests.some((r) => r.method === method && r.url.startsWith(path))
-    ).toBe(true)
-    expect(requests.filter((r) => r.method === 'PUT')).toHaveLength(
-      method === 'PUT' ? 1 : 0
-    )
-  })
-  it('does not follow same-origin redirects either', async () => {
+  it('rejects redirect on file upload without forwarding credentials', async () => {
     redirect = {
       method: 'POST',
       path: '/files/files',
-      target: `${origin}/other`
+      target: `${attacker}/capture`
     }
     expect((await deploy()).ok).toBe(false)
-    expect(requests.some((r) => r.url === '/other')).toBe(false)
-  })
-  it('fails before network if Request ignores the redirect mode', async () => {
-    const expression = `(async () => { const Original = window.Request; window.Request = function () { return { redirect: 'follow' } }; try { const sas = new SASjs.default({ serverUrl: location.origin, serverType: 'SASVIYA', appLoc: '/Public' }); await sas.deployServicePack({ members: [{ type: 'file', name: 'asset.txt', code: 'hello' }] }); return 'unexpected success' } catch (e) { return e.message } finally { window.Request = Original } })()`
-    const result = await send(
-      'Runtime.evaluate',
-      { expression, awaitPromise: true, returnByValue: true },
-      sid
+    expect(requests.filter((r) => r.host === 'attacker')).toEqual([])
+    expect(
+      requests.filter(
+        (r) => r.method === 'POST' && r.url.startsWith('/files/files')
+      )
+    ).toHaveLength(1)
+    expect(requests.filter((r) => r.method === 'GET' && r.url === '/')).toEqual(
+      []
     )
-    expect(result.result.value).toMatch(/redirect/i)
-    expect(requests).toEqual([])
+  })
+  it('does not replay an upload after the server drops its response', async () => {
+    dropUpload = true
+    expect((await deploy()).ok).toBe(false)
+    expect(
+      requests.filter(
+        (r) => r.method === 'POST' && r.url.startsWith('/files/files')
+      )
+    ).toHaveLength(1)
+    expect(requests.filter((r) => r.method === 'GET' && r.url === '/')).toEqual(
+      []
+    )
+  })
+  it('blocks cross-origin redirect before sending credentials', async () => {
+    redirect = {
+      method: 'GET',
+      path: '/folders/folders/@item',
+      target: `${attacker}/capture`
+    }
+    expect((await deploy()).ok).toBe(false)
+    expect(requests.filter((r) => r.host === 'attacker')).toEqual([])
   })
 })
