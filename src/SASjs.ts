@@ -1273,28 +1273,47 @@ export default class SASjs {
     progress: DeployProgressState = {
       index: 0,
       total: countMembers(membersJson)
-    }
+    },
+    parentFolderUri?: string
   ) {
     await asyncForEach(membersJson, async (member: any) => {
       switch (member.type) {
-        case 'folder':
+        case 'folder': {
           reportMember(progress, 'folder', member.name, parentFolder)
-          await this.createFolder(
+
+          const folder = await this.createFolder(
             member.name,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient,
             isForced
           )
+
+          if (member.members && member.members.length) {
+            const folderPath = `${parentFolder}/${member.name}`
+
+            await this.createFoldersAndServices(
+              folderPath,
+              member.members,
+              accessToken,
+              sasApiClient,
+              isForced,
+              progress,
+              // the folder the deploy has just created, so its children do not
+              // each resolve the same path back to a URI
+              folder?.id ? `/folders/folders/${folder.id}` : undefined
+            )
+          }
           break
+        }
         case 'file':
           reportMember(progress, 'file', member.name, parentFolder)
           await this.createFile(
             member.name,
             member.code,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient
           )
@@ -1305,7 +1324,7 @@ export default class SASjs {
             member.name,
             member.code,
             parentFolder,
-            undefined,
+            parentFolderUri,
             accessToken,
             sasApiClient
           )
@@ -1313,15 +1332,6 @@ export default class SASjs {
         default:
           throw new Error(`Unidentified member '${member.name}' provided.`)
       }
-      if (member.type === 'folder' && member.members && member.members.length)
-        await this.createFoldersAndServices(
-          `${parentFolder}/${member.name}`,
-          member.members,
-          accessToken,
-          sasApiClient,
-          isForced,
-          progress
-        )
     })
   }
 

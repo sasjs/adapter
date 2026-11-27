@@ -60,7 +60,9 @@ describe('SASjs.deployServicePack', () => {
 
     jest.spyOn(apiClient, 'createFolder').mockImplementation((name: string) => {
       writes.push({ kind: 'folder', name })
-      return Promise.resolve({} as any)
+      // the walk turns the created folder's id into the parent URI for its
+      // children, so a stub without one would silently disable that
+      return Promise.resolve({ id: `folder-${name}` } as any)
     })
     jest.spyOn(apiClient, 'createFile').mockImplementation((name: string) => {
       writes.push({ kind: 'file', name })
@@ -125,6 +127,53 @@ describe('SASjs.deployServicePack', () => {
     expect(writes.filter((w) => w.kind === 'folder')).toHaveLength(3)
     expect(writes.filter((w) => w.kind === 'file')).toHaveLength(3)
     expect(writes.filter((w) => w.kind === 'service')).toHaveLength(2)
+  })
+
+  it('hands each member the URI of its parent folder, so nothing looks the folder up twice', async () => {
+    // one folder lookup per member is half the deploy's requests; the folder the
+    // walk has just created gives its children a URI instead of a path to resolve
+    const fileCalls: any[][] = []
+    const jobCalls: any[][] = []
+
+    ;(apiClient.createFile as jest.Mock).mockImplementation(
+      (...args: any[]) => {
+        fileCalls.push(args)
+        return Promise.resolve({} as any)
+      }
+    )
+    ;(apiClient.createJobDefinition as jest.Mock).mockImplementation(
+      (...args: any[]) => {
+        jobCalls.push(args)
+        return Promise.resolve({} as any)
+      }
+    )
+
+    await sasjs.deployServicePack(
+      servicePack(),
+      undefined,
+      undefined,
+      'token',
+      false
+    )
+
+    const uriOf = (name: string) => `/folders/folders/folder-${name}`
+
+    // (name, code, parentPath, parentUri, token, client)
+    for (const [name, , parentPath, parentUri] of fileCalls) {
+      expect(parentUri).toBe(uriOf(parentPath.split('/').pop() as string))
+      expect(name).toBeTruthy()
+    }
+    for (const [name, , parentPath, parentUri] of jobCalls) {
+      expect(parentUri).toBe(uriOf(parentPath.split('/').pop() as string))
+      expect(name).toBeTruthy()
+    }
+
+    // the two top-level folders still resolve appLoc itself - the root has no
+    // folder above it to inherit a URI from
+    const folderCalls = (apiClient.createFolder as jest.Mock).mock.calls
+    expect(
+      folderCalls.filter(([, , parentUri]) => parentUri === undefined)
+    ).toHaveLength(2)
   })
 
   it('does not announce a member it cannot identify', async () => {
